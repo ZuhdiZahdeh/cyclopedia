@@ -1,13 +1,24 @@
 /* colors.css */
 :root {
-  --primary-color: #4CAF50;
-  --secondary-color: #FF9800;
-  --accent-color: #2196F3;
-  --text-color: #333;
-  --bg-color: #f9f9f9;
+  /* 🎨 الألوان الأساسية */
+  --color-primary: #4CAF50;       /* أخضر مريح - رئيسي */
+  --color-secondary: #FFC107;     /* أصفر برتقالي - للتمييز */
+  --color-accent: #2196F3;        /* أزرق - للأزرار والروابط */
+  --color-danger: #F44336;        /* أحمر - للإشعارات والتحذير */
+  --color-success: #00C853;       /* أخضر فاتح - للنجاح والتحفيز */
 
-  --font-en-body: "Segoe UI", sans-serif;
-  --font-ar-body: "Amiri", serif;
-  --font-he-body: "Rubik", sans-serif;
+  /* 🖼️ ألوان الخلفيات */
+  --bg-light: #F5F5F5;
+  --bg-dark: #212121;
+  --bg-white: #FFFFFF;
+
+  /* 🖋️ ألوان النص */
+  --text-dark: #212121;
+  --text-light: #FAFAFA;
+  --text-muted: #888888;
+
+  /* 🌈 ألوان تفاعلية إضافية */
+  --color-orange: #FF5722;
+  --color-purple: #9C27B0;
+  --color-teal: #009688;
 }
-
