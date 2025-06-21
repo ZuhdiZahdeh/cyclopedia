@@ -1,0 +1,158 @@
+/* animals.css */
+
+/* شبكة الصفحة الكاملة */
+.page-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  max-width: 1200px;
+  margin: auto;
+}
+
+/* الشريط العلوي */
+.top-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-primary);
+  color: white;
+  padding: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.top-navbar select,
+.top-navbar button {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: none;
+  margin-inline-start: 0.5rem;
+}
+
+/* الشريط الجانبي */
+.sidebar {
+  background-color: var(--color-light);
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+}
+
+.user-info {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+}
+
+.category-topics ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-topics li {
+  background-color: var(--color-secondary-light);
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.category-topics li:hover {
+  background-color: var(--color-secondary);
+  color: white;
+}
+
+/* المحتوى الرئيسي */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* تبويبات التفاعل */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.tabs button {
+  padding: 0.5rem 1rem;
+  background-color: var(--color-secondary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.tabs button:hover {
+  background-color: var(--color-secondary-dark);
+}
+
+.tab-content {
+  margin-top: 1rem;
+  min-height: 150px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.05);
+}
+
+/* بطاقة الحيوان */
+.animal-card {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.animal-card img.animal-image {
+  max-width: 200px;
+  height: auto;
+  margin: 1rem 0;
+}
+
+.animal-info-list {
+  list-style: none;
+  padding: 0;
+  text-align: right;
+  line-height: 1.8;
+}
+
+.animal-info-list li strong {
+  color: var(--color-primary);
+}
+
+/* استجابة الهواتف */
+@media (max-width: 768px) {
+  .page-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    order: 2;
+  }
+
+  .main-content {
+    order: 1;
+  }
+
+  .tabs {
+    justify-content: center;
+  }
+}
