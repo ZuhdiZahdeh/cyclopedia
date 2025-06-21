@@ -22,7 +22,17 @@
   "Description": "الوصف",
   "Click a card to hear the name": "انقر على البطاقة لسماع الاسم",
   "Listen and match the sound to the animal": "استمع وطابق الصوت مع الحيوان",
-  "Learn names of baby and female animals": "تعلم أسماء الأبناء والإناث",
   "Classify animals into types": "صنّف الحيوانات إلى أنواع",
+  "Learn names of baby and female animals": "تعرّف على أسماء الأبناء والزوجات",
+  "Play with Animals": "اللعب مع الحيوانات",
+  "Names": "تعرّف على الأسماء",
+  "Sounds": "تعرّف على الأصوات",
+  "Family": "أسماء الأبناء والزوجات",
+  "Classify": "صنّف الكائنات",
+  "Points": "النقاط",
+  "Level": "المستوى",
+  "Back": "عودة",
+  "Language": "اللغة",
+  "Profile": "الملف الشخصي",
   "back_to_home": "العودة إلى الصفحة الرئيسية"
 }
