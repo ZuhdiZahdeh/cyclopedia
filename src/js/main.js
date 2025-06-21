@@ -1,16 +1,14 @@
-import { loadLanguage } from './lang-handler.js'; // ✅ استيراد من الملف الصحيح
+// main.js — متوافق مع Vite + Firebase SDK v9
 
 window.addEventListener("DOMContentLoaded", () => {
   const lang = localStorage.getItem("language") || "en";
   document.documentElement.lang = lang;
   document.body.setAttribute("dir", lang === "ar" || lang === "he" ? "rtl" : "ltr");
 
-  loadLanguage(lang); // ✅ يعمل الآن بشكل سليم
-
-  handleAuthUI();
+  handleAuthUI(); // لإظهار أزرار الدخول والخروج
 });
 
-// 🔐 إدارة واجهة الدخول والخروج
+// ✅ هذه الدالة لإدارة واجهة الدخول والخروج
 function handleAuthUI() {
   const isLoggedIn = localStorage.getItem("user");
 
