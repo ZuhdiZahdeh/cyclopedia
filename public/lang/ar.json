@@ -10,12 +10,19 @@
   "transport_title": "وسائل النقل",
   "birds_title": "الطيور",
   "fish_title": "الأسماك",
-
   "login": "تسجيل الدخول",
   "register": "إنشاء حساب",
   "logout": "تسجيل الخروج",
   "my_profile": "ملفي الشخصي",
   "welcome": "مرحبًا بك في",
   "welcome_message": "مرحباً بكم في الموسوعة التفاعلية",
+  "Category": "التصنيف",
+  "Baby": "الابن",
+  "Female": "الأنثى",
+  "Description": "الوصف",
+  "Click a card to hear the name": "انقر على البطاقة لسماع الاسم",
+  "Listen and match the sound to the animal": "استمع وطابق الصوت مع الحيوان",
+  "Learn names of baby and female animals": "تعلم أسماء الأبناء والإناث",
+  "Classify animals into types": "صنّف الحيوانات إلى أنواع",
   "back_to_home": "العودة إلى الصفحة الرئيسية"
 }
