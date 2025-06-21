@@ -1,0 +1,13 @@
+/* colors.css */
+:root {
+  --primary-color: #4CAF50;
+  --secondary-color: #FF9800;
+  --accent-color: #2196F3;
+  --text-color: #333;
+  --bg-color: #f9f9f9;
+
+  --font-en-body: "Segoe UI", sans-serif;
+  --font-ar-body: "Amiri", serif;
+  --font-he-body: "Rubik", sans-serif;
+}
+
