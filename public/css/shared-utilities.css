@@ -1,0 +1,99 @@
+/* ✅ شبكة عامة للصفحة */
+.page-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+/* ✅ شريط علوي ثابت */
+.top-navbar {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  background-color: var(--color-primary);
+  color: white;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* ✅ الشريط الجانبي */
+.sidebar {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+/* ✅ محتوى رئيسي */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ✅ أزرار عامة */
+.btn {
+  padding: 0.5rem 1rem;
+  background-color: var(--color-secondary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+  background-color: var(--color-accent);
+}
+
+/* ✅ ظل مشترك */
+.shadow {
+  box-shadow: 0 4px 8px var(--color-shadow);
+}
+
+/* ✅ بطاقات العناصر */
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+/* ✅ تنسيق Tabs */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tabs button {
+  background-color: var(--color-secondary);
+  color: white;
+  padding: 0.4rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background-color: var(--color-primary);
+}
+
+/* ✅ دعم RWD */
+@media (max-width: 768px) {
+  .page-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    order: 2;
+  }
+
+  .main-content {
+    order: 1;
+  }
+}
