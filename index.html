@@ -3,75 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-translate="welcome">welcome</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <title>KidCyclopedia</title>
+  <link rel="stylesheet" href="./src/css/style.css" />
+  <link rel="stylesheet" href="./src/css/colors.css" />
+  <script type="module" src="./src/js/main.js" defer></script>
 </head>
 <body>
   <header>
-    <h1 data-translate="welcome_message">مرحبا بكم في الموسوعةالتفاعلية</h1>
-    <h2>مرحبًا بكم في الموسوعة التفاعلية 🎉 (مباشرة من GitHub)</h2>
-    <!-- اختيار اللغة -->
-    <label for="language-selector" data-translate="language">Language:</label>
-    <select id="language-selector">
-      <option value="en">English</option>
-      <option value="ar">العربية</option>
-      <option value="he">עברית</option>
-    </select>
+    <h1>Welcome to KidCyclopedia</h1>
+    <div id="language-selector"></div>
+
+    <!-- auth buttons -->
+    <div id="auth-buttons">
+      <a id="loginBtn" href="users/login.html">🔑 Login</a>
+      <a id="registerBtn" href="users/register.html">📝 Register</a>
+      <button id="logoutBtn" style="display:none;">🚪 Logout</button>
+    </div>
   </header>
 
-  <main>
-    <div id="auth-buttons">
-       <a href="html/vegetables.html" class="category-card">🥦 Vegetables</a>
-      <a id="loginBtn" href="/users/login.html" data-translate="login">Login</a>
-      <a id="registerBtn" href="/users/register.html" data-translate="register">Register</a>
-      <a id="profileBtn" href="/users/profile.html" data-translate="my_profile" style="display:none;">My Profile</a>
-      <button id="logoutBtn" style="display:none;" data-translate="logout">Logout</button>
-    </div>
+  <main class="category-grid">
+    <a href="html/fruits.html" class="category-card">🍎 Fruits</a>
+    <a href="html/animals.html" class="category-card">🦁 Animals</a>
+    <a href="html/vegetables.html" class="category-card">🥦 Vegetables</a>
+    <a href="html/transport.html" class="category-card">🚗 Transport</a>
+    <a href="html/birds.html" class="category-card">🕊️ Birds</a>
+    <a href="html/plants.html" class="category-card">🌿 Plants</a>
+    <a href="html/human-body.html" class="category-card">🧠 Human Body</a>
+    <a href="html/fish.html" class="category-card">🐟 Fish</a>
+    <a href="html/colors-page.html" class="category-card">🎨 Colors</a>
+    <a href="html/numbers.html" class="category-card">🔢 Numbers</a>
+    <a href="html/time.html" class="category-card">⏰ Time</a>
   </main>
 
   <footer>
-    <p data-translate="back_to_home">← Back to Home</p>
+    <p>&copy; 2025 KidCyclopedia</p>
   </footer>
-
-  <script type="module">
-    import { loadLanguage } from '/src/js/lang-handler.js';
-
-    const lang = localStorage.getItem("language") || "en";
-    document.documentElement.lang = lang;
-    document.body.setAttribute("dir", lang === "ar" || lang === "he" ? "rtl" : "ltr");
-    loadLanguage(lang);
-
-    const selector = document.getElementById("language-selector");
-    selector.value = lang;
-    selector.addEventListener("change", (e) => {
-      localStorage.setItem("language", e.target.value);
-      location.reload();
-    });
-
-    // واجهة الدخول والخروج
-    const isLoggedIn = localStorage.getItem("user");
-    const loginBtn = document.getElementById("loginBtn");
-    const registerBtn = document.getElementById("registerBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const profileBtn = document.getElementById("profileBtn");
-
-    if (isLoggedIn) {
-      loginBtn.style.display = "none";
-      registerBtn.style.display = "none";
-      logoutBtn.style.display = "inline";
-      profileBtn.style.display = "inline";
-    } else {
-      loginBtn.style.display = "inline";
-      registerBtn.style.display = "inline";
-      logoutBtn.style.display = "none";
-      profileBtn.style.display = "none";
-    }
-
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem("user");
-      location.reload();
-    });
-  </script>
 </body>
 </html>
-
