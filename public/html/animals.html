@@ -1,31 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KidCyclopedia</title>
-  <link rel="stylesheet" href="../css/animals.css" />
-  <link rel="stylesheet" href="../css/style.css" />
+  <title>الحيوانات | الموسوعة التفاعلية</title>
+
+  <!-- روابط CSS -->
+  <link rel="stylesheet" href="/css/colors.css" />
+  <link rel="stylesheet" href="/css/fonts.css" />
+  <link rel="stylesheet" href="/css/shared-utilities.css" />
+  <link rel="stylesheet" href="/css/animals.css" />
 </head>
+
 <body>
-  <header>
-    <h1>Welcome to KidCyclopedia</h1>
-    <div id="language-selector"></div>
-    <div id="auth-buttons">
-      <a id="loginBtn" href="../users/login.html">🔑 Login</a>
-      <a id="registerBtn" href="../users/register.html">📝 Register</a>
-      <button id="logoutBtn" style="display:none;">🚪 Logout</button>
+  <!-- ✅ شريط علوي -->
+  <div class="top-navbar">
+    <div>
+      <span data-i18n="Language">اللغة</span>: <select id="langSwitcher">
+        <option value="ar">عربي</option>
+        <option value="en">English</option>
+        <option value="he">עברית</option>
+      </select>
     </div>
-  </header>
+    <div>
+      <span data-i18n="Points">النقاط</span>: <span id="points">0</span>
+      •
+      <span data-i18n="Level">المستوى</span>: <span id="level">مبتدئ</span>
+    </div>
+    <button class="btn" onclick="history.back()">
+      ← <span data-i18n="Back">عودة</span>
+    </button>
+  </div>
 
-  <main class="category-grid">
-    <!-- روابط الفئات التعليمية -->
-  </main>
+  <!-- ✅ هيكل الصفحة -->
+  <div class="page-grid">
 
-  <footer>
-    <p>&copy; 2025 KidCyclopedia</p>
-  </footer>
+    <!-- ✅ الشريط الجانبي -->
+    <aside class="sidebar shadow card">
+      <h3>🐾 <span data-i18n="Play with Animals">اللعب مع الحيوانات</span></h3>
+      <ul>
+        <li><button class="btn" data-tab="names" data-i18n="Names">تعرّف على الأسماء</button></li>
+        <li><button class="btn" data-tab="sounds" data-i18n="Sounds">تعرّف على الأصوات</button></li>
+        <li><button class="btn" data-tab="family" data-i18n="Family">أسماء الأبناء والزوجات</button></li>
+        <li><button class="btn" data-tab="classify" data-i18n="Classify">صنّف الكائنات</button></li>
+      </ul>
+    </aside>
 
-  <script type="module" src="../src/js/main.js"></script>
+    <!-- ✅ المحتوى الرئيسي -->
+    <main class="main-content">
+
+      <!-- قسم تفاعلي -->
+      <section class="interactive-section shadow card">
+        <div class="tabs">
+          <button class="active" data-tab="names" data-i18n="Names">تعرّف على الأسماء</button>
+          <button data-tab="sounds" data-i18n="Sounds">تعرّف على الأصوات</button>
+          <button data-tab="family" data-i18n="Family">أسماء الأبناء والزوجات</button>
+          <button data-tab="classify" data-i18n="Classify">صنّف الكائنات</button>
+        </div>
+        <div class="tab-content">
+          <!-- محتوى ديناميكي للتبويبات -->
+        </div>
+      </section>
+
+      <!-- قسم معلوماتي ديناميكي -->
+      <section class="animal-card shadow card">
+        <!-- يتم تعبئته من Firestore عبر animals.js -->
+      </section>
+    </main>
+  </div>
+
+  <!-- ✅ سكربتات JS -->
+  <script type="module" src="../js/lang-handler.js"></script>
+  <script type="module" src="../js/audio-handler.js"></script>
+  <script type="module" src="../src/js/animals.js"></script>
 </body>
 </html>
