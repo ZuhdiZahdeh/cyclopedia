@@ -1,17 +1,16 @@
 {
+	"type": "module",
   "name": "cyclopedia-app",
-  "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "devDependencies": {
-    "vite": "^6.3.5"
+    "build": "vite build && node copy-html.js",
+    "serve": "vite preview"
   },
   "dependencies": {
-    "firebase": "^11.9.1"
+    "firebase": "^9.0.0"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0"
   }
 }

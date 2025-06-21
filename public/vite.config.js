@@ -6,15 +6,15 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+        // ✅ صفحات الفئات (HTML متعددة)
+        animals: resolve('html/animals.html'),
+        vegetables: resolve(__dirname, 'html/vegetables.html')
 
-        // ✅ صفحات الفئات
-        animals: resolve(__dirname, 'html/animals.html'),
-        vegetables: resolve(__dirname, 'html/vegetables.html'),
-        // أضف المزيد حسب الحاجة
       }
     },
     emptyOutDir: true
   }
 });
+
 
 
