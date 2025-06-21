@@ -4,7 +4,14 @@ body {
   background-color: #fefefe;
   color: #333;
 }
-
+h1 {
+  color: green;
+  text-align: center;
+}
+h2 {
+  color: blue;
+  text-align: center;
+}
 #keyboard {
   display: flex;
   flex-wrap: wrap;
