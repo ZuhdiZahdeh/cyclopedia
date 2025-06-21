@@ -1,30 +1,85 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KidCyclopedia</title>
-  <link rel="stylesheet" href="../src/css/style.css" />
+  <title>الحيوانات - موسوعتي التفاعلية</title>
+  <link rel="stylesheet" href="/src/css/shared-utilities.css">
+  <link rel="stylesheet" href="/src/css/colors.css">
+  <link rel="stylesheet" href="/src/css/fonts.css">
+  <link rel="stylesheet" href="/src/css/animals.css">
 </head>
 <body>
-  <header>
-    <h1>Welcome to KidCyclopedia</h1>
-    <div id="language-selector"></div>
-    <div id="auth-buttons">
-      <a id="loginBtn" href="../users/login.html">🔑 Login</a>
-      <a id="registerBtn" href="../users/register.html">📝 Register</a>
-      <button id="logoutBtn" style="display:none;">🚪 Logout</button>
+  <!-- شريط التنقل العلوي -->
+  <header class="top-navbar">
+    <div class="navbar-left">
+      <button id="back-button">عودة</button>
+    </div>
+    <div class="navbar-center">
+      <h1>الحيوانات</h1>
+    </div>
+    <div class="navbar-right">
+      <select id="language-selector">
+        <option value="ar">العربية</option>
+        <option value="en">English</option>
+        <option value="he">עברית</option>
+      </select>
+      <span id="points-display">نقاط: 0</span>
     </div>
   </header>
 
-  <main class="category-grid">
-    <!-- روابط الفئات التعليمية -->
-  </main>
+  <!-- شبكة الصفحة الرئيسية -->
+  <div class="page-grid">
+    <!-- الشريط الجانبي -->
+    <aside class="sidebar">
+      <div class="user-info">
+        <img src="/images/avatar/boy1.png" alt="الصورة الرمزية" class="avatar">
+        <h3>الاسم: زيد</h3>
+        <p>المستوى: مبتدئ</p>
+        <p>النقاط: 130</p>
+      </div>
+      <nav class="category-topics">
+        <ul>
+          <li>الأسود</li>
+          <li>القطط</li>
+          <li>الطيور</li>
+          <li>الزواحف</li>
+        </ul>
+      </nav>
+    </aside>
 
-  <footer>
-    <p>&copy; 2025 KidCyclopedia</p>
-  </footer>
+    <!-- المحتوى الرئيسي -->
+    <main class="main-content">
+      <!-- قسم تفاعلي -->
+      <section class="interactive-section">
+        <h2>اللعب مع الحيوانات</h2>
+        <div class="tabs">
+          <button data-tab="names">تعرّف على الأسماء</button>
+          <button data-tab="sounds">تعرّف على الأصوات</button>
+          <button data-tab="family">أسماء الأبناء والزوجات</button>
+          <button data-tab="classify">صنّف الكائنات</button>
+        </div>
+        <div class="tab-content" id="tab-content">
+          <!-- المحتوى الديناميكي يظهر هنا -->
+        </div>
+      </section>
 
-  <script type="module" src="../src/js/main.js"></script>
+      <!-- قسم معلوماتي -->
+      <section class="info-section animal-card">
+        <h3 class="animal-name">الأسد</h3>
+        <img src="/images/animals/lion.png" alt="أسد" class="animal-image">
+        <audio controls src="/audio/ar/animals/lion_teacher.mp3"></audio>
+        <ul class="animal-info-list">
+          <li><strong>التصنيف:</strong> ثديي، مفترس</li>
+          <li><strong>يأكل:</strong> اللحوم</li>
+          <li><strong>يعيش في:</strong> السافانا</li>
+          <li><strong>الابن:</strong> شبل</li>
+          <li><strong>الأنثى:</strong> لبؤة</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/src/js/animals.js"></script>
 </body>
 </html>
