@@ -1,0 +1,21 @@
+{
+  "animals_title": "الحيوانات",
+  "vegetables_title": "الخضروات",
+  "plants_title": "النباتات",
+  "fruits_title": "الفواكه",
+  "colors_title": "الألوان",
+  "numbers_title": "الأرقام",
+  "time_title": "الوقت",
+  "human_body_title": "جسم الإنسان",
+  "transport_title": "وسائل النقل",
+  "birds_title": "الطيور",
+  "fish_title": "الأسماك",
+
+  "login": "تسجيل الدخول",
+  "register": "إنشاء حساب",
+  "logout": "تسجيل الخروج",
+  "my_profile": "ملفي الشخصي",
+  "welcome": "مرحبًا بك في",
+  "welcome_message": "مرحباً بكم في الموسوعة التفاعلية",
+  "back_to_home": "العودة إلى الصفحة الرئيسية"
+}

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-translate="welcome">welcome</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>
+    <h1 data-translate="welcome_message">مرحبا بكم في الموسوعةالتفاعلية</h1>
+
+    <!-- اختيار اللغة -->
+    <label for="language-selector" data-translate="language">Language:</label>
+    <select id="language-selector">
+      <option value="en">English</option>
+      <option value="ar">العربية</option>
+      <option value="he">עברית</option>
+    </select>
+  </header>
+
+  <main>
+    <div id="auth-buttons">
+      <a id="loginBtn" href="/users/login.html" data-translate="login">Login</a>
+      <a id="registerBtn" href="/users/register.html" data-translate="register">Register</a>
+      <a id="profileBtn" href="/users/profile.html" data-translate="my_profile" style="display:none;">My Profile</a>
+      <button id="logoutBtn" style="display:none;" data-translate="logout">Logout</button>
+    </div>
+  </main>
+
+  <footer>
+    <p data-translate="back_to_home">← Back to Home</p>
+  </footer>
+
+  <script type="module">
+    import { loadLanguage } from '/src/js/lang-handler.js';
+
+    const lang = localStorage.getItem("language") || "en";
+    document.documentElement.lang = lang;
+    document.body.setAttribute("dir", lang === "ar" || lang === "he" ? "rtl" : "ltr");
+    loadLanguage(lang);
+
+    const selector = document.getElementById("language-selector");
+    selector.value = lang;
+    selector.addEventListener("change", (e) => {
+      localStorage.setItem("language", e.target.value);
+      location.reload();
+    });
+
+    // واجهة الدخول والخروج
+    const isLoggedIn = localStorage.getItem("user");
+    const loginBtn = document.getElementById("loginBtn");
+    const registerBtn = document.getElementById("registerBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const profileBtn = document.getElementById("profileBtn");
+
+    if (isLoggedIn) {
+      loginBtn.style.display = "none";
+      registerBtn.style.display = "none";
+      logoutBtn.style.display = "inline";
+      profileBtn.style.display = "inline";
+    } else {
+      loginBtn.style.display = "inline";
+      registerBtn.style.display = "inline";
+      logoutBtn.style.display = "none";
+      profileBtn.style.display = "none";
+    }
+
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("user");
+      location.reload();
+    });
+  </script>
+</body>
+</html>
+

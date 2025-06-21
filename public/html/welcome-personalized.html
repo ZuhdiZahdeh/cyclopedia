@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-translate="welcome_title">Welcome-</title>
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <h1 id="welcomeText" data-translate="welcome_message">Welcome!</h1>
+  <p id="userInfo"></p>
+
+  <a href="../index.html" data-translate="back_to_home">← Back to Home</a>
+
+  <script type="module">
+    import { loadLanguage } from '../js/lang-handler.js';
+
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const lang = localStorage.getItem("language") || "en";
+    document.documentElement.lang = lang;
+    document.body.setAttribute("dir", lang === "ar" || lang === "he" ? "rtl" : "ltr");
+
+    loadLanguage(lang);
+
+    const welcomeText = document.getElementById("welcomeText");
+    const userInfo = document.getElementById("userInfo");
+
+    userInfo.textContent = `${user.username} • Level: ${user.level} • Points: ${user.points}`;
+  </script>
+</body>
+</html>

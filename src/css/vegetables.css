@@ -1,0 +1,43 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  padding: 1rem;
+  background-color: #fefefe;
+  color: #333;
+}
+
+#keyboard {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  justify-content: center;
+}
+
+#keyboard button {
+  padding: 0.5rem 1rem;
+  font-size: 1.1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #e0ffe0;
+}
+
+#keyboard button:hover {
+  background-color: #c3f7c3;
+}
+
+#content-display {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+#itemImage {
+  max-width: 220px;
+  display: block;
+  margin: 0 auto;
+}
+
+#itemName {
+  font-size: 1.5rem;
+  margin-top: 0.5rem;
+}

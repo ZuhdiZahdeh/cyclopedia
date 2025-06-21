@@ -1,0 +1,22 @@
+{
+  "animals_title": "Animals",
+  "vegetables_title": "Vegetables",
+  "plants_title": "Plants",
+  "fruits_title": "Fruits",
+  "colors_title": "Colors",
+  "numbers_title": "Numbers",
+  "time_title": "Time",
+  "human_body_title": "Human Body",
+  "transport_title": "Transport",
+  "birds_title": "Birds",
+  "fish_title": "Fish",
+
+  "login": "Login",
+  "register": "Register",
+  "logout": "Logout",
+   "my_profile": "My Profile",
+  "welcome": "Welcome!",
+  "welcome_message": "Welcome to the Interactive Cyclopedia",
+  "back_to_home": "← Back to Home"
+}
+
