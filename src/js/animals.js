@@ -1,46 +1,69 @@
-import { db } from './firebase-config.js';
-import { collection, getDocs } from 'firebase/firestore';
+import { db } from "../js/firebase-config.js";
+import { getDocs, collection } from "firebase/firestore";
+import { playAudio } from "../js/audio-handler.js";
+import { currentLang, translate } from "../js/lang-handler.js";
 
-const lang = localStorage.getItem("language") || "en";
-const category = "animals";
-let data = [];
+document.addEventListener("DOMContentLoaded", () => {
+  loadAnimalCards();
+  setupTabs();
+});
 
-async function loadCategoryItems() {
-  try {
-    const colRef = collection(db, "categories", category, "items");
-    const snapshot = await getDocs(colRef);
-    snapshot.forEach(doc => {
-      data.push(doc.data());
-    });
+async function loadAnimalCards() {
+  const container = document.querySelector(".animal-card");
+  const querySnapshot = await getDocs(collection(db, "categories", "animals", "items"));
 
-    renderKeyboard();
-  } catch (err) {
-    console.error("Error loading category items:", err);
-  }
-}
+  querySnapshot.forEach((doc) => {
+    const data = doc.data();
+    const name = data.name[currentLang];
+    const image = `/images/animals/${data.image}`;
+    const sound = `/audio/${currentLang}/animals/${data.voices.teacher}`;
+    const description = data.description[currentLang];
+    const baby = data.baby?.[currentLang] || "";
+    const female = data.female?.[currentLang] || "";
+    const category = data.category?.[currentLang]?.join(", ") || "";
 
-function renderKeyboard() {
-  const keyboard = document.getElementById("keyboard");
-  const letters = [...new Set(data.map(item => item.letter[lang]))];
-
-  keyboard.innerHTML = "";
-  letters.forEach(letter => {
-    const btn = document.createElement("button");
-    btn.textContent = letter;
-    btn.addEventListener("click", () => showItem(letter));
-    keyboard.appendChild(btn);
+    container.innerHTML += `
+      <div class="animal-entry">
+        <h3>${name}</h3>
+        <img src="${image}" alt="${name}" />
+        <audio controls src="${sound}"></audio>
+        <ul>
+          <li><strong>${translate("Category")}:</strong> ${category}</li>
+          ${baby ? `<li><strong>${translate("Baby")}:</strong> ${baby}</li>` : ""}
+          ${female ? `<li><strong>${translate("Female")}:</strong> ${female}</li>` : ""}
+          <li><strong>${translate("Description")}:</strong> ${description}</li>
+        </ul>
+      </div>
+    `;
   });
 }
 
-function showItem(letter) {
-  const match = data.find(item => item.letter[lang] === letter);
-  if (!match) return;
+function setupTabs() {
+  const tabs = document.querySelectorAll(".tabs button");
+  const tabContent = document.querySelector(".tab-content");
 
-  document.getElementById("itemName").textContent = match.name[lang];
-  document.getElementById("itemImage").src = `/images/animals/${match.image}`;
-  const audio = document.getElementById("itemAudio");
-  audio.src = `/audio/animals/${match.sound_base}`;
-  audio.play().catch(err => console.warn("Audio error:", err));
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      tabs.forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+
+      const selected = tab.dataset.tab;
+      tabContent.innerHTML = getTabContent(selected);
+    });
+  });
 }
 
-loadCategoryItems();
+function getTabContent(tab) {
+  switch (tab) {
+    case "names":
+      return `<p>${translate("Click a card to hear the name")}</p>`;
+    case "sounds":
+      return `<p>${translate("Listen and match the sound to the animal")}</p>`;
+    case "family":
+      return `<p>${translate("Learn names of baby and female animals")}</p>`;
+    case "classify":
+      return `<p>${translate("Classify animals into types")}</p>`;
+    default:
+      return "";
+  }
+}
