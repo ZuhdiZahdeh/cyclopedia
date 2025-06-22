@@ -1,0 +1,25 @@
+/* cyclopedia-app/public/css/fruits.css */
+.fruit-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.fruit-entry {
+  background-color: #fff7ec;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.fruit-entry:hover {
+  transform: scale(1.05);
+}
+
+.fruit-entry img {
+  width: 100px;
+  height: auto;
+  cursor: pointer;
+}
