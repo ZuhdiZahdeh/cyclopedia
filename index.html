@@ -1,42 +1,77 @@
+<!-- cyclopedia-app/index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KidCyclopedia</title>
-  <link rel="stylesheet" href="./src/css/style.css" />
-  <link rel="stylesheet" href="./src/css/colors.css" />
-  <script type="module" src="./src/js/main.js" defer></script>
-</head>
-<body>
-  <header>
-    <h1>Welcome to KidCyclopedia</h1>
-    <div id="language-selector"></div>
+  <title>الموسوعة التفاعلية للأطفال</title>
 
-    <!-- auth buttons -->
-    <div id="auth-buttons">
-      <a id="loginBtn" href="users/login.html">🔑 Login</a>
-      <a id="registerBtn" href="users/register.html">📝 Register</a>
-      <button id="logoutBtn" style="display:none;">🚪 Logout</button>
+  <link rel="stylesheet" href="/css/colors.css" />
+  <link rel="stylesheet" href="/css/fonts.css" />
+  <link rel="stylesheet" href="/css/shared-utilities.css" />
+  <link rel="stylesheet" href="/css/home.css" />
+</head>
+
+<body>
+  <!-- ✅ الشريط العلوي -->
+  <header class="top-navbar shadow">
+    <div class="left-section">
+      <select id="langSwitcher">
+        <option value="ar">عربي</option>
+        <option value="en">English</option>
+        <option value="he">עברית</option>
+      </select>
     </div>
+    <nav class="top-nav-links">
+      <a href="index.html" data-i18n="Home">🏠 الرئيسية</a>
+      <a href="#topics" data-i18n="Topics">📚 المواضيع</a>
+      <a href="#games" data-i18n="Games">🎮 الألعاب</a>
+      <a href="about.html" data-i18n="About">ℹ️ من نحن</a>
+    </nav>
   </header>
 
-  <main class="category-grid">
-    <a href="html/fruits.html" class="category-card">🍎 Fruits</a>
-    <a href="html/animals.html" class="category-card">🦁 Animals</a>
-    <a href="html/vegetables.html" class="category-card">🥦 Vegetables</a>
-    <a href="html/transport.html" class="category-card">🚗 Transport</a>
-    <a href="html/birds.html" class="category-card">🕊️ Birds</a>
-    <a href="html/plants.html" class="category-card">🌿 Plants</a>
-    <a href="html/human-body.html" class="category-card">🧠 Human Body</a>
-    <a href="html/fish.html" class="category-card">🐟 Fish</a>
-    <a href="html/colors-page.html" class="category-card">🎨 Colors</a>
-    <a href="html/numbers.html" class="category-card">🔢 Numbers</a>
-    <a href="html/time.html" class="category-card">⏰ Time</a>
-  </main>
+  <!-- ✅ التخطيط العام -->
+  <div class="page-layout">
+    <!-- ✅ القائمة الجانبية -->
+    <aside class="sidebar shadow">
+      <h3 data-i18n="Account">👤 حسابك</h3>
+      <ul>
+        <li><a href="users/login.html" data-i18n="Login">تسجيل الدخول</a></li>
+        <li><a href="users/register.html" data-i18n="Register">تسجيل جديد</a></li>
+        <li><a href="users/profile.html" data-i18n="Profile">الملف الشخصي</a></li>
+        <li><a href="users/my-report.html" data-i18n="Points">سجل النقاط</a></li>
+        <li><a href="users/my-report.html" data-i18n="Activity">سجل الأنشطة</a></li>
+      </ul>
+    </aside>
 
-  <footer>
-    <p>&copy; 2025 KidCyclopedia</p>
+    <!-- ✅ المحتوى الرئيسي -->
+    <main class="main-content">
+      <section id="topics" class="topics-section">
+        <h2 data-i18n="ChooseTopic">اختر موضوعك</h2>
+        <div class="topics-grid">
+          <a href="animals.html" class="topic-icon">🐾 <span data-i18n="Animals">الحيوانات</span></a>
+          <a href="birds.html" class="topic-icon">🕊️ <span data-i18n="Birds">الطيور</span></a>
+          <a href="fruits.html" class="topic-icon">🍎 <span data-i18n="Fruits">الفواكه</span></a>
+          <a href="vegetables.html" class="topic-icon">🥕 <span data-i18n="Vegetables">الخضروات</span></a>
+          <a href="plants.html" class="topic-icon">🌿 <span data-i18n="Plants">النباتات</span></a>
+          <a href="human-body.html" class="topic-icon">🧠 <span data-i18n="Body">جسم الإنسان</span></a>
+          <a href="fish.html" class="topic-icon">🐟 <span data-i18n="Fish">الأسماك</span></a>
+          <a href="colors-page.html" class="topic-icon">🎨 <span data-i18n="Colors">الألوان</span></a>
+          <a href="numbers.html" class="topic-icon">🔢 <span data-i18n="Numbers">الأرقام</span></a>
+          <a href="time.html" class="topic-icon">⏰ <span data-i18n="Time">الوقت</span></a>
+          <a href="transport.html" class="topic-icon">🚗 <span data-i18n="Transport">وسائل النقل</span></a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ✅ التذييل -->
+  <footer class="footer shadow">
+    <p>© 2025 جميع الحقوق محفوظة لموسوعة الأطفال</p>
+    <button class="btn" onclick="location.href='sitemap.html'" data-i18n="Sitemap">خارطة الموقع</button>
   </footer>
+
+  <!-- ✅ ملفات JS -->
+  <script type="module" src="/js/lang-handler.js"></script>
 </body>
 </html>

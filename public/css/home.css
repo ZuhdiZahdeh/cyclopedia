@@ -1,0 +1,79 @@
+/* cyclopedia-app/public/css/home.css */
+body {
+  margin: 0;
+  font-family: 'Cairo', sans-serif;
+  background-color: #f0f8ff;
+}
+
+.top-navbar {
+  background-color: #0288d1;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.top-navbar select,
+.top-navbar a {
+  margin: 0 0.5rem;
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.page-layout {
+  display: flex;
+}
+
+.sidebar {
+  width: 220px;
+  padding: 1rem;
+  background-color: #e1f5fe;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  margin: 0.5rem 0;
+}
+
+.main-content {
+  flex: 1;
+  padding: 1rem;
+}
+
+.topics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.topic-icon {
+  background-color: #fff;
+  border: 2px solid #0288d1;
+  border-radius: 12px;
+  padding: 1rem;
+  font-size: 2rem;
+  text-align: center;
+  color: #0288d1;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.topic-icon:hover {
+  transform: scale(1.1);
+  background-color: #b3e5fc;
+}
+
+.footer {
+  background-color: #0288d1;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  margin-top: 2rem;
+}
