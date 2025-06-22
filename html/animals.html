@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>الحيوانات | الموسوعة التفاعلية</title>
 
-  <!-- ✅ روابط CSS -->
+  <!-- ✅ ملفات التنسيق -->
   <link rel="stylesheet" href="/css/colors.css" />
   <link rel="stylesheet" href="/css/fonts.css" />
   <link rel="stylesheet" href="/css/shared-utilities.css" />
@@ -13,7 +13,6 @@
 </head>
 
 <body>
-  <!-- ✅ شريط علوي -->
   <div class="top-navbar">
     <div>
       <span data-i18n="Language">اللغة</span>:
@@ -28,12 +27,9 @@
       •
       <span data-i18n="Level">المستوى</span>: <span id="level">مبتدئ</span>
     </div>
-    <button class="btn" onclick="history.back()">
-      ← <span data-i18n="Back">عودة</span>
-    </button>
+    <button class="btn" onclick="history.back()">← <span data-i18n="Back">عودة</span></button>
   </div>
 
-  <!-- ✅ الصفحة -->
   <div class="page-grid">
     <aside class="sidebar shadow card">
       <h3>🐾 <span data-i18n="Play with Animals">اللعب مع الحيوانات</span></h3>
@@ -56,15 +52,8 @@
         <div class="tab-content"></div>
       </section>
 
-      <section class="animal-card shadow card">
-        <!-- يتم تعبئته من Firestore عبر animals.js -->
-      </section>
+      <section class="animal-card shadow card"></section>
     </main>
   </div>
-
-  <!-- ✅ سكربتات JS محدثة -->
-  <script type="module" src="/js/lang-handler.js"></script>
-  <script type="module" src="/js/audio-handler.js"></script>
-  <script type="module" src="/js/animals.js"></script>
 </body>
 </html>
