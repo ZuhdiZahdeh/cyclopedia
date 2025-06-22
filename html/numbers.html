@@ -1,0 +1,55 @@
+<!-- cyclopedia-app/html/numbers.html -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>الأرقام | الموسوعة التفاعلية</title>
+
+  <link rel="stylesheet" href="/css/colors.css" />
+  <link rel="stylesheet" href="/css/fonts.css" />
+  <link rel="stylesheet" href="/css/shared-utilities.css" />
+  <link rel="stylesheet" href="/css/numbers.css" />
+</head>
+
+<body>
+  <div class="top-navbar">
+    <div>
+      <span data-i18n="Language">اللغة</span>:
+      <select id="langSwitcher">
+        <option value="ar">عربي</option>
+        <option value="en">English</option>
+        <option value="he">עברית</option>
+      </select>
+    </div>
+    <div>
+      <span data-i18n="Points">النقاط</span>: <span id="points">0</span>
+      •
+      <span data-i18n="Level">المستوى</span>: <span id="level">مبتدئ</span>
+    </div>
+    <button class="btn" onclick="history.back()">← <span data-i18n="Back">عودة</span></button>
+  </div>
+
+  <div class="page-grid">
+    <aside class="sidebar shadow card">
+      <h3>🔢 <span data-i18n="Play with Numbers">اللعب مع الأرقام</span></h3>
+      <ul>
+        <li><button class="btn" data-tab="names" data-i18n="Names">تعرّف على الأسماء</button></li>
+        <li><button class="btn" data-tab="sounds" data-i18n="Sounds">تعرّف على الأصوات</button></li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <section class="interactive-section shadow card">
+        <div class="tabs">
+          <button class="active" data-tab="names" data-i18n="Names">تعرّف على الأسماء</button>
+          <button data-tab="sounds" data-i18n="Sounds">تعرّف على الأصوات</button>
+        </div>
+        <div class="tab-content"></div>
+      </section>
+
+      <section class="numbers-card shadow card"></section>
+    </main>
+  </div>
+</body>
+</html>
