@@ -1,33 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-translate="vegetables_title">Vegetables</title>
-  <link rel="stylesheet" href="/src/css/vegetables.css" />
-  <link rel="stylesheet" href="/src/css/style.css" />
+  <title>الخضروات | الموسوعة التفاعلية</title>
+
+  <link rel="stylesheet" href="/css/colors.css" />
+  <link rel="stylesheet" href="/css/fonts.css" />
+  <link rel="stylesheet" href="/css/shared-utilities.css" />
+  <link rel="stylesheet" href="/css/vegetables.css" />
 </head>
+
 <body>
-  <header>
-    <h1 data-translate="vegetables_title">Vegetables</h1>
-     <h2>🥕 Vegetable Page</h2>
-    <div id="language-selector"></div>
-  </header>
-  <main>
-     <h1>🥕 Vegetable Page</h1>
-    <section id="keyboard"></section>
-    <section id="content-display">
-      <img id="itemImage" src="" alt="Vegetable Image" />
-      <h2 id="itemName"></h2>
-       <p>This box uses a unique vegetable style!</p>
-      <audio id="itemAudio" controls></audio>
-    </section>
-  </main>
+  <div class="top-navbar">
+    <div>
+      <span data-i18n="Language">اللغة</span>:
+      <select id="langSwitcher">
+        <option value="ar">عربي</option>
+        <option value="en">English</option>
+        <option value="he">עברית</option>
+      </select>
+    </div>
+    <div>
+      <span data-i18n="Points">النقاط</span>: <span id="points">0</span>
+      •
+      <span data-i18n="Level">المستوى</span>: <span id="level">مبتدئ</span>
+    </div>
+    <button class="btn" onclick="history.back()">← <span data-i18n="Back">عودة</span></button>
+  </div>
 
-  <footer>
-    <a href="../index.html" data-translate="back_to_home">← Back to Home</a>
-  </footer>
+  <div class="page-grid">
+    <aside class="sidebar shadow card">
+      <h3>🥕 <span data-i18n="Play with Vegetables">اللعب مع الخضروات</span></h3>
+      <ul>
+        <li><button class="btn" data-tab="names" data-i18n="Names">تعرّف على الأسماء</button></li>
+        <li><button class="btn" data-tab="sounds" data-i18n="Sounds">تعرّف على الأصوات</button></li>
+      </ul>
+    </aside>
 
-  <script type="module" src="/src/js/vegetables.js"></script>
+    <main class="main-content">
+      <section class="interactive-section shadow card">
+        <div class="tabs">
+          <button class="active" data-tab="names" data-i18n="Names">تعرّف على الأسماء</button>
+          <button data-tab="sounds" data-i18n="Sounds">تعرّف على الأصوات</button>
+        </div>
+        <div class="tab-content"></div>
+      </section>
+
+      <section class="vegetable-card shadow card">
+        <!-- يتم تعبئته من Firestore عبر vegetables.js -->
+      </section>
+    </main>
+  </div>
 </body>
 </html>

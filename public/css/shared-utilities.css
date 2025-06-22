@@ -28,7 +28,7 @@
   padding: 1rem;
 }
 
-/* ✅ محتوى رئيسي */
+/* ✅ المحتوى الرئيسي */
 .main-content {
   display: flex;
   flex-direction: column;
@@ -44,6 +44,7 @@
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  font-family: inherit;
 }
 
 .btn:hover {
@@ -63,11 +64,20 @@
   padding: 1rem;
 }
 
-/* ✅ تنسيق Tabs */
+/* ✅ إدخال موحد للصور داخل البطاقات */
+.card img {
+  width: 180px;
+  height: auto;
+  display: block;
+  margin: 0 auto 1rem auto;
+}
+
+/* ✅ تبويبات (Tabs) */
 .tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .tabs button {
@@ -77,13 +87,22 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  font-family: inherit;
 }
 
 .tabs button.active {
   background-color: var(--color-primary);
 }
 
-/* ✅ دعم RWD */
+/* ✅ منطقة المحتوى داخل التبويبات */
+.tab-content {
+  padding: 0.5rem 1rem;
+  background-color: var(--color-background);
+  border-radius: 8px;
+  min-height: 60px;
+}
+
+/* ✅ دعم التصميم المتجاوب */
 @media (max-width: 768px) {
   .page-grid {
     grid-template-columns: 1fr;
@@ -95,5 +114,10 @@
 
   .main-content {
     order: 1;
+  }
+
+  .card img {
+    width: 100%;
+    max-width: 300px;
   }
 }

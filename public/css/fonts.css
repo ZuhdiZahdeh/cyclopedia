@@ -1,4 +1,4 @@
-/* 1. استيراد الخطوط من Google Fonts */
+/* ✅ 1. استيراد الخطوط من Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Cairo&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Changa&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Rubik&display=swap');
@@ -9,7 +9,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Assistant&display=swap');
 
-/* 2. تحديد الخطوط باستخدام :root حسب اللغة */
+/* ✅ 2. تعريف المتغيرات لكل لغة */
 :root {
   /* العربية */
   --font-ar-body: 'Cairo', sans-serif;
@@ -17,17 +17,17 @@
 
   /* الإنجليزية */
   --font-en-body: 'Poppins', sans-serif;
-  --font-en-heading: 'Quicksand', sans-serif; /* أو 'Nunito' */
+  --font-en-heading: 'Quicksand', sans-serif; /* يمكن التبديل بـ Nunito */
 
   /* العبرية */
   --font-he-body: 'Assistant', sans-serif;
   --font-he-heading: 'Rubik', sans-serif;
 
-  /* بديل موحد للجميع */
+  /* بديل موحد لجميع الحالات */
   --font-unified: 'Rubik', sans-serif;
 }
 
-/* 3. تطبيق الخطوط تلقائيًا حسب اتجاه اللغة */
+/* ✅ 3. الخط الأساسي للنصوص حسب اللغة */
 html[lang="ar"] body {
   font-family: var(--font-ar-body);
 }
@@ -40,7 +40,7 @@ html[lang="he"] body {
   font-family: var(--font-he-body);
 }
 
-/* 4. العناوين حسب اللغة */
+/* ✅ 4. العناوين H1-H3 حسب اللغة */
 html[lang="ar"] h1, html[lang="ar"] h2, html[lang="ar"] h3 {
   font-family: var(--font-ar-heading);
 }

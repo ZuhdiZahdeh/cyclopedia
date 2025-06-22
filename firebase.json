@@ -8,15 +8,6 @@
     ],
     "headers": [
       {
-        "source": "/html/animals.html",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-store"
-          }
-        ]
-      },
-      {
         "source": "**/*.html",
         "headers": [
           {
@@ -43,6 +34,9 @@
           }
         ]
       }
-    ]
+    ],
+    "release": {
+      "maxReleases": 20
+    }
   }
 }
