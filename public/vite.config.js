@@ -18,7 +18,10 @@ export default defineConfig({
         'human-body': resolve(__dirname, 'html/human-body.html'),
         fish: resolve(__dirname, 'html/fish.html'),
         numbers: resolve(__dirname, 'html/numbers.html'),
-        time: resolve(__dirname, 'html/time.html')
+        time: resolve(__dirname, 'html/time.html'),
+             // صفحات إضافية عند الحاجة:
+        'users/my-report': resolve(__dirname, 'users/my-report.html'),
+        'users/profile': resolve(__dirname, 'users/profile.html')
       }
     },
     emptyOutDir: true
