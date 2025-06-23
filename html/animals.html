@@ -3,57 +3,55 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>الحيوانات | الموسوعة التفاعلية</title>
-
-  <!-- ✅ ملفات التنسيق -->
+  <title>تعرف على الحيوانات</title>
   <link rel="stylesheet" href="/css/colors.css" />
   <link rel="stylesheet" href="/css/fonts.css" />
   <link rel="stylesheet" href="/css/shared-utilities.css" />
-  <link rel="stylesheet" href="/css/animals.css" />
+  <link rel="stylesheet" href="/css/forms.css" />
+  <style>
+    .game-box {
+      max-width: 400px;
+      margin: 2rem auto;
+      text-align: center;
+      font-family: 'Cairo', sans-serif;
+    }
+    .game-box img {
+      width: 100%;
+      max-height: 250px;
+      object-fit: contain;
+      border: 2px solid #0288d1;
+      border-radius: 1rem;
+      margin-bottom: 1rem;
+    }
+    .game-box button {
+      margin: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #0288d1;
+      color: white;
+      cursor: pointer;
+    }
+    .game-box button:hover {
+      background-color: #0277bd;
+    }
+  </style>
 </head>
-
 <body>
-  <div class="top-navbar">
-    <div>
-      <span data-i18n="Language">اللغة</span>:
-      <select id="langSwitcher">
-        <option value="ar">عربي</option>
-        <option value="en">English</option>
-        <option value="he">עברית</option>
-      </select>
+  <main class="main-content">
+    <h1 style="text-align: center;">🐾 تعرف على الحيوانات</h1>
+    <div class="game-box">
+      <img id="image" src="" alt="animal" />
+      <h2 id="word">---</h2>
+      <button id="playBtn">🔊 استمع</button>
+      <button id="nextBtn">التالي ➡️</button>
     </div>
-    <div>
-      <span data-i18n="Points">النقاط</span>: <span id="points">0</span>
-      •
-      <span data-i18n="Level">المستوى</span>: <span id="level">مبتدئ</span>
-    </div>
-    <button class="btn" onclick="history.back()">← <span data-i18n="Back">عودة</span></button>
-  </div>
+  </main>
 
-  <div class="page-grid">
-    <aside class="sidebar shadow card">
-      <h3>🐾 <span data-i18n="Play with Animals">اللعب مع الحيوانات</span></h3>
-      <ul>
-        <li><button class="btn" data-tab="names" data-i18n="Names">تعرّف على الأسماء</button></li>
-        <li><button class="btn" data-tab="sounds" data-i18n="Sounds">تعرّف على الأصوات</button></li>
-        <li><button class="btn" data-tab="family" data-i18n="Family">أسماء الأبناء والزوجات</button></li>
-        <li><button class="btn" data-tab="classify" data-i18n="Classify">صنّف الكائنات</button></li>
-      </ul>
-    </aside>
-
-    <main class="main-content">
-      <section class="interactive-section shadow card">
-        <div class="tabs">
-          <button class="active" data-tab="names" data-i18n="Names">تعرّف على الأسماء</button>
-          <button data-tab="sounds" data-i18n="Sounds">تعرّف على الأصوات</button>
-          <button data-tab="family" data-i18n="Family">أسماء الأبناء والزوجات</button>
-          <button data-tab="classify" data-i18n="Classify">صنّف الكائنات</button>
-        </div>
-        <div class="tab-content"></div>
-      </section>
-
-      <section class="animal-card shadow card"></section>
-    </main>
-  </div>
+  <script type="module">
+    import { startGame } from '/src/js/game.js';
+    startGame("animals");
+  </script>
 </body>
 </html>

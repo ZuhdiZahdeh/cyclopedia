@@ -21,6 +21,8 @@ export default defineConfig({
         time: resolve(__dirname, 'html/time.html'),
              // صفحات إضافية عند الحاجة:
         'users/my-report': resolve(__dirname, 'users/my-report.html'),
+		'users/login': resolve(__dirname, 'users/login.html'),
+        'users/register': resolve(__dirname, 'users/register.html'),
         'users/profile': resolve(__dirname, 'users/profile.html')
       }
     },
