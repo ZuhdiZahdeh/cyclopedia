@@ -5,83 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>الموسوعة التفاعلية للأطفال</title>
 
-  <!-- ملفات التنسيق الموحدة -->
   <link rel="stylesheet" href="/css/colors.css" />
   <link rel="stylesheet" href="/css/fonts.css" />
   <link rel="stylesheet" href="/css/shared-utilities.css" />
   <link rel="stylesheet" href="/css/home.css" />
   <link rel="stylesheet" href="/css/forms.css" />
-</head>
+  <link rel="stylesheet" href="/css/animals.css" /> 
+  <link rel="stylesheet" href="/css/style.css" /> </head>
 
 <body>
-  <!-- ✅ الشريط العلوي -->
   <header class="top-navbar shadow">
-    <div class="left-section">
-      <select id="langSwitcher" style="color:#222; background-color:#fff;">
-        <option value="ar">عربي</option>
-        <option value="en">English</option>
-        <option value="he">עברית</option>
-      </select>
-    </div>
     <nav class="top-nav-links">
-      <a href="index.html" data-i18n="Home">🏠 الرئيسية</a>
-      <a href="#topics" data-i18n="Topics">📚 المواضيع</a>
-      <a href="#games" data-i18n="Games">🎮 الألعاب</a>
-      <a href="about.html" data-i18n="About">ℹ️ من نحن</a>
+      <a href="index.html">🏠 الرئيسية</a>
+      <a href="#" onclick="loadAnimalsPage()">📚 الحيوانات</a> <a href="#games">🎮 الألعاب</a>
     </nav>
   </header>
 
-  <!-- ✅ تخطيط الصفحة -->
   <div class="page-layout">
-    <!-- ✅ القائمة الجانبية -->
     <aside class="sidebar shadow">
-      <h3 data-i18n="Account">👤 حسابك</h3>
+      <h3>👤 حسابك</h3>
       <ul>
-        <li><a href="#" onclick="loadLogin()" data-i18n="Login">تسجيل الدخول</a></li>
-        <li><a href="#" onclick="loadRegister()" data-i18n="Register">تسجيل جديد</a></li>
-        <li><a href="#" onclick="loadProfile()" data-i18n="Profile">الملف الشخصي</a></li>
-        <li><a href="users/my-report.html" data-i18n="Points">سجل النقاط</a></li>
-        <li><a href="users/my-report.html" data-i18n="Activity">سجل الأنشطة</a></li>
+        <li><a href="#" onclick="loadLogin()">تسجيل الدخول</a></li>
+        <li><a href="#" onclick="loadRegister()">تسجيل جديد</a></li>
+        <li><a href="#" onclick="loadProfile()">الملف الشخصي</a></li>
+        <li><a href="users/my-report.html">سجل النقاط</a></li>
       </ul>
     </aside>
 
-    <!-- ✅ المحتوى الرئيسي -->
     <main class="main-content">
-      <section id="topics" class="topics-section">
-        <h2 data-i18n="ChooseTopic">اختر موضوعك</h2>
-        <div class="topics-grid">
-          <a href="html/animals.html" class="topic-icon">🐾 <span data-i18n="Animals">الحيوانات</span></a>
-          <a href="html/birds.html" class="topic-icon">🕊️ <span data-i18n="Birds">الطيور</span></a>
-          <a href="html/fruits.html" class="topic-icon">🍎 <span data-i18n="Fruits">الفواكه</span></a>
-          <a href="html/vegetables.html" class="topic-icon">🥕 <span data-i18n="Vegetables">الخضروات</span></a>
-          <a href="html/plants.html" class="topic-icon">🌿 <span data-i18n="Plants">النباتات</span></a>
-          <a href="html/human-body.html" class="topic-icon">🧠 <span data-i18n="Body">جسم الإنسان</span></a>
-          <a href="html/fish.html" class="topic-icon">🐟 <span data-i18n="Fish">الأسماك</span></a>
-          <a href="html/colors-page.html" class="topic-icon">🎨 <span data-i18n="Colors">الألوان</span></a>
-          <a href="html/numbers.html" class="topic-icon">🔢 <span data-i18n="Numbers">الأرقام</span></a>
-          <a href="html/time.html" class="topic-icon">⏰ <span data-i18n="Time">الوقت</span></a>
-          <a href="html/transport.html" class="topic-icon">🚗 <span data-i18n="Transport">وسائل النقل</span></a>
-        </div>
-      </section>
-    </main>
+      <h2>مرحبًا بك في الموسوعة!</h2>
+      </main>
   </div>
 
-  <!-- ✅ التذييل -->
-  <footer class="footer shadow">
-    <p>© 2025 جميع الحقوق محفوظة لموسوعة الأطفال</p>
-    <button class="btn" onclick="location.href='sitemap.html'" data-i18n="Sitemap">خارطة الموقع</button>
-  </footer>
-
-  <!-- ✅ سكربتات -->
-  <script type="module" src="/js/lang-handler.js"></script>
   <script type="module">
-    import { showLoginForm } from '/src/js/login.js';
-    import { showRegisterForm } from '/src/js/register.js';
-    import { showProfileForm } from '/src/js/profile.js';
+    // مسارات الاستيراد لملفات النماذج في public/users/
+    import loginForm from '/users/login-form.html?raw';
+    import registerForm from '/users/register-form.html?raw';
+    import { showProfileForm } from '/js/profile.js'; // المسار لـ profile.js في public/js/
+    import { loadAnimalsGameContent } from '/js/animals-game.js'; // المسار لـ animals-game.js في public/js/
 
-    window.loadLogin = showLoginForm;
-    window.loadRegister = showRegisterForm;
+    window.loadLogin = () => {
+      document.querySelector("main.main-content").innerHTML = loginForm;
+    };
+
+    window.loadRegister = () => {
+      document.querySelector("main.main-content").innerHTML = registerForm;
+    };
+
     window.loadProfile = showProfileForm;
+
+    // دالة جديدة لتحميل محتوى الحيوانات وبدء اللعبة
+    window.loadAnimalsPage = async () => {
+      await loadAnimalsGameContent(); // استدعاء الدالة التي تحقن المحتوى وتبدأ اللعبة
+    };
   </script>
 </body>
 </html>

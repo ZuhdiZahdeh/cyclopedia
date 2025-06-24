@@ -127,17 +127,91 @@
   margin: 1rem 0;
 }
 
+/* التنسيقات الجديدة/المحدثة لـ game-box */
+.game-box {
+  max-width: 400px; /* لتحديد عرض الصندوق */
+  margin: 2rem auto; /* لتوسيطه */
+  text-align: center;
+  font-family: 'Cairo', sans-serif; /* تأكد من استيراد خط Cairo في fonts.css */
+  border: 1px solid var(--color-accent);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* ظل خفيف */
+  background-color: white; /* خلفية بيضاء للصندوق */
+}
+
+.game-box img#animal-image { /* استخدام ID المحدد للصورة */
+  width: 100%;
+  max-height: 250px;
+  object-fit: contain;
+  border: 2px solid var(--color-primary);
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+}
+
+.game-box h2#animal-word { /* استخدام ID المحدد للكلمة */
+  color: var(--color-text);
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.game-box button {
+  margin: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--color-accent); /* لون الأزرار */
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.game-box button:hover {
+  background-color: #1976d2; /* ظل أغمق للـ accent color عند التمرير */
+}
+
+/* تنسيقات اختيار الصوت */
+.voice-selection {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.voice-selection label {
+  color: var(--color-text);
+  font-weight: bold;
+}
+
+.voice-selection select {
+  padding: 0.5rem;
+  border-radius: 5px;
+  border: 1px solid var(--color-primary);
+  background-color: #f9f9f9;
+  color: var(--color-text);
+  font-size: 1rem;
+}
+
+/* إذا أضفت animal-details */
 .animal-info-list {
   list-style: none;
   padding: 0;
-  text-align: right;
+  margin-top: 1.5rem;
+  text-align: right; /* للعربية */
   line-height: 1.8;
+  color: var(--color-text-medium);
+  background-color: var(--color-background);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .animal-info-list li strong {
   color: var(--color-primary);
+  margin-inline-end: 0.5rem;
 }
-
 /* استجابة الهواتف */
 @media (max-width: 768px) {
   .page-grid {
