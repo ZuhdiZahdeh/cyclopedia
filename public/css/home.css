@@ -1,18 +1,25 @@
-/* cyclopedia-app/public/css/home.css */
+/* public/css/home.css */
+
 body {
   margin: 0;
   font-family: 'Cairo', sans-serif;
-  background-color: #f0f8ff;
+  background-color: #f0f8ff; /* لون الخلفية العام */
+  display: flex;        /* اجعل الـ body حاوية flex */
+  flex-direction: column; /* لترتيب العناصر داخل الـ body عموديًا (Header ثم Page Layout) */
+  min-height: 100vh;    /* اجعل الـ body يمتد على ارتفاع الشاشة بالكامل */
 }
 
 .top-navbar {
-  background-color: #0288d1;
+  background-color: #0288d1; /* لون الخلفية للشريط العلوي */
   color: black;
   display: flex;
   justify-content: space-between;
   padding: 1rem;
   flex-wrap: wrap;
   align-items: center;
+  /* إزالة أي position: relative/sticky هنا إذا كان موجودًا ويتعارض */
+  /* لضمان أنه يأخذ كامل العرض: */
+  width: 100%;
 }
 
 .top-navbar select,
@@ -23,14 +30,25 @@ body {
   font-weight: bold;
 }
 
+/* Container for sidebar and main content */
 .page-layout {
-  display: flex;
+  display: flex; /* استخدم Flexbox لتقسيم الشريط الجانبي والمحتوى الرئيسي */
+  flex: 1;       /* اجعل الـ page-layout يمتد ليأخذ كل المساحة المتبقية عموديًا */
+  max-width: 1200px; /* يمكن تحديد أقصى عرض لهيكل الصفحة */
+  margin: 0 auto;  /* لتوسيط الـ page-layout أفقياً */
+  width: 100%;     /* لضمان أخذ كامل العرض المتاح ضمن max-width */
+  padding: 1rem;   /* للتباعد عن الحواف */
+  gap: 1rem;       /* مسافة بين الشريط الجانبي والمحتوى الرئيسي */
 }
 
+/* الشريط الجانبي */
 .sidebar {
-  width: 220px;
+  width: 220px; /* عرض ثابت للشريط الجانبي */
   padding: 1rem;
-  background-color: #e1f5fe;
+  background-color: #e1f5fe; /* لون الشريط الجانبي */
+  border-radius: 8px; /* حواف مستديرة */
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05); /* ظل خفيف */
+  flex-shrink: 0; /* لمنع الشريط الجانبي من التقلص */
 }
 
 .sidebar ul {
@@ -42,9 +60,13 @@ body {
   margin: 0.5rem 0;
 }
 
+/* المحتوى الرئيسي */
 .main-content {
-  flex: 1;
+  flex: 1; /* اجعل المحتوى الرئيسي يأخذ كل المساحة المتبقية في Flexbox */
   padding: 1rem;
+  background-color: white; /* لون خلفية المحتوى الرئيسي */
+  border-radius: 8px; /* حواف مستديرة */
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05); /* ظل خفيف */
 }
 
 .topics-grid {
@@ -78,5 +100,15 @@ body {
   margin-top: 2rem;
 }
 
+/* Media Queries for responsiveness */
+@media (max-width: 768px) {
+  .page-layout {
+    flex-direction: column; /* في الشاشات الصغيرة، ضع الشريط الجانبي فوق المحتوى الرئيسي */
+    align-items: center; /* توسيط العناصر */
+  }
 
-
+  .sidebar {
+    width: 100%; /* اجعل الشريط الجانبي يأخذ كامل العرض */
+    margin-bottom: 1rem; /* مسافة أسفل الشريط الجانبي */
+  }
+}

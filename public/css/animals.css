@@ -1,146 +1,24 @@
-/* animals.css */
+/* public/css/animals.css */
 
-/* شبكة الصفحة الكاملة */
-.page-grid {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 1rem;
-  padding: 1rem;
-  max-width: 1200px;
-  margin: auto;
-}
+/* إزالة هذه القواعد إذا كانت موجودة، لأنها أصبحت في home.css */
+/* .page-grid { ... } */
+/* .top-navbar { ... } */
+/* .sidebar { ... } */
 
-/* الشريط العلوي */
-.top-navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: var(--color-primary);
-  color: white;
-  padding: 1rem;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.top-navbar select,
-.top-navbar button {
-  font-family: inherit;
-  font-size: 1rem;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  border: none;
-  margin-inline-start: 0.5rem;
-}
-
-/* الشريط الجانبي */
-.sidebar {
-  background-color: var(--color-light);
-  padding: 1rem;
-  border-radius: 12px;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
-}
-
-.user-info {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  margin-bottom: 0.5rem;
-}
-
-.category-topics ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.category-topics li {
-  background-color: var(--color-secondary-light);
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  text-align: center;
-  transition: background-color 0.3s ease;
-}
-
-.category-topics li:hover {
-  background-color: var(--color-secondary);
-  color: white;
-}
-
-/* المحتوى الرئيسي */
-.main-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-/* تبويبات التفاعل */
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.tabs button {
-  padding: 0.5rem 1rem;
-  background-color: var(--color-secondary);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.tabs button:hover {
-  background-color: var(--color-secondary-dark);
-}
-
-.tab-content {
-  margin-top: 1rem;
-  min-height: 150px;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  padding: 1rem;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.05);
-}
-
-/* بطاقة الحيوان */
-.animal-card {
-  background-color: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  text-align: center;
-}
-
-.animal-card img.animal-image {
-  max-width: 200px;
-  height: auto;
-  margin: 1rem 0;
-}
-
-/* التنسيقات الجديدة/المحدثة لـ game-box */
+/* التنسيقات الخاصة بـ game-box */
 .game-box {
-  max-width: 400px; /* لتحديد عرض الصندوق */
-  margin: 2rem auto; /* لتوسيطه */
+  max-width: 400px;
+  margin: 2rem auto;
   text-align: center;
-  font-family: 'Cairo', sans-serif; /* تأكد من استيراد خط Cairo في fonts.css */
+  font-family: 'Cairo', sans-serif;
   border: 1px solid var(--color-accent);
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* ظل خفيف */
-  background-color: white; /* خلفية بيضاء للصندوق */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: white;
 }
 
-.game-box img#animal-image { /* استخدام ID المحدد للصورة */
+img#animal-image { /* استخدام ID المحدد للصورة */
   width: 100%;
   max-height: 250px;
   object-fit: contain;
@@ -149,7 +27,7 @@
   margin-bottom: 1rem;
 }
 
-.game-box h2#animal-word { /* استخدام ID المحدد للكلمة */
+h2#animal-word { /* استخدام ID المحدد للكلمة */
   color: var(--color-text);
   font-size: 2rem;
   margin-bottom: 1rem;
@@ -161,14 +39,14 @@
   font-size: 1rem;
   border: none;
   border-radius: 8px;
-  background-color: var(--color-accent); /* لون الأزرار */
+  background-color: var(--color-accent);
   color: white;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
 .game-box button:hover {
-  background-color: #1976d2; /* ظل أغمق للـ accent color عند التمرير */
+  background-color: #1976d2;
 }
 
 /* تنسيقات اختيار الصوت */
@@ -194,39 +72,10 @@
   font-size: 1rem;
 }
 
-/* إذا أضفت animal-details */
-.animal-info-list {
-  list-style: none;
-  padding: 0;
-  margin-top: 1.5rem;
-  text-align: right; /* للعربية */
-  line-height: 1.8;
-  color: var(--color-text-medium);
-  background-color: var(--color-background);
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: var(--shadow-sm);
-}
+/* .animal-card */
+/* إذا كنت تخطط لنمط عرض البطاقات، أضف تنسيقاتها هنا */
 
-.animal-info-list li strong {
-  color: var(--color-primary);
-  margin-inline-end: 0.5rem;
-}
-/* استجابة الهواتف */
+/* استجابة الهواتف (انقل أي قواعد Media Query عامة تتعلق بالهيكل إلى home.css) */
 @media (max-width: 768px) {
-  .page-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar {
-    order: 2;
-  }
-
-  .main-content {
-    order: 1;
-  }
-
-  .tabs {
-    justify-content: center;
-  }
+  /* أي تنسيقات خاصة بـ game-box أو عناصرها الداخلية فقط للشاشات الصغيرة */
 }
