@@ -10,14 +10,16 @@
   <link rel="stylesheet" href="/css/shared-utilities.css" />
   <link rel="stylesheet" href="/css/home.css" />
   <link rel="stylesheet" href="/css/forms.css" />
-  <link rel="stylesheet" href="/css/animals.css" /> 
-  <link rel="stylesheet" href="/css/style.css" /> </head>
+  <link rel="stylesheet" href="/css/animals.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
 
 <body>
   <header class="top-navbar shadow">
     <nav class="top-nav-links">
       <a href="index.html">🏠 الرئيسية</a>
-      <a href="#" onclick="loadAnimalsPage()">📚 الحيوانات</a> <a href="#games">🎮 الألعاب</a>
+      <a href="#" onclick="loadAnimalsPage()">📚 الحيوانات</a>
+      <a href="#games">🎮 الألعاب</a>
     </nav>
   </header>
 
@@ -34,15 +36,17 @@
 
     <main class="main-content">
       <h2>مرحبًا بك في الموسوعة!</h2>
-      </main>
+    </main>
   </div>
 
   <script type="module">
     // مسارات الاستيراد لملفات النماذج في public/users/
     import loginForm from '/users/login-form.html?raw';
     import registerForm from '/users/register-form.html?raw';
-	import { showProfileForm } from '/src/js/profile.js'; // المسار الصحيح لـ profile.js في src/js/
-    import { loadAnimalsGameContent } from '/js/animals-game.js'; // المسار لـ animals-game.js في public/js/
+    // تم تحديث المسار لـ profile.js ليشير إلى src/js/
+    import { showProfileForm } from '/src/js/profile.js';
+    // تم تحديث المسار لـ animals-game.js ليشير إلى src/js/
+    import { loadAnimalsGameContent } from '/src/js/animals-game.js';
 
     window.loadLogin = () => {
       document.querySelector("main.main-content").innerHTML = loginForm;
