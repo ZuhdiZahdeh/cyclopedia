@@ -1,16 +1,18 @@
 {
 	"type": "module",
-  "name": "cyclopedia-app",
-  "version": "0.0.0",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build && node copy-html.js",
-    "serve": "vite preview"
-  },
-  "dependencies": {
-    "firebase": "^9.0.0"
-  },
-  "devDependencies": {
-    "vite": "^4.0.0"
-  }
+	"name": "cyclopedia-app",
+	"version": "0.0.0",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build && node copy-html.js",
+		"serve": "vite preview"
+	},
+	"dependencies": {
+		"dotenv": "^16.5.0",
+		"firebase": "^9.0.0",
+		"node-fetch": "^3.3.2"
+	},
+	"devDependencies": {
+		"vite": "^4.0.0"
+	}
 }
