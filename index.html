@@ -15,31 +15,30 @@
 </head>
 
 <body>
-  <header class="top-navbar shadow">
-    <nav class="top-nav-links">
-      <a href="index.html">🏠 الرئيسية</a>
-      <a href="#" onclick="loadAnimalsPage()">📚 الحيوانات</a>
-      <a href="#games">🎮 الألعاب</a>
-    </nav>
-  </header>
+  <div id="app"> <header class="top-navbar shadow">
+      <nav class="top-nav-links">
+        <a href="index.html">🏠 الرئيسية</a>
+        <a href="#" onclick="loadAnimalsPage()">📚 الحيوانات</a>
+        <a href="#games">🎮 الألعاب</a>
+      </nav>
+    </header>
 
-  <div class="page-layout">
-    <aside class="sidebar shadow">
-      <h3>👤 حسابك</h3>
-      <ul>
-        <li><a href="#" onclick="loadLogin()">تسجيل الدخول</a></li>
-        <li><a href="#" onclick="loadRegister()">تسجيل جديد</a></li>
-        <li><a href="#" onclick="loadProfile()">الملف الشخصي</a></li>
-        <li><a href="users/my-report.html">سجل النقاط</a></li>
-      </ul>
-    </aside>
+    <div class="page-layout">
+      <aside class="sidebar shadow">
+        <h3>👤 حسابك</h3>
+        <ul>
+          <li><a href="#" onclick="loadLogin()">تسجيل الدخول</a></li>
+          <li><a href="#" onclick="loadRegister()">تسجيل جديد</a></li>
+          <li><a href="#" onclick="loadProfile()">الملف الشخصي</a></li>
+          <li><a href="users/my-report.html">سجل النقاط</a></li>
+        </ul>
+      </aside>
 
-    <main class="main-content">
-      <h2>مرحبًا بك في الموسوعة!</h2>
-    </main>
-  </div>
-
-  <script type="module">
+      <main class="main-content">
+        <h2>مرحبًا بك في الموسوعة!</h2>
+      </main>
+    </div>
+  </div> <script type="module">
     // مسارات الاستيراد لملفات النماذج في public/users/
     import loginForm from '/users/login-form.html?raw';
     import registerForm from '/users/register-form.html?raw';

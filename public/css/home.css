@@ -1,23 +1,18 @@
 /* public/css/home.css */
 
-body {
-  margin: 0;
-  font-family: 'Cairo', sans-serif;
-  background-color: #f0f8ff; /* لون الخلفية العام */
-  display: flex;        /* اجعل الـ body حاوية flex */
-  flex-direction: column; /* لترتيب العناصر داخل الـ body عموديًا (Header ثم Page Layout) */
-  min-height: 100vh;    /* اجعل الـ body يمتد على ارتفاع الشاشة بالكامل */
-}
+/* تم نقل خصائص body إلى style.css (html, body) */
+/* body { ... } */
 
 .top-navbar {
-  background-color: #0288d1; /* لون الخلفية للشريط العلوي */
+  background-color: #0288d1;
   color: black;
   display: flex;
   justify-content: space-between;
   padding: 1rem;
   flex-wrap: wrap;
   align-items: center;
-  width: 100%; /* لضمان أنه يأخذ كامل العرض */
+  width: 100%;
+  /* تأكد من إزالة أي position: sticky; top: 0; هنا لتجنب التداخل إذا كانت #app تتحكم */
 }
 
 .top-navbar select,
@@ -28,26 +23,25 @@ body {
   font-weight: bold;
 }
 
-/* Container for sidebar and main content */
 .page-layout {
-  display: flex; /* استخدم Flexbox لتقسيم الشريط الجانبي والمحتوى الرئيسي */
-  flex: 1;       /* اجعل الـ page-layout يمتد ليأخذ كل المساحة المتبقية عموديًا */
-  max-width: 1200px; /* يمكن تحديد أقصى عرض لهيكل الصفحة */
-  margin: 0 auto;  /* لتوسيط الـ page-layout أفقياً */
-  width: 100%;     /* لضمان أخذ كامل العرض المتاح ضمن max-width */
-  padding: 1rem;   /* للتباعد عن الحواف */
-  gap: 1rem;       /* مسافة بين الشريط الجانبي والمحتوى الرئيسي */
+  display: flex; /* لتقسيم الشريط الجانبي والمحتوى الرئيسي */
+  flex: 1; /* مهم: اجعلها تأخذ المساحة المتبقية داخل #app (إذا كان #app flex-direction: column) */
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 1rem;
+  gap: 1rem;
 }
 
 /* الشريط الجانبي */
 .sidebar {
-  width: 220px; /* عرض ثابت للشريط الجانبي */
+  width: 220px;
   padding: 1rem;
-  background-color: #e1f5fe; /* لون الشريط الجانبي */
-  border-radius: 8px; /* حواف مستديرة */
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05); /* ظل خفيف */
-  flex-shrink: 0; /* لمنع الشريط الجانبي من التقلص */
-  min-height: calc(100vh - 120px); /* Adjust based on header/footer height */
+  background-color: #e1f5fe;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+  /* min-height: calc(100vh - 120px); */ /* قد لا تحتاجها بعد الآن مع flex: 1 على page-layout */
 }
 
 .sidebar ul {
@@ -61,13 +55,13 @@ body {
 
 /* المحتوى الرئيسي */
 .main-content {
-  flex: 1; /* اجعل المحتوى الرئيسي يأخذ كل المساحة المتبقية في Flexbox */
+  flex: 1; /* اجعل المحتوى الرئيسي يأخذ كل المساحة المتبقية في Flexbox داخل page-layout */
   padding: 1rem;
-  background-color: white; /* لون خلفية المحتوى الرئيسي */
-  border-radius: 8px; /* حواف مستديرة */
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05); /* ظل خفيف */
-  display: flex; /* إضافة display flex لـ main-content */
-  flex-direction: column; /* لترتيب المحتوى داخله عموديا */
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
 }
 
 .topics-grid {
@@ -98,19 +92,19 @@ body {
   color: white;
   text-align: center;
   padding: 1rem;
-  margin-top: 2rem;
+  margin-top: 2rem; /* قد تحتاج لتعديل هذا ليكون في ذيل الصفحة بشكل صحيح */
 }
 
 /* Media Queries for responsiveness */
 @media (max-width: 768px) {
   .page-layout {
-    flex-direction: column; /* في الشاشات الصغيرة، ضع الشريط الجانبي فوق المحتوى الرئيسي */
-    align-items: center; /* توسيط العناصر */
+    flex-direction: column;
+    align-items: center;
   }
 
   .sidebar {
-    width: 100%; /* اجعل الشريط الجانبي يأخذ كامل العرض */
-    margin-bottom: 1rem; /* مسافة أسفل الشريط الجانبي */
-    min-height: auto; /* Remove min-height for mobile */
+    width: 100%;
+    margin-bottom: 1rem;
+    min-height: auto;
   }
 }

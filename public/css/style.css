@@ -1,5 +1,10 @@
 /* public/css/style.css */
-:root {
+html, body { /* *** إضافة: دمج html و body *** */
+  margin: 0;
+  padding: 0;
+  width: 100%; /* تأكد من أنها تأخذ 100% من العرض */
+  height: 100%; /* تأكد من أنها تأخذ 100% من الارتفاع */
+  overflow-x: hidden; /* لمنع شريط التمرير الأفقي غير المرغوب فيه */
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -23,13 +28,7 @@ a:hover {
   color: #535bf2;
 }
 
-/* قم بإزالة أي خصائص تخطيط من هنا تمامًا */
-body {
-  margin: 0;
-  /* min-width: 320px; */ /* يمكن الاحتفاظ بها أو إزالتها حسب الحاجة */
-  /* min-height: 100vh; */ /* هذا أيضًا يمكن إزالته، home.css سيتعامل معه */
-  /* تأكد من عدم وجود display: flex; place-items: center; هنا */
-}
+/* قم بإزالة قاعدة body المنفصلة إذا كانت موجودة */
 
 h1 {
   font-size: 3.2em;
@@ -37,10 +36,14 @@ h1 {
 }
 
 #app {
-  max-width: 1280px; /* هذا غالبا سيكون تأثيره على العنصر الذي يحمل id="app" */
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  /* هنا يتم تحديد الخصائص التي ستحكم في تخطيط التطبيق بالكامل */
+  display: flex; /* اجعل #app حاوية flex */
+  flex-direction: column; /* لترتيب العناصر داخل #app عموديًا */
+  min-height: 100vh; /* اجعل #app يمتد على ارتفاع الشاشة بالكامل */
+  max-width: 100%; /* اجعل #app يأخذ كامل العرض المتاح */
+  margin: 0 auto; /* توسيط #app إذا كان لديه max-width أقل من 100% */
+  padding: 0; /* أزل padding إذا كنت تريد أن يمتد المحتوى إلى الحواف */
+  text-align: center; /* يمكن إزالته إذا لم يكن مطلوبًا بشكل عام */
 }
 
 .logo {
@@ -53,7 +56,7 @@ h1 {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
 .logo.vanilla:hover {
-  filter: drop-shadow(0 0 2em #f7df1eaa);
+  filter: drop_shadow(0 0 2em #f7df1eaa);
 }
 
 .card {
@@ -84,7 +87,7 @@ button:focus-visible {
 }
 
 @media (prefers-color-scheme: light) {
-  :root {
+  html, body { /* *** إضافة: تطبيق تغييرات الخلفية على html, body *** */
     color: #213547;
     background-color: #ffffff;
   }
