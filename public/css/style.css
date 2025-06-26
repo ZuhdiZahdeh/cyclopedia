@@ -3,8 +3,8 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
-  overflow-x: hidden;
+  height: 100%; /* *** مهم: تأكد أن html و body يأخذان كامل ارتفاع الشاشة *** */
+  overflow-x: hidden; /* لمنع شريط التمرير الأفقي غير المرغوب فيه */
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -19,46 +19,14 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff; /* يمكن تغيير هذا اللون هنا أو في colors.css */
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-/* قم بإزالة قاعدة body المنفصلة إذا كانت موجودة */
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+/* ... بقية الـ CSS ... */
 
 #app {
-  /* *** تبسيط قواعد #app للسماح لـ home.css بالتحكم *** */
-  width: 100%;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  /* أزل: max-width, margin, padding, text-align من هنا إذا كانت موجودة */
-  /* max-width: 1280px; */
-  /* margin: 0 auto; */
-  /* padding: 2rem; */
-  /* text-align: center; */
+  min-height: 100vh; /* *** مهم: اجعل #app يمتد على كامل ارتفاع الشاشة *** */
+  width: 100%; /* تأكد أن #app يأخذ كامل عرض الـ body */
+  /* أزل: max-width, margin, padding, text-align إذا كانت موجودة هنا */
 }
 
 /* ... بقية style.css ... */
-
-@media (prefers-color-scheme: light) {
-  html, body {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}

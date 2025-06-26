@@ -17,11 +17,14 @@
   justify-content: center; /* توسيط العناصر أفقيا */
   align-items: flex-start; /* محاذاة العناصر للأعلى داخل البطاقة */
   gap: 1.5rem; /* مسافة بين العناصر داخل البطاقة */
+  /* *** مهم: تحديد ارتفاع أقصى للبطاقة إذا أردت أن تظهر في شاشة واحدة *** */
+  max-height: calc(100vh - 200px); /* ارتفاع أقصى: (ارتفاع الشاشة - (ارتفاع الهيدر + هامش)) */
+  overflow-y: auto; /* *** إضافة شريط تمرير عمودي للبطاقة إذا تجاوز المحتوى الارتفاع الأقصى *** */
 }
 
 /* تنسيقات الصورة */
 img#animal-image {
-  max-width: 40%; /* *** الصورة تأخذ 40% من عرض البطاقة (يمكن التعديل) *** */
+  max-width: 40%; /* الصورة تأخذ 40% من عرض البطاقة (يمكن التعديل) */
   height: auto;
   max-height: 250px;
   object-fit: contain;
@@ -34,7 +37,7 @@ img#animal-image {
 /* تنسيقات كلمة الحيوان */
 h2#animal-word {
   color: var(--color-text);
-  font-size: 2.5rem; /* *** تكبير حجم الخط للكلمة *** */
+  font-size: 2.5rem; /* تكبير حجم الخط للكلمة */
   margin-bottom: 1rem;
   flex-basis: 100%; /* اجعل الكلمة تأخذ سطرًا كاملاً */
   text-align: center;
@@ -42,18 +45,18 @@ h2#animal-word {
 
 /* تنسيقات قسم تفاصيل الحيوان الجديد */
 .animal-details-section {
-  width: 55%; /* *** القسم يأخذ 55% من عرض البطاقة (البقية للصورة) *** */
+  width: 55%; /* القسم يأخذ 55% من عرض البطاقة (البقية للصورة) */
   text-align: right;
-  margin-top: 0; /* أزل أي margin-top زائد */
+  margin-top: 0;
   padding-top: 0;
-  border-top: none; /* أزل الخط الفاصل إذا كان يظهر بشكل غريب */
-  display: flex; /* لجعل التفاصيل تترتب عموديا بشكل جيد */
+  border-top: none;
+  display: flex;
   flex-direction: column;
 }
 
 .animal-details-section h3 {
   color: var(--color-primary);
-  font-size: 1.5rem; /* *** تكبير الخط *** */
+  font-size: 1.5rem;
   margin-bottom: 0.8rem;
 }
 
@@ -65,7 +68,7 @@ h2#animal-word {
 
 .animal-details-section li {
   margin-bottom: 0.5rem;
-  font-size: 1.15rem; /* *** تكبير الخط *** */
+  font-size: 1.15rem;
   color: var(--color-text);
 }
 
@@ -85,7 +88,7 @@ h2#animal-word {
 
 .animal-description-box h4 {
   color: var(--color-primary);
-  font-size: 1.25rem; /* *** تكبير الخط *** */
+  font-size: 1.25rem;
   margin-bottom: 0.5rem;
   border-bottom: 1px solid var(--color-primary);
   padding-bottom: 0.3rem;
@@ -105,24 +108,27 @@ h2#animal-word {
 /* مجموعة الأزرار */
 .game-box #play-sound-btn,
 .game-box #next-animal-btn {
-    font-size: 1.2rem; /* *** تكبير حجم الخط للأزرار *** */
+    font-size: 1.2rem;
     padding: 0.8rem 1.8rem;
 }
 
 /* media query لضمان التخطيط العمودي على الشاشات الصغيرة */
 @media (max-width: 768px) {
   .game-box {
-    flex-direction: column; /* العودة إلى التخطيط العمودي على الجوال */
+    flex-direction: column;
     align-items: center;
+    max-width: 90%; /* تعديل العرض الأقصى للجوال */
+    max-height: none; /* إزالة الحد الأقصى للارتفاع على الجوال للسماح بالتمرير */
+    overflow-y: visible; /* إزالة شريط التمرير على الجوال */
   }
   img#animal-image {
-    max-width: 80%; /* الصورة تأخذ عرض أكبر على الجوال */
+    max-width: 80%;
   }
   .animal-details-section {
-    width: 100%; /* تأخذ عرض كامل على الجوال */
-    text-align: center; /* توسيط النص على الجوال */
+    width: 100%;
+    text-align: center;
   }
   .animal-description-box {
-    text-align: right; /* تبقى محاذاة لليمين للوصف */
+    text-align: right;
   }
 }

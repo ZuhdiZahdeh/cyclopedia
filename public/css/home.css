@@ -1,58 +1,63 @@
 /* public/css/home.css */
 
 body {
-  margin: 0;
+  margin: 0; /* تأكد من عدم وجود هامش افتراضي على body */
   font-family: 'Cairo', sans-serif;
   background-color: #f0f8ff; /* لون الخلفية العام */
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  /* display: flex; flex-direction: column; min-height: 100vh; هذه الخصائص يجب أن تكون على #app الآن */
 }
 
 .top-navbar {
-  background-color: #0288d1; /* لون الخلفية للشريط العلوي */
-  color: #FFFFFF; /* *** تغيير لون الخط إلى أبيض ليكون واضحًا *** */
+  background-color: #0288d1;
+  color: #FFFFFF;
   display: flex;
   justify-content: space-between;
   padding: 1rem;
   flex-wrap: wrap;
   align-items: center;
   width: 100%;
-  /* لضمان أنه يثبت في الأعلى: */
-  position: sticky; /* *** إضافة: لجعل الشريط العلوي يثبت في الأعلى *** */
-  top: 0; /* *** إضافة: يثبت عند أعلى 0 بكسل *** */
-  z-index: 1000; /* *** إضافة: لضمان ظهوره فوق العناصر الأخرى *** */
+  position: fixed; /* *** تغيير إلى fixed ليثبت في الأعلى تمامًا *** */
+  top: 0;
+  left: 0; /* *** إضافة: لضمان أنه يبدأ من أقصى اليسار *** */
+  z-index: 1000;
+  box-sizing: border-box; /* لضمان أن العرض 100% يشمل الـ padding */
 }
 
 .top-navbar select,
 .top-navbar a {
   margin: 0 0.5rem;
-  color: #FFFFFF; /* *** تغيير لون الروابط إلى أبيض *** */
+  color: #FFFFFF;
   text-decoration: none;
   font-weight: bold;
-  font-size: 1.2rem; /* *** تكبير حجم الخط قليلاً *** */
+  font-size: 1.2rem;
 }
 
 /* Container for sidebar and main content */
 .page-layout {
-  display: flex; /* استخدم Flexbox لتقسيم الشريط الجانبي والمحتوى الرئيسي */
-  flex: 1; /* مهم: اجعل الـ page-layout يمتد ليأخذ كل المساحة المتبقية عموديًا داخل #app */
-  max-width: 1200px; /* يمكن تحديد أقصى عرض لهيكل الصفحة */
-  margin: 0 auto;  /* لتوسيط الـ page-layout أفقياً */
-  width: 100%;     /* لضمان أخذ كامل العرض المتاح ضمن max-width */
-  padding: 1rem;   /* للتباعد عن الحواف */
-  gap: 1rem;       /* مسافة بين الشريط الجانبي والمحتوى الرئيسي */
+  display: flex;
+  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 1rem;
+  gap: 1rem;
+  /* إضافة padding-top لتعويض الشريط العلوي الثابت */
+  padding-top: 70px; /* *** مهم: اضبط هذه القيمة لتكون أكبر قليلاً من ارتفاع top-navbar *** */
+  box-sizing: border-box; /* لضمان أن الـ padding لا يزيد من الحجم الإجمالي */
 }
 
 /* الشريط الجانبي */
 .sidebar {
-  width: 220px; /* عرض ثابت للشريط الجانبي */
+  width: 220px;
   padding: 1rem;
-  background-color: #e1f5fe; /* لون الشريط الجانبي */
-  border-radius: 8px; /* حواف مستديرة */
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05); /* ظل خفيف */
-  flex-shrink: 0; /* لمنع الشريط الجانبي من التقلص */
-  min-height: calc(100vh - 120px); /* Adjust based on header/footer height */
+  background-color: #e1f5fe;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+  height: calc(100vh - 80px); /* *** لجعله يمتد على كامل ارتفاع الشاشة المتبقي *** */
+  position: sticky; /* *** اجعله sticky ليثبت مع التمرير داخل الـ page-layout *** */
+  top: 70px; /* *** يثبت تحت الشريط العلوي *** */
+  overflow-y: auto; /* *** لإضافة شريط تمرير إذا كان المحتوى طويلاً *** */
 }
 
 .sidebar ul {
@@ -66,56 +71,39 @@ body {
 
 /* المحتوى الرئيسي */
 .main-content {
-  flex: 1; /* اجعل المحتوى الرئيسي يأخذ كل المساحة المتبقية في Flexbox */
+  flex: 1;
   padding: 1rem;
-  background-color: white; /* لون خلفية المحتوى الرئيسي */
-  border-radius: 8px; /* حواف مستديرة */
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05); /* ظل خفيف */
-  display: flex; /* إضافة display flex لـ main-content */
-  flex-direction: column; /* لترتيب المحتوى داخله عموديا */
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px - 2rem); /* *** لجعله يمتد على كامل ارتفاع الشاشة المتبقي *** */
 }
 
-.topics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1rem;
-}
-
-.topic-icon {
-  background-color: #fff;
-  border: 2px solid #0288d1;
-  border-radius: 12px;
-  padding: 1rem;
-  font-size: 2rem;
-  text-align: center;
-  color: #0288d1;
-  text-decoration: none;
-  transition: transform 0.2s ease;
-}
-
-.topic-icon:hover {
-  transform: scale(1.1);
-  background-color: #b3e5fc;
-}
-
-.footer {
-  background-color: #0288d1;
-  color: white;
-  text-align: center;
-  padding: 1rem;
-  margin-top: auto; /* *** إضافة: لدفع الـ footer إلى الأسفل إذا كان موجودًا *** */
-}
+.topics-grid { /* ... */ }
+.topic-icon { /* ... */ }
+.footer { /* ... */ }
 
 /* Media Queries for responsiveness */
 @media (max-width: 768px) {
   .page-layout {
     flex-direction: column;
     align-items: center;
+    padding-top: 60px; /* Adjust for smaller header on mobile */
   }
 
   .sidebar {
     width: 100%;
     margin-bottom: 1rem;
     min-height: auto;
+    position: static; /* Remove sticky on mobile */
+    height: auto;
+  }
+  .top-navbar {
+    padding: 0.8rem; /* Smaller padding on mobile */
+  }
+  .top-navbar a {
+    font-size: 1rem; /* Smaller font on mobile */
   }
 }
