@@ -1,7 +1,5 @@
 /* public/css/animals.css */
 
-/* ... (Existing styles for .game-box, img#animal-image, h2#animal-word, etc.) ... */
-
 .game-box {
   max-width: 400px;
   margin: 2rem auto;
@@ -17,7 +15,41 @@
   align-items: center; /* Center items horizontally */
 }
 
-/* ... (Other existing styles) ... */
+/* تنسيقات الصورة */
+img#animal-image {
+  max-width: 100%; /* الصورة تأخذ 100% من عرض الـ game-box */
+  height: auto; /* الحفاظ على نسب الأبعاد */
+  max-height: 250px; /* تحديد أقصى ارتفاع */
+  object-fit: contain; /* احتواء الصورة بالكامل داخل الأبعاد المحددة */
+  border: 2px solid var(--color-primary);
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+  display: block; /* لجعل margin: auto يعمل بشكل صحيح */
+}
+
+/* تنسيقات كلمة الحيوان */
+h2#animal-word {
+  color: var(--color-text);
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+/* تنسيقات الأزرار */
+.game-box button {
+  margin: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--color-accent);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.game-box button:hover {
+  background-color: #1976d2;
+}
 
 /* تنسيقات قسم تفاصيل الحيوان الجديد */
 .animal-details-section {
@@ -68,4 +100,26 @@
   padding-bottom: 0.3rem;
 }
 
-/* ... (Rest of your animals.css) ... */
+/* تنسيقات اختيار الصوت */
+.voice-selection {
+  margin-top: 1.5rem; /* مسافة علوية لتبديل الصوت */
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.voice-selection label {
+  color: var(--color-text);
+  font-weight: bold;
+}
+
+.voice-selection select {
+  padding: 0.5rem;
+  border-radius: 5px;
+  border: 1px solid var(--color-primary);
+  background-color: #f9f9f9;
+  color: var(--color-text);
+  font-size: 1rem;
+}

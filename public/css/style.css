@@ -1,3 +1,4 @@
+/* public/css/style.css */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -22,10 +23,12 @@ a:hover {
   color: #535bf2;
 }
 
+/* قم بإزالة أي خصائص تخطيط من هنا تمامًا */
 body {
   margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+  /* min-width: 320px; */ /* يمكن الاحتفاظ بها أو إزالتها حسب الحاجة */
+  /* min-height: 100vh; */ /* هذا أيضًا يمكن إزالته، home.css سيتعامل معه */
+  /* تأكد من عدم وجود display: flex; place-items: center; هنا */
 }
 
 h1 {
@@ -34,7 +37,7 @@ h1 {
 }
 
 #app {
-  max-width: 1280px;
+  max-width: 1280px; /* هذا غالبا سيكون تأثيره على العنصر الذي يحمل id="app" */
   margin: 0 auto;
   padding: 2rem;
   text-align: center;

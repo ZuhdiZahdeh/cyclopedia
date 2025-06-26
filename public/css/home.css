@@ -17,9 +17,7 @@ body {
   padding: 1rem;
   flex-wrap: wrap;
   align-items: center;
-  /* إزالة أي position: relative/sticky هنا إذا كان موجودًا ويتعارض */
-  /* لضمان أنه يأخذ كامل العرض: */
-  width: 100%;
+  width: 100%; /* لضمان أنه يأخذ كامل العرض */
 }
 
 .top-navbar select,
