@@ -1,8 +1,7 @@
 /* public/css/animals.css */
 
 .game-box {
-  max-width: 800px; /* *** زيادة العرض الأقصى للبطاقة لتكون أعرض *** */
-  /* يمكنك تجربة قيم أكبر مثل 600px إذا أردت المزيد من العرض */
+  max-width: 800px; /* العرض الأقصى للبطاقة */
   margin: 2rem auto;
   text-align: center;
   font-family: 'Cairo', sans-serif;
@@ -12,19 +11,19 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   background-color: white;
   display: flex;
-  flex-direction: row; /* *** تغيير الاتجاه إلى أفقي لتكون عريضة *** */
-  flex-wrap: wrap; /* *** السماح للعناصر بالالتفاف إلى سطر جديد إذا لم يكن هناك مساحة *** */
-  justify-content: center; /* توسيط العناصر أفقيا */
-  align-items: flex-start; /* محاذاة العناصر للأعلى داخل البطاقة */
-  gap: 1.5rem; /* مسافة بين العناصر داخل البطاقة */
-  /* *** مهم: تحديد ارتفاع أقصى للبطاقة إذا أردت أن تظهر في شاشة واحدة *** */
+  flex-direction: row; /* الصورة والتفاصيل جنبًا إلى جنب */
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1.5rem;
+  /* مهم: تحديد ارتفاع أقصى للبطاقة إذا أردت أن تظهر في شاشة واحدة */
   max-height: calc(100vh - 200px); /* ارتفاع أقصى: (ارتفاع الشاشة - (ارتفاع الهيدر + هامش)) */
-  overflow-y: auto; /* *** إضافة شريط تمرير عمودي للبطاقة إذا تجاوز المحتوى الارتفاع الأقصى *** */
+  overflow-y: auto; /* إضافة شريط تمرير عمودي للبطاقة إذا تجاوز المحتوى الارتفاع الأقصى */
 }
 
 /* تنسيقات الصورة */
 img#animal-image {
-  max-width: 40%; /* الصورة تأخذ 40% من عرض البطاقة (يمكن التعديل) */
+  max-width: 40%;
   height: auto;
   max-height: 250px;
   object-fit: contain;
@@ -37,15 +36,15 @@ img#animal-image {
 /* تنسيقات كلمة الحيوان */
 h2#animal-word {
   color: var(--color-text);
-  font-size: 2.5rem; /* تكبير حجم الخط للكلمة */
+  font-size: 2.5rem;
   margin-bottom: 1rem;
-  flex-basis: 100%; /* اجعل الكلمة تأخذ سطرًا كاملاً */
+  flex-basis: 100%; /* تأخذ سطرًا كاملاً */
   text-align: center;
 }
 
-/* تنسيقات قسم تفاصيل الحيوان الجديد */
+/* تنسيقات قسم تفاصيل الحيوان */
 .animal-details-section {
-  width: 55%; /* القسم يأخذ 55% من عرض البطاقة (البقية للصورة) */
+  width: 55%;
   text-align: right;
   margin-top: 0;
   padding-top: 0;
@@ -94,32 +93,18 @@ h2#animal-word {
   padding-bottom: 0.3rem;
 }
 
-/* تنسيقات اختيار الصوت والأزرار - تأكد أنها تترتب بشكل جيد */
-.voice-selection {
-  margin-top: 1.5rem;
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  flex-basis: 100%; /* تأخذ سطرًا كاملاً لتوسيطها بشكل أفضل */
-}
-
-/* مجموعة الأزرار */
-.game-box #play-sound-btn,
-.game-box #next-animal-btn {
-    font-size: 1.2rem;
-    padding: 0.8rem 1.8rem;
-}
+/* تنسيقات اختيار الصوت والأزرار - تم نقلها إلى home.css أو animals-game.js */
+/* .voice-selection { ... } */
+/* .game-box button { ... } */
 
 /* media query لضمان التخطيط العمودي على الشاشات الصغيرة */
 @media (max-width: 768px) {
   .game-box {
     flex-direction: column;
     align-items: center;
-    max-width: 90%; /* تعديل العرض الأقصى للجوال */
-    max-height: none; /* إزالة الحد الأقصى للارتفاع على الجوال للسماح بالتمرير */
-    overflow-y: visible; /* إزالة شريط التمرير على الجوال */
+    max-width: 90%;
+    max-height: none;
+    overflow-y: visible;
   }
   img#animal-image {
     max-width: 80%;
