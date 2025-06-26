@@ -1,22 +1,27 @@
 // scripts/generate-static-animal-audio.js
 
-import 'dotenv/config'; // طريقة أسهل لتهيئة dotenv في ES modules
+// تهيئة متغيرات البيئة من ملف .env في بيئة ES Modules
+import 'dotenv/config';
 
+// استيراد وحدات Node.js المدمجة (built-in) باستخدام import
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url'; // للحصول على __dirname في ES Modules
+
+// استيراد node-fetch (مطلوب إذا كان Node.js < v18، أو إذا كنت تفضل استخدامه)
 import fetch from 'node-fetch';
 
-// *** إضافة: استيراد وحساب __dirname و __filename في ES Modules ***
-import { fileURLToPath } from 'url';
+// *** حساب __dirname و __filename في بيئة ES Modules ***
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // *******************************************************************
 
-// 1. إعدادات Eleven Labs
+// 1. إعدادات Eleven Labs - يتم جلبها من ملف .env
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-const ELEVENLABS_VOICE_ID_BOY = process.env.ELEVENLABS_VOICE_ID_BOY;
+// استخدم ELEVENLABS_VOICE_ID ليكون متغير الصوت النشط (سواء كان ولد أو بنت)
+const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID;
 
-// 2. تحديد مجلد حفظ ملفات الصوت. بناءً على هيكل مشروعك، هذا هو المسار المتوقع.
+// 2. تحديد مجلد حفظ ملفات الصوت. يجب أن يكون ضمن public/audio/ar/animals/
 const AUDIO_OUTPUT_DIR = path.resolve(__dirname, '../public/audio/ar/animals');
 
 // تأكد من وجود مجلد الإخراج
@@ -24,135 +29,80 @@ if (!fs.existsSync(AUDIO_OUTPUT_DIR)) {
   fs.mkdirSync(AUDIO_OUTPUT_DIR, { recursive: true });
 }
 
-// 3. قائمة الحيوانات مع اسمها العربي واسم ملف الصوت المطلوب
+// 3. قائمة الحيوانات مع اسمها العربي واسم ملف الصوت المطلوب.
+// *** ملاحظة هامة: يجب تحديث حقل 'fileName' هنا ليعكس نوع الصوت الذي تولده (girl/girl) ***
 const animalsData = [
-  { englishName: "Dolphin", arabicName: "دلفين", fileName: "dolphin_boy_ar.mp3" },
-  { englishName: "Donkey", arabicName: "حمار", fileName: "donkey_boy_ar.mp3" },
-  { englishName: "Duck", arabicName: "بطة", fileName: "duck_boy_ar.mp3" },
-  { englishName: "Dove", arabicName: "حمامة", fileName: "dove_boy_ar.mp3" },
-  { englishName: "Dragon", arabicName: "تنين", fileName: "dragon_boy_ar.mp3" },
-  { englishName: "Eagle", arabicName: "نسر", fileName: "eagle_boy_ar.mp3" },
-  { englishName: "Eel", arabicName: "أنقليس", fileName: "eel_boy_ar.mp3" },
-  { englishName: "Elephant", arabicName: "فيل", fileName: "elephant_boy_ar.mp3" },
-  { englishName: "Elk", arabicName: "أيل", fileName: "elk_boy_ar.mp3" },
-  { englishName: "Emu", arabicName: "إيمو", fileName: "emu_boy_ar.mp3" },
-  { englishName: "Falcon", arabicName: "صقر", fileName: "falcon_boy_ar.mp3" },
-  { englishName: "Ferret", arabicName: "نمس", fileName: "ferret_boy_ar.mp3" },
-  { englishName: "Fish", arabicName: "سمكة", fileName: "fish_boy_ar.mp3" },
-  { englishName: "Flamingo", arabicName: "فلامنجو", fileName: "flamingo_boy_ar.mp3" },
-  { englishName: "Fly", arabicName: "ذبابة", fileName: "fly_boy_ar.mp3" },
-  { englishName: "Fox", arabicName: "ثعلب", fileName: "fox_boy_ar.mp3" },
-  { englishName: "Frog", arabicName: "ضفدع", fileName: "frog_boy_ar.mp3" },
-  { englishName: "Gecko", arabicName: "وزغة", fileName: "gecko_boy_ar.mp3" },
-  { englishName: "Gazelle", arabicName: "غزال", fileName: "gazelle_boy_ar.mp3" },
-  { englishName: "Giraffe", arabicName: "زرافة", fileName: "giraffe_boy_ar.mp3" },
-  { englishName: "Goat", arabicName: "ماعز", fileName: "goat_boy_ar.mp3" },
-  { englishName: "Goose", arabicName: "إوزة", fileName: "goose_boy_ar.mp3" },
-  { englishName: "Gorilla", arabicName: "غوريلا", fileName: "gorilla_boy_ar.mp3" },
-  { englishName: "Grasshopper", arabicName: "جرادة", fileName: "grasshopper_boy_ar.mp3" },
-  { englishName: "Grizzly Bear", arabicName: "دب أشيب", fileName: "grizzly_bear_boy_ar.mp3" },
-  { englishName: "Hamster", arabicName: "هامستر", fileName: "hamster_boy_ar.mp3" },
-  { englishName: "Hare", arabicName: "أرنب بري", fileName: "hare_boy_ar.mp3" },
-  { englishName: "Hawk", arabicName: "باز", fileName: "hawk_boy_ar.mp3" },
-  { englishName: "Hedgehog", arabicName: "قنفذ", fileName: "hedgehog_boy_ar.mp3" },
-  { englishName: "Hippopotamus", arabicName: "فرس النهر", fileName: "hippopotamus_boy_ar.mp3" },
-  { englishName: "Horse", arabicName: "حصان", fileName: "horse_boy_ar.mp3" },
-  { englishName: "Hummingbird", arabicName: "طائر الطنان", fileName: "hummingbird_boy_ar.mp3" },
-  { englishName: "Hyena", arabicName: "ضبع", fileName: "hyena_boy_ar.mp3" },
-  { englishName: "Ibis", arabicName: "أبو منجل", fileName: "ibis_boy_ar.mp3" },
-  { englishName: "Ibex", arabicName: "وعل", fileName: "ibex_boy_ar.mp3" },
-  { englishName: "Impala", arabicName: "إمبالا", fileName: "impala_boy_ar.mp3" },
-  { englishName: "Jackal", arabicName: "ابن آوى", fileName: "jackal_boy_ar.mp3" },
-  { englishName: "Jaguar", arabicName: "جاغوار", fileName: "jaguar_boy_ar.mp3" },
-  { englishName: "Jellyfish", arabicName: "قنديل البحر", fileName: "jellyfish_boy_ar.mp3" },
-  { englishName: "Jay", arabicName: "قيق", fileName: "jay_boy_ar.mp3" },
-  { englishName: "Kangaroo", arabicName: "كنغر", fileName: "kangaroo_boy_ar.mp3" },
-  { englishName: "Kingfisher", arabicName: "رفراف", fileName: "kingfisher_boy_ar.mp3" },
-  { englishName: "Koala", arabicName: "كوالا", fileName: "koala_boy_ar.mp3" },
-  { englishName: "Kookaburra", arabicName: "كوكابورا", fileName: "kookaburra_boy_ar.mp3" },
-  { englishName: "Ladybug", arabicName: "دعسوقة", fileName: "ladybug_boy_ar.mp3" },
-  { englishName: "Lamb", arabicName: "حمل", fileName: "lamb_boy_ar.mp3" },
-  { englishName: "Leopard", arabicName: "فهد", fileName: "leopard_boy_ar.mp3" },
-  { englishName: "Lion", arabicName: "أسد", fileName: "lion_boy_ar.mp3" },
-  { englishName: "Lizard", arabicName: "سحلية", fileName: "lizard_boy_ar.mp3" },
-  { englishName: "Llama", arabicName: "لاما", fileName: "llama_boy_ar.mp3" },
-  { englishName: "Lobster", arabicName: "جراد البحر", fileName: "lobster_boy_ar.mp3" },
-  { englishName: "Macaw", arabicName: "مكاو", fileName: "macaw_boy_ar.mp3" },
-  { englishName: "Magpie", arabicName: "عقعق", fileName: "magpie_boy_ar.mp3" },
-  { englishName: "Mallard", arabicName: "بط بري", fileName: "mallard_boy_ar.mp3" },
-  { englishName: "Meerkat", arabicName: "ميركات", fileName: "meerkat_boy_ar.mp3" },
-  { englishName: "Monkey", arabicName: "قرد", fileName: "monkey_boy_ar.mp3" },
-  { englishName: "Moose", arabicName: "أيل أمريكي", fileName: "moose_boy_ar.mp3" },
-  { englishName: "Mosquito", arabicName: "بعوضة", fileName: "mosquito_boy_ar.mp3" },
-  { englishName: "Mouse", arabicName: "فأر", fileName: "mouse_boy_ar.mp3" },
-  { englishName: "Mule", arabicName: "بغل", fileName: "mule_boy_ar.mp3" },
-  { englishName: "Nightingale", arabicName: "عندليب", fileName: "nightingale_boy_ar.mp3" },
-  { englishName: "Newt", arabicName: "سمندل", fileName: "newt_boy_ar.mp3" },
-  { englishName: "Narwhal", arabicName: "حوت وحيد القرن", fileName: "narwhal_boy_ar.mp3" },
-  { englishName: "Octopus", arabicName: "أخطبوط", fileName: "octopus_boy_ar.mp3" },
-  { englishName: "Okapi", arabicName: "أوكابي", fileName: "okapi_boy_ar.mp3" },
-  { englishName: "Opossum", arabicName: "أوبوسوم", fileName: "opossum_boy_ar.mp3" },
-  { englishName: "Orangutan", arabicName: "إنسان الغاب", fileName: "orangutan_boy_ar.mp3" },
-  { englishName: "Ostrich", arabicName: "نعامة", fileName: "ostrich_boy_ar.mp3" },
-  { englishName: "Otter", arabicName: "قضاعة", fileName: "otter_boy_ar.mp3" },
-  { englishName: "Owl", arabicName: "بومة", fileName: "owl_boy_ar.mp3" },
-  { englishName: "Ox", arabicName: "ثور", fileName: "ox_boy_ar.mp3" },
-  { englishName: "Panda", arabicName: "باندا", fileName: "panda_boy_ar.mp3" },
-  { englishName: "Panther", arabicName: "فهد أسود", fileName: "panther_boy_ar.mp3" },
-  { englishName: "Parrot", arabicName: "ببغاء", fileName: "parrot_boy_ar.mp3" },
-  { englishName: "Peacock", arabicName: "طاووس", fileName: "peacock_boy_ar.mp3" },
-  { englishName: "Pelican", arabicName: "بجع", fileName: "pelican_boy_ar.mp3" },
-  { englishName: "Penguin", arabicName: "بطريق", fileName: "penguin_boy_ar.mp3" },
-  { englishName: "Pig", arabicName: "خنزير", fileName: "pig_boy_ar.mp3" },
-  { englishName: "Pigeon", arabicName: "حمامة", fileName: "pigeon_boy_ar.mp3" },
-  { englishName: "Polar Bear", arabicName: "دب قطبي", fileName: "polar_bear_boy_ar.mp3" },
-  { englishName: "Pony", arabicName: "مهر", fileName: "pony_boy_ar.mp3" },
-  { englishName: "Porcupine", arabicName: "شيهم", fileName: "porcupine_boy_ar.mp3" },
-  { englishName: "Quail", arabicName: "سمان", fileName: "quail_boy_ar.mp3" },
-  { englishName: "Quokka", arabicName: "كوكا", fileName: "quokka_boy_ar.mp3" },
-  { englishName: "Rabbit", arabicName: "أرنب", fileName: "rabbit_boy_ar.mp3" },
-  { englishName: "Raccoon", arabicName: "راكون", fileName: "raccoon_boy_ar.mp3" },
-  { englishName: "Ram", arabicName: "كبش", fileName: "ram_boy_ar.mp3" },
-  { englishName: "Rat", arabicName: "جرذ", fileName: "rat_boy_ar.mp3" },
-  { englishName: "Raven", arabicName: "غراب", fileName: "raven_boy_ar.mp3" },
-  { englishName: "Reindeer", arabicName: "رنة", fileName: "reindeer_boy_ar.mp3" },
-  { englishName: "Rhinoceros", arabicName: "وحيد القرن", fileName: "rhinoceros_boy_ar.mp3" },
-  { englishName: "Robin", arabicName: "أبو الحناء", fileName: "robin_boy_ar.mp3" },
-  { englishName: "Salmon", arabicName: "سلمون", fileName: "salmon_boy_ar.mp3" },
-  { englishName: "Scorpion", arabicName: "عقرب", fileName: "scorpion_boy_ar.mp3" },
-  { englishName: "Seal", arabicName: "فقمة", fileName: "seal_boy_ar.mp3" },
-  { englishName: "Shark", arabicName: "قرش", fileName: "shark_boy_ar.mp3" },
-  { englishName: "Sheep", arabicName: "خروف", fileName: "sheep_boy_ar.mp3" },
-  { englishName: "Skunk", arabicName: "ظربان", fileName: "skunk_boy_ar.mp3" },
-  { englishName: "Snail", arabicName: "حلزون", fileName: "snail_boy_ar.mp3" },
-  { englishName: "Snake", arabicName: "أفعى", fileName: "snake_boy_ar.mp3" },
-  { englishName: "Sparrow", arabicName: "عصفور", fileName: "sparrow_boy_ar.mp3" },
-  { englishName: "Spider", arabicName: "عنكبوت", fileName: "spider_boy_ar.mp3" },
-  { englishName: "Squirrel", arabicName: "سنجاب", fileName: "squirrel_boy_ar.mp3" },
-  { englishName: "Starfish", arabicName: "نجم البحر", fileName: "starfish_boy_ar.mp3" },
-  { englishName: "Swan", arabicName: "بجعة", fileName: "swan_boy_ar.mp3" },
-  { englishName: "Tiger", arabicName: "نمر", fileName: "tiger_boy_ar.mp3" },
-  { englishName: "Toad", arabicName: "علجوم", fileName: "toad_boy_ar.mp3" },
-  { englishName: "Toucan", arabicName: "طوقان", fileName: "toucan_boy_ar.mp3" },
-  { englishName: "Turkey", arabicName: "ديك رومي", fileName: "turkey_boy_ar.mp3" },
-  { englishName: "Turtle", arabicName: "سلحفاة", fileName: "turtle_boy_ar.mp3" },
-  { englishName: "Urial", arabicName: "أوريال", fileName: "urial_boy_ar.mp3" },
-  { englishName: "Vulture", arabicName: "نسر", fileName: "vulture_boy_ar.mp3" },
-  { englishName: "Walrus", arabicName: "فظ", fileName: "walrus_boy_ar.mp3" },
-  { englishName: "Wasp", arabicName: "دبور", fileName: "wasp_boy_ar.mp3" },
-  { englishName: "Weasel", arabicName: "ابن عرس", fileName: "weasel_boy_ar.mp3" },
-  { englishName: "Whale", arabicName: "حوت", fileName: "whale_boy_ar.mp3" },
-  { englishName: "Wolf", arabicName: "ذئب", fileName: "wolf_boy_ar.mp3" },
-  { englishName: "Wolverine", arabicName: "ولفرين", fileName: "wolverine_boy_ar.mp3" },
-  { englishName: "Wombat", arabicName: "ومبات", fileName: "wombat_boy_ar.mp3" },
-  { englishName: "Woodpecker", arabicName: "نقار الخشب", fileName: "woodpecker_boy_ar.mp3" },
-  { englishName: "Xerus", arabicName: "سنجاب أرضي", fileName: "xerus_boy_ar.mp3" },
-  { englishName: "Yak", arabicName: "ياك", fileName: "yak_boy_ar.mp3" },
-  { englishName: "Zebra", arabicName: "حمار وحشي", fileName: "zebra_boy_ar.mp3" },
+    { englishName: "Alligator", arabicName: "تمساح", fileName: "alligator_girl_ar.mp3" },
+    { englishName: "Ant", arabicName: "نملة", fileName: "ant_girl_ar.mp3" },
+    { englishName: "Ape", arabicName: "قرد", fileName: "ape_girl_ar.mp3" },
+    { englishName: "Arctic Fox", arabicName: "ثعلب قطبي", fileName: "arctic_fox_girl_ar.mp3" },
+    { englishName: "Armadillo", arabicName: "مدرع", fileName: "armadillo_girl_ar.mp3" },
+    { englishName: "Bear", arabicName: "دب", fileName: "bear_girl_ar.mp3" },
+    { englishName: "Bee", arabicName: "نحلة", fileName: "bee_girl_ar.mp3" },
+    { englishName: "Bird", arabicName: "طائر", fileName: "bird_girl_ar.mp3" },
+    { englishName: "Butterfly", arabicName: "فراشة", fileName: "butterfly_girl_ar.mp3" },
+    { englishName: "Bat", arabicName: "خفاش", fileName: "bat_girl_ar.mp3" },
+    { englishName: "Badger", arabicName: "غرير", fileName: "badger_girl_ar.mp3" },
+    { englishName: "Beaver", arabicName: "قندس", fileName: "beaver_girl_ar.mp3" },
+    { englishName: "Bison", arabicName: "بيسون", fileName: "bison_girl_ar.mp3" },
+    { englishName: "Boar", arabicName: "خنزير بري", fileName: "boar_girl_ar.mp3" },
+    { englishName: "Bobcat", arabicName: "وشق أحمر", fileName: "bobcat_girl_ar.mp3" },
+    { englishName: "Camel", arabicName: "جمل", fileName: "camel_girl_ar.mp3" },
+    { englishName: "Cat", arabicName: "قط", fileName: "cat_girl_ar.mp3" },
+    { englishName: "Chicken", arabicName: "دجاجة", fileName: "chicken_girl_ar.mp3" },
+    { englishName: "Chimpanzee", arabicName: "شمبانزي", fileName: "chimpanzee_girl_ar.mp3" },
+    { englishName: "Cobra", arabicName: "كوبرا", fileName: "cobra_girl_ar.mp3" },
+    { englishName: "Cow", arabicName: "بقرة", fileName: "cow_girl_ar.mp3" },
+    { englishName: "Crab", arabicName: "سرطان", fileName: "crab_girl_ar.mp3" },
+    { englishName: "Crocodile", arabicName: "تمساح", fileName: "crocodile_girl_ar.mp3" },
+    { englishName: "Crow", arabicName: "غراب", fileName: "crow_girl_ar.mp3" },
+    { englishName: "Cheetah", arabicName: "فهد", fileName: "cheetah_girl_ar.mp3" },
+    { englishName: "Deer", arabicName: "غزال", fileName: "deer_girl_ar.mp3" },
+    { englishName: "Dog", arabicName: "كلب", fileName: "dog_girl_ar.mp3" },
+    { englishName: "Dolphin", arabicName: "دلفين", fileName: "dolphin_girl_ar.mp3" },
+    { englishName: "Donkey", arabicName: "حمار", fileName: "donkey_girl_ar.mp3" },
+    { englishName: "Duck", arabicName: "بطة", fileName: "duck_girl_ar.mp3" },
+    { englishName: "Dove", arabicName: "حمامة", fileName: "dove_girl_ar.mp3" },
+    { englishName: "Dragon", arabicName: "تنين", fileName: "dragon_girl_ar.mp3" },
+    { englishName: "Eagle", arabicName: "نسر", fileName: "eagle_girl_ar.mp3" },
+    { englishName: "Eel", arabicName: "أنقليس", fileName: "eel_girl_ar.mp3" },
+    { englishName: "Elephant", arabicName: "فيل", fileName: "elephant_girl_ar.mp3" },
+    { englishName: "Elk", arabicName: "أيل", fileName: "elk_girl_ar.mp3" },
+    { englishName: "Emu", arabicName: "إيمو", fileName: "emu_girl_ar.mp3" },
+    { englishName: "Falcon", arabicName: "صقر", fileName: "falcon_girl_ar.mp3" },
+    { englishName: "Ferret", arabicName: "نمس", fileName: "ferret_girl_ar.mp3" },
+    { englishName: "Fish", arabicName: "سمكة", fileName: "fish_girl_ar.mp3" },
+    { englishName: "Flamingo", arabicName: "فلامنجو", fileName: "flamingo_girl_ar.mp3" },
+    { englishName: "Fly", arabicName: "ذبابة", fileName: "fly_girl_ar.mp3" },
+    { englishName: "Fox", arabicName: "ثعلب", fileName: "fox_girl_ar.mp3" },
+    { englishName: "Frog", arabicName: "ضفدع", fileName: "frog_girl_ar.mp3" },
+    { englishName: "Gecko", arabicName: "وزغة", fileName: "gecko_girl_ar.mp3" },
+    { englishName: "Gazelle", arabicName: "غزال", fileName: "gazelle_girl_ar.mp3" },
+    { englishName: "Giraffe", arabicName: "زرافة", fileName: "giraffe_girl_ar.mp3" },
+    { englishName: "Goat", arabicName: "ماعز", fileName: "goat_girl_ar.mp3" },
+    { englishName: "Goose", arabicName: "إوزة", fileName: "goose_girl_ar.mp3" },
+    { englishName: "Gorilla", arabicName: "غوريلا", fileName: "gorilla_girl_ar.mp3" },
+    { englishName: "Grasshopper", arabicName: "جرادة", fileName: "grasshopper_girl_ar.mp3" },
+    { englishName: "Grizzly Bear", arabicName: "دب أشيب", fileName: "grizzly_bear_girl_ar.mp3" },
+    { englishName: "Hamster", arabicName: "هامستر", fileName: "hamster_girl_ar.mp3" },
+    { englishName: "Hare", arabicName: "أرنب بري", fileName: "hare_girl_ar.mp3" },
+    { englishName: "Hawk", arabicName: "باز", fileName: "hawk_girl_ar.mp3" },
+    { englishName: "Hedgehog", arabicName: "قنفذ", fileName: "hedgehog_girl_ar.mp3" },
+    { englishName: "Hippopotamus", arabicName: "فرس النهر", fileName: "hippopotamus_girl_ar.mp3" },
+    { englishName: "Horse", arabicName: "حصان", fileName: "horse_girl_ar.mp3" },
+    { englishName: "Hummingbird", arabicName: "طائر الطنان", fileName: "hummingbird_girl_ar.mp3" },
+    { englishName: "Hyena", arabicName: "ضبع", fileName: "hyena_girl_ar.mp3" },
+    { englishName: "Ibis", arabicName: "أبو منجل", fileName: "ibis_girl_ar.mp3" },
+    { englishName: "Ibex", arabicName: "وعل", fileName: "ibex_girl_ar.mp3" },
+    { englishName: "Impala", arabicName: "إمبالا", fileName: "impala_girl_ar.mp3" },
+    { englishName: "Jackal", arabicName: "ابن آوى", fileName: "jackal_girl_ar.mp3" },
+    { englishName: "Jaguar", arabicName: "جاغوار", fileName: "jaguar_girl_ar.mp3" },
+    { englishName: "Jellyfish", arabicName: "قنديل البحر", fileName: "jellyfish_girl_ar.mp3" },
+   
 ];
 
 async function generateAudioForStaticAnimals() {
-  if (!ELEVENLABS_API_KEY || !ELEVENLABS_VOICE_ID_BOY) {
+  if (!ELEVENLABS_API_KEY || !ELEVENLABS_VOICE_ID) { // تم تغيير ELEVENLABS_VOICE_ID_girl إلى ELEVENLABS_VOICE_ID
     console.error("⛔️ Eleven Labs API Key or Voice ID is missing. Check your .env file.");
     return;
   }
@@ -191,7 +141,7 @@ async function generateAudioForStaticAnimals() {
       console.log(`- Generating audio for: '${arabicName}' into '${fileName}'`);
 
       // طلب تحويل النص إلى كلام من Eleven Labs API
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID_BOY}`, {
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`, { // تم تغيير ELEVENLABS_VOICE_ID_girl إلى ELEVENLABS_VOICE_ID
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
