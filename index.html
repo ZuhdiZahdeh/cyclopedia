@@ -15,52 +15,86 @@
 </head>
 
 <body>
-  <div id="app"> <header class="top-navbar shadow">
+  <div id="app">
+    <header class="top-navbar shadow">
       <nav class="top-nav-links">
-        <a href="index.html">🏠 الرئيسية</a>
-        <a href="#" onclick="loadAnimalsPage()">📚 الحيوانات</a>
+        <a href="index.html" onclick="showHomePage()">🏠 الرئيسية</a> <a href="#" onclick="loadAnimalsPage()">📚 الحيوانات</a>
         <a href="#games">🎮 الألعاب</a>
       </nav>
     </header>
 
     <div class="page-layout">
       <aside class="sidebar shadow">
-        <h3>👤 حسابك</h3>
-        <ul>
-          <li><a href="#" onclick="loadLogin()">تسجيل الدخول</a></li>
-          <li><a href="#" onclick="loadRegister()">تسجيل جديد</a></li>
-          <li><a href="#" onclick="loadProfile()">الملف الشخصي</a></li>
-          <li><a href="users/my-report.html">سجل النقاط</a></li>
-        </ul>
+        <div id="animal-sidebar-controls" class="sidebar-section">
+          </div>
+
+        <div class="sidebar-section static-section">
+          <h3>👤 حسابك</h3>
+          <ul>
+            <li><a href="#" onclick="loadLogin()">تسجيل الدخول</a></li>
+            <li><a href="#" onclick="loadRegister()">تسجيل جديد</a></li>
+            <li><a href="#" onclick="loadProfile()">الملف الشخصي</a></li>
+            <li><a href="users/my-report.html">سجل النقاط</a></li>
+          </ul>
+        </div>
       </aside>
 
       <main class="main-content">
-        <h2>مرحبًا بك في الموسوعة!</h2>
-      </main>
+        <h2 id="welcome-message">مرحبًا بك في الموسوعة!</h2> </main>
     </div>
-  </div> <script type="module">
-    // مسارات الاستيراد لملفات النماذج في public/users/
+  </div>
+
+  <script type="module">
     import loginForm from '/users/login-form.html?raw';
     import registerForm from '/users/register-form.html?raw';
-    // تم تحديث المسار لـ profile.js ليشير إلى src/js/
     import { showProfileForm } from '/src/js/profile.js';
-    // تم تحديث المسار لـ animals-game.js ليشير إلى src/js/
     import { loadAnimalsGameContent } from '/src/js/animals-game.js';
 
-    window.loadLogin = () => {
-      document.querySelector("main.main-content").innerHTML = loginForm;
-    };
+    // الحصول على المراجع لمناطق المحتوى
+    const mainContentArea = document.querySelector("main.main-content");
+    const animalSidebarControls = document.getElementById("animal-sidebar-controls");
+    const welcomeMessage = document.getElementById("welcome-message");
 
-    window.loadRegister = () => {
-      document.querySelector("main.main-content").innerHTML = registerForm;
-    };
 
-    window.loadProfile = showProfileForm;
+    window.loadLogin = () => { mainContentArea.innerHTML = loginForm; hideAnimalControls(); };
+    window.loadRegister = () => { mainContentArea.innerHTML = registerForm; hideAnimalControls(); };
+    window.loadProfile = () => { showProfileForm(); hideAnimalControls(); }; // قد تحتاجshowProfileForm لتعديلها لتعمل مع mainContentArea
 
-    // دالة جديدة لتحميل محتوى الحيوانات وبدء اللعبة
     window.loadAnimalsPage = async () => {
-      await loadAnimalsGameContent(); // استدعاء الدالة التي تحقن المحتوى وتبدأ اللعبة
+      // إخفاء رسالة الترحيب
+      if (welcomeMessage) welcomeMessage.style.display = 'none';
+
+      // استدعاء الدالة التي ستحقن محتوى اللعبة في main-content
+      // و ستحقن الأزرار وعناصر التحكم في animalSidebarControls
+      await loadAnimalsGameContent(); 
+      showAnimalControls(); // إظهار عناصر التحكم الخاصة بالحيوانات
     };
+
+    window.showHomePage = () => {
+        mainContentArea.innerHTML = `<h2>مرحبًا بك في الموسوعة!</h2>`; // إعادة محتوى الصفحة الرئيسية
+        if (welcomeMessage) welcomeMessage.style.display = 'block'; // إظهار رسالة الترحيب إذا كانت مخفية
+        hideAnimalControls(); // إخفاء عناصر التحكم الخاصة بالحيوانات
+    };
+
+    function showAnimalControls() {
+        if (animalSidebarControls) {
+            animalSidebarControls.style.display = 'block'; // أو 'flex' إذا كان يستخدم flex
+        }
+    }
+
+    function hideAnimalControls() {
+        if (animalSidebarControls) {
+            animalSidebarControls.style.display = 'none';
+        }
+    }
+
+    // إخفاء عناصر التحكم عند تحميل الصفحة لأول مرة (إذا لم تكن صفحة الحيوانات هي البداية)
+    document.addEventListener('DOMContentLoaded', () => {
+        hideAnimalControls();
+        // يمكنك هنا تحديد أي محتوى افتراضي يظهر في main-content عند بدء التطبيق
+        // مثلاً عرض بطاقات مواضيع أو غير ذلك
+    });
+
   </script>
 </body>
 </html>

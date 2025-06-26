@@ -1,10 +1,12 @@
 /* public/css/home.css */
 
 body {
-  margin: 0; /* تأكد من عدم وجود هامش افتراضي على body */
+  margin: 0;
   font-family: 'Cairo', sans-serif;
-  background-color: #f0f8ff; /* لون الخلفية العام */
-  /* display: flex; flex-direction: column; min-height: 100vh; هذه الخصائص يجب أن تكون على #app الآن */
+  background-color: #f0f8ff;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 .top-navbar {
@@ -18,9 +20,9 @@ body {
   width: 100%;
   position: fixed; /* *** تغيير إلى fixed ليثبت في الأعلى تمامًا *** */
   top: 0;
-  left: 0; /* *** إضافة: لضمان أنه يبدأ من أقصى اليسار *** */
+  left: 0;
   z-index: 1000;
-  box-sizing: border-box; /* لضمان أن العرض 100% يشمل الـ padding */
+  box-sizing: border-box;
 }
 
 .top-navbar select,
@@ -32,7 +34,6 @@ body {
   font-size: 1.2rem;
 }
 
-/* Container for sidebar and main content */
 .page-layout {
   display: flex;
   flex: 1;
@@ -41,12 +42,11 @@ body {
   width: 100%;
   padding: 1rem;
   gap: 1rem;
-  /* إضافة padding-top لتعويض الشريط العلوي الثابت */
-  padding-top: 70px; /* *** مهم: اضبط هذه القيمة لتكون أكبر قليلاً من ارتفاع top-navbar *** */
-  box-sizing: border-box; /* لضمان أن الـ padding لا يزيد من الحجم الإجمالي */
+  padding-top: 70px; /* *** تعويض ارتفاع top-navbar الثابت *** */
+  box-sizing: border-box;
 }
 
-/* الشريط الجانبي */
+/* الشريط الجانبي (sidebar) */
 .sidebar {
   width: 220px;
   padding: 1rem;
@@ -54,19 +54,67 @@ body {
   border-radius: 8px;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
-  height: calc(100vh - 80px); /* *** لجعله يمتد على كامل ارتفاع الشاشة المتبقي *** */
-  position: sticky; /* *** اجعله sticky ليثبت مع التمرير داخل الـ page-layout *** */
-  top: 70px; /* *** يثبت تحت الشريط العلوي *** */
-  overflow-y: auto; /* *** لإضافة شريط تمرير إذا كان المحتوى طويلاً *** */
+  height: calc(100vh - 80px); /* يمتد على ارتفاع الشاشة المتبقي */
+  position: sticky; /* اجعله sticky ليثبت مع التمرير داخل الـ page-layout */
+  top: 70px; /* يثبت تحت الشريط العلوي */
+  overflow-y: auto; /* لإضافة شريط تمرير إذا كان المحتوى طويلاً */
+  display: flex; /* *** إضافة: لجعل الأقسام بداخله تترتب عموديًا *** */
+  flex-direction: column; /* *** إضافة: لترتيب الأقسام عموديًا *** */
+  gap: 1rem; /* *** إضافة: مسافة بين الأقسام في الشريط الجانبي *** */
 }
 
-.sidebar ul {
-  list-style: none;
-  padding: 0;
+/* الأقسام داخل الشريط الجانبي */
+.sidebar-section {
+  background-color: white; /* خلفية بيضاء للأقسام الداخلية */
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.05); /* ظل خفيف */
 }
 
-.sidebar li {
-  margin: 0.5rem 0;
+.sidebar-section.static-section {
+  margin-top: auto; /* *** يدفع القسم السفلي إلى أسفل الشريط الجانبي *** */
+}
+
+/* تنسيقات عناصر التحكم الخاصة باللعبة في الشريط الجانبي */
+.sidebar-game-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  align-items: center; /* توسيط العناصر داخل هذا القسم */
+}
+
+.sidebar-game-controls h3 {
+    color: var(--color-primary); /* لون العنوان */
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.sidebar-game-controls .language-selection,
+.sidebar-game-controls .voice-selection {
+  display: flex;
+  flex-direction: column; /* جعل الزر والقائمة المنسدلة تظهر فوق بعضها */
+  align-items: center; /* توسيط المكونات */
+  width: 100%; /* تأخذ العرض الكامل المتاح */
+}
+
+.sidebar-game-controls label {
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: var(--color-text-primary);
+}
+
+.sidebar-game-controls select {
+  width: 80%; /* عرض القائمة المنسدلة */
+  padding: 0.5rem;
+  border-radius: 5px;
+  border: 1px solid var(--color-primary);
+  background-color: #f9f9f9;
+  font-size: 1rem;
+}
+
+.sidebar-game-controls button {
+  width: 90%; /* عرض الأزرار */
+  margin-top: 0.8rem; /* مسافة بين الأزرار */
 }
 
 /* المحتوى الرئيسي */
@@ -78,7 +126,7 @@ body {
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 80px - 2rem); /* *** لجعله يمتد على كامل ارتفاع الشاشة المتبقي *** */
+  min-height: calc(100vh - 80px - 2rem);
 }
 
 .topics-grid { /* ... */ }
@@ -90,20 +138,37 @@ body {
   .page-layout {
     flex-direction: column;
     align-items: center;
-    padding-top: 60px; /* Adjust for smaller header on mobile */
+    padding-top: 60px;
   }
 
   .sidebar {
     width: 100%;
     margin-bottom: 1rem;
     min-height: auto;
-    position: static; /* Remove sticky on mobile */
+    position: static;
     height: auto;
   }
   .top-navbar {
-    padding: 0.8rem; /* Smaller padding on mobile */
+    padding: 0.8rem;
   }
   .top-navbar a {
-    font-size: 1rem; /* Smaller font on mobile */
+    font-size: 1rem;
+  }
+  /* على الجوال، اجعل الأقسام في الشريط الجانبي تترتب بشكل طبيعي */
+  .sidebar-section.static-section {
+    margin-top: 0;
+  }
+  .sidebar-game-controls {
+    flex-direction: row; /* الأزرار واللغة والصوت جنبًا إلى جنب على الجوال */
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .sidebar-game-controls .language-selection,
+  .sidebar-game-controls .voice-selection {
+    width: 48%; /* لكل منها نصف العرض تقريبًا */
+  }
+  .sidebar-game-controls button {
+    width: 48%; /* الأزرار تأخذ نصف العرض تقريبًا */
   }
 }
