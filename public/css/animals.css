@@ -1,7 +1,8 @@
 /* public/css/animals.css */
 
 .game-box {
-  max-width: 400px;
+  max-width: 800px; /* *** زيادة العرض الأقصى للبطاقة لتكون أعرض *** */
+  /* يمكنك تجربة قيم أكبر مثل 600px إذا أردت المزيد من العرض */
   margin: 2rem auto;
   text-align: center;
   font-family: 'Cairo', sans-serif;
@@ -10,59 +11,49 @@
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   background-color: white;
-  display: flex; /* Make game-box a flex container */
-  flex-direction: column; /* Stack items vertically */
-  align-items: center; /* Center items horizontally */
+  display: flex;
+  flex-direction: row; /* *** تغيير الاتجاه إلى أفقي لتكون عريضة *** */
+  flex-wrap: wrap; /* *** السماح للعناصر بالالتفاف إلى سطر جديد إذا لم يكن هناك مساحة *** */
+  justify-content: center; /* توسيط العناصر أفقيا */
+  align-items: flex-start; /* محاذاة العناصر للأعلى داخل البطاقة */
+  gap: 1.5rem; /* مسافة بين العناصر داخل البطاقة */
 }
 
 /* تنسيقات الصورة */
 img#animal-image {
-  max-width: 100%; /* الصورة تأخذ 100% من عرض الـ game-box */
-  height: auto; /* الحفاظ على نسب الأبعاد */
-  max-height: 250px; /* تحديد أقصى ارتفاع */
-  object-fit: contain; /* احتواء الصورة بالكامل داخل الأبعاد المحددة */
+  max-width: 40%; /* *** الصورة تأخذ 40% من عرض البطاقة (يمكن التعديل) *** */
+  height: auto;
+  max-height: 250px;
+  object-fit: contain;
   border: 2px solid var(--color-primary);
   border-radius: 1rem;
   margin-bottom: 1rem;
-  display: block; /* لجعل margin: auto يعمل بشكل صحيح */
+  display: block;
 }
 
 /* تنسيقات كلمة الحيوان */
 h2#animal-word {
   color: var(--color-text);
-  font-size: 2rem;
+  font-size: 2.5rem; /* *** تكبير حجم الخط للكلمة *** */
   margin-bottom: 1rem;
-}
-
-/* تنسيقات الأزرار */
-.game-box button {
-  margin: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 8px;
-  background-color: var(--color-accent);
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.game-box button:hover {
-  background-color: #1976d2;
+  flex-basis: 100%; /* اجعل الكلمة تأخذ سطرًا كاملاً */
+  text-align: center;
 }
 
 /* تنسيقات قسم تفاصيل الحيوان الجديد */
 .animal-details-section {
-  width: 100%; /* تأكد من أن القسم يأخذ العرض الكامل داخل game-box */
-  text-align: right; /* محاذاة النص لليمين */
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px dashed #ccc; /* خط فاصل خفيف */
+  width: 55%; /* *** القسم يأخذ 55% من عرض البطاقة (البقية للصورة) *** */
+  text-align: right;
+  margin-top: 0; /* أزل أي margin-top زائد */
+  padding-top: 0;
+  border-top: none; /* أزل الخط الفاصل إذا كان يظهر بشكل غريب */
+  display: flex; /* لجعل التفاصيل تترتب عموديا بشكل جيد */
+  flex-direction: column;
 }
 
 .animal-details-section h3 {
   color: var(--color-primary);
-  font-size: 1.3rem;
+  font-size: 1.5rem; /* *** تكبير الخط *** */
   margin-bottom: 0.8rem;
 }
 
@@ -74,7 +65,7 @@ h2#animal-word {
 
 .animal-details-section li {
   margin-bottom: 0.5rem;
-  font-size: 1.05rem;
+  font-size: 1.15rem; /* *** تكبير الخط *** */
   color: var(--color-text);
 }
 
@@ -83,43 +74,55 @@ h2#animal-word {
 }
 
 .animal-description-box {
-  background-color: #f0f8ff; /* لون خلفية خفيف للوصف */
+  background-color: #f0f8ff;
   border: 1px solid #e1f5fe;
   border-radius: 8px;
   padding: 1rem;
   margin-top: 1rem;
-  text-align: justify; /* محاذاة النص Justify */
+  text-align: justify;
   line-height: 1.6;
 }
 
 .animal-description-box h4 {
   color: var(--color-primary);
-  font-size: 1.15rem;
+  font-size: 1.25rem; /* *** تكبير الخط *** */
   margin-bottom: 0.5rem;
   border-bottom: 1px solid var(--color-primary);
   padding-bottom: 0.3rem;
 }
 
-/* تنسيقات اختيار الصوت */
+/* تنسيقات اختيار الصوت والأزرار - تأكد أنها تترتب بشكل جيد */
 .voice-selection {
-  margin-top: 1.5rem; /* مسافة علوية لتبديل الصوت */
+  margin-top: 1.5rem;
   margin-bottom: 1rem;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
+  flex-basis: 100%; /* تأخذ سطرًا كاملاً لتوسيطها بشكل أفضل */
 }
 
-.voice-selection label {
-  color: var(--color-text);
-  font-weight: bold;
+/* مجموعة الأزرار */
+.game-box #play-sound-btn,
+.game-box #next-animal-btn {
+    font-size: 1.2rem; /* *** تكبير حجم الخط للأزرار *** */
+    padding: 0.8rem 1.8rem;
 }
 
-.voice-selection select {
-  padding: 0.5rem;
-  border-radius: 5px;
-  border: 1px solid var(--color-primary);
-  background-color: #f9f9f9;
-  color: var(--color-text);
-  font-size: 1rem;
+/* media query لضمان التخطيط العمودي على الشاشات الصغيرة */
+@media (max-width: 768px) {
+  .game-box {
+    flex-direction: column; /* العودة إلى التخطيط العمودي على الجوال */
+    align-items: center;
+  }
+  img#animal-image {
+    max-width: 80%; /* الصورة تأخذ عرض أكبر على الجوال */
+  }
+  .animal-details-section {
+    width: 100%; /* تأخذ عرض كامل على الجوال */
+    text-align: center; /* توسيط النص على الجوال */
+  }
+  .animal-description-box {
+    text-align: right; /* تبقى محاذاة لليمين للوصف */
+  }
 }
