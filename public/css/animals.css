@@ -1,11 +1,7 @@
 /* public/css/animals.css */
 
-/* إزالة هذه القواعد إذا كانت موجودة، لأنها أصبحت في home.css */
-/* .page-grid { ... } */
-/* .top-navbar { ... } */
-/* .sidebar { ... } */
+/* ... (Existing styles for .game-box, img#animal-image, h2#animal-word, etc.) ... */
 
-/* التنسيقات الخاصة بـ game-box */
 .game-box {
   max-width: 400px;
   margin: 2rem auto;
@@ -16,66 +12,60 @@
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   background-color: white;
+  display: flex; /* Make game-box a flex container */
+  flex-direction: column; /* Stack items vertically */
+  align-items: center; /* Center items horizontally */
 }
 
-img#animal-image { /* استخدام ID المحدد للصورة */
-  width: 100%;
-  max-height: 250px;
-  object-fit: contain;
-  border: 2px solid var(--color-primary);
-  border-radius: 1rem;
-  margin-bottom: 1rem;
+/* ... (Other existing styles) ... */
+
+/* تنسيقات قسم تفاصيل الحيوان الجديد */
+.animal-details-section {
+  width: 100%; /* تأكد من أن القسم يأخذ العرض الكامل داخل game-box */
+  text-align: right; /* محاذاة النص لليمين */
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #ccc; /* خط فاصل خفيف */
 }
 
-h2#animal-word { /* استخدام ID المحدد للكلمة */
+.animal-details-section h3 {
+  color: var(--color-primary);
+  font-size: 1.3rem;
+  margin-bottom: 0.8rem;
+}
+
+.animal-details-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.animal-details-section li {
+  margin-bottom: 0.5rem;
+  font-size: 1.05rem;
   color: var(--color-text);
-  font-size: 2rem;
-  margin-bottom: 1rem;
 }
 
-.game-box button {
-  margin: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  border: none;
+.animal-details-section li strong {
+  color: var(--color-accent);
+}
+
+.animal-description-box {
+  background-color: #f0f8ff; /* لون خلفية خفيف للوصف */
+  border: 1px solid #e1f5fe;
   border-radius: 8px;
-  background-color: var(--color-accent);
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: justify; /* محاذاة النص Justify */
+  line-height: 1.6;
 }
 
-.game-box button:hover {
-  background-color: #1976d2;
+.animal-description-box h4 {
+  color: var(--color-primary);
+  font-size: 1.15rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-primary);
+  padding-bottom: 0.3rem;
 }
 
-/* تنسيقات اختيار الصوت */
-.voice-selection {
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.voice-selection label {
-  color: var(--color-text);
-  font-weight: bold;
-}
-
-.voice-selection select {
-  padding: 0.5rem;
-  border-radius: 5px;
-  border: 1px solid var(--color-primary);
-  background-color: #f9f9f9;
-  color: var(--color-text);
-  font-size: 1rem;
-}
-
-/* .animal-card */
-/* إذا كنت تخطط لنمط عرض البطاقات، أضف تنسيقاتها هنا */
-
-/* استجابة الهواتف (انقل أي قواعد Media Query عامة تتعلق بالهيكل إلى home.css) */
-@media (max-width: 768px) {
-  /* أي تنسيقات خاصة بـ game-box أو عناصرها الداخلية فقط للشاشات الصغيرة */
-}
+/* ... (Rest of your animals.css) ... */

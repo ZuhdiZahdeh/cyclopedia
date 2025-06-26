@@ -49,6 +49,7 @@ body {
   border-radius: 8px; /* حواف مستديرة */
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.05); /* ظل خفيف */
   flex-shrink: 0; /* لمنع الشريط الجانبي من التقلص */
+  min-height: calc(100vh - 120px); /* Adjust based on header/footer height */
 }
 
 .sidebar ul {
@@ -67,6 +68,8 @@ body {
   background-color: white; /* لون خلفية المحتوى الرئيسي */
   border-radius: 8px; /* حواف مستديرة */
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.05); /* ظل خفيف */
+  display: flex; /* إضافة display flex لـ main-content */
+  flex-direction: column; /* لترتيب المحتوى داخله عموديا */
 }
 
 .topics-grid {
@@ -110,5 +113,6 @@ body {
   .sidebar {
     width: 100%; /* اجعل الشريط الجانبي يأخذ كامل العرض */
     margin-bottom: 1rem; /* مسافة أسفل الشريط الجانبي */
+    min-height: auto; /* Remove min-height for mobile */
   }
 }

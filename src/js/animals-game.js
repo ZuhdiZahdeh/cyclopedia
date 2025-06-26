@@ -23,6 +23,22 @@ export async function loadAnimalsGameContent() {
     <div class="game-box">
       <img id="animal-image" src="" alt="animal" />
       <h2 id="animal-word">---</h2>
+      
+      <!-- قسم تفاصيل الحيوان الجديد -->
+      <div class="animal-details-section">
+        <h3>تفاصيل إضافية:</h3>
+        <ul id="animal-details-list">
+          <li><strong>اسم الابناء:</strong> <span id="animal-baby">---</span></li>
+          <li><strong>اسم الزوجة:</strong> <span id="animal-female">---</span></li>
+          <li><strong>الصنف:</strong> <span id="animal-category">---</span></li>
+        </ul>
+        <div class="animal-description-box">
+          <h4>الوصف:</h4>
+          <p id="animal-description">---</p>
+        </div>
+      </div>
+      <!-- نهاية قسم تفاصيل الحيوان الجديد -->
+
       <div class="voice-selection">
         <label for="voice-select">اختر الصوت:</label>
         <select id="voice-select">
@@ -30,23 +46,28 @@ export async function loadAnimalsGameContent() {
           <option value="boy">صوت ولد</option>
           <option value="girl">صوت بنت</option>
           <option value="child">صوت طفل</option>
-          </select>
+        </select>
       </div>
       <button id="play-sound-btn">🔊 استمع</button>
       <button id="next-animal-btn">التالي ➡️</button>
-      </div>
+    </div>
   `;
 
   // الحصول على المراجع للعناصر بعد حقنها في DOM
-  // تأكد أن هذه الـ IDs تتطابق مع الـ IDs في الـ HTML الذي تم حقنه أعلاه
   const animalImage = document.getElementById("animal-image");
   const animalWord = document.getElementById("animal-word");
   const playSoundBtn = document.getElementById("play-sound-btn");
   const nextAnimalBtn = document.getElementById("next-animal-btn");
   const voiceSelect = document.getElementById("voice-select");
-  // const animalDetails = document.getElementById("animal-details"); // إذا أضفت هذا العنصر
 
-  if (!animalImage || !animalWord || !playSoundBtn || !nextAnimalBtn || !voiceSelect) {
+  // مراجع العناصر الجديدة لتفاصيل الحيوان
+  const animalBaby = document.getElementById("animal-baby");
+  const animalFemale = document.getElementById("animal-female");
+  const animalCategory = document.getElementById("animal-category");
+  const animalDescription = document.getElementById("animal-description");
+
+
+  if (!animalImage || !animalWord || !playSoundBtn || !nextAnimalBtn || !voiceSelect || !animalBaby || !animalFemale || !animalCategory || !animalDescription) {
     console.error("One or more game elements not found after content injection. Check IDs.");
     return;
   }
@@ -57,9 +78,15 @@ export async function loadAnimalsGameContent() {
     console.warn("No animals found for this category and language.");
     animalImage.src = "/images/default.png";
     animalWord.textContent = "لا توجد بيانات";
+    // تعطيل الأزرار والقوائم المنسدلة
     playSoundBtn.disabled = true;
     nextAnimalBtn.disabled = true;
     voiceSelect.disabled = true;
+    // مسح تفاصيل الحيوان
+    animalBaby.textContent = "غير متوفر";
+    animalFemale.textContent = "غير متوفر";
+    animalCategory.textContent = "غير متوفر";
+    animalDescription.textContent = "لا يوجد وصف متوفر.";
     return;
   }
 
@@ -84,7 +111,8 @@ export async function loadAnimalsGameContent() {
 
   voiceSelect.addEventListener("change", (event) => {
     selectedVoice = event.target.value;
-    // playAudio(getAudioPath(animals[currentIndex], selectedVoice)); // يمكن تشغيل الصوت الجديد فورًا
+    // يمكنك هنا إضافة تشغيل الصوت الجديد فورًا إذا أردت
+    // playAudio(getAudioPath(animals[currentIndex], selectedVoice));
   });
 }
 
@@ -109,16 +137,12 @@ function showAnimal(index) {
   document.getElementById("animal-image").alt = name;
   document.getElementById("animal-word").textContent = name;
 
-  // لتحديث تفاصيل إضافية إذا أضفت العناصر في HTML
-  // const animalDetails = document.getElementById("animal-details");
-  // if (animalDetails && data) {
-  //   animalDetails.innerHTML = `
-  //     <li><strong>النوع:</strong> ${data.category?.[currentLang]?.join(", ") || 'غير معروف'}</li>
-  //     <li><strong>الزوجة:</strong> ${data.female?.[currentLang] || 'غير معروف'}</li>
-  //     <li><strong>الأبناء:</strong> ${data.baby?.[currentLang] || 'غير معروف'}</li>
-  //     <li><strong>الوصف:</strong> ${data.description?.[currentLang] || 'لا يوجد وصف'}</li>
-  //   `;
-  // }
+  // تحديث تفاصيل إضافية للحيوان
+  document.getElementById("animal-baby").textContent = data.baby?.[currentLang] || "غير معروف";
+  document.getElementById("animal-female").textContent = data.female?.[currentLang] || "غير معروف";
+  // تأكد من أن category هو مصفوفة أو حوله إلى سلسلة نصية
+  document.getElementById("animal-category").textContent = Array.isArray(data.category) ? data.category.map(cat => cat[currentLang] || cat).join(", ") : data.category?.[currentLang] || "غير معروف";
+  document.getElementById("animal-description").textContent = data.description?.[currentLang] || "لا يوجد وصف";
 }
 
 function getAudioPath(data, voiceType) {
