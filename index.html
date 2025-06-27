@@ -11,21 +11,25 @@
   <link rel="stylesheet" href="/css/home.css" />
   <link rel="stylesheet" href="/css/forms.css" />
   <link rel="stylesheet" href="/css/animals.css" />
-  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/fruits.css" /> <link rel="stylesheet" href="/css/style.css" />
 </head>
 
 <body>
   <div id="app">
     <header class="top-navbar shadow">
       <nav class="top-nav-links">
-        <a href="index.html" onclick="showHomePage()">🏠 الرئيسية</a> <a href="#" onclick="loadAnimalsPage()">📚 الحيوانات</a>
-        <a href="#games">🎮 الألعاب</a>
+        <a href="#" onclick="showHomePage()">🏠 الرئيسية</a>
+        <a href="#" onclick="loadAnimalsPage()">📚 الحيوانات</a>
+        <a href="#" onclick="loadFruitsPage()">🍎 الفواكه</a> <a href="#games">🎮 الألعاب</a>
       </nav>
     </header>
 
     <div class="page-layout">
       <aside class="sidebar shadow">
         <div id="animal-sidebar-controls" class="sidebar-section">
+          </div>
+
+        <div id="fruit-sidebar-controls" class="sidebar-section" style="display: none;">
           </div>
 
         <div class="sidebar-section static-section">
@@ -40,45 +44,58 @@
       </aside>
 
       <main class="main-content">
-        <h2 id="welcome-message">مرحبًا بك في الموسوعة!</h2> </main>
+        <h2 id="welcome-message">مرحبًا بك في الموسوعة!</h2>
+        </main>
     </div>
   </div>
 
   <script type="module">
+    // استيراد مكونات مختلفة
     import loginForm from '/users/login-form.html?raw';
     import registerForm from '/users/register-form.html?raw';
     import { showProfileForm } from '/src/js/profile.js';
     import { loadAnimalsGameContent } from '/src/js/animals-game.js';
+    import { loadFruitsGameContent } from '/src/js/fruits-game.js'; // استيراد دالة لعبة الفواكه
 
     // الحصول على المراجع لمناطق المحتوى
     const mainContentArea = document.querySelector("main.main-content");
     const animalSidebarControls = document.getElementById("animal-sidebar-controls");
+    const fruitSidebarControls = document.getElementById("fruit-sidebar-controls"); // الحصول على مرجع عناصر تحكم الفواكه
     const welcomeMessage = document.getElementById("welcome-message");
 
 
-    window.loadLogin = () => { mainContentArea.innerHTML = loginForm; hideAnimalControls(); };
-    window.loadRegister = () => { mainContentArea.innerHTML = registerForm; hideAnimalControls(); };
-    window.loadProfile = () => { showProfileForm(); hideAnimalControls(); }; // قد تحتاجshowProfileForm لتعديلها لتعمل مع mainContentArea
+    window.loadLogin = () => { mainContentArea.innerHTML = loginForm; hideAllControls(); };
+    window.loadRegister = () => { mainContentArea.innerHTML = registerForm; hideAllControls(); };
+    window.loadProfile = () => { showProfileForm(); hideAllControls(); };
 
+    // دالة تحميل صفحة الحيوانات
     window.loadAnimalsPage = async () => {
-      // إخفاء رسالة الترحيب
+      hideAllControls(); // إخفاء جميع عناصر التحكم أولاً
       if (welcomeMessage) welcomeMessage.style.display = 'none';
-
-      // استدعاء الدالة التي ستحقن محتوى اللعبة في main-content
-      // و ستحقن الأزرار وعناصر التحكم في animalSidebarControls
-      await loadAnimalsGameContent(); 
+      await loadAnimalsGameContent();
       showAnimalControls(); // إظهار عناصر التحكم الخاصة بالحيوانات
     };
 
-    window.showHomePage = () => {
-        mainContentArea.innerHTML = `<h2>مرحبًا بك في الموسوعة!</h2>`; // إعادة محتوى الصفحة الرئيسية
-        if (welcomeMessage) welcomeMessage.style.display = 'block'; // إظهار رسالة الترحيب إذا كانت مخفية
-        hideAnimalControls(); // إخفاء عناصر التحكم الخاصة بالحيوانات
+    // دالة تحميل صفحة الفواكه (جديدة)
+    window.loadFruitsPage = async () => {
+      hideAllControls(); // إخفاء جميع عناصر التحكم أولاً
+      if (welcomeMessage) welcomeMessage.style.display = 'none';
+      await loadFruitsGameContent(); // استدعاء دالة تحميل محتوى الفواكه
+      showFruitControls(); // إظهار عناصر التحكم الخاصة بالفواكه
     };
 
+    // دالة العودة للصفحة الرئيسية
+    window.showHomePage = () => {
+        mainContentArea.innerHTML = `<h2 id="welcome-message-inner">مرحبًا بك في الموسوعة!</h2>`; // إعادة محتوى الصفحة الرئيسية
+        const innerWelcomeMessage = document.getElementById("welcome-message-inner");
+        if (innerWelcomeMessage) innerWelcomeMessage.style.display = 'block'; // التأكد من إظهار رسالة الترحيب
+        hideAllControls(); // إخفاء جميع عناصر التحكم
+    };
+
+    // وظائف إظهار وإخفاء عناصر التحكم الجانبية
     function showAnimalControls() {
         if (animalSidebarControls) {
-            animalSidebarControls.style.display = 'block'; // أو 'flex' إذا كان يستخدم flex
+            animalSidebarControls.style.display = 'block'; // أو 'flex'
         }
     }
 
@@ -88,13 +105,30 @@
         }
     }
 
-    // إخفاء عناصر التحكم عند تحميل الصفحة لأول مرة (إذا لم تكن صفحة الحيوانات هي البداية)
-    document.addEventListener('DOMContentLoaded', () => {
-        hideAnimalControls();
-        // يمكنك هنا تحديد أي محتوى افتراضي يظهر في main-content عند بدء التطبيق
-        // مثلاً عرض بطاقات مواضيع أو غير ذلك
-    });
+    function showFruitControls() {
+        if (fruitSidebarControls) {
+            fruitSidebarControls.style.display = 'block'; // أو 'flex'
+        }
+    }
 
+    function hideFruitControls() {
+        if (fruitSidebarControls) {
+            fruitSidebarControls.style.display = 'none';
+        }
+    }
+
+    // دالة شاملة لإخفاء جميع عناصر التحكم في الشريط الجانبي
+    function hideAllControls() {
+        hideAnimalControls();
+        hideFruitControls();
+        // أضف هنا أي دوال إخفاء أخرى لأقسام جانبية مستقبلية
+    }
+
+    // إخفاء عناصر التحكم عند تحميل الصفحة لأول مرة
+    document.addEventListener('DOMContentLoaded', () => {
+        hideAllControls();
+        // يمكنك هنا تحديد أي محتوى افتراضي يظهر في main-content عند بدء التطبيق
+    });
   </script>
 </body>
 </html>
