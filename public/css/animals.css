@@ -1,119 +1,136 @@
 /* public/css/animals.css */
 
+/* نمط لـ game-box لتوسيط المحتوى داخل main-content */
 .game-box {
-  max-width: 800px; /* العرض الأقصى للبطاقة */
-  margin: 2rem auto;
-  text-align: center;
-  font-family: 'Cairo', sans-serif;
-  border: 1px solid var(--color-accent);
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  background-color: white;
-  display: flex;
-  flex-direction: row; /* الصورة والتفاصيل جنبًا إلى جنب */
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 1.5rem;
-  /* مهم: تحديد ارتفاع أقصى للبطاقة إذا أردت أن تظهر في شاشة واحدة */
-  max-height: calc(100vh - 200px); /* ارتفاع أقصى: (ارتفاع الشاشة - (ارتفاع الهيدر + هامش)) */
-  overflow-y: auto; /* إضافة شريط تمرير عمودي للبطاقة إذا تجاوز المحتوى الارتفاع الأقصى */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px; /* مسافة بين العناصر */
+    padding: 20px;
+    background-color: #f8f8f8; /* خلفية خفيفة للبطاقة */
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: 100%;
+    box-sizing: border-box; /* لضمان أن البادينج لا يزيد العرض */
 }
 
-/* تنسيقات الصورة */
-img#animal-image {
-  max-width: 40%;
-  height: auto;
-  max-height: 250px;
-  object-fit: contain;
-  border: 2px solid var(--color-primary);
-  border-radius: 1rem;
-  margin-bottom: 1rem;
-  display: block;
+/* نمط اسم الحيوان (تم نقله ليصبح فوق الصورة) */
+#animal-word {
+    font-size: 2.8em; /* حجم أكبر لجذب الانتباه */
+    font-weight: bold; /* خط عريض */
+    color: #007bff; /* لون مميز (يمكنك تغييره) */
+    margin-bottom: 10px; /* مسافة أسفل الاسم */
+    position: relative; /* لتمكين التلوين بالحرف الأول */
+    display: inline-block; /* لضمان تطبيق الأنماط بشكل صحيح */
 }
 
-/* تنسيقات كلمة الحيوان */
-h2#animal-word {
-  color: var(--color-text);
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-  flex-basis: 100%; /* تأخذ سطرًا كاملاً */
-  text-align: center;
+/* نمط لتلوين الحرف الأول */
+#animal-word::first-letter {
+    color: #FF6347; /* لون مختلف للحرف الأول (مثال: أحمر طماطم) */
+    font-size: 1.2em; /* حجم أكبر قليلاً للحرف الأول */
 }
 
-/* تنسيقات قسم تفاصيل الحيوان */
+
+#animal-image {
+    width: 300px; /* حجم ثابت للصور */
+    height: 300px;
+    object-fit: contain; /* للحفاظ على نسبة الأبعاد */
+    border-radius: 15px; /* حواف دائرية */
+    border: 3px solid #6A5ACD; /* إطار بنفسجي */
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    background-color: #ffffff; /* خلفية بيضاء للصورة */
+}
+
 .animal-details-section {
-  width: 55%;
-  text-align: right;
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
-  display: flex;
-  flex-direction: column;
+    /* تم إزالة هذا القسم من HTML المحقون، لذا قد لا تحتاج إلى نمطه */
+    /* إذا كنت لا تزال ترغب في إظهار تفاصيل إضافية، يجب إعادتها في HTML */
+    width: 100%;
+    text-align: right; /* محاذاة لليمين */
 }
 
 .animal-details-section h3 {
-  color: var(--color-primary);
-  font-size: 1.5rem;
-  margin-bottom: 0.8rem;
+    color: #4CAF50;
+    font-size: 1.4em;
+    margin-bottom: 10px;
 }
 
 .animal-details-section ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .animal-details-section li {
-  margin-bottom: 0.5rem;
-  font-size: 1.15rem;
-  color: var(--color-text);
+    font-size: 1.1em;
+    margin-bottom: 5px;
+    color: #444;
 }
 
-.animal-details-section li strong {
-  color: var(--color-accent);
+.animal-details-section strong {
+    color: #333;
 }
 
 .animal-description-box {
-  background-color: #f0f8ff;
-  border: 1px solid #e1f5fe;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-top: 1rem;
-  text-align: justify;
-  line-height: 1.6;
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fefefe;
+    text-align: justify;
 }
 
 .animal-description-box h4 {
-  color: var(--color-primary);
-  font-size: 1.25rem;
-  margin-bottom: 0.5rem;
-  border-bottom: 1px solid var(--color-primary);
-  padding-bottom: 0.3rem;
+    color: #2196F3;
+    font-size: 1.3em;
+    margin-top: 0;
+    margin-bottom: 10px;
 }
 
-/* تنسيقات اختيار الصوت والأزرار - تم نقلها إلى home.css أو animals-game.js */
-/* .voice-selection { ... } */
-/* .game-box button { ... } */
+#animal-description {
+    font-size: 1.1em;
+    line-height: 1.6;
+    color: #555;
+}
 
-/* media query لضمان التخطيط العمودي على الشاشات الصغيرة */
-@media (max-width: 768px) {
-  .game-box {
+/* أنماط الشريط الجانبي - تكرار لـ fruits.css لكن بأسماء ids/classes مختلفة */
+.sidebar-game-controls {
+    display: flex;
     flex-direction: column;
-    align-items: center;
-    max-width: 90%;
-    max-height: none;
-    overflow-y: visible;
-  }
-  img#animal-image {
-    max-width: 80%;
-  }
-  .animal-details-section {
+    gap: 10px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+}
+
+.language-selection, .voice-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sidebar-game-controls label {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.sidebar-game-controls select,
+.sidebar-game-controls button {
     width: 100%;
-    text-align: center;
-  }
-  .animal-description-box {
-    text-align: right;
-  }
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    font-size: 1em;
+}
+
+.sidebar-game-controls button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.sidebar-game-controls button:hover {
+    background-color: #0056b3;
 }
