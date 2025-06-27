@@ -1,25 +1,127 @@
-/* cyclopedia-app/public/css/fruits.css */
+body {
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f0f8ff; /* Light blue background */
+    color: #333;
+    direction: rtl; /* للغة العربية */
+    text-align: center;
+}
+
+.container {
+    background-color: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    padding: 30px;
+    width: 90%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+h1 {
+    color: #4CAF50; /* Green */
+    font-size: 2.5em;
+    margin-bottom: 15px;
+}
+
 .fruit-card {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+    border: 2px solid #FFD700; /* Gold border */
+    border-radius: 10px;
+    padding: 20px;
+    background-color: #fffaf0; /* Light cream */
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
 }
 
-.fruit-entry {
-  background-color: #fff7ec;
-  border-radius: 12px;
-  padding: 1rem;
-  text-align: center;
-  transition: transform 0.2s ease;
+#fruit-image {
+    width: 250px; /* حجم ثابت للصور */
+    height: 250px;
+    object-fit: contain; /* للحفاظ على نسبة الأبعاد */
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background-color: #eee; /* خلفية افتراضية للصورة */
 }
 
-.fruit-entry:hover {
-  transform: scale(1.05);
+.fruit-name {
+    font-size: 2em;
+    color: #FF6347; /* Tomato Red */
+    margin: 0;
 }
 
-.fruit-entry img {
-  width: 100px;
-  height: auto;
-  cursor: pointer;
+.fruit-name-en {
+    font-size: 1.2em;
+    color: #6A5ACD; /* Slate Blue */
+    margin: 0;
+    font-style: italic;
+    direction: ltr; /* للغة الإنجليزية */
+}
+
+.fruit-description {
+    font-size: 1.1em;
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+    direction: rtl;
+    text-align: justify; /* محاذاة النص */
+}
+
+.sound-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.sound-btn {
+    background-color: #2196F3; /* Blue */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 25px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sound-btn:hover {
+    background-color: #1976D2;
+}
+
+.navigation-buttons {
+    display: flex;
+    gap: 25px;
+    margin-top: 25px;
+}
+
+.nav-btn {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 15px 30px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+}
+
+.nav-btn:hover {
+    background-color: #388E3C;
+    transform: translateY(-2px);
+}
+
+.nav-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    box-shadow: none;
 }
