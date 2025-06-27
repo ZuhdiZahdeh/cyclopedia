@@ -172,7 +172,7 @@ function displayFruit(index) {
     if (index >= 0 && index < fruits.length) {
         const fruit = fruits[index];
         // تحديث مسار الصورة ليطابق هيكلية Firestore
-        fruitImage.src = `/images/ar/fruits/${fruit.image}`;
+        fruitImage.src = `/images/fruits/${fruit.image}`;
         fruitImage.alt = fruit.name.en;
         
         // عرض الاسم والوصف باللغة الحالية
