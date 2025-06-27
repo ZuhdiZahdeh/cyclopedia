@@ -7,7 +7,7 @@ import { getDocs, collection } from "firebase/firestore";
 // استيراد دوال اللغة لضبط اللغة والترجمة
 import { currentLang, loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
 // استيراد دالة تشغيل الصوت
-import { playAudio } from "./audio-handler.js";
+import { playAudio, stopCurrentAudio } from "./audio-handler.js"; // تأكد من استيراد stopCurrentAudio
 // استيراد دالة تسجيل النشاط
 import { recordActivity } from "./activity-handler.js";
 
@@ -18,10 +18,14 @@ let selectedVoice = "boy"; // الصوت الافتراضي للفاكهة (يم
 
 const currentUser = JSON.parse(localStorage.getItem("user") || "{}"); // جلب المستخدم الحالي (إذا كنت تستخدم نظام تسجيل الدخول)
 
+// تعريف المتغيرات التي ستحمل مراجع عناصر DOM على نطاق أوسع لتكون متاحة لدالة displayFruit
+let fruitImage, fruitNameAr, fruitNameEn, fruitDescriptionAr;
+let playSoundBtn, nextFruitBtn, prevFruitBtn, voiceSelect, gameLangSelect;
+
 // دالة لتشغيل محتوى لعبة الفواكه وتحميلها في DOM
 export async function loadFruitsGameContent() {
     const mainContentArea = document.querySelector("main.main-content");
-    const fruitSidebarControls = document.getElementById("fruit-sidebar-controls"); // المرجع الجديد لعناصر تحكم الفواكه
+    const fruitSidebarControls = document.getElementById("fruit-sidebar-controls");
 
     if (!mainContentArea || !fruitSidebarControls) {
         console.error("Main content area or fruit sidebar controls not found.");
@@ -31,17 +35,20 @@ export async function loadFruitsGameContent() {
     // 1. حقن HTML الخاص بلعبة الفواكه في منطقة المحتوى الرئيسية
     mainContentArea.innerHTML = `
         <div class="game-box">
-            <img id="fruit-image" src="" alt="Fruit" />
             <h2 id="fruit-name-ar" class="fruit-name">---</h2>
+            <img id="fruit-image" src="" alt="Fruit" />
             <h3 id="fruit-name-en" class="fruit-name-en">---</h3>
             <div class="fruit-description-box">
                 <h4>الوصف:</h4>
                 <p id="fruit-description-ar" class="fruit-description">---</p>
             </div>
+            <div class="navigation-buttons"> <button id="prev-fruit-btn">⬅️ السابق</button>
+                <button id="next-fruit-btn">التالي ➡️</button>
+            </div>
         </div>
     `;
 
-    // 2. حقن HTML الخاص بعناصر التحكم (عنوان البطاقة، الأزرار، اختيار الصوت واللغة) في الشريط الجانبي
+    // 2. حقن HTML الخاص بعناصر التحكم في الشريط الجانبي
     fruitSidebarControls.innerHTML = `
         <h3 style="text-align: center;">🍎 تعرف على الفواكه</h3>
         <div class="sidebar-game-controls">
@@ -61,28 +68,28 @@ export async function loadFruitsGameContent() {
                 </select>
             </div>
             <button id="play-sound-btn-fruit">🔊 استمع</button>
-            <button id="next-fruit-btn">التالي ➡️</button>
-            <button id="prev-fruit-btn">⬅️ السابق</button>
         </div>
     `;
 
-    // الحصول على المراجع للعناصر بعد حقنها في DOM
+    // ====== الحصول على المراجع للعناصر بعد حقنها في DOM ======
     // العناصر في main-content
-    const fruitImage = document.getElementById("fruit-image");
-    const fruitNameAr = document.getElementById("fruit-name-ar");
-    const fruitNameEn = document.getElementById("fruit-name-en");
-    const fruitDescriptionAr = document.getElementById("fruit-description-ar");
+    fruitImage = document.getElementById("fruit-image");
+    fruitNameAr = document.getElementById("fruit-name-ar");
+    fruitNameEn = document.getElementById("fruit-name-en");
+    fruitDescriptionAr = document.getElementById("fruit-description-ar");
 
     // العناصر في الشريط الجانبي
-    const playSoundBtn = document.getElementById("play-sound-btn-fruit");
-    const nextFruitBtn = document.getElementById("next-fruit-btn");
-    const prevFruitBtn = document.getElementById("prev-fruit-btn"); // زر السابق الجديد
-    const voiceSelect = document.getElementById("voice-select-fruit");
-    const gameLangSelect = document.getElementById("game-lang-select-fruit");
+    playSoundBtn = document.getElementById("play-sound-btn-fruit");
+    voiceSelect = document.getElementById("voice-select-fruit");
+    gameLangSelect = document.getElementById("game-lang-select-fruit");
+    
+    // أزرار التنقل التي أصبحت داخل main-content
+    nextFruitBtn = document.getElementById("next-fruit-btn");
+    prevFruitBtn = document.getElementById("prev-fruit-btn");
 
     // التحقق من وجود جميع العناصر الحيوية
     if (!fruitImage || !fruitNameAr || !playSoundBtn || !nextFruitBtn || !prevFruitBtn || !voiceSelect || !gameLangSelect || !fruitDescriptionAr) {
-        console.error("One or more fruit game/control elements not found after content injection. Check IDs.");
+        console.error("One or more fruit game/control elements not found after content injection. Check IDs. Re-running display functions before elements exist.");
         disableFruitButtons(true);
         return;
     }
@@ -112,7 +119,6 @@ export async function loadFruitsGameContent() {
         if (currentIndex < fruits.length - 1) {
             currentIndex++;
             displayFruit(currentIndex);
-            // تسجيل النشاط (اختياري، يمكنك تحديد متى تسجل النقاط)
             if (currentUser && currentUser.uid) {
                 await recordActivity(currentUser, "fruits");
             }
@@ -137,17 +143,13 @@ export async function loadFruitsGameContent() {
 
     voiceSelect.addEventListener("change", (event) => {
         selectedVoice = event.target.value;
-        // يمكنك تشغيل الصوت الجديد فورًا إذا أردت عند تغيير الاختيار
-        // playAudio(getFruitAudioPath(fruits[currentIndex], selectedVoice));
     });
 
     gameLangSelect.addEventListener("change", async (event) => {
         const newLang = event.target.value;
-        await loadLanguage(newLang); // تحديث اللغة في lang-handler
-        applyTranslations(); // إعادة تطبيق الترجمات على عناصر data-i18n
-        // لا نحتاج لإعادة جلب الفواكه إذا كانت الترجمات في نفس الكائن
-        // فقط أعد عرض الفاكهة الحالية لتطبيق اللغة الجديدة على النصوص
-        displayFruit(currentIndex);
+        await loadLanguage(newLang);
+        applyTranslations();
+        displayFruit(currentIndex); // أعد عرض الفاكهة الحالية لتطبيق اللغة الجديدة
         setDirection(newLang); // لضبط اتجاه النص في المتصفح بالكامل
     });
 }
@@ -155,13 +157,9 @@ export async function loadFruitsGameContent() {
 // دالة لجلب بيانات الفواكه من Firestore
 async function fetchFruits() {
     try {
-        // المسار الذي اتفقنا عليه: categories/fruits/items
         const fruitsCollectionRef = collection(db, "categories", "fruits", "items");
         const snapshot = await getDocs(fruitsCollectionRef);
-        fruits = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return data;
-        });
+        fruits = snapshot.docs.map(doc => doc.data());
         console.log("Fetched fruits:", fruits);
     } catch (error) {
         console.error("Error fetching fruits from Firestore:", error);
@@ -178,8 +176,8 @@ function displayFruit(index) {
         fruitImage.alt = fruit.name.en;
         
         // عرض الاسم والوصف باللغة الحالية
-        fruitNameAr.textContent = fruit.name?.[currentLang] || fruit.name.ar || "---"; // استخدم اللغة الحالية أولاً
-        fruitNameEn.textContent = fruit.name.en || "---"; // الاسم الإنجليزي دائمًا
+        fruitNameAr.textContent = fruit.name?.[currentLang] || fruit.name.ar || "---";
+        fruitNameEn.textContent = fruit.name.en || "---";
 
         fruitDescriptionAr.textContent = fruit.description?.[currentLang] || fruit.description.ar || "لا يوجد وصف";
 
@@ -187,14 +185,14 @@ function displayFruit(index) {
         prevFruitBtn.disabled = (index === 0);
         nextFruitBtn.disabled = (index === fruits.length - 1);
 
-        // إيقاف أي صوت يتم تشغيله حالياً
-        stopCurrentAudio(); // استخدم دالة stopCurrentAudio من audio-handler
+        stopCurrentAudio(); // إيقاف أي صوت يتم تشغيله حالياً
     }
 }
 
 // دالة للحصول على المسار الصحيح لملف الصوت
 function getFruitAudioPath(data, voiceType) {
-    const fileName = data.voices?.[voiceType]; // على سبيل المثال: 'apple_boy_ar.mp3'
+    // التأكد من أن حقل voices موجود وأن نوع الصوت المطلوب موجود
+    const fileName = data.voices?.[voiceType];
     if (fileName) {
         return `/audio/ar/fruits/${fileName}`; // المسار الكامل لملفات الصوت
     }

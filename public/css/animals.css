@@ -1,17 +1,16 @@
 /* public/css/animals.css */
 
-/* نمط لـ game-box لتوسيط المحتوى داخل main-content */
 .game-box {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px; /* مسافة بين العناصر */
+    gap: 15px;
     padding: 20px;
-    background-color: #f8f8f8; /* خلفية خفيفة للبطاقة */
+    background-color: #f8f8f8;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     width: 100%;
-    box-sizing: border-box; /* لضمان أن البادينج لا يزيد العرض */
+    box-sizing: border-box;
 }
 
 /* نمط اسم الحيوان (تم نقله ليصبح فوق الصورة) */
@@ -20,7 +19,7 @@
     font-weight: bold; /* خط عريض */
     color: #007bff; /* لون مميز (يمكنك تغييره) */
     margin-bottom: 10px; /* مسافة أسفل الاسم */
-    position: relative; /* لتمكين التلوين بالحرف الأول */
+    position: relative;
     display: inline-block; /* لضمان تطبيق الأنماط بشكل صحيح */
 }
 
@@ -32,20 +31,19 @@
 
 
 #animal-image {
-    width: 300px; /* حجم ثابت للصور */
+    width: 300px;
     height: 300px;
-    object-fit: contain; /* للحفاظ على نسبة الأبعاد */
-    border-radius: 15px; /* حواف دائرية */
-    border: 3px solid #6A5ACD; /* إطار بنفسجي */
+    object-fit: contain;
+    border-radius: 15px;
+    border: 3px solid #6A5ACD;
     box-shadow: 0 5px 10px rgba(0,0,0,0.2);
-    background-color: #ffffff; /* خلفية بيضاء للصورة */
+    background-color: #ffffff;
 }
 
-.animal-details-section {
-    /* تم إزالة هذا القسم من HTML المحقون، لذا قد لا تحتاج إلى نمطه */
-    /* إذا كنت لا تزال ترغب في إظهار تفاصيل إضافية، يجب إعادتها في HTML */
+.animal-details-section { /* قسم تفاصيل إضافية معاد */
     width: 100%;
-    text-align: right; /* محاذاة لليمين */
+    text-align: right;
+    margin-top: 15px; /* إضافة هامش علوي */
 }
 
 .animal-details-section h3 {
@@ -77,6 +75,8 @@
     border-radius: 8px;
     background-color: #fefefe;
     text-align: justify;
+    word-wrap: break-word; /* يضمن التفاف الكلمات الطويلة */
+    overflow-wrap: break-word; /* بديل أحدث لـ word-wrap */
 }
 
 .animal-description-box h4 {
@@ -90,9 +90,10 @@
     font-size: 1.1em;
     line-height: 1.6;
     color: #555;
+    /* تأكد أن هذا العنصر يلتف بشكل صحيح ضمن الـ box */
 }
 
-/* أنماط الشريط الجانبي - تكرار لـ fruits.css لكن بأسماء ids/classes مختلفة */
+/* أنماط الشريط الجانبي */
 .sidebar-game-controls {
     display: flex;
     flex-direction: column;
@@ -133,4 +134,33 @@
 
 .sidebar-game-controls button:hover {
     background-color: #0056b3;
+}
+
+/* أزرار التنقل في bottom of game-box */
+.navigation-buttons {
+    display: flex;
+    justify-content: space-between; /* تبعد الأزرار عن بعضها */
+    width: 100%;
+    margin-top: 20px; /* مسافة من الوصف */
+}
+
+.navigation-buttons button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navigation-buttons button:hover {
+    background-color: #388E3C;
+}
+
+.navigation-buttons button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
 }

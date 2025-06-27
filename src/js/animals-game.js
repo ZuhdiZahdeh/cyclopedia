@@ -3,12 +3,12 @@
 import { db } from "./firebase-config.js";
 import { getDocs, collection } from "firebase/firestore";
 import { currentLang, loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
-import { playAudio, stopCurrentAudio } from "./audio-handler.js"; // تأكد من استيراد stopCurrentAudio
+import { playAudio, stopCurrentAudio } from "./audio-handler.js";
 import { recordActivity } from "./activity-handler.js";
 
 let animals = [];
 let currentIndex = 0;
-let selectedVoice = "teacher"; // الصوت الافتراضي
+let selectedVoice = "teacher";
 
 const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -26,14 +26,24 @@ export async function loadAnimalsGameContent() {
     <div class="game-box">
       <h2 id="animal-word" class="animal-name">---</h2> <img id="animal-image" src="" alt="animal" />
       
-      <div class="animal-description-box">
-        <h4>الوصف:</h4>
-        <p id="animal-description">---</p>
+      <div class="animal-details-section"> <h3>تفاصيل إضافية:</h3>
+        <ul id="animal-details-list">
+          <li><strong>اسم الابناء:</strong> <span id="animal-baby">---</span></li>
+          <li><strong>اسم الزوجة:</strong> <span id="animal-female">---</span></li>
+          <li><strong>الصنف:</strong> <span id="animal-category">---</span></li>
+        </ul>
+        <div class="animal-description-box">
+          <h4>الوصف:</h4>
+          <p id="animal-description">---</p>
+        </div>
       </div>
+      <div class="navigation-buttons"> <button id="prev-animal-btn">⬅️ السابق</button>
+                <button id="next-animal-btn">التالي ➡️</button>
+            </div>
     </div>
   `;
 
-  // 2. حقن HTML الخاص بعناصر التحكم (عنوان البطاقة، الأزرار، اختيار الصوت واللغة) في الشريط الجانبي
+  // 2. حقن HTML الخاص بعناصر التحكم في الشريط الجانبي
   animalSidebarControls.innerHTML = `
     <h3 style="text-align: center;">🐾 تعرف على الحيوانات</h3>
     <div class="sidebar-game-controls">
@@ -48,29 +58,35 @@ export async function loadAnimalsGameContent() {
       <div class="voice-selection" style="margin-bottom: 1rem;">
         <label for="voice-select">الصوت:</label>
         <select id="voice-select">
-          <option value="teacher">المعلم</option>
+          <option value="teacher">المعلم</moption>
           <option value="boy">صوت ولد</option>
           <option value="girl">صوت بنت</option>
           <option value="child">صوت طفل</option>
         </select>
       </div>
       <button id="play-sound-btn">🔊 استمع</button>
-      <button id="next-animal-btn">التالي ➡️</button>
-      <button id="prev-animal-btn">⬅️ السابق</button> </div>
+    </div>
   `;
 
   // الحصول على المراجع للعناصر بعد حقنها في DOM
+  // العناصر في main-content
   const animalImage = document.getElementById("animal-image");
   const animalWord = document.getElementById("animal-word");
+  const animalBaby = document.getElementById("animal-baby"); // تم إعادة تعريفها
+  const animalFemale = document.getElementById("animal-female"); // تم إعادة تعريفها
+  const animalCategory = document.getElementById("animal-category"); // تم إعادة تعريفها
   const animalDescription = document.getElementById("animal-description");
-  
+
+  // العناصر في الشريط الجانبي
   const playSoundBtn = document.getElementById("play-sound-btn");
-  const nextAnimalBtn = document.getElementById("next-animal-btn");
-  const prevAnimalBtn = document.getElementById("prev-animal-btn"); // الحصول على مرجع زر السابق
   const voiceSelect = document.getElementById("voice-select");
   const gameLangSelect = document.getElementById("game-lang-select");
+  
+  // أزرار التنقل التي أصبحت داخل main-content
+  const nextAnimalBtn = document.getElementById("next-animal-btn");
+  const prevAnimalBtn = document.getElementById("prev-animal-btn");
 
-  if (!animalImage || !animalWord || !playSoundBtn || !nextAnimalBtn || !prevAnimalBtn || !voiceSelect || !gameLangSelect || !animalDescription) {
+  if (!animalImage || !animalWord || !playSoundBtn || !nextAnimalBtn || !prevAnimalBtn || !voiceSelect || !gameLangSelect || !animalBaby || !animalFemale || !animalCategory || !animalDescription) {
     console.error("One or more animal game/control elements not found after content injection. Check IDs.");
     disableAnimalButtons(true);
     return;
@@ -85,6 +101,9 @@ export async function loadAnimalsGameContent() {
     animalImage.src = "/images/default.png";
     animalWord.textContent = "لا توجد بيانات";
     animalDescription.textContent = "لا يوجد وصف متوفر.";
+    animalBaby.textContent = "غير متوفر"; // مسح التفاصيل
+    animalFemale.textContent = "غير متوفر";
+    animalCategory.textContent = "غير متوفر";
     disableAnimalButtons(true);
     return;
   }
@@ -92,7 +111,7 @@ export async function loadAnimalsGameContent() {
   showAnimal(currentIndex);
 
   nextAnimalBtn.addEventListener("click", async () => {
-    if (currentIndex < animals.length - 1) { // تغيير بسيط لتجنب الزيادة بعد الأخير
+    if (currentIndex < animals.length - 1) {
         currentIndex++;
         showAnimal(currentIndex);
         if (currentUser && currentUser.uid) {
@@ -101,7 +120,7 @@ export async function loadAnimalsGameContent() {
     }
   });
 
-  prevAnimalBtn.addEventListener("click", () => { // معالج حدث لزر السابق
+  prevAnimalBtn.addEventListener("click", () => {
     if (currentIndex > 0) {
         currentIndex--;
         showAnimal(currentIndex);
@@ -125,7 +144,7 @@ export async function loadAnimalsGameContent() {
     const newLang = event.target.value;
     await loadLanguage(newLang);
     applyTranslations();
-    await fetchAnimals();
+    await fetchAnimals(); // إعادة جلب الحيوانات باللغة الجديدة
     currentIndex = 0;
     showAnimal(currentIndex);
     setDirection(newLang);
@@ -145,24 +164,22 @@ async function fetchAnimals() {
 }
 
 function showAnimal(index) {
-  if (index >= 0 && index < animals.length) { // إضافة هذا التحقق
+  if (index >= 0 && index < animals.length) {
     const data = animals[index];
     
-    // عرض الاسم باللغة الحالية، مع fallback للإنجليزية
     const name = data.name?.[currentLang] || data.name?.en || "---"; 
     const imgSrc = `/images/animals/${data.image}`;
     
     document.getElementById("animal-image").src = imgSrc;
     document.getElementById("animal-image").alt = name;
     document.getElementById("animal-word").textContent = name; // هذا هو العنصر الذي سيظهر فوق الصورة
-    
-    // إزالة تفاصيل الابناء والزوجة والصنف إذا لم تعد مطلوبة في الواجهة
-    // أو التأكد من إزالتها من HTML المحقون
-    // animalBaby.textContent = data.baby?.[currentLang] || "غير معروف";
-    // animalFemale.textContent = data.female?.[currentLang] || "غير معروف";
-    // animalCategory.textContent = Array.isArray(data.category) 
-    //   ? data.category.map(cat => (typeof cat === 'object' && cat !== null ? cat[currentLang] : cat) || "غير معروف").join(", ") 
-    //   : (data.category?.[currentLang] || "غير معروف");
+
+    // عرض التفاصيل الإضافية
+    document.getElementById("animal-baby").textContent = data.baby?.[currentLang] || "غير معروف";
+    document.getElementById("animal-female").textContent = data.female?.[currentLang] || "غير معروف";
+    document.getElementById("animal-category").textContent = Array.isArray(data.category) 
+      ? data.category.map(cat => (typeof cat === 'object' && cat !== null ? cat[currentLang] : cat) || "غير معروف").join(", ") 
+      : (data.category?.[currentLang] || "غير معروف");
     
     document.getElementById("animal-description").textContent = data.description?.[currentLang] || "لا يوجد وصف";
 
@@ -170,14 +187,13 @@ function showAnimal(index) {
     document.getElementById("prev-animal-btn").disabled = (index === 0);
     document.getElementById("next-animal-btn").disabled = (index === animals.length - 1);
 
-    stopCurrentAudio(); // إيقاف أي صوت يتم تشغيله حالياً
+    stopCurrentAudio();
   }
 }
 
 function getAudioPath(data, voiceType) {
   const fileName = data.voices?.[voiceType];
   if (fileName) {
-    // استخدم currentLang للمجلد الفرعي للغة للصوت
     return `/audio/${currentLang}/animals/${fileName}`;
   }
   return null;
