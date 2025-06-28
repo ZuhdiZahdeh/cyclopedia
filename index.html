@@ -13,7 +13,64 @@
   <link rel="stylesheet" href="/css/common-components-subjects.css" />
   <link rel="stylesheet" href="/css/animals.css" />
   <link rel="stylesheet" href="/css/fruits.css" />
+  <link rel="stylesheet" href="/css/vegetables.css" />
   <link rel="stylesheet" href="/css/style.css" />
+
+  <style>
+    /* أنماط إضافية لبطاقات الصفحة الرئيسية */
+    .home-cards-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        padding: 20px;
+        width: 100%;
+        max-width: 900px; /* للتحكم في عرض الحاوي */
+        margin: auto;
+    }
+
+    .topic-card {
+        background-color: var(--color-surface);
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 25px;
+        width: 180px; /* حجم البطاقة */
+        height: 180px;
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        text-decoration: none; /* لإزالة خط التسطير من الروابط */
+        color: var(--color-text-primary); /* لون النص */
+    }
+
+    .topic-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .topic-card .icon {
+        font-size: 4em; /* حجم الأيقونة */
+        margin-bottom: 10px;
+        color: var(--color-primary); /* لون الأيقونة */
+    }
+
+    .topic-card h3 {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: var(--color-text-primary);
+        margin: 0;
+        text-align: center;
+    }
+
+    /* ألوان خاصة للأيقونات إذا أردت */
+    .topic-card.animals .icon { color: var(--color-purple); }
+    .topic-card.fruits .icon { color: var(--color-secondary); }
+    .topic-card.vegetables .icon { color: var(--color-success); } /* الأخضر ليتناسب مع الخضروات */
+
+  </style>
 </head>
 
 <body>
@@ -22,17 +79,85 @@
       <nav class="top-nav-links">
         <a href="#" onclick="showHomePage()">🏠 الرئيسية</a>
         <a href="#" onclick="loadAnimalsPage()">📚 الحيوانات</a>
-        <a href="#" onclick="loadFruitsPage()">🍎 الفواكه</a> <a href="#games">🎮 الألعاب</a>
+        <a href="#" onclick="loadFruitsPage()">🍎 الفواكه</a>
+        <a href="#" onclick="loadVegetablesPage()">🥦 الخضروات</a>
+        <a href="#games">🎮 الألعاب</a>
       </nav>
     </header>
 
     <div class="page-layout">
       <aside class="sidebar shadow">
-        <div id="animal-sidebar-controls" class="sidebar-section">
+        <div id="animal-sidebar-controls" class="sidebar-section" style="display: none;">
+          <h3 style="text-align: center;">🐾 تعرف على الحيوانات</h3>
+          <div class="sidebar-game-controls">
+            <div class="language-selection" style="margin-bottom: 1rem;">
+              <label for="game-lang-select">اللغة:</label>
+              <select id="game-lang-select">
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+                <option value="he">עבריة</option>
+              </select>
+            </div>
+            <div class="voice-selection" style="margin-bottom: 1rem;">
+              <label for="voice-select">الصوت:</label>
+              <select id="voice-select">
+                <option value="teacher">المعلم</option>
+                <option value="boy">صوت ولد</option>
+                <option value="girl">صوت بنت</option>
+                <option value="child">صوت طفل</option>
+              </select>
+            </div>
+            <button id="play-sound-btn">🔊 استمع</button>
           </div>
+        </div>
 
         <div id="fruit-sidebar-controls" class="sidebar-section" style="display: none;">
-          </div>
+            <h3 style="text-align: center;">🍎 تعرف على الفواكه</h3>
+            <div class="sidebar-game-controls">
+                <div class="language-selection" style="margin-bottom: 1rem;">
+                    <label for="game-lang-select-fruit">اللغة:</label>
+                    <select id="game-lang-select-fruit">
+                        <option value="ar">العربية</option>
+                        <option value="en">English</option>
+                        <option value="he">עבריة</option>
+                    </select>
+                </div>
+                <div class="voice-selection" style="margin-bottom: 1rem;">
+                    <label for="voice-select-fruit">الصوت:</label>
+                    <select id="voice-select-fruit">
+                        <option value="teacher">المعلم</option>
+                        <option value="boy">صوت ولد</option>
+                        <option value="girl">صوت بنت</option>
+                        <option value="child">صوت طفل</option>
+                    </select>
+                </div>
+                <button id="play-sound-btn-fruit">🔊 استمع</button>
+            </div>
+        </div>
+
+        <div id="vegetable-sidebar-controls" class="sidebar-section" style="display: none;">
+            <h3 style="text-align: center;">🥦 تعرف على الخضروات</h3>
+            <div class="sidebar-game-controls">
+                <div class="language-selection" style="margin-bottom: 1rem;">
+                    <label for="game-lang-select-vegetable">اللغة:</label>
+                    <select id="game-lang-select-vegetable">
+                        <option value="ar">العربية</option>
+                        <option value="en">English</option>
+                        <option value="he">עבריة</option>
+                    </select>
+                </div>
+                <div class="voice-selection" style="margin-bottom: 1rem;">
+                    <label for="voice-select-vegetable">الصوت:</label>
+                    <select id="voice-select-vegetable">
+                        <option value="teacher">المعلم</option>
+                        <option value="boy">صوت ولد</option>
+                        <option value="girl">صوت بنت</option>
+                        <option value="child">صوت طفل</option>
+                    </select>
+                </div>
+                <button id="play-sound-btn-vegetable">🔊 استمع</button>
+            </div>
+        </div>
 
         <div class="sidebar-section static-section">
           <h3>👤 حسابك</h3>
@@ -46,8 +171,22 @@
       </aside>
 
       <main class="main-content">
-        <h2 id="welcome-message">مرحبًا بك في الموسوعة!</h2>
-        </main>
+        <h2 id="welcome-message" style="display: block;">مرحبًا بك في الموسوعة!</h2>
+        <div id="home-topic-cards" class="home-cards-container">
+            <a href="#" class="topic-card animals" onclick="loadAnimalsPage(); return false;">
+                <span class="icon">🐾</span>
+                <h3>الحيوانات</h3>
+            </a>
+            <a href="#" class="topic-card fruits" onclick="loadFruitsPage(); return false;">
+                <span class="icon">🍎</span>
+                <h3>الفواكه</h3>
+            </a>
+            <a href="#" class="topic-card vegetables" onclick="loadVegetablesPage(); return false;">
+                <span class="icon">🥦</span>
+                <h3>الخضروات</h3>
+            </a>
+            </div>
+      </main>
     </div>
   </div>
 
@@ -56,14 +195,17 @@
     import loginForm from '/users/login-form.html?raw';
     import registerForm from '/users/register-form.html?raw';
     import { showProfileForm } from '/src/js/profile.js';
-    import { loadAnimalsGameContent } from '/src/js/animals-game.js';
-    import { loadFruitsGameContent } from '/src/js/fruits-game.js'; // استيراد دالة لعبة الفواكه
+    import { loadAnimalsGameContent } => '/src/js/animals-game.js';
+    import { loadFruitsGameContent } => '/src/js/fruits-game.js';
+    import { loadVegetablesGameContent } => '/src/js/vegetables-game.js';
 
     // الحصول على المراجع لمناطق المحتوى
     const mainContentArea = document.querySelector("main.main-content");
     const animalSidebarControls = document.getElementById("animal-sidebar-controls");
-    const fruitSidebarControls = document.getElementById("fruit-sidebar-controls"); // الحصول على مرجع عناصر تحكم الفواكه
+    const fruitSidebarControls = document.getElementById("fruit-sidebar-controls");
+    const vegetableSidebarControls = document.getElementById("vegetable-sidebar-controls");
     const welcomeMessage = document.getElementById("welcome-message");
+    const homeTopicCards = document.getElementById("home-topic-cards");
 
 
     window.loadLogin = () => { mainContentArea.innerHTML = loginForm; hideAllControls(); };
@@ -74,30 +216,63 @@
     window.loadAnimalsPage = async () => {
       hideAllControls(); // إخفاء جميع عناصر التحكم أولاً
       if (welcomeMessage) welcomeMessage.style.display = 'none';
+      if (homeTopicCards) homeTopicCards.style.display = 'none'; // إخفاء بطاقات الصفحة الرئيسية
       await loadAnimalsGameContent();
       showAnimalControls(); // إظهار عناصر التحكم الخاصة بالحيوانات
     };
 
-    // دالة تحميل صفحة الفواكه (جديدة)
+    // دالة تحميل صفحة الفواكه
     window.loadFruitsPage = async () => {
       hideAllControls(); // إخفاء جميع عناصر التحكم أولاً
       if (welcomeMessage) welcomeMessage.style.display = 'none';
+      if (homeTopicCards) homeTopicCards.style.display = 'none'; // إخفاء بطاقات الصفحة الرئيسية
       await loadFruitsGameContent(); // استدعاء دالة تحميل محتوى الفواكه
       showFruitControls(); // إظهار عناصر التحكم الخاصة بالفواكه
     };
 
+    // دالة تحميل صفحة الخضروات
+    window.loadVegetablesPage = async () => {
+      hideAllControls(); // إخفاء جميع عناصر التحكم أولاً
+      if (welcomeMessage) welcomeMessage.style.display = 'none';
+      if (homeTopicCards) homeTopicCards.style.display = 'none'; // إخفاء بطاقات الصفحة الرئيسية
+      await loadVegetablesGameContent(); // استدعاء دالة تحميل محتوى الخضروات
+      showVegetableControls(); // إظهار عناصر التحكم الخاصة بالخضروات
+    };
+
     // دالة العودة للصفحة الرئيسية
     window.showHomePage = () => {
-        mainContentArea.innerHTML = `<h2 id="welcome-message-inner">مرحبًا بك في الموسوعة!</h2>`; // إعادة محتوى الصفحة الرئيسية
+        // إعادة محتوى الصفحة الرئيسية بما في ذلك رسالة الترحيب والبطاقات
+        mainContentArea.innerHTML = `
+            <h2 id="welcome-message-inner" style="display: block;">مرحبًا بك في الموسوعة!</h2>
+            <div id="home-topic-cards-inner" class="home-cards-container">
+                <a href="#" class="topic-card animals" onclick="loadAnimalsPage(); return false;">
+                    <span class="icon">🐾</span>
+                    <h3>الحيوانات</h3>
+                </a>
+                <a href="#" class="topic-card fruits" onclick="loadFruitsPage(); return false;">
+                    <span class="icon">🍎</span>
+                    <h3>الفواكه</h3>
+                </a>
+                <a href="#" class="topic-card vegetables" onclick="loadVegetablesPage(); return false;">
+                    <span class="icon">🥦</span>
+                    <h3>الخضروات</h3>
+                </a>
+            </div>
+        `;
+        // إظهار رسالة الترحيب والبطاقات بعد إعادة الحقن
+        // (إذا كانت IDs مختلفة، يجب الحصول على المراجع الجديدة هنا)
         const innerWelcomeMessage = document.getElementById("welcome-message-inner");
-        if (innerWelcomeMessage) innerWelcomeMessage.style.display = 'block'; // التأكد من إظهار رسالة الترحيب
-        hideAllControls(); // إخفاء جميع عناصر التحكم
+        if (innerWelcomeMessage) innerWelcomeMessage.style.display = 'block';
+        const innerHomeTopicCards = document.getElementById("home-topic-cards-inner");
+        if (innerHomeTopicCards) innerHomeTopicCards.style.display = 'flex'; // أو 'block' حسب الحاجة
+
+        hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية
     };
 
     // وظائف إظهار وإخفاء عناصر التحكم الجانبية
     function showAnimalControls() {
         if (animalSidebarControls) {
-            animalSidebarControls.style.display = 'block'; // أو 'flex'
+            animalSidebarControls.style.display = 'block';
         }
     }
 
@@ -109,7 +284,7 @@
 
     function showFruitControls() {
         if (fruitSidebarControls) {
-            fruitSidebarControls.style.display = 'block'; // أو 'flex'
+            fruitSidebarControls.style.display = 'block';
         }
     }
 
@@ -119,17 +294,31 @@
         }
     }
 
+    function showVegetableControls() {
+        if (vegetableSidebarControls) {
+            vegetableSidebarControls.style.display = 'block';
+        }
+    }
+
+    function hideVegetableControls() {
+        if (vegetableSidebarControls) {
+            vegetableSidebarControls.style.display = 'none';
+        }
+    }
+
     // دالة شاملة لإخفاء جميع عناصر التحكم في الشريط الجانبي
     function hideAllControls() {
         hideAnimalControls();
         hideFruitControls();
+        hideVegetableControls();
         // أضف هنا أي دوال إخفاء أخرى لأقسام جانبية مستقبلية
     }
 
-    // إخفاء عناصر التحكم عند تحميل الصفحة لأول مرة
+    // إخفاء عناصر التحكم عند تحميل الصفحة لأول مرة، وإظهار محتوى الصفحة الرئيسية
     document.addEventListener('DOMContentLoaded', () => {
-        hideAllControls();
-        // يمكنك هنا تحديد أي محتوى افتراضي يظهر في main-content عند بدء التطبيق
+        hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية
+        // التأكد من عرض محتوى الصفحة الرئيسية عند التحميل الأولي
+        window.showHomePage(); // استدعاء دالة عرض الصفحة الرئيسية عند التحميل
     });
   </script>
 </body>

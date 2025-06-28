@@ -1,13 +1,29 @@
-.vegetable-card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  padding: 1rem;
-  border-radius: 12px;
+/* public/css/vegetables.css */
+
+/* أنماط خاصة بصور الخضروات (إذا كانت مختلفة عن الحيوانات والفواكه) */
+#vegetable-image {
+    max-width: 100%; /* تأكد من أنها لا تتجاوز عرض الحاوية */
+    height: 250px; /* يمكن تعديل الارتفاع حسب الحاجة */
+    object-fit: contain; /* للحفاظ على نسبة العرض إلى الارتفاع */
+    border-radius: 8px;
+    border: 3px solid var(--color-primary); /* استخدام لون أساسي للخضروات (أخضر) */
+    box-shadow: 0 4px 8px var(--color-shadow);
+    background-color: var(--color-surface);
+    margin-bottom: 20px; /* مسافة تحت الصورة */
 }
 
-.vegetable-entry img {
-  width: 180px;
-  height: auto;
-  display: block;
-  margin-bottom: 0.5rem;
+/* نمط قسم التفاصيل الإضافية (خاص بالخضروات) */
+/* استخدام الفئة info-box من common-components-subjects.css */
+/* إذا أردت أنماطًا إضافية خاصة بالخضروات يمكن وضعها هنا */
+.vegetable-details-section {
+    /* يمكنك إضافة أنماط هنا لتجاوز/تخصيص أنماط .info-box إذا لزم الأمر */
+    /* text-align: right; */ /* info-box به justify، يمكن تغييره هنا */
 }
+
+/* نمط لتضمين الوصف إذا كان بحاجة لأنماط خاصة إضافية */
+.vegetable-description-box {
+    /* يمكنك إضافة أنماط هنا لتجاوز/تخصيص أنماط .info-box إذا لزم الأمر */
+}
+
+/* لا داعي لتكرار الأنماط المشتركة مثل .game-box, .item-main-name, .navigation-buttons, .sidebar-game-controls هنا */
+/* هذه الأنماط موجودة في public/css/common-components-subjects.css */
