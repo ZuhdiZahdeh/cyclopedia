@@ -6,17 +6,17 @@
   <title>الموسوعة التفاعلية للأطفال</title>
 
   <!-- روابط ملفات CSS المشتركة والخاصة بالمواضيع -->
-  <!-- تم تحديث المسارات لتعكس وجود index.html في الجذر -->
-  <link rel="stylesheet" href="public/css/colors.css" />
-  <link rel="stylesheet" href="public/css/fonts.css" />
-  <link rel="stylesheet" href="public/css/shared-utilities.css" />
-  <link rel="stylesheet" href="public/css/home.css" />
-  <link rel="stylesheet" href="public/css/forms.css" />
-  <link rel="stylesheet" href="public/css/common-components-subjects.css" />
-  <link rel="stylesheet" href="public/css/animals.css" />
-  <link rel="stylesheet" href="public/css/fruits.css" />
-  <link rel="stylesheet" href="public/css/vegetables.css" />
-  <link rel="stylesheet" href="public/css/style.css" />
+  <!-- هذه المسارات يجب أن تبدأ بـ / لأنها ستكون في جذر مجلد dist بعد البناء -->
+  <link rel="stylesheet" href="/css/colors.css" />
+  <link rel="stylesheet" href="/css/fonts.css" />
+  <link rel="stylesheet" href="/css/shared-utilities.css" />
+  <link rel="stylesheet" href="/css/home.css" />
+  <link rel="stylesheet" href="/css/forms.css" />
+  <link rel="stylesheet" href="/css/common-components-subjects.css" />
+  <link rel="stylesheet" href="/css/animals.css" />
+  <link rel="stylesheet" href="/css/fruits.css" />
+  <link rel="stylesheet" href="/css/vegetables.css" />
+  <link rel="stylesheet" href="/css/style.css" />
 
   <!-- أنماط CSS مخصصة لبطاقات الصفحة الرئيسية (topic-card) -->
   <style>
@@ -174,7 +174,7 @@
             <li><a href="#" onclick="loadLogin()">تسجيل الدخول</a></li>
             <li><a href="#" onclick="loadRegister()">تسجيل جديد</a></li>
             <li><a href="#" onclick="loadProfile()">الملف الشخصي</a></li>
-            <li><a href="public/users/my-report.html">سجل النقاط</a></li>
+            <li><a href="/users/my-report.html">سجل النقاط</a></li> <!-- هذا المسار صحيح إذا كان users/my-report.html موجوداً في dist/users/my-report.html بعد البناء -->
           </ul>
         </div>
       </aside>
@@ -205,12 +205,12 @@
   <!-- روابط ملفات JavaScript كوحدات (Modules) -->
   <script type="module">
     // استيراد مكونات ودووال من ملفات JS الأخرى
-    // تم تحديث المسارات لتعكس وجود index.html في الجذر
-    import { showProfileForm } from './public/src/js/profile.js';
-    import { loadAnimalsGameContent } from './public/src/js/animals-game.js';
-    import { loadFruitsGameContent } from './public/src/js/fruits-game.js';
-    import { loadVegetablesGameContent } from './public/src/js/vegetables-game.js';
-    import { setDirection } from './public/src/js/lang-handler.js';
+    // هذه المسارات يجب أن تبدأ بـ / لأنها ستكون في جذر مجلد dist بعد البناء (من مجلد public الأصلي)
+    import { showProfileForm } from '/src/js/profile.js'; 
+    import { loadAnimalsGameContent } from '/src/js/animals-game.js';
+    import { loadFruitsGameContent } from '/src/js/fruits-game.js';
+    import { loadVegetablesGameContent } from '/src/js/vegetables-game.js';
+    import { setDirection } from '/src/js/lang-handler.js';
 
 
     // الحصول على المراجع لعناصر DOM الرئيسية في الصفحة
@@ -222,11 +222,11 @@
     const homeTopicCards = document.getElementById("home-topic-cards");
 
     // وظائف تحميل النماذج الثابتة (تسجيل الدخول/التسجيل/الملف الشخصي)
-    // تم تحديث المسارات لتعكس وجود index.html في الجذر
+    // هذه المسارات يجب أن تبدأ بـ / لأنها ستكون في جذر مجلد dist بعد البناء
     window.loadLogin = async () => {
         hideAllControls();
         try {
-            const response = await fetch('./public/users/login-form.html');
+            const response = await fetch('/users/login-form.html');
             if (!response.ok) throw new Error('Failed to load login form');
             const loginFormHtml = await response.text();
             mainContentArea.innerHTML = loginFormHtml;
@@ -239,7 +239,7 @@
     window.loadRegister = async () => {
         hideAllControls();
         try {
-            const response = await fetch('./public/users/register-form.html');
+            const response = await fetch('/users/register-form.html');
             if (!response.ok) throw new Error('Failed to load register form');
             const registerFormHtml = await response.text();
             mainContentArea.innerHTML = registerFormHtml;
