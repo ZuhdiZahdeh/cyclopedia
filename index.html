@@ -5,19 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>الموسوعة التفاعلية للأطفال</title>
 
-  <link rel="stylesheet" href="/css/colors.css" />
-  <link rel="stylesheet" href="/css/fonts.css" />
-  <link rel="stylesheet" href="/css/shared-utilities.css" />
-  <link rel="stylesheet" href="/css/home.css" />
-  <link rel="stylesheet" href="/css/forms.css" />
-  <link rel="stylesheet" href="/css/common-components-subjects.css" />
-  <link rel="stylesheet" href="/css/animals.css" />
-  <link rel="stylesheet" href="/css/fruits.css" />
-  <link rel="stylesheet" href="/css/vegetables.css" />
-  <link rel="stylesheet" href="/css/style.css" />
+  <!-- روابط ملفات CSS المشتركة والخاصة بالمواضيع -->
+  <!-- تم تحديث المسارات لتعكس وجود index.html في الجذر -->
+  <link rel="stylesheet" href="public/css/colors.css" />
+  <link rel="stylesheet" href="public/css/fonts.css" />
+  <link rel="stylesheet" href="public/css/shared-utilities.css" />
+  <link rel="stylesheet" href="public/css/home.css" />
+  <link rel="stylesheet" href="public/css/forms.css" />
+  <link rel="stylesheet" href="public/css/common-components-subjects.css" />
+  <link rel="stylesheet" href="public/css/animals.css" />
+  <link rel="stylesheet" href="public/css/fruits.css" />
+  <link rel="stylesheet" href="public/css/vegetables.css" />
+  <link rel="stylesheet" href="public/css/style.css" />
 
+  <!-- أنماط CSS مخصصة لبطاقات الصفحة الرئيسية (topic-card) -->
   <style>
-    /* أنماط إضافية لبطاقات الصفحة الرئيسية */
     .home-cards-container {
         display: flex;
         flex-wrap: wrap;
@@ -25,14 +27,14 @@
         justify-content: center;
         padding: 20px;
         width: 100%;
-        max-width: 900px; /* للتحكم في عرض الحاوي */
-        margin: auto;
+        max-width: 900px; /* لضبط عرض الحاوية على الشاشات الكبيرة */
+        margin: auto; /* لتوسيط الحاوية */
     }
 
     .topic-card {
-        background-color: var(--color-surface);
-        border-radius: 15px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        background-color: var(--color-surface); /* استخدام متغير اللون للخلفية */
+        border-radius: 15px; /* زوايا دائرية */
+        box-shadow: 0 5px 15px var(--color-shadow); /* ظل للبطاقة */
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -41,20 +43,20 @@
         width: 180px; /* حجم البطاقة */
         height: 180px;
         cursor: pointer;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        text-decoration: none; /* لإزالة خط التسطير من الروابط */
-        color: var(--color-text-primary); /* لون النص */
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* تأثير الانتقال عند التحويم */
+        text-decoration: none; /* إزالة خط التسطير من الروابط */
+        color: var(--color-text-primary); /* لون النص الأساسي */
     }
 
     .topic-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        transform: translateY(-5px); /* رفع البطاقة قليلاً عند التحويم */
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* زيادة الظل عند التحويم */
     }
 
     .topic-card .icon {
         font-size: 4em; /* حجم الأيقونة */
         margin-bottom: 10px;
-        color: var(--color-primary); /* لون الأيقونة */
+        color: var(--color-primary); /* لون افتراضي للأيقونة */
     }
 
     .topic-card h3 {
@@ -65,16 +67,16 @@
         text-align: center;
     }
 
-    /* ألوان خاصة للأيقونات إذا أردت */
+    /* ألوان خاصة للأيقونات لكل موضوع */
     .topic-card.animals .icon { color: var(--color-purple); }
     .topic-card.fruits .icon { color: var(--color-secondary); }
-    .topic-card.vegetables .icon { color: var(--color-success); } /* الأخضر ليتناسب مع الخضروات */
-
+    .topic-card.vegetables .icon { color: var(--color-success); }
   </style>
 </head>
 
 <body>
   <div id="app">
+    <!-- شريط التنقل العلوي -->
     <header class="top-navbar shadow">
       <nav class="top-nav-links">
         <a href="#" onclick="showHomePage()">🏠 الرئيسية</a>
@@ -85,8 +87,11 @@
       </nav>
     </header>
 
+    <!-- تخطيط الصفحة: شريط جانبي ومحتوى رئيسي -->
     <div class="page-layout">
+      <!-- الشريط الجانبي (Sidebar) -->
       <aside class="sidebar shadow">
+        <!-- عناصر تحكم الحيوانات (تظهر فقط عند عرض صفحة الحيوانات) -->
         <div id="animal-sidebar-controls" class="sidebar-section" style="display: none;">
           <h3 style="text-align: center;">🐾 تعرف على الحيوانات</h3>
           <div class="sidebar-game-controls">
@@ -95,7 +100,7 @@
               <select id="game-lang-select">
                 <option value="ar">العربية</option>
                 <option value="en">English</option>
-                <option value="he">עבריة</option>
+                <option value="he">عبري</option>
               </select>
             </div>
             <div class="voice-selection" style="margin-bottom: 1rem;">
@@ -111,6 +116,7 @@
           </div>
         </div>
 
+        <!-- عناصر تحكم الفواكه (تظهر فقط عند عرض صفحة الفواكه) -->
         <div id="fruit-sidebar-controls" class="sidebar-section" style="display: none;">
             <h3 style="text-align: center;">🍎 تعرف على الفواكه</h3>
             <div class="sidebar-game-controls">
@@ -119,7 +125,7 @@
                     <select id="game-lang-select-fruit">
                         <option value="ar">العربية</option>
                         <option value="en">English</option>
-                        <option value="he">עבריة</option>
+                        <option value="he">عبري</option>
                     </select>
                 </div>
                 <div class="voice-selection" style="margin-bottom: 1rem;">
@@ -135,6 +141,7 @@
             </div>
         </div>
 
+        <!-- عناصر تحكم الخضروات (تظهر فقط عند عرض صفحة الخضروات) -->
         <div id="vegetable-sidebar-controls" class="sidebar-section" style="display: none;">
             <h3 style="text-align: center;">🥦 تعرف على الخضروات</h3>
             <div class="sidebar-game-controls">
@@ -143,7 +150,7 @@
                     <select id="game-lang-select-vegetable">
                         <option value="ar">العربية</option>
                         <option value="en">English</option>
-                        <option value="he">עבריة</option>
+                        <option value="he">عبري</option>
                     </select>
                 </div>
                 <div class="voice-selection" style="margin-bottom: 1rem;">
@@ -159,18 +166,22 @@
             </div>
         </div>
 
+        <!-- قسم الحساب الثابت في الشريط الجانبي -->
         <div class="sidebar-section static-section">
           <h3>👤 حسابك</h3>
           <ul>
+            <!-- تم تحديث المسارات لتعكس وجود index.html في الجذر -->
             <li><a href="#" onclick="loadLogin()">تسجيل الدخول</a></li>
             <li><a href="#" onclick="loadRegister()">تسجيل جديد</a></li>
             <li><a href="#" onclick="loadProfile()">الملف الشخصي</a></li>
-            <li><a href="users/my-report.html">سجل النقاط</a></li>
+            <li><a href="public/users/my-report.html">سجل النقاط</a></li>
           </ul>
         </div>
       </aside>
 
+      <!-- منطقة المحتوى الرئيسية (Main Content Area) -->
       <main class="main-content">
+        <!-- المحتوى الأولي الذي يظهر في الصفحة الرئيسية -->
         <h2 id="welcome-message" style="display: block;">مرحبًا بك في الموسوعة!</h2>
         <div id="home-topic-cards" class="home-cards-container">
             <a href="#" class="topic-card animals" onclick="loadAnimalsPage(); return false;">
@@ -185,21 +196,24 @@
                 <span class="icon">🥦</span>
                 <h3>الخضروات</h3>
             </a>
-            </div>
+            <!-- يمكن إضافة المزيد من البطاقات هنا للمواضيع المستقبلية -->
+        </div>
       </main>
     </div>
   </div>
 
+  <!-- روابط ملفات JavaScript كوحدات (Modules) -->
   <script type="module">
-    // استيراد مكونات مختلفة
-    import loginForm from '/users/login-form.html?raw';
-    import registerForm from '/users/register-form.html?raw';
-    import { showProfileForm } from '/src/js/profile.js';
-    import { loadAnimalsGameContent } => '/src/js/animals-game.js';
-    import { loadFruitsGameContent } => '/src/js/fruits-game.js';
-    import { loadVegetablesGameContent } => '/src/js/vegetables-game.js';
+    // استيراد مكونات ودووال من ملفات JS الأخرى
+    // تم تحديث المسارات لتعكس وجود index.html في الجذر
+    import { showProfileForm } from 'public/src/js/profile.js';
+    import { loadAnimalsGameContent } from 'public/src/js/animals-game.js';
+    import { loadFruitsGameContent } from 'public/src/js/fruits-game.js';
+    import { loadVegetablesGameContent } from 'public/src/js/vegetables-game.js';
+    import { setDirection } from 'public/src/js/lang-handler.js';
 
-    // الحصول على المراجع لمناطق المحتوى
+
+    // الحصول على المراجع لعناصر DOM الرئيسية في الصفحة
     const mainContentArea = document.querySelector("main.main-content");
     const animalSidebarControls = document.getElementById("animal-sidebar-controls");
     const fruitSidebarControls = document.getElementById("fruit-sidebar-controls");
@@ -207,41 +221,68 @@
     const welcomeMessage = document.getElementById("welcome-message");
     const homeTopicCards = document.getElementById("home-topic-cards");
 
+    // وظائف تحميل النماذج الثابتة (تسجيل الدخول/التسجيل/الملف الشخصي)
+    // تم تحديث المسارات لتعكس وجود index.html في الجذر
+    window.loadLogin = async () => {
+        hideAllControls();
+        try {
+            const response = await fetch('public/users/login-form.html');
+            if (!response.ok) throw new Error('Failed to load login form');
+            const loginFormHtml = await response.text();
+            mainContentArea.innerHTML = loginFormHtml;
+        } catch (error) {
+            console.error('Error loading login form:', error);
+            mainContentArea.innerHTML = '<p style="color: red;">تعذر تحميل نموذج تسجيل الدخول. يرجى المحاولة لاحقاً.</p>';
+        }
+    };
 
-    window.loadLogin = () => { mainContentArea.innerHTML = loginForm; hideAllControls(); };
-    window.loadRegister = () => { mainContentArea.innerHTML = registerForm; hideAllControls(); };
+    window.loadRegister = async () => {
+        hideAllControls();
+        try {
+            const response = await fetch('public/users/register-form.html');
+            if (!response.ok) throw new Error('Failed to load register form');
+            const registerFormHtml = await response.text();
+            mainContentArea.innerHTML = registerFormHtml;
+        } catch (error) {
+            console.error('Error loading register form:', error);
+            mainContentArea.innerHTML = '<p style="color: red;">تعذر تحميل نموذج التسجيل. يرجى المحاولة لاحقاً.</p>';
+        }
+    };
+
     window.loadProfile = () => { showProfileForm(); hideAllControls(); };
 
     // دالة تحميل صفحة الحيوانات
     window.loadAnimalsPage = async () => {
-      hideAllControls(); // إخفاء جميع عناصر التحكم أولاً
-      if (welcomeMessage) welcomeMessage.style.display = 'none';
+      hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية أولاً
+      if (welcomeMessage) welcomeMessage.style.display = 'none'; // إخفاء رسالة الترحيب
       if (homeTopicCards) homeTopicCards.style.display = 'none'; // إخفاء بطاقات الصفحة الرئيسية
-      await loadAnimalsGameContent();
+      await loadAnimalsGameContent(); // تحميل محتوى لعبة الحيوانات
       showAnimalControls(); // إظهار عناصر التحكم الخاصة بالحيوانات
+      // لا داعي لـ setDirection هنا، يتم التعامل معها داخل game-lang-select
     };
 
     // دالة تحميل صفحة الفواكه
     window.loadFruitsPage = async () => {
-      hideAllControls(); // إخفاء جميع عناصر التحكم أولاً
+      hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية أولاً
       if (welcomeMessage) welcomeMessage.style.display = 'none';
-      if (homeTopicCards) homeTopicCards.style.display = 'none'; // إخفاء بطاقات الصفحة الرئيسية
-      await loadFruitsGameContent(); // استدعاء دالة تحميل محتوى الفواكه
+      if (homeTopicCards) homeTopicCards.style.display = 'none';
+      await loadFruitsGameContent(); // تحميل محتوى لعبة الفواكه
       showFruitControls(); // إظهار عناصر التحكم الخاصة بالفواكه
     };
 
     // دالة تحميل صفحة الخضروات
     window.loadVegetablesPage = async () => {
-      hideAllControls(); // إخفاء جميع عناصر التحكم أولاً
+      hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية أولاً
       if (welcomeMessage) welcomeMessage.style.display = 'none';
-      if (homeTopicCards) homeTopicCards.style.display = 'none'; // إخفاء بطاقات الصفحة الرئيسية
-      await loadVegetablesGameContent(); // استدعاء دالة تحميل محتوى الخضروات
+      if (homeTopicCards) homeTopicCards.style.display = 'none';
+      await loadVegetablesGameContent(); // تحميل محتوى لعبة الخضروات
       showVegetableControls(); // إظهار عناصر التحكم الخاصة بالخضروات
     };
 
-    // دالة العودة للصفحة الرئيسية
+    // دالة العودة للصفحة الرئيسية وتحديث محتواها
     window.showHomePage = () => {
-        // إعادة محتوى الصفحة الرئيسية بما في ذلك رسالة الترحيب والبطاقات
+        // إعادة حقن محتوى الصفحة الرئيسية بما في ذلك رسالة الترحيب والبطاقات
+        // نستخدم innerHTML لإعادة تعيين المحتوى بالكامل في main-content
         mainContentArea.innerHTML = `
             <h2 id="welcome-message-inner" style="display: block;">مرحبًا بك في الموسوعة!</h2>
             <div id="home-topic-cards-inner" class="home-cards-container">
@@ -259,20 +300,20 @@
                 </a>
             </div>
         `;
-        // إظهار رسالة الترحيب والبطاقات بعد إعادة الحقن
-        // (إذا كانت IDs مختلفة، يجب الحصول على المراجع الجديدة هنا)
-        const innerWelcomeMessage = document.getElementById("welcome-message-inner");
-        if (innerWelcomeMessage) innerWelcomeMessage.style.display = 'block';
-        const innerHomeTopicCards = document.getElementById("home-topic-cards-inner");
-        if (innerHomeTopicCards) innerHomeTopicCards.style.display = 'flex'; // أو 'block' حسب الحاجة
+        // إخفاء جميع عناصر التحكم الجانبية عند العودة للصفحة الرئيسية
+        hideAllControls();
 
-        hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية
+        // إعادة ضبط اتجاه النص إلى اللغة الافتراضية عند العودة للرئيسية
+        // هذا يضمن أن الصفحة الرئيسية تكون RTL إذا كانت اللغة العربية هي الافتراضية
+        // يمكنك الحصول على اللغة الافتراضية من localStorage أو تعريفها هنا
+        const defaultLang = localStorage.getItem("lang") || "ar";
+        setDirection(defaultLang);
     };
 
-    // وظائف إظهار وإخفاء عناصر التحكم الجانبية
+    // وظائف إظهار وإخفاء عناصر التحكم الجانبية (للتأكد من ظهور عنصر واحد فقط)
     function showAnimalControls() {
         if (animalSidebarControls) {
-            animalSidebarControls.style.display = 'block';
+            animalSidebarControls.style.display = 'block'; // أو 'flex' حسب التخطيط
         }
     }
 
@@ -311,14 +352,13 @@
         hideAnimalControls();
         hideFruitControls();
         hideVegetableControls();
-        // أضف هنا أي دوال إخفاء أخرى لأقسام جانبية مستقبلية
+        // أي أقسام جانبية مستقبلية يجب أن تضاف هنا
     }
 
-    // إخفاء عناصر التحكم عند تحميل الصفحة لأول مرة، وإظهار محتوى الصفحة الرئيسية
+    // تشغيل عند تحميل DOM بالكامل
     document.addEventListener('DOMContentLoaded', () => {
-        hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية
-        // التأكد من عرض محتوى الصفحة الرئيسية عند التحميل الأولي
-        window.showHomePage(); // استدعاء دالة عرض الصفحة الرئيسية عند التحميل
+        // عند تحميل الصفحة لأول مرة، قم بعرض محتوى الصفحة الرئيسية
+        window.showHomePage();
     });
   </script>
 </body>
