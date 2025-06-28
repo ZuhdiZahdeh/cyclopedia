@@ -4,11 +4,11 @@ import { db } from "./firebase-config.js";
 import { getDocs, collection } from "firebase/firestore";
 import { currentLang, loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
 import { playAudio, stopCurrentAudio } from "./audio-handler.js";
-import { recordActivity } from "./activity-handler.js"; // لتسجيل النشاط
+import { recordActivity } from "./activity-handler.js";
 
 let vegetables = [];
 let currentIndex = 0;
-let selectedVoice = "teacher"; // افتراضيًا صوت المعلم
+let selectedVoice = "teacher";
 
 const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -21,19 +21,19 @@ export async function loadVegetablesGameContent() {
     return;
   }
 
-  // 1. حقن HTML الخاص بلعبة الخضروات في منطقة المحتوى الرئيسية
-  // سنستخدم نفس بنية .game-box و .item-main-name من common-components-subjects.css
   mainContentArea.innerHTML = `
     <div class="game-box">
       <h2 id="vegetable-word" class="item-main-name">---</h2>
       <img id="vegetable-image" src="" alt="vegetable" />
       
-      <div class="vegetable-details-section info-box"> <h3>حقائق عن الخضروات:</h3>
+      <div class="vegetable-details-section info-box">
+        <h3>حقائق عن الخضروات:</h3>
         <ul id="vegetable-details-list">
           <li><strong>الصنف:</strong> <span id="vegetable-type">---</span></li>
           <li><strong>الفوائد:</strong> <span id="vegetable-benefits">---</span></li>
         </ul>
-        <div class="vegetable-description-box info-box"> <h4>الوصف:</h4>
+        <div class="vegetable-description-box info-box">
+          <h4>الوصف:</h4>
           <p id="vegetable-description">---</p>
         </div>
       </div>
@@ -44,7 +44,6 @@ export async function loadVegetablesGameContent() {
     </div>
   `;
 
-  // 2. حقن HTML الخاص بعناصر التحكم في الشريط الجانبي
   vegetableSidebarControls.innerHTML = `
     <h3 style="text-align: center;">🥦 تعرف على الخضروات</h3>
     <div class="sidebar-game-controls">
@@ -53,7 +52,7 @@ export async function loadVegetablesGameContent() {
         <select id="game-lang-select-vegetable">
           <option value="ar">العربية</option>
           <option value="en">English</option>
-          <option value="he">עברית</option>
+          <option value="he">עבריة</option>
         </select>
       </div>
       <div class="voice-selection" style="margin-bottom: 1rem;">
@@ -69,24 +68,19 @@ export async function loadVegetablesGameContent() {
     </div>
   `;
 
-  // 3. الحصول على المراجع للعناصر بعد حقنها في DOM
-  // العناصر في main-content
   const vegetableImage = document.getElementById("vegetable-image");
   const vegetableWord = document.getElementById("vegetable-word");
-  const vegetableType = document.getElementById("vegetable-type"); // حقل جديد: نوع الخضروات (جذرية، ورقية، فاكهة)
-  const vegetableBenefits = document.getElementById("vegetable-benefits"); // حقل جديد: الفوائد
+  const vegetableType = document.getElementById("vegetable-type");
+  const vegetableBenefits = document.getElementById("vegetable-benefits");
   const vegetableDescription = document.getElementById("vegetable-description");
 
-  // العناصر في الشريط الجانبي
   const playSoundBtn = document.getElementById("play-sound-btn-vegetable");
   const voiceSelect = document.getElementById("voice-select-vegetable");
   const gameLangSelect = document.getElementById("game-lang-select-vegetable");
   
-  // أزرار التنقل التي أصبحت داخل main-content
   const nextVegetableBtn = document.getElementById("next-vegetable-btn");
   const prevVegetableBtn = document.getElementById("prev-vegetable-btn");
 
-  // التحقق من وجود جميع العناصر بعد الحقن
   if (!vegetableImage || !vegetableWord || !playSoundBtn || !nextVegetableBtn || !prevVegetableBtn || !voiceSelect || !gameLangSelect || !vegetableType || !vegetableBenefits || !vegetableDescription) {
     console.error("One or more vegetable game/control elements not found after content injection. Check IDs.");
     disableVegetableButtons(true);
@@ -108,15 +102,14 @@ export async function loadVegetablesGameContent() {
     return;
   }
 
-  showVegetable(currentIndex); // عرض أول خضروات
+  showVegetable(currentIndex);
 
-  // 4. معالجات الأحداث (Event Listeners)
   nextVegetableBtn.addEventListener("click", async () => {
     if (currentIndex < vegetables.length - 1) {
         currentIndex++;
         showVegetable(currentIndex);
         if (currentUser && currentUser.uid) {
-            await recordActivity(currentUser, "vegetables"); // تسجيل النشاط
+            await recordActivity(currentUser, "vegetables");
         }
     }
   });
@@ -144,15 +137,14 @@ export async function loadVegetablesGameContent() {
   gameLangSelect.addEventListener("change", async (event) => {
     const newLang = event.target.value;
     await loadLanguage(newLang);
-    applyTranslations(); // تطبيق الترجمات على جميع العناصر
-    await fetchVegetables(); // إعادة جلب الخضروات باللغة الجديدة
-    currentIndex = 0; // العودة للعنصر الأول بعد تغيير اللغة
+    applyTranslations();
+    await fetchVegetables();
+    currentIndex = 0;
     showVegetable(currentIndex);
-    setDirection(newLang); // ضبط اتجاه النص
+    setDirection(newLang);
   });
 }
 
-// 5. جلب البيانات من Firestore
 async function fetchVegetables() {
   try {
     const itemsCollectionRef = collection(db, "categories", "vegetables", "items");
@@ -161,47 +153,45 @@ async function fetchVegetables() {
     console.log("Fetched vegetables:", vegetables);
   } catch (error) {
     console.error("Error fetching vegetables from Firestore:", error);
-    vegetables = []; // مسح البيانات في حالة الخطأ
+    vegetables = [];
   }
 }
 
-// 6. عرض بيانات الخضروات في البطاقة
 function showVegetable(index) {
   if (index >= 0 && index < vegetables.length) {
     const data = vegetables[index];
     
-    // الحصول على الاسم باللغة الحالية، مع fallback للإنجليزية ثم لـ "---"
     const name = data.name?.[currentLang] || data.name?.en || "---"; 
-    const imgSrc = `/images/vegetables/${data.image}`; // مسار الصورة
-
+    // التعديل هنا: استخدام اسم الملف بدون لاحقة _image إذا كانت موجودة في Firestore
+    // أو ببساطة استخدام data.image مباشرة إذا كان Firestore يحتوي على "tomato.png"
+    // بما أن Firestore يحتوي على "tomato_image.png" وملفك هو "tomato.png"
+    // سنقوم بإزالة "_image" من الاسم إذا كانت موجودة قبل بناء المسار.
+    const imageNameWithoutSuffix = data.image.replace('_image.png', '.png'); 
+    const imgSrc = `/images/vegetables/${imageNameWithoutSuffix}`;
+    
     document.getElementById("vegetable-image").src = imgSrc;
     document.getElementById("vegetable-image").alt = name;
     document.getElementById("vegetable-word").textContent = name;
 
-    // عرض التفاصيل الإضافية (تأكد من مطابقتها لهيكل بيانات Firestore)
-    document.getElementById("vegetable-type").textContent = data.type?.[currentLang] || "غير متوفر"; // حقل "نوع" جديد
-    document.getElementById("vegetable-benefits").textContent = data.benefits?.[currentLang] || "غير متوفر"; // حقل "فوائد" جديد
-    
+    document.getElementById("vegetable-type").textContent = data.type?.[currentLang] || "غير متوفر";
+    document.getElementById("vegetable-benefits").textContent = data.benefits?.[currentLang] || "غير متوفر";
     document.getElementById("vegetable-description").textContent = data.description?.[currentLang] || "لا يوجد وصف";
 
-    // تحديث حالة أزرار التنقل (enable/disable)
     document.getElementById("prev-vegetable-btn").disabled = (index === 0);
     document.getElementById("next-vegetable-btn").disabled = (index === vegetables.length - 1);
 
-    stopCurrentAudio(); // إيقاف أي صوت يتم تشغيله حاليًا
+    stopCurrentAudio();
   }
 }
 
-// 7. الحصول على مسار ملف الصوت
 function getAudioPath(data, voiceType) {
-  const fileName = data.voices?.[voiceType]; // الحصول على اسم الملف بناءً على نوع الصوت
+  const fileName = data.voices?.[voiceType];
   if (fileName) {
-    return `/audio/${currentLang}/vegetables/${fileName}`; // بناء المسار الكامل
+    return `/audio/${currentLang}/vegetables/${fileName}`;
   }
   return null;
 }
 
-// 8. لتعطيل/تفعيل الأزرار (لتحسين تجربة المستخدم)
 function disableVegetableButtons(isDisabled) {
     const btns = [
         document.getElementById("play-sound-btn-vegetable"),
