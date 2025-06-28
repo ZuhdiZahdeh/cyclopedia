@@ -1,0 +1,167 @@
+/* css/alphabet-press.css */
+
+/* أنماط خاصة بوعاء اللعبة إذا لزم الأمر، ولكن game-box كافية عادةً */
+#alphabet-press-game {
+    /* يمكن إضافة أنماط إضافية هنا إذا كانت هناك حاجة لتجاوز common-components-subjects.css */
+    padding: 20px;
+}
+
+.game-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center; /* لتوسيط عناصر التحكم */
+}
+
+.game-controls label {
+    font-weight: bold;
+    color: var(--color-dark-text); /* استخدام لون من colors.css */
+}
+
+.game-controls select {
+    padding: 8px 12px;
+    border: 1px solid var(--color-light-gray); /* لون الحدود من colors.css */
+    border-radius: 5px;
+    background-color: var(--color-white); /* لون الخلفية من colors.css */
+    color: var(--color-dark-text);
+    font-size: 1em;
+    cursor: pointer;
+}
+
+/* أنماط لوحة المفاتيح */
+.keyboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr)); /* مرن لعرض الحروف */
+    gap: 10px;
+    padding: 20px;
+    background-color: var(--color-light-background); /* لون خلفية من colors.css */
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm); /* ظل خفيف من shared-utilities.css أو colors.css */
+    margin-bottom: 30px;
+    max-width: 800px; /* لتحديد أقصى عرض للوحة المفاتيح */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.keyboard-button {
+    background-color: var(--color-secondary); /* لون من colors.css */
+    color: var(--color-white);
+    border: none;
+    border-radius: 8px;
+    padding: 15px 10px;
+    font-size: 1.8em; /* حجم الخط للحروف */
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60px; /* لتثبيت ارتفاع الأزرار */
+    box-shadow: 0 4px var(--color-dark-secondary); /* ظل ثلاثي الأبعاد */
+}
+
+.keyboard-button:hover {
+    background-color: var(--color-primary); /* لون مختلف عند التحويم */
+    transform: translateY(-2px);
+    box-shadow: 0 6px var(--color-dark-primary);
+}
+
+.keyboard-button:active {
+    background-color: var(--color-orange); /* لون عند الضغط */
+    transform: translateY(0);
+    box-shadow: 0 2px var(--color-dark-orange);
+}
+
+/* أنماط منطقة عرض العنصر */
+#item-display-area {
+    display: flex; /* لترتيب العناصر بشكل مرن */
+    flex-direction: column; /* ترتيب رأسي */
+    align-items: center; /* توسيط العناصر */
+    padding: 25px;
+    margin-bottom: 20px;
+    background-color: var(--color-white); /* استخدام لون من colors.css */
+    border: 1px solid var(--color-border);
+    border-radius: 15px;
+    box-shadow: var(--shadow-md);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#alphabet-press-image {
+    max-width: 90%;
+    max-height: 250px; /* تحديد أقصى ارتفاع للصورة */
+    border-radius: 10px;
+    margin-bottom: 15px;
+    object-fit: contain; /* لضمان عرض الصورة بالكامل داخل الأبعاد المحددة */
+}
+
+#alphabet-press-item-name {
+    font-size: 2.5em; /* حجم خط أكبر للاسم الرئيسي */
+    margin-bottom: 15px;
+    color: var(--color-dark-text); /* لون النص من colors.css */
+}
+
+/* تمييز الحرف الأول */
+.highlight-first-letter {
+    color: var(--color-orange); /* اللون البرتقالي المميز من colors.css */
+    font-size: 1.2em; /* تكبير الحرف الأول قليلاً */
+    font-weight: bold;
+}
+
+.control-button {
+    background-color: var(--color-green); /* زر الاستماع بلون أخضر */
+    color: var(--color-white);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 25px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 3px var(--color-dark-green);
+}
+
+.control-button:hover {
+    background-color: var(--color-dark-green);
+}
+
+.control-button i {
+    font-size: 1.2em;
+}
+
+#game-message {
+    padding: 15px;
+    background-color: var(--color-info-background); /* لون رسائل المعلومات */
+    color: var(--color-info-text);
+    border-radius: 10px;
+    text-align: center;
+    max-width: 400px;
+    margin: 20px auto;
+    box-shadow: var(--shadow-sm);
+}
+
+/* دعم RTL لأنماط لوحة المفاتيح وعناصر التحكم */
+[dir="rtl"] .keyboard-grid {
+    /* قد لا تحتاج لتغيير إذا كان التخطيط مرنًا */
+}
+
+[dir="rtl"] .game-controls {
+    /* لضمان تناسق الترتيب في RTL */
+    flex-direction: row-reverse; /* إذا كانت الأزرار مرتبة عكسياً في RTL */
+}
+
+[dir="rtl"] .game-controls label {
+    margin-right: 0;
+    margin-left: 10px; /* مسافة بعد النص في RTL */
+}
+
+[dir="rtl"] .highlight-first-letter {
+    /* لا يلزم تغيير عادة، لأن التمييز هو على الحرف داخل الكلمة */
+}
+
+/* الأنماط المشتركة مثل .game-box و .info-box موجودة في common-components-subjects.css [cite: 26, 29]، لذلك لا نكررها هنا. */

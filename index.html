@@ -14,9 +14,11 @@
   <link rel="stylesheet" href="/css/animals.css" />
   <link rel="stylesheet" href="/css/fruits.css" />
   <link rel="stylesheet" href="/css/vegetables.css" />
-  <link rel="stylesheet" href="/css/human-body.css" /> <link rel="stylesheet" href="/css/style.css" />
-
-  </head>
+  <link rel="stylesheet" href="/css/human-body.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/alphabet-press.css" /> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
 
 <body>
   <div id="app">
@@ -26,7 +28,8 @@
         <a href="#" onclick="loadAnimalsPage()">📚 الحيوانات</a>
         <a href="#" onclick="loadFruitsPage()">🍎 الفواكه</a>
         <a href="#" onclick="loadVegetablesPage()">🥦 الخضروات</a>
-        <a href="#" onclick="loadHumanBodyPage()">🧠 جسم الإنسان</a> <a href="#games">🎮 الألعاب</a>
+        <a href="#" onclick="loadHumanBodyPage()">🧠 جسم الإنسان</a>
+        <a href="#" onclick="loadAlphabetPressPage()">🎮 الألعاب</a> 
       </nav>
     </header>
 
@@ -128,6 +131,10 @@
             </div>
         </div>
 
+        <div id="alphabet-press-sidebar-controls" class="sidebar-section" style="display: none;">
+            <h3 style="text-align: center;">🎮 إعدادات لعبة الحروف</h3>
+            </div>
+
         <div class="sidebar-section static-section">
           <h3>👤 حسابك</h3>
           <ul>
@@ -157,7 +164,11 @@
             <a href="#" class="topic-card human-body" onclick="loadHumanBodyPage(); return false;"> <span class="icon">🧠</span>
                 <h3>جسم الإنسان</h3>
             </a>
-            </div>
+            <a href="#" class="topic-card games" onclick="loadAlphabetPressPage(); return false;">
+                <span class="icon">🔠</span>
+                <h3>لعبة الحروف</h3>
+            </a>
+        </div>
       </main>
     </div>
   </div>
@@ -170,7 +181,10 @@
     import { loadAnimalsGameContent } from '/src/js/animals-game.js';
     import { loadFruitsGameContent } from '/src/js/fruits-game.js';
     import { loadVegetablesGameContent } from '/src/js/vegetables-game.js';
-    import { loadHumanBodyGameContent } from '/src/js/human-body-game.js'; import { setDirection } from '/src/js/lang-handler.js';
+    import { loadHumanBodyGameContent } from '/src/js/human-body-game.js';
+    import { setDirection } from '/src/js/lang-handler.js';
+    // جديد: استيراد دالة تحميل لعبة اضغط على الحرف
+    import { loadAlphabetPressGameContent } from '/src/js/alphabet-press-game.js';
 
 
     // الحصول على المراجع لعناصر DOM الرئيسية في الصفحة
@@ -178,7 +192,11 @@
     const animalSidebarControls = document.getElementById("animal-sidebar-controls");
     const fruitSidebarControls = document.getElementById("fruit-sidebar-controls");
     const vegetableSidebarControls = document.getElementById("vegetable-sidebar-controls");
-    const humanBodySidebarControls = document.getElementById("human-body-sidebar-controls"); const welcomeMessage = document.getElementById("welcome-message");
+    const humanBodySidebarControls = document.getElementById("human-body-sidebar-controls");
+    // جديد: مرجع لعناصر التحكم الجانبية للعبة اضغط على الحرف
+    const alphabetPressSidebarControls = document.getElementById("alphabet-press-sidebar-controls");
+
+    const welcomeMessage = document.getElementById("welcome-message");
     const homeTopicCards = document.getElementById("home-topic-cards");
 
     // وظائف تحميل النماذج الثابتة (تسجيل الدخول/التسجيل/الملف الشخصي)
@@ -239,13 +257,23 @@
       showVegetableControls(); // إظهار عناصر التحكم الخاصة بالخضروات
     };
 
-    // جديد: دالة تحميل صفحة جسم الإنسان
+    // دالة تحميل صفحة جسم الإنسان
     window.loadHumanBodyPage = async () => {
       hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية أولاً
       if (welcomeMessage) welcomeMessage.style.display = 'none';
       if (homeTopicCards) homeTopicCards.style.display = 'none';
       await loadHumanBodyGameContent(); // تحميل محتوى لعبة جسم الإنسان
       showHumanBodyControls(); // إظهار عناصر التحكم الخاصة بجسم الإنسان
+    };
+
+    // جديد: دالة تحميل صفحة لعبة اضغط على الحرف
+    window.loadAlphabetPressPage = async () => {
+      hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية أولاً
+      if (welcomeMessage) welcomeMessage.style.display = 'none';
+      if (homeTopicCards) homeTopicCards.style.display = 'none';
+      // المسار هنا '/html/alphabet-press.html' بناءً على المسار الذي قدمته E:\cyclopedia\html\alphabet-press.html
+      await loadAlphabetPressGameContent('/html/alphabet-press.html'); // تمرير مسار ملف HTML للعبة
+      showAlphabetPressControls(); // إظهار عناصر التحكم الخاصة باللعبة
     };
 
     // دالة العودة للصفحة الرئيسية وتحديث محتواها
@@ -271,13 +299,16 @@
                     <span class="icon">🧠</span>
                     <h3>جسم الإنسان</h3>
                 </a>
+                <a href="#" class="topic-card games" onclick="loadAlphabetPressPage(); return false;">
+                    <span class="icon">🔠</span>
+                    <h3>لعبة الحروف</h3>
+                </a>
             </div>
         `;
         // إخفاء جميع عناصر التحكم الجانبية عند العودة للصفحة الرئيسية
         hideAllControls();
 
         // إعادة ضبط اتجاه النص إلى اللغة الافتراضية عند العودة للرئيسية
-        // هذا يضمن أن الصفحة الرئيسية تكون RTL إذا كانت اللغة العربية هي الافتراضية
         const defaultLang = localStorage.getItem("lang") || "ar";
         setDirection(defaultLang);
     };
@@ -332,12 +363,26 @@
         }
     }
 
+    // جديد: وظائف إظهار وإخفاء عناصر التحكم الجانبية للعبة اضغط على الحرف
+    function showAlphabetPressControls() {
+        if (alphabetPressSidebarControls) {
+            alphabetPressSidebarControls.style.display = 'block';
+        }
+    }
+
+    function hideAlphabetPressControls() {
+        if (alphabetPressSidebarControls) {
+            alphabetPressSidebarControls.style.display = 'none';
+        }
+    }
+
     // دالة شاملة لإخفاء جميع عناصر التحكم في الشريط الجانبي
     function hideAllControls() {
         hideAnimalControls();
         hideFruitControls();
         hideVegetableControls();
-        hideHumanBodyControls(); // جديد
+        hideHumanBodyControls();
+        hideAlphabetPressControls(); // جديد
         // أي أقسام جانبية مستقبلية يجب أن تضاف هنا
     }
 
