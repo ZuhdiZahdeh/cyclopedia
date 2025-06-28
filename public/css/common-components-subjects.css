@@ -1,0 +1,139 @@
+/* public/css/common-components-subjects.css */
+
+/* نمط لـ game-box لتوسيط المحتوى داخل main-content (يستخدم في game-box) */
+.game-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background-color: var(--color-surface); /* استخدام متغير اللون للخلفية */
+    border-radius: 10px;
+    box-shadow: 0 4px 8px var(--color-shadow); /* استخدام متغير اللون للظل */
+    width: 100%;
+    box-sizing: border-box;
+    position: relative; /* لتحديد الموضع النسبي لأزرار التنقل إذا كانت داخلها */
+}
+
+/* نمط لاسم العنصر الرئيسي (الحيوان، الفاكهة) - H2 */
+.item-main-name {
+    font-size: 2.8em;
+    font-weight: bold;
+    color: var(--color-orange); /* لون مميز من Colors.css */
+    margin-bottom: 10px;
+    position: relative;
+    display: inline-block;
+    text-align: center;
+    width: 100%; /* لضمان توسيط النص بشكل صحيح */
+}
+
+/* نمط لتلوين الحرف الأول من الاسم الرئيسي */
+.item-main-name::first-letter {
+    color: var(--color-danger); /* لون مختلف للحرف الأول من Colors.css */
+    font-size: 1.2em;
+}
+
+/* نمط حاوية الوصف والتفاصيل المشتركة */
+.info-box {
+    margin-top: 15px; /* هامش علوي من العنصر السابق */
+    padding: 15px;
+    border: 1px solid var(--color-border); /* حد من Colors.css */
+    border-radius: 8px;
+    background-color: var(--color-surface); /* خلفية من Colors.css */
+    text-align: justify;
+    width: 100%;
+    box-sizing: border-box;
+    word-wrap: break-word; /* يضمن التفاف الكلمات الطويلة */
+    overflow-wrap: break-word; /* بديل أحدث لـ word-wrap */
+}
+
+/* نمط للعناوين H3 و H4 داخل الحاويات المشتركة */
+.info-box h3,
+.info-box h4 {
+    font-family: var(--font-ar-heading); /* استخدام الخط المخصص للعناوين من fonts.css */
+    font-weight: bold; /* خط عريض */
+    font-size: 1.5em; /* حجم موحد لـ H3 */
+    color: var(--color-primary); /* لون موحد للعناوين من Colors.css */
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: right;
+}
+
+.info-box h4 {
+    font-size: 1.3em; /* حجم أصغر قليلاً لـ H4 */
+    color: var(--color-accent); /* لون مختلف لـ H4 */
+}
+
+
+/* أنماط أزرار التنقل (إذا كانت داخل game-box) */
+.navigation-buttons {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.navigation-buttons button {
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 2px 4px var(--color-shadow);
+}
+
+.navigation-buttons button:hover {
+    background-color: #388E3C; /* لون أغمق لـ primary */
+}
+
+.navigation-buttons button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* أنماط الشريط الجانبي - لتنسيق عناصر التحكم فيه */
+.sidebar-game-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #f9f9f9; /* يمكن تغييرها لمتغير */
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.05); /* يمكن تغييرها لمتغير */
+}
+
+.language-selection, .voice-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sidebar-game-controls label {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.sidebar-game-controls select,
+.sidebar-game-controls button {
+    width: 100%;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    font-size: 1em;
+}
+
+.sidebar-game-controls button {
+    background-color: var(--color-info); /* لون من Colors.css */
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.sidebar-game-controls button:hover {
+    background-color: #0056b3; /* لون أغمق لـ info */
+}
