@@ -1,25 +1,76 @@
-/* cyclopedia-app/public/css/human-body.css */
-.human-body-card {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+/* public/css/human-body.css */
+
+/* أنماط خاصة بصور أجزاء جسم الإنسان */
+#human-body-image {
+    max-width: 100%; /* تأكد من أنها لا تتجاوز عرض الحاوية */
+    height: 300px; /* يمكن تعديل الارتفاع حسب الحاجة */
+    object-fit: contain; /* للحفاظ على نسبة العرض إلى الارتفاع */
+    border-radius: 12px; /* زوايا دائرية */
+    border: 3px solid var(--color-info); /* استخدام لون مناسب لموضوع جسم الإنسان */
+    box-shadow: 0 4px 12px var(--color-shadow);
+    background-color: var(--color-surface);
+    margin-bottom: 20px; /* مسافة تحت الصورة */
+    padding: 10px; /* إضافة بعض المسافة الداخلية للصورة */
 }
 
-.human-body-entry {
-  background-color: #f9efff;
-  border-radius: 12px;
-  padding: 1rem;
-  text-align: center;
-  transition: transform 0.2s ease;
+/* نمط قسم التفاصيل الإضافية (خاص بأجزاء جسم الإنسان) */
+/* يستخدم .info-box من common-components-subjects.css */
+.human-body-details-section {
+    margin-top: 15px;
+    /* الأنماط الأخرى مثل padding, border, background-color, text-align, width, box-sizing
+       يجب أن تأتي من .info-box في common-components-subjects.css */
 }
 
-.human-body-entry:hover {
-  transform: scale(1.05);
+.human-body-details-section h3 {
+    font-family: var(--font-ar-heading);
+    font-weight: bold;
+    font-size: 1.5em;
+    color: var(--color-info); /* لون عنوان القسم */
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: right; /* الاتجاه الافتراضي للنص العربي */
 }
 
-.human-body-entry img {
-  width: 100px;
-  height: auto;
-  cursor: pointer;
+.human-body-details-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
+
+.human-body-details-section li {
+    margin-bottom: 8px;
+    font-size: 1.1em;
+    color: var(--color-text-primary);
+}
+
+.human-body-details-section strong {
+    color: var(--color-primary-dark); /* لون مميز للعناوين الفرعية داخل القائمة */
+}
+
+/* نمط لحاوية الوصف داخل قسم التفاصيل */
+/* يستخدم .info-box من common-components-subjects.css */
+.human-body-description-box {
+    margin-top: 15px;
+    /* الأنماط الأخرى مثل padding, border, background-color, text-align, word-wrap, overflow-wrap
+       يجب أن تأتي من .info-box في common-components-subjects.css */
+}
+
+.human-body-description-box h4 {
+    font-family: var(--font-ar-heading);
+    font-weight: bold;
+    font-size: 1.3em;
+    color: var(--color-accent); /* لون عنوان الوصف */
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: right;
+}
+
+.human-body-description-box p {
+    font-size: 1em;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+}
+
+/* لا تكرر الأنماط الموجودة في common-components-subjects.css مثل:
+   .game-box, .item-main-name, .navigation-buttons, .sidebar-game-controls
+   يجب استخدامها مباشرة في HTML */

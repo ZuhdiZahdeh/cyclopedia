@@ -129,9 +129,66 @@ body {
   min-height: calc(100vh - 80px - 2rem);
 }
 
-.topics-grid { /* ... */ }
-.topic-icon { /* ... */ }
-.footer { /* ... */ }
+/* public/css/home.css */
+
+/* ... (الأنماط الموجودة مسبقًا في home.css) ... */
+
+/* أنماط مخصصة لحاوية بطاقات الصفحة الرئيسية */
+.home-cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+    width: 100%;
+    max-width: 900px; /* لضبط عرض الحاوية على الشاشات الكبيرة */
+    margin: auto; /* لتوسيط الحاوية */
+}
+
+/* أنماط عامة لبطاقات المواضيع في الصفحة الرئيسية */
+.topic-card {
+    background-color: var(--color-surface); /* استخدام متغير اللون للخلفية */
+    border-radius: 15px; /* زوايا دائرية */
+    box-shadow: 0 5px 15px var(--color-shadow); /* ظل للبطاقة */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 25px;
+    width: 180px; /* حجم البطاقة */
+    height: 180px;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* تأثير الانتقال عند التحويم */
+    text-decoration: none; /* إزالة خط التسطير من الروابط */
+    color: var(--color-text-primary); /* لون النص الأساسي */
+}
+
+.topic-card:hover {
+    transform: translateY(-5px); /* رفع البطاقة قليلاً عند التحويم */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* زيادة الظل عند التحويم */
+}
+
+.topic-card .icon {
+    font-size: 4em; /* حجم الأيقونة */
+    margin-bottom: 10px;
+    color: var(--color-primary); /* لون افتراضي للأيقونة */
+}
+
+.topic-card h3 {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--color-text-primary);
+    margin: 0;
+    text-align: center;
+}
+
+/* ألوان خاصة للأيقونات لكل موضوع */
+.topic-card.animals .icon { color: var(--color-purple); }
+.topic-card.fruits .icon { color: var(--color-secondary); }
+.topic-card.vegetables .icon { color: var(--color-success); }
+.topic-card.human-body .icon { color: var(--color-info); } /* جديد: لون أيقونة جسم الإنسان */
+
+/* ... (نهاية الأنماط الموجودة مسبقًا في home.css) ... */
 
 /* Media Queries for responsiveness */
 @media (max-width: 768px) {
