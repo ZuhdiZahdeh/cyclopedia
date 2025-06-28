@@ -206,11 +206,11 @@
   <script type="module">
     // استيراد مكونات ودووال من ملفات JS الأخرى
     // تم تحديث المسارات لتعكس وجود index.html في الجذر
-    import { showProfileForm } from 'public/src/js/profile.js';
-    import { loadAnimalsGameContent } from 'public/src/js/animals-game.js';
-    import { loadFruitsGameContent } from 'public/src/js/fruits-game.js';
-    import { loadVegetablesGameContent } from 'public/src/js/vegetables-game.js';
-    import { setDirection } from 'public/src/js/lang-handler.js';
+    import { showProfileForm } from './public/src/js/profile.js';
+    import { loadAnimalsGameContent } from './public/src/js/animals-game.js';
+    import { loadFruitsGameContent } from './public/src/js/fruits-game.js';
+    import { loadVegetablesGameContent } from './public/src/js/vegetables-game.js';
+    import { setDirection } from './public/src/js/lang-handler.js';
 
 
     // الحصول على المراجع لعناصر DOM الرئيسية في الصفحة
@@ -226,7 +226,7 @@
     window.loadLogin = async () => {
         hideAllControls();
         try {
-            const response = await fetch('public/users/login-form.html');
+            const response = await fetch('./public/users/login-form.html');
             if (!response.ok) throw new Error('Failed to load login form');
             const loginFormHtml = await response.text();
             mainContentArea.innerHTML = loginFormHtml;
@@ -239,7 +239,7 @@
     window.loadRegister = async () => {
         hideAllControls();
         try {
-            const response = await fetch('public/users/register-form.html');
+            const response = await fetch('./public/users/register-form.html');
             if (!response.ok) throw new Error('Failed to load register form');
             const registerFormHtml = await response.text();
             mainContentArea.innerHTML = registerFormHtml;
