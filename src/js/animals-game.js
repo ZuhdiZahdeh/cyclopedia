@@ -24,7 +24,7 @@ export async function loadAnimalsGameContent() {
   // 1. حقن HTML الخاص بلعبة الحيوانات في منطقة المحتوى الرئيسية
   mainContentArea.innerHTML = `
     <div class="game-box">
-      <h2 id="animal-word" class="animal-name">---</h2> <img id="animal-image" src="" alt="animal" />
+      <h2 id="animal-word" class="item-main-name">---</h2>---</h2> <img id="animal-image" src="" alt="animal" />
       
       <div class="animal-details-section"> <h3>تفاصيل إضافية:</h3>
         <ul id="animal-details-list">

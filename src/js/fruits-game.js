@@ -1,4 +1,4 @@
-// public/js/fruits-game.js (النسخة النهائية)
+// src/js/fruits-game.js (النسخة النهائية)
 
 import { db } from "./firebase-config.js";
 import { getDocs, collection } from "firebase/firestore";
@@ -151,7 +151,7 @@ async function fetchFruits() {
 function displayFruit(index) {
     if (index >= 0 && index < fruits.length) {
         const fruit = fruits[index];
-        fruitImage.src = `/images/ar/fruits/${fruit.image}`; // تأكد من أن fruit.image تحتوي على اسم الملف فقط (مثال: 'apple_image.png')
+        fruitImage.src = `/images/fruits/${fruit.image}`; // تأكد من أن fruit.image تحتوي على اسم الملف فقط (مثال: 'apple_image.png')
         fruitImage.alt = fruit.name.en;
         
         fruitNameAr.textContent = fruit.name?.[currentLang] || fruit.name.ar || "---";
