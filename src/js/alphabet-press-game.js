@@ -1,15 +1,15 @@
 // public/js/alphabet-press-game.js
 
-import { db } from './firebase-config.js'; // تم التعديل: استيراد db
-import { collection, getDocs, query } from 'firebase/firestore'; // تم التعديل: إزالة where
-import { currentLang, loadLanguage, applyTranslations, setDirection } from './lang-handler.js'; // تم التعديل: استيراد جميع الدوال
-import { playAudio, stopCurrentAudio } from './audio-handler.js'; // تم التعديل: استيراد
-import { recordActivity } from './activity-handler.js'; // تم التعديل: استيراد
+import { db } from './firebase-config.js';
+import { collection, getDocs, query } from 'firebase/firestore';
+import { currentLang, loadLanguage, applyTranslations, setDirection } from './lang-handler.js';
+import { playAudio, stopCurrentAudio } from './audio-handler.js';
+import { recordActivity } from './activity-handler.js';
 
 let allItems = [];
 let currentDisplayedItem = null;
-let currentAlphabetPressCategory = 'animals';
-let currentAlphabetPressVoice = 'teacher';
+export let currentAlphabetPressCategory = 'animals'; // تصدير المتغير ليمكن الوصول إليه وتعديله من index.html
+export let currentAlphabetPressVoice = 'teacher'; // تصدير المتغير
 
 
 const alphabetLetters = {
@@ -18,6 +18,7 @@ const alphabetLetters = {
     'he': ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת']
 };
 
+// Available categories can be directly used here or fetched dynamically if needed
 const availableCategories = [
     { id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
     { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
@@ -29,13 +30,10 @@ export function getCurrentDisplayedItem() {
     return currentDisplayedItem;
 }
 
-// هذه الدوال لم تعد مطلوبة لأننا نُمرر المراجع مباشرة من index.html
-// export function getAlphabetPressCategorySelect() { return document.getElementById('alphabet-press-category-select'); }
-// export function getAlphabetPressVoiceSelect() { return document.getElementById('alphabet-press-voice-select'); }
-
+// هذه الدوال الآن تُعدّل المتغيرات المصدرة مباشرةً
 export function updateAlphabetPressCategory(newCategory) {
     currentAlphabetPressCategory = newCategory;
-    loadCategoryItems(newCategory);
+    loadCategoryItems(newCategory); // إعادة تحميل العناصر عند تغيير الفئة
 }
 
 export function updateAlphabetPressVoice(newVoice) {
@@ -59,14 +57,19 @@ export async function loadAlphabetPressGameContent() {
         return;
     }
 
+    // تهيئة لوحة المفاتيح بناءً على اللغة الحالية
     generateKeyboard(currentLang);
-    resetDisplay();
+    resetDisplay(); // مسح أي عنصر معروض سابقًا
 
+    // تحميل العناصر للفئة الافتراضية أو المختارة حاليا
     await loadCategoryItems(currentAlphabetPressCategory);
-    applyTranslations(); // تطبيق الترجمات بعد تحميل المحتوى (لضمان ترجمة عنوان اللعبة)
+
+    // تطبيق الترجمات بعد تحميل المحتوى (لضمان ترجمة عنوان اللعبة)
+    applyTranslations();
 }
 
 
+// دالة عامة لتشغيل الصوت من الشريط الجانبي
 export function playCurrentAlphabetItemAudioFromSidebar() {
     if (currentDisplayedItem) {
         const categoryId = currentAlphabetPressCategory;
@@ -87,21 +90,25 @@ export function playCurrentAlphabetItemAudioFromSidebar() {
 }
 
 
+// دالة يتم استدعاؤها عند تغيير اللغة من الشريط الجانبي
 export async function handleAlphabetPressLanguageChange(newLang) {
-    await loadLanguage(newLang);
-    applyTranslations();
-    setDirection(newLang);
+    await loadLanguage(newLang); // تحميل ملف اللغة الجديد
+    applyTranslations(); // تطبيق الترجمات (للصفحة كلها)
+    setDirection(newLang); // تعيين اتجاه الصفحة
 
+    // تحديث لوحة المفاتيح باللغة الجديدة
     generateKeyboard(newLang);
-    resetDisplay();
+    resetDisplay(); // مسح العرض الحالي
 
+    // إعادة تحميل عناصر الفئة لضمان أنها باللغة الصحيحة (إذا كانت البيانات تعتمد على اللغة)
     await loadCategoryItems(currentAlphabetPressCategory);
 }
 
+// دالة يتم استدعاؤها عند تغيير الفئة من الشريط الجانبي
 export async function handleAlphabetPressCategoryChange(newCategoryId) {
-    currentAlphabetPressCategory = newCategoryId;
-    await loadCategoryItems(newCategoryId);
-    resetDisplay();
+    currentAlphabetPressCategory = newCategoryId; // تحديث الفئة المختارة
+    await loadCategoryItems(newCategoryId); // إعادة تحميل العناصر للفئة الجديدة
+    resetDisplay(); // مسح العرض الحالي
 }
 
 
