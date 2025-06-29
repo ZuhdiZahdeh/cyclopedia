@@ -125,14 +125,6 @@
                 <div class="control-group">
                     <label for="game-lang-select-human-body">اللغة:</label>
                     <select id="game-lang-select-human-body">
-                        <option value="ar">العربية</option>
-                        <option value="en">English</option>
-                        <option value="he">عبري</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label for="voice-select-human-body">الصوت:</label>
-                    <select id="voice-select-human-body">
                         <option value="boy">صوت ولد</option>
                         <option value="teacher">المعلم</option>
                         <option value="girl">صوت بنت</option>
@@ -218,7 +210,15 @@
     import { loadVegetablesGameContent, showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio } from '/src/js/vegetables-game.js';
     import { loadHumanBodyGameContent, showNextHumanBodyPart, showPreviousHumanBodyPart, playCurrentHumanBodyPartAudio } from '/src/js/human-body-game.js';
     import { setDirection, currentLang, loadLanguage, applyTranslations } from '/src/js/lang-handler.js';
-	import { loadAlphabetPressGameContent, playCurrentAlphabetItemAudioFromSidebar, getCurrentDisplayedItem, getAlphabetPressCategorySelect, getAlphabetPressVoiceSelect } from '/src/js/alphabet-press-game.js';
+	// استيراد دوال لعبة الحروف اللازمة من ملفها
+    import {
+        loadAlphabetPressGameContent,
+        playCurrentAlphabetItemAudioFromSidebar,
+        getCurrentDisplayedItem,
+        handleAlphabetPressLanguageChange, // استيراد الدالة الجديدة
+        handleAlphabetPressCategoryChange,  // استيراد الدالة الجديدة
+        updateAlphabetPressVoice // استيراد الدالة الجديدة
+    } from '/src/js/alphabet-press-game.js';
 
     const mainContentArea = document.querySelector("main.main-content");
     const animalSidebarControls = document.getElementById("animal-sidebar-controls");
@@ -226,7 +226,7 @@
     const vegetableSidebarControls = document.getElementById("vegetable-sidebar-controls");
     const humanBodySidebarControls = document.getElementById("human-body-sidebar-controls");
     const alphabetPressSidebarControls = document.getElementById("alphabet-press-sidebar-controls");
-	console.log("alphabetPressSidebarControls reference at global scope:", alphabetPressSidebarControls);
+	console.log("alphabetPressSidebarControls reference at global scope (should be found):", alphabetPressSidebarControls);
 
     const welcomeMessage = document.getElementById("welcome-message");
     const homeTopicCards = document.getElementById("home-topic-cards");
@@ -308,17 +308,18 @@
       await loadAlphabetPressGameContent(); // يتم حقن محتوى اللعبة في main-content
       showAlphabetPressControls(); // إظهار عناصر التحكم الخاصة باللعبة في الشريط الجانبي
 
-      // *** الحصول على المراجع هنا بعد أن أصبح HTML موجودًا في الـ DOM ***
+      // *** الحصول على المراجع هنا بعد أن أصبح HTML الخاص بالشريط الجانبي موجودًا في الـ DOM ***
       const alphabetPressLanguageSelect = document.getElementById('alphabet-press-language-select');
       const alphabetPressCategorySelect = document.getElementById('alphabet-press-category-select');
       const alphabetPressVoiceSelect = document.getElementById('alphabet-press-voice-select');
-      const alphabetPressPlayAudioSidebarBtn = document.getElementById('alphabet-press-play-audio-sidebar'); // *** الحصول على مرجع الزر الجديد ***
+      const alphabetPressPlayAudioSidebarBtn = document.getElementById('alphabet-press-play-audio-sidebar');
 
       if (alphabetPressLanguageSelect && alphabetPressCategorySelect && alphabetPressVoiceSelect && alphabetPressPlayAudioSidebarBtn) {
           console.log("Found alphabet press sidebar controls, initializing...");
+          // نمرر المراجع إلى دالة التهيئة
           await initializeAlphabetPressSidebarControls(alphabetPressLanguageSelect, alphabetPressCategorySelect, alphabetPressVoiceSelect, alphabetPressPlayAudioSidebarBtn);
       } else {
-          console.error("Failed to get references for alphabet press sidebar controls. Make sure the elements are present in alphabet-press.html and properly loaded.");
+          console.error("Failed to get references for alphabet press sidebar controls. Make sure the elements are present in index.html (sidebar section) and loaded.");
       }
     };
 
@@ -449,12 +450,17 @@
             option.textContent = category['name_' + currentLang];
             catSelect.appendChild(option);
         });
+        // تأكد من تحديد الفئة الافتراضية
+        catSelect.value = availableCategories[0].id;
+
 
         // المستمعون لعناصر التحكم في الشريط الجانبي للعبة الحروف
         langSelect.addEventListener('change', async () => {
+            // تحديث اللغة العالمية والاتجاه
             await loadLanguage(langSelect.value);
             applyTranslations();
             setDirection(langSelect.value);
+
             // تحديث أسماء الفئات باللغة الجديدة
             Array.from(catSelect.options).forEach(option => {
                 const category = availableCategories.find(cat => cat.id === option.value);
@@ -462,29 +468,27 @@
                     option.textContent = category['name_' + currentLang];
                 }
             });
-            // لا حاجة لإعادة تحميل loadAlphabetPressGameContent() هنا، فقط تحديث البيانات
-            // سيتم التعامل مع إعادة تحميل العناصر في alphabet-press-game.js
+            // استدعاء دالة AlphabetPressGameContent لتحديث لوحة المفاتيح والعناصر
+            loadAlphabetPressGameContent();
         });
 
         catSelect.addEventListener('change', () => {
-            // سيتم التعامل مع تغيير الفئة في alphabet-press-game.js
+            // استدعاء دالة في alphabet-press-game.js لتحديث الفئة والعناصر
+            handleAlphabetPressCategoryChange(catSelect.value);
+        });
+
+        voiceSelect.addEventListener('change', () => {
+            // استدعاء دالة في alphabet-press-game.js لتحديث نوع الصوت
+            updateAlphabetPressVoice(voiceSelect.value);
         });
 
         // *** إضافة مستمع لزر الاستماع الجديد في الشريط الجانبي ***
         if (playAudioBtn) {
             playAudioBtn.addEventListener('click', () => {
                 const currentItem = getCurrentDisplayedItem(); // الحصول على العنصر المعروض حالياً من alphabet-press-game.js
-                const categorySelectFromGame = getAlphabetPressCategorySelect(); // الحصول على الـ select من اللعبة
-                const voiceSelectFromGame = getAlphabetPressVoiceSelect(); // الحصول على الـ select من اللعبة
-
-                if (currentItem && categorySelectFromGame && voiceSelectFromGame) {
-                    const categoryId = categorySelectFromGame.value;
-                    const selectedVoiceType = voiceSelectFromGame.value;
-                    playCurrentAlphabetItemAudioFromSidebar(currentItem, selectedVoiceType, categoryId);
-                } else {
-                    console.warn("لا يوجد عنصر معروض أو عناصر التحكم غير جاهزة لتشغيل الصوت من الشريط الجانبي.");
-                    // يمكنك عرض رسالة للمستخدم هنا إذا أردت
-                }
+                // no need to get category/voice select here, they are stored in alphabet-press-game.js variables
+                // playCurrentAlphabetItemAudioFromSidebar will use the stored values
+                playCurrentAlphabetItemAudioFromSidebar(); // استدعاء الدالة الجديدة بدون تمرير المعاملات
             });
         }
     }
