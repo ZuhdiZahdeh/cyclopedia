@@ -1,25 +1,23 @@
-// js/alphabet-press-game.js
+// public/js/alphabet-press-game.js
 
-import { db } from './firebase-config.js';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { currentLang, loadLanguage, applyTranslations, setDirection } from './lang-handler.js';
-import { playAudio, stopCurrentAudio } from './audio-handler.js';
-import { recordActivity } from './activity-handler.js';
+import { db } from './firebase-config.js'; // تم التعديل: استيراد db
+import { collection, getDocs, query } from 'firebase/firestore'; // تم التعديل: إزالة where
+import { currentLang, loadLanguage, applyTranslations, setDirection } from './lang-handler.js'; // تم التعديل: استيراد جميع الدوال
+import { playAudio, stopCurrentAudio } from './audio-handler.js'; // تم التعديل: استيراد
+import { recordActivity } from './activity-handler.js'; // تم التعديل: استيراد
 
-let allItems = []; // لتخزين جميع العناصر من الفئة المختارة
-let currentDisplayedItem = null; // لتتبع العنصر المعروض حاليا
-let currentAlphabetPressCategory = 'animals'; // تتبع الفئة المختارة حاليا للعبة الحروف
-let currentAlphabetPressVoice = 'teacher'; // تتبع الصوت المختار حاليا للعبة الحروف
+let allItems = [];
+let currentDisplayedItem = null;
+let currentAlphabetPressCategory = 'animals';
+let currentAlphabetPressVoice = 'teacher';
 
 
-// تعريف الحروف لكل لغة
 const alphabetLetters = {
     'ar': ['أ', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'س', 'ش', 'ص', 'ض', 'ع', 'غ', 'ف', 'ق', 'ك', 'ل', 'م', 'ن', 'ه', 'و', 'ي'],
     'en': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
     'he': ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת']
 };
 
-// تعريف الفئات المتوفرة (يمكن جلبها ديناميا من Firestore لاحقاً)
 const availableCategories = [
     { id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
     { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
@@ -27,31 +25,21 @@ const availableCategories = [
     { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף האדם' },
 ];
 
-// دالة تصدير العنصر المعروض حاليا ليتم الوصول إليه من index.html
 export function getCurrentDisplayedItem() {
     return currentDisplayedItem;
 }
 
-// دوال تصدير للوصول إلى قوائم الاختيار من index.html
-// هذه الدوال ستجلب العنصر من DOM في كل مرة يتم استدعاؤها
-// وهي ضرورية لأن الـ select قد لا تكون موجودة عند التحميل الأولي
-export function getAlphabetPressCategorySelect() {
-    return document.getElementById('alphabet-press-category-select');
-}
+// هذه الدوال لم تعد مطلوبة لأننا نُمرر المراجع مباشرة من index.html
+// export function getAlphabetPressCategorySelect() { return document.getElementById('alphabet-press-category-select'); }
+// export function getAlphabetPressVoiceSelect() { return document.getElementById('alphabet-press-voice-select'); }
 
-export function getAlphabetPressVoiceSelect() {
-    return document.getElementById('alphabet-press-voice-select');
-}
-
-// تحديث هذه الدوال لتتلقى القيمة مباشرة بدلاً من الاعتماد على DOM
 export function updateAlphabetPressCategory(newCategory) {
     currentAlphabetPressCategory = newCategory;
-    loadCategoryItems(newCategory); // إعادة تحميل العناصر عند تغيير الفئة
+    loadCategoryItems(newCategory);
 }
 
 export function updateAlphabetPressVoice(newVoice) {
     currentAlphabetPressVoice = newVoice;
-    // لا حاجة لإعادة تحميل العناصر، فقط تحديث المتغير
 }
 
 
@@ -68,26 +56,21 @@ export async function loadAlphabetPressGameContent() {
     } catch (error) {
         console.error("Error loading alphabet-press.html:", error);
         mainContentArea.innerHTML = "<p style='color: red;'>فشل تحميل لعبة الحروف. يرجى التأكد من وجود ملف /html/alphabet-press.html.</p>";
-        return; // توقف التنفيذ إذا فشل تحميل HTML
+        return;
     }
 
-    // تهيئة لوحة المفاتيح بناءً على اللغة الحالية
     generateKeyboard(currentLang);
-    resetDisplay(); // مسح أي عنصر معروض سابقًا
+    resetDisplay();
 
-    // تحميل العناصر للفئة الافتراضية أو المختارة حاليا
     await loadCategoryItems(currentAlphabetPressCategory);
-
-    // تطبيق الترجمات بعد تحميل المحتوى (لضمان ترجمة عنوان اللعبة)
-    applyTranslations();
+    applyTranslations(); // تطبيق الترجمات بعد تحميل المحتوى (لضمان ترجمة عنوان اللعبة)
 }
 
 
-// دالة عامة لتشغيل الصوت من الشريط الجانبي
 export function playCurrentAlphabetItemAudioFromSidebar() {
     if (currentDisplayedItem) {
-        const categoryId = currentAlphabetPressCategory; // استخدم المتغير المُخزّن
-        const selectedVoiceType = currentAlphabetPressVoice; // استخدم المتغير المُخزّن
+        const categoryId = currentAlphabetPressCategory;
+        const selectedVoiceType = currentAlphabetPressVoice;
         
         const audioPath = getAudioPath(currentDisplayedItem, selectedVoiceType, categoryId);
         if (audioPath) {
@@ -104,25 +87,21 @@ export function playCurrentAlphabetItemAudioFromSidebar() {
 }
 
 
-// دالة يتم استدعاؤها عند تغيير اللغة من الشريط الجانبي
 export async function handleAlphabetPressLanguageChange(newLang) {
-    await loadLanguage(newLang); // تحميل ملف اللغة الجديد
-    applyTranslations(); // تطبيق الترجمات (للصفحة كلها)
-    setDirection(newLang); // تعيين اتجاه الصفحة
+    await loadLanguage(newLang);
+    applyTranslations();
+    setDirection(newLang);
 
-    // تحديث لوحة المفاتيح باللغة الجديدة
     generateKeyboard(newLang);
-    resetDisplay(); // مسح العرض الحالي
+    resetDisplay();
 
-    // إعادة تحميل عناصر الفئة لضمان أنها باللغة الصحيحة (إذا كانت البيانات تعتمد على اللغة)
     await loadCategoryItems(currentAlphabetPressCategory);
 }
 
-// دالة يتم استدعاؤها عند تغيير الفئة من الشريط الجانبي
 export async function handleAlphabetPressCategoryChange(newCategoryId) {
-    currentAlphabetPressCategory = newCategoryId; // تحديث الفئة المختارة
-    await loadCategoryItems(newCategoryId); // إعادة تحميل العناصر للفئة الجديدة
-    resetDisplay(); // مسح العرض الحالي
+    currentAlphabetPressCategory = newCategoryId;
+    await loadCategoryItems(newCategoryId);
+    resetDisplay();
 }
 
 
@@ -159,14 +138,12 @@ async function loadCategoryItems(categoryId) {
         console.log(`تم تحميل ${allItems.length} عنصرًا للفئة ${categoryId}.`);
         hideGameMessage();
         
-        // إذا لم يتم العثور على عناصر، اعرض رسالة مناسبة
         if (allItems.length === 0) {
             showGameMessage(`لا توجد عناصر متاحة للفئة "${categoryId}".`, 'warning');
         }
 
     } catch (error) {
         console.error('خطأ في تحميل عناصر الفئة:', error);
-        // رسالة الخطأ من Firestore قد تكون غير مفهومة للمستخدم، لذا اعرض رسالة عامة
         showGameMessage('فشل تحميل العناصر. يرجى المحاولة مرة أخرى.', 'error');
         allItems = [];
     }
@@ -175,18 +152,16 @@ async function loadCategoryItems(categoryId) {
 function handleLetterPress(letter) {
     stopCurrentAudio();
 
-    // استخدم المتغير المخزن للفئة
     const selectedCategoryId = currentAlphabetPressCategory;
 
     const filteredItems = allItems.filter(item => {
-        // تأكد من أن item.letter موجود وأن فيه الخاصية currentLang
         return item.letter && item.letter[currentLang] && item.letter[currentLang].toLowerCase() === letter.toLowerCase();
     });
 
     if (filteredItems.length > 0) {
         const randomIndex = Math.floor(Math.random() * filteredItems.length);
         const selectedItem = filteredItems[randomIndex];
-        displayItem(selectedItem); // هنا يتم تعيين currentDisplayedItem
+        displayItem(selectedItem);
         const currentUser = JSON.parse(localStorage.getItem("user"));
         if (currentUser) {
             recordActivity(currentUser, selectedCategoryId);
@@ -202,9 +177,9 @@ function displayItem(itemData) {
     const alphabetPressImage = document.getElementById('alphabet-press-image');
     const alphabetPressItemName = document.getElementById('alphabet-press-item-name');
     
-    currentDisplayedItem = itemData; // ***** تم تعيينه هنا *****
+    currentDisplayedItem = itemData;
 
-    const categoryId = currentAlphabetPressCategory; // استخدم المتغير المخزن
+    const categoryId = currentAlphabetPressCategory;
 
     if (alphabetPressImage) {
         alphabetPressImage.src = `/images/${categoryId}/${itemData.image}`;
@@ -225,8 +200,7 @@ function displayItem(itemData) {
     if (itemDisplayArea) itemDisplayArea.style.display = 'flex';
     hideGameMessage();
 
-    // تشغيل الصوت تلقائياً عند عرض العنصر هنا
-    const selectedVoiceType = currentAlphabetPressVoice; // استخدم المتغير المخزن
+    const selectedVoiceType = currentAlphabetPressVoice;
     const audioPath = getAudioPath(itemData, selectedVoiceType, categoryId);
     if (audioPath) {
         playAudio(audioPath);

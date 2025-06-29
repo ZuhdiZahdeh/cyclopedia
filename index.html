@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/css/human-body.css" />
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/alphabet-press.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="/css/memory-game.css" /> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 
 <body>
@@ -30,138 +30,34 @@
         <a href="#" onclick="loadVegetablesPage()">🥦 الخضروات</a>
         <a href="#" onclick="loadHumanBodyPage()">🧠 جسم الإنسان</a>
         <a href="#" onclick="loadAlphabetPressPage()">🎮 الألعاب</a>
-      </nav>
+        <a href="#" onclick="loadMemoryGamePage()">🃏 الذاكرة</a> </nav>
     </header>
 
     <div class="page-layout">
       <aside class="sidebar shadow">
-        <div id="animal-sidebar-controls" class="sidebar-section" style="display: none;">
-          <h3 style="text-align: center;">🐾 تعرف على الحيوانات</h3>
-          <div class="sidebar-game-controls">
-            <div class="control-group">
-              <label for="game-lang-select-animal">اللغة:</label>
-              <select id="game-lang-select-animal">
-                <option value="ar">العربية</option>
-                <option value="en">English</option>
-                <option value="he">عبري</option>
-              </select>
-            </div>
-            <div class="control-group">
-              <label for="voice-select-animal">الصوت:</label>
-              <select id="voice-select-animal">
-                <option value="teacher">المعلم</option>
-                <option value="boy">صوت ولد</option>
-                <option value="girl">صوت بنت</option>
-                <option value="child">صوت طفل</option>
-              </select>
-            </div>
-            <button id="play-sound-btn-animal" class="control-button">🔊 استمع</button>
-            <div class="sidebar-navigation-buttons">
-                <button id="prev-animal-btn" class="control-button">⬅️ السابق</button>
-                <button id="next-animal-btn" class="control-button">التالي ➡️</button>
-            </div>
-          </div>
-        </div>
+        <div id="animal-sidebar-controls" class="sidebar-section" style="display: none;">...</div>
+        <div id="fruit-sidebar-controls" class="sidebar-section" style="display: none;">...</div>
+        <div id="vegetable-sidebar-controls" class="sidebar-section" style="display: none;">...</div>
+        <div id="human-body-sidebar-controls" class="sidebar-section" style="display: none;">...</div>
+        <div id="alphabet-press-sidebar-controls" class="sidebar-section" style="display: none;">...</div>
 
-        <div id="fruit-sidebar-controls" class="sidebar-section" style="display: none;">
-            <h3 style="text-align: center;">🍎 تعرف على الفواكه</h3>
-            <div class="sidebar-game-controls">
-                <div class="control-group">
-                    <label for="game-lang-select-fruit">اللغة:</label>
-                    <select id="game-lang-select-fruit">
-                        <option value="ar">العربية</option>
-                        <option value="en">English</option>
-                        <option value="he">عبري</option>
-                    </select>
+        <div id="memory-game-sidebar-controls" class="sidebar-section" style="display: none;">
+            <h3 style="text-align: center;">🃏 إعدادات لعبة الذاكرة</h3>
+            <div class="sidebar-game-controls memory-game-controls"> <div class="control-group">
+                    <h3>اختر اللغة:</h3>
+                    <button id="memory-game-lang-ar" class="memory-game-lang-button active">العربية</button>
+                    <button id="memory-game-lang-en" class="memory-game-lang-button">English</button>
                 </div>
-                <div class="control-group">
-                    <label for="voice-select-fruit">الصوت:</label>
-                    <select id="voice-select-fruit">
-                        <option value="teacher">المعلم</option>
-                        <option value="boy">صوت ولد</option>
-                        <option value="girl">صوت بنت</option>
-                        <option value="child">صوت طفل</option>
-                    </select>
+                <div class="control-group topic-selection"> <h3>اختر الموضوع:</h3>
+                    </div>
+                <div class="control-group play-mode-selection">
+                    <h3>نمط اللعب:</h3>
+                    <button id="memory-game-mode-image-image" class="memory-game-mode-button active">صورة - صورة</button>
+                    <button id="memory-game-mode-image-word" class="memory-game-mode-button">صورة - كلمة</button>
+                    <button id="memory-game-mode-image-char" class="memory-game-mode-button">صورة - حرف</button>
+                    <button id="memory-game-mode-image-audio" class="memory-game-mode-button">صورة - صوت</button>
                 </div>
-                <button id="play-sound-btn-fruit" class="control-button">🔊 استمع</button>
-                <div class="sidebar-navigation-buttons">
-                    <button id="prev-fruit-btn" class="control-button">⬅️ السابق</button>
-                    <button id="next-fruit-btn" class="control-button">التالي ➡️</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="vegetable-sidebar-controls" class="sidebar-section" style="display: none;">
-            <h3 style="text-align: center;">🥦 تعرف على الخضروات</h3>
-            <div class="sidebar-game-controls">
-                <div class="control-group">
-                    <label for="game-lang-select-vegetable">اللغة:</label>
-                    <select id="game-lang-select-vegetable">
-                        <option value="ar">العربية</option>
-                        <option value="en">English</option>
-                        <option value="he">عبري</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label for="voice-select-vegetable">الصوت:</label>
-                    <select id="voice-select-vegetable">
-                        <option value="teacher">المعلم</option>
-                        <option value="boy">صوت ولد</option>
-                        <option value="girl">صوت بنت</option>
-                        <option value="child">صوت طفل</option>
-                    </select>
-                </div>
-                <button id="play-sound-btn-vegetable" class="control-button">🔊 استمع</button>
-                <div class="sidebar-navigation-buttons">
-                    <button id="prev-vegetable-btn" class="control-button">⬅️ السابق</button>
-                    <button id="next-vegetable-btn" class="control-button">التالي ➡️</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="human-body-sidebar-controls" class="sidebar-section" style="display: none;">
-            <h3 style="text-align: center;">🧠 تعرف على جسم الإنسان</h3>
-            <div class="sidebar-game-controls">
-                <div class="control-group">
-                    <label for="game-lang-select-human-body">اللغة:</label>
-                    <select id="game-lang-select-human-body">
-                        <option value="boy">صوت ولد</option>
-                        <option value="teacher">المعلم</option>
-                        <option value="girl">صوت بنت</option>
-                        <option value="child">صوت طفل</option>
-                    </select>
-                </div>
-                <button id="play-sound-btn-human-body" class="control-button">🔊 استمع</button>
-                <div class="sidebar-navigation-buttons">
-                    <button id="prev-human-body-btn" class="control-button">⬅️ السابق</button>
-                    <button id="next-human-body-btn" class="control-button">التالي ➡️</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="alphabet-press-sidebar-controls" class="sidebar-section" style="display: none;">
-            <h3 style="text-align: center;">🎮 إعدادات لعبة الحروف</h3>
-            <div class="sidebar-game-controls">
-                <div class="control-group">
-                    <label for="alphabet-press-language-select">اختر اللغة:</label>
-                    <select id="alphabet-press-language-select"></select>
-                </div>
-
-                <div class="control-group">
-                    <label for="alphabet-press-category-select">اختر الفئة:</label>
-                    <select id="alphabet-press-category-select"></select>
-                </div>
-
-                <div class="control-group">
-                    <label for="alphabet-press-voice-select">اختر الصوت:</label>
-                    <select id="alphabet-press-voice-select">
-                        <option value="teacher" data-i18n="teacher_voice">المعلم</option>
-                        <option value="boy" data-i18n="boy_voice">صوت ولد</option>
-                        <option value="girl" data-i18n="girl_voice">صوت بنت</option>
-                        <option value="child" data-i18n="child_voice">صوت طفل</option>
-                    </select>
-                </div>
-                <button id="alphabet-press-play-audio-sidebar" class="control-button">🔊 استمع</button>
+                <button id="memory-game-start-button" class="memory-game-start-button">ابدأ اللعب</button>
             </div>
         </div>
 
@@ -198,6 +94,9 @@
                 <span class="icon">🔠</span>
                 <h3>لعبة الحروف</h3>
             </a>
+            <a href="#" class="topic-card games" onclick="loadMemoryGamePage(); return false;"> <span class="icon">🧠</span>
+                <h3>لعبة الذاكرة</h3>
+            </a>
         </div>
       </main>
     </div>
@@ -215,10 +114,17 @@
         loadAlphabetPressGameContent,
         playCurrentAlphabetItemAudioFromSidebar,
         getCurrentDisplayedItem,
-        handleAlphabetPressLanguageChange, // استيراد الدالة الجديدة
-        handleAlphabetPressCategoryChange,  // استيراد الدالة الجديدة
-        updateAlphabetPressVoice // استيراد الدالة الجديدة
+        handleAlphabetPressLanguageChange,
+        handleAlphabetPressCategoryChange,
+        updateAlphabetPressVoice
     } from '/src/js/alphabet-press-game.js';
+    // استيراد دوال لعبة الذاكرة الجديدة
+    import {
+        loadMemoryGameContent,
+        initializeMemoryGameSidebarControls, // دالة تهيئة عناصر الشريط الجانبي للذاكرة
+        populateTopicButtons as populateMemoryGameTopicButtons // إعادة تسمية لتجنب التعارض
+    } from '/src/js/memory-game.js';
+
 
     const mainContentArea = document.querySelector("main.main-content");
     const animalSidebarControls = document.getElementById("animal-sidebar-controls");
@@ -226,7 +132,7 @@
     const vegetableSidebarControls = document.getElementById("vegetable-sidebar-controls");
     const humanBodySidebarControls = document.getElementById("human-body-sidebar-controls");
     const alphabetPressSidebarControls = document.getElementById("alphabet-press-sidebar-controls");
-	console.log("alphabetPressSidebarControls reference at global scope (should be found):", alphabetPressSidebarControls);
+    const memoryGameSidebarControls = document.getElementById("memory-game-sidebar-controls"); // مرجع جديد
 
     const welcomeMessage = document.getElementById("welcome-message");
     const homeTopicCards = document.getElementById("home-topic-cards");
@@ -308,7 +214,7 @@
       await loadAlphabetPressGameContent(); // يتم حقن محتوى اللعبة في main-content
       showAlphabetPressControls(); // إظهار عناصر التحكم الخاصة باللعبة في الشريط الجانبي
 
-      // *** الحصول على المراجع هنا بعد أن أصبح HTML الخاص بالشريط الجانبي موجودًا في الـ DOM ***
+      // الحصول على المراجع هنا بعد أن أصبح HTML الخاص بالشريط الجانبي موجودًا في الـ DOM
       const alphabetPressLanguageSelect = document.getElementById('alphabet-press-language-select');
       const alphabetPressCategorySelect = document.getElementById('alphabet-press-category-select');
       const alphabetPressVoiceSelect = document.getElementById('alphabet-press-voice-select');
@@ -316,12 +222,23 @@
 
       if (alphabetPressLanguageSelect && alphabetPressCategorySelect && alphabetPressVoiceSelect && alphabetPressPlayAudioSidebarBtn) {
           console.log("Found alphabet press sidebar controls, initializing...");
-          // نمرر المراجع إلى دالة التهيئة
           await initializeAlphabetPressSidebarControls(alphabetPressLanguageSelect, alphabetPressCategorySelect, alphabetPressVoiceSelect, alphabetPressPlayAudioSidebarBtn);
       } else {
           console.error("Failed to get references for alphabet press sidebar controls. Make sure the elements are present in index.html (sidebar section) and loaded.");
       }
     };
+
+    // دالة تحميل صفحة لعبة الذاكرة (جديدة)
+    window.loadMemoryGamePage = async () => {
+        hideAllControls();
+        if (welcomeMessage) welcomeMessage.style.display = 'none';
+        if (homeTopicCards) homeTopicCards.style.display = 'none';
+        await loadMemoryGameContent(); // يتم حقن محتوى اللعبة في main-content
+        showMemoryGameControls(); // إظهار عناصر التحكم الخاصة باللعبة في الشريط الجانبي
+        // تهيئة عناصر التحكم في الشريط الجانبي للعبة الذاكرة
+        await initializeMemoryGameSidebarControls();
+    };
+
 
     // دالة العودة للصفحة الرئيسية وتحديث محتواها
     window.showHomePage = () => {
@@ -348,6 +265,9 @@
                     <span class="icon">🔠</span>
                     <h3>لعبة الحروف</h3>
                 </a>
+                <a href="#" class="topic-card games" onclick="loadMemoryGamePage(); return false;">
+                    <span class="icon">🧠</span> <h3>لعبة الذاكرة</h3>
+                </a>
             </div>
         `;
         hideAllControls();
@@ -356,65 +276,20 @@
         setDirection(defaultLang);
     };
 
-    function showAnimalControls() {
-        if (animalSidebarControls) {
-            animalSidebarControls.style.display = 'block';
-        }
-    }
+    // دوال إظهار/إخفاء أقسام الشريط الجانبي
+    function showAnimalControls() { if (animalSidebarControls) { animalSidebarControls.style.display = 'block'; } }
+    function hideAnimalControls() { if (animalSidebarControls) { animalSidebarControls.style.display = 'none'; } }
+    function showFruitControls() { if (fruitSidebarControls) { fruitSidebarControls.style.display = 'block'; } }
+    function hideFruitControls() { if (fruitSidebarControls) { fruitSidebarControls.style.display = 'none'; } }
+    function showVegetableControls() { if (vegetableSidebarControls) { vegetableSidebarControls.style.display = 'block'; } }
+    function hideVegetableControls() { if (vegetableSidebarControls) { vegetableSidebarControls.style.display = 'none'; } }
+    function showHumanBodyControls() { if (humanBodySidebarControls) { humanBodySidebarControls.style.display = 'block'; } }
+    function hideHumanBodyControls() { if (humanBodySidebarControls) { humanBodySidebarControls.style.display = 'none'; } }
+    function showAlphabetPressControls() { if (alphabetPressSidebarControls) { alphabetPressSidebarControls.style.display = 'block'; } }
+    function hideAlphabetPressControls() { if (alphabetPressSidebarControls) { alphabetPressSidebarControls.style.display = 'none'; } }
+    function showMemoryGameControls() { if (memoryGameSidebarControls) { memoryGameSidebarControls.style.display = 'block'; } } // جديدة
+    function hideMemoryGameControls() { if (memoryGameSidebarControls) { memoryGameSidebarControls.style.display = 'none'; } } // جديدة
 
-    function hideAnimalControls() {
-        if (animalSidebarControls) {
-            animalSidebarControls.style.display = 'none';
-        }
-    }
-
-    function showFruitControls() {
-        if (fruitSidebarControls) {
-            fruitSidebarControls.style.display = 'block';
-        }
-    }
-
-    function hideFruitControls() {
-        if (fruitSidebarControls) {
-            fruitSidebarControls.style.display = 'none';
-        }
-    }
-
-    function showVegetableControls() {
-        if (vegetableSidebarControls) {
-            vegetableSidebarControls.style.display = 'block';
-        }
-    }
-
-    function hideVegetableControls() {
-        if (vegetableSidebarControls) {
-            vegetableSidebarControls.style.display = 'none';
-        }
-    }
-
-    function showHumanBodyControls() {
-        if (humanBodySidebarControls) {
-            humanBodySidebarControls.style.display = 'block';
-        }
-    }
-
-    function hideHumanBodyControls() {
-        if (humanBodySidebarControls) {
-            humanBodySidebarControls.style.display = 'none';
-        }
-    }
-
-    function showAlphabetPressControls() {
-        if (alphabetPressSidebarControls) {
-            alphabetPressSidebarControls.style.display = 'block';
-        }
-    }
-
-    function hideAlphabetPressControls() {
-        if (alphabetPressSidebarControls) {
-            alphabetPressSidebarControls.style.display = 'none';
-        }
-    }
 
     function hideAllControls() {
         hideAnimalControls();
@@ -422,18 +297,18 @@
         hideVegetableControls();
         hideHumanBodyControls();
         hideAlphabetPressControls();
+        hideMemoryGameControls(); // إخفاء عناصر تحكم الذاكرة
     }
 
     const availableCategories = [
         { id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
         { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
-        { id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables', name_he: 'ירקות' },
+        { id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables', name_he: 'ירقات' },
         { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף האדם' },
     ];
 
     async function initializeAlphabetPressSidebarControls(langSelect, catSelect, voiceSelect, playAudioBtn) {
-        // تعبئة قائمة اللغات
-        langSelect.innerHTML = ''; // مسح الخيارات القديمة
+        langSelect.innerHTML = '';
         ['ar', 'en', 'he'].forEach(langCode => {
             const option = document.createElement('option');
             option.value = langCode;
@@ -442,59 +317,46 @@
         });
         langSelect.value = currentLang;
 
-        // تعبئة الفئات
-        catSelect.innerHTML = ''; // مسح الخيارات القديمة
+        catSelect.innerHTML = '';
         availableCategories.forEach(category => {
             const option = document.createElement('option');
             option.value = category.id;
             option.textContent = category['name_' + currentLang];
             catSelect.appendChild(option);
         });
-        // تأكد من تحديد الفئة الافتراضية
         catSelect.value = availableCategories[0].id;
 
 
-        // المستمعون لعناصر التحكم في الشريط الجانبي للعبة الحروف
         langSelect.addEventListener('change', async () => {
-            // تحديث اللغة العالمية والاتجاه
             await loadLanguage(langSelect.value);
             applyTranslations();
             setDirection(langSelect.value);
 
-            // تحديث أسماء الفئات باللغة الجديدة
             Array.from(catSelect.options).forEach(option => {
                 const category = availableCategories.find(cat => cat.id === option.value);
                 if (category) {
                     option.textContent = category['name_' + currentLang];
                 }
             });
-            // استدعاء دالة AlphabetPressGameContent لتحديث لوحة المفاتيح والعناصر
             loadAlphabetPressGameContent();
         });
 
         catSelect.addEventListener('change', () => {
-            // استدعاء دالة في alphabet-press-game.js لتحديث الفئة والعناصر
             handleAlphabetPressCategoryChange(catSelect.value);
         });
 
         voiceSelect.addEventListener('change', () => {
-            // استدعاء دالة في alphabet-press-game.js لتحديث نوع الصوت
             updateAlphabetPressVoice(voiceSelect.value);
         });
 
-        // *** إضافة مستمع لزر الاستماع الجديد في الشريط الجانبي ***
         if (playAudioBtn) {
             playAudioBtn.addEventListener('click', () => {
-                const currentItem = getCurrentDisplayedItem(); // الحصول على العنصر المعروض حالياً من alphabet-press-game.js
-                // no need to get category/voice select here, they are stored in alphabet-press-game.js variables
-                // playCurrentAlphabetItemAudioFromSidebar will use the stored values
-                playCurrentAlphabetItemAudioFromSidebar(); // استدعاء الدالة الجديدة بدون تمرير المعاملات
+                playCurrentAlphabetItemAudioFromSidebar();
             });
         }
     }
 
 
-    // دالة initializeSubjectControls العامة لتهيئة عناصر التحكم لكل موضوع
     async function initializeSubjectControls(subjectType) {
         let langSelect, voiceSelect, playSoundBtn, prevBtn, nextBtn;
         let loadContentFunc, showNextFunc, showPrevFunc, playAudioFunc;
@@ -548,13 +410,11 @@
                 return;
         }
 
-        // تحقق مما إذا كانت عناصر التحكم موجودة قبل محاولة استخدامها
         if (!langSelect || !voiceSelect) {
             console.error(`عناصر التحكم لنوع الموضوع '${subjectType}' لم يتم العثور عليها في DOM.`);
             return;
         }
 
-        // تعبئة قوائم اللغة والصوت (إذا لم تكن قد عُبئت بالفعل)
         if (langSelect.options.length === 0) {
             ['ar', 'en', 'he'].forEach(langCode => {
                 const option = document.createElement('option');
@@ -575,32 +435,32 @@
             voiceSelect.value = 'teacher';
         }
 
-        // إضافة مستمعي الأحداث
         langSelect.onchange = async () => {
             const newLang = langSelect.value;
             await loadLanguage(newLang);
             applyTranslations();
             setDirection(newLang);
-            await loadContentFunc(); // إعادة تحميل محتوى الموضوع باللغة الجديدة
+            await loadContentFunc();
         };
 
         voiceSelect.onchange = () => {
-            // لا حاجة لإعادة تحميل المحتوى، فقط تحديث المتغير الداخلي في game.js
+            // منطق تحديث الصوت في ملف اللعبة الخاص بالموضوع (مثل animals-game.js)
+            // هذه الأزرار لا تمرر القيمة مباشرة إلى الدالة، بل الدالة تستخدم قيمة الـ select
+            // ولذلك لا حاجة لدالة update هنا
         };
 
         if (playSoundBtn) playSoundBtn.onclick = () => {
-            playAudioFunc(); // استدعاء دالة تشغيل الصوت المصدرة
+            playAudioFunc();
         };
 
         if (prevBtn) prevBtn.onclick = () => {
-            showPrevFunc(); // استدعاء دالة السابق المصدرة
+            showPrevFunc();
         };
 
         if (nextBtn) nextBtn.onclick = () => {
-            showNextFunc(); // استدعاء دالة التالي المصدرة
+            showNextFunc();
         };
 
-        // لضمان تحديث اللغة في القوائم المنسدلة عند تغييرها عالمياً
         applyTranslations();
     }
 
