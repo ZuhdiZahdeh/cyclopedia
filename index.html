@@ -169,8 +169,7 @@
                         <option value="child" data-i18n="child_voice">صوت طفل</option>
                     </select>
                 </div>
-                <button id="alphabet-press-play-audio-sidebar" class="control-button">🔊 استمع</button>
-            </div>
+                </div>
         </div>
 
         <div class="sidebar-section static-section">
@@ -218,7 +217,7 @@
     import { loadVegetablesGameContent, showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio } from '/src/js/vegetables-game.js';
     import { loadHumanBodyGameContent, showNextHumanBodyPart, showPreviousHumanBodyPart, playCurrentHumanBodyPartAudio } from '/src/js/human-body-game.js';
     import { setDirection, currentLang, loadLanguage, applyTranslations } from '/src/js/lang-handler.js';
-	import { loadAlphabetPressGameContent } from '/src/js/alphabet-press-game.js';
+	import { loadAlphabetPressGameContent } from '/src/js/alphabet-press-game.js'; // تم الإبقاء على هذا فقط
 
     const mainContentArea = document.querySelector("main.main-content");
     const animalSidebarControls = document.getElementById("animal-sidebar-controls");
@@ -234,19 +233,7 @@
     const alphabetPressLanguageSelect = document.getElementById('alphabet-press-language-select');
     const alphabetPressCategorySelect = document.getElementById('alphabet-press-category-select');
     const alphabetPressVoiceSelect = document.getElementById('alphabet-press-voice-select');
-    const alphabetPressPlayAudioSidebarBtn = document.getElementById('alphabet-press-play-audio-sidebar'); // زر الاستماع للعبة الحروف
-
-
-    // مراجع لأزرار التنقل والاستماع لكل موضوع (هذه المراجع سيتم تهيئتها عند load***Page)
-    // الحيوانات
-    let prevAnimalBtn, nextAnimalBtn, playSoundAnimalBtn, gameLangSelectAnimal, voiceSelectAnimal;
-    // الفواكه
-    let prevFruitBtn, nextFruitBtn, playSoundFruitBtn, gameLangSelectFruit, voiceSelectFruit;
-    // الخضروات
-    let prevVegetableBtn, nextVegetableBtn, playSoundVegetableBtn, gameLangSelectVegetable, voiceSelectVegetable;
-    // جسم الإنسان
-    let prevHumanBodyBtn, nextHumanBodyBtn, playSoundHumanBodyBtn, gameLangSelectHumanBody, voiceSelectHumanBody;
-
+    // تمت إزالة alphabetPressPlayAudioSidebarBtn لأنه لم يعد ضرورياً هنا
 
     // وظائف تحميل النماذج الثابتة (تسجيل الدخول/التسجيل/الملف الشخصي)
     window.loadLogin = async () => {
@@ -476,10 +463,10 @@
             }
         });
 
-        // مستمع حدث لزر الاستماع في الشريط الجانبي للعبة الحروف
-        alphabetPressPlayAudioSidebarBtn.addEventListener('click', () => {
-            playCurrentAlphabetItemAudio();
-        });
+        // تم إزالة مستمع حدث لزر الاستماع في الشريط الجانبي للعبة الحروف
+        // alphabetPressPlayAudioSidebarBtn.addEventListener('click', () => {
+        //     playCurrentAlphabetItemAudio();
+        // });
     }
 
 
@@ -490,44 +477,44 @@
 
         switch(subjectType) {
             case 'animal':
-                langSelect = gameLangSelectAnimal;
-                voiceSelect = voiceSelectAnimal;
-                playSoundBtn = playSoundAnimalBtn;
-                prevBtn = prevAnimalBtn;
-                nextBtn = nextAnimalBtn;
+                langSelect = document.getElementById('game-lang-select-animal'); // الحصول على المرجع هنا
+                voiceSelect = document.getElementById('voice-select-animal');
+                playSoundBtn = document.getElementById('play-sound-btn-animal');
+                prevBtn = document.getElementById('prev-animal-btn');
+                nextBtn = document.getElementById('next-animal-btn');
                 loadContentFunc = loadAnimalsGameContent;
                 showNextFunc = showNextAnimal;
                 showPrevFunc = showPreviousAnimal;
                 playAudioFunc = playCurrentAnimalAudio;
                 break;
             case 'fruit':
-                langSelect = gameLangSelectFruit;
-                voiceSelect = voiceSelectFruit;
-                playSoundBtn = playSoundFruitBtn;
-                prevBtn = prevFruitBtn;
-                nextBtn = nextFruitBtn;
+                langSelect = document.getElementById('game-lang-select-fruit');
+                voiceSelect = document.getElementById('voice-select-fruit');
+                playSoundBtn = document.getElementById('play-sound-btn-fruit');
+                prevBtn = document.getElementById('prev-fruit-btn');
+                nextBtn = document.getElementById('next-fruit-btn');
                 loadContentFunc = loadFruitsGameContent;
                 showNextFunc = showNextFruit;
                 showPrevFunc = showPreviousFruit;
                 playAudioFunc = playCurrentFruitAudio;
                 break;
             case 'vegetable':
-                langSelect = gameLangSelectVegetable;
-                voiceSelect = voiceSelectVegetable;
-                playSoundBtn = playSoundVegetableBtn;
-                prevBtn = prevVegetableBtn;
-                nextBtn = nextVegetableBtn;
+                langSelect = document.getElementById('game-lang-select-vegetable');
+                voiceSelect = document.getElementById('voice-select-vegetable');
+                playSoundBtn = document.getElementById('play-sound-btn-vegetable');
+                prevBtn = document.getElementById('prev-vegetable-btn');
+                nextBtn = document.getElementById('next-vegetable-btn');
                 loadContentFunc = loadVegetablesGameContent;
                 showNextFunc = showNextVegetable;
                 showPrevFunc = showPreviousVegetable;
                 playAudioFunc = playCurrentVegetableAudio;
                 break;
             case 'human-body':
-                langSelect = gameLangSelectHumanBody;
-                voiceSelect = voiceSelectHumanBody;
-                playSoundBtn = playSoundHumanBodyBtn;
-                prevBtn = prevHumanBodyBtn;
-                nextBtn = nextHumanBodyBtn;
+                langSelect = document.getElementById('game-lang-select-human-body');
+                voiceSelect = document.getElementById('voice-select-human-body');
+                playSoundBtn = document.getElementById('play-sound-btn-human-body');
+                prevBtn = document.getElementById('prev-human-body-btn');
+                nextBtn = document.getElementById('next-human-body-btn');
                 loadContentFunc = loadHumanBodyGameContent;
                 showNextFunc = showNextHumanBodyPart;
                 showPrevFunc = showPreviousHumanBodyPart;
@@ -535,6 +522,12 @@
                 break;
             default:
                 return;
+        }
+
+        // تحقق مما إذا كانت عناصر التحكم موجودة قبل محاولة استخدامها
+        if (!langSelect || !voiceSelect) {
+            console.error(`عناصر التحكم لنوع الموضوع '${subjectType}' لم يتم العثور عليها في DOM.`);
+            return;
         }
 
         // تعبئة قوائم اللغة والصوت (إذا لم تكن قد عُبئت بالفعل)

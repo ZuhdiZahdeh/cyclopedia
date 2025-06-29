@@ -3,15 +3,15 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%; /* *** مهم: تأكد أن html و body يأخذان كامل ارتفاع الشاشة *** */
+  min-height: 100vh; /* استخدم min-height بدلاً من height لتجنب مشاكل المحتوى الزائد */
   overflow-x: hidden; /* لمنع شريط التمرير الأفقي غير المرغوب فيه */
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: var(--color-text-primary); /* استخدام متغير اللون  */
-  background-color: var(--color-background); /* استخدام متغير اللون  */
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -22,6 +22,139 @@ html, body {
 #app {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* *** مهم: اجعل #app يمتد على كامل ارتفاع الشاشة *** */
-  width: 100%; /* تأكد أن #app يأخذ كامل عرض الـ body */
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* *** التعديل هنا: تطبيق Flexbox على .page-layout *** */
+.page-layout {
+  display: flex; /* يجعل العناصر الفرعية (sidebar, main-content) تترتب بجانب بعضها */
+  flex-direction: row; /* يحدد اتجاه الترتيب كصف (أفقي) */
+  flex-grow: 1; /* يسمح لـ page-layout بالتمدد لملء المساحة المتبقية داخل #app */
+  width: 100%; /* تأكد من أنه يأخذ كامل العرض المتاح */
+}
+
+/* أنماط الشريط الجانبي (sidebar) */
+.sidebar {
+  flex-shrink: 0; /* يمنع الشريط الجانبي من التقلص */
+  width: 280px; /* عرض ثابت للشريط الجانبي، يمكنك تعديله */
+  padding: 15px; /* مسافة داخلية */
+  box-sizing: border-box; /* لضمان أن البادينج لا يزيد العرض الكلي */
+  /* الأنماط الموجودة مثل shadow و background-color ستظل مطبقة */
+}
+
+/* أنماط المحتوى الرئيسي (main-content) */
+.main-content {
+  flex-grow: 1; /* يسمح للمحتوى الرئيسي بشغل المساحة المتبقية بالكامل */
+  padding: 20px; /* مسافة داخلية للمحتوى */
+  overflow-y: auto; /* يسمح بالتمرير الرأسي إذا كان المحتوى طويلاً */
+  box-sizing: border-box; /* لضمان أن البادينج لا يتجاوز العرض المتاح */
+}
+
+/* أنماط شريط التنقل العلوي */
+.top-navbar {
+    width: 100%;
+    background-color: var(--color-primary); /* لون الخلفية من colors.css */
+    padding: 10px 20px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center; /* توسيط الروابط في المنتصف */
+    align-items: center;
+    position: sticky; /* لجعل الشريط يبقى في الأعلى عند التمرير */
+    top: 0;
+    z-index: 1000; /* لضمان ظهوره فوق العناصر الأخرى */
+}
+
+.top-nav-links {
+    display: flex;
+    gap: 25px; /* مسافة بين الروابط */
+}
+
+.top-nav-links a {
+    color: var(--color-white); /* لون النص أبيض */
+    text-decoration: none;
+    font-size: 1.1em;
+    font-weight: bold;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.top-nav-links a:hover {
+    background-color: var(--color-accent); /* لون مختلف عند التحويم */
+}
+
+/* أنماط بطاقات المواضيع في الصفحة الرئيسية */
+.home-cards-container {
+    display: flex;
+    flex-wrap: wrap; /* للسماح للبطاقات بالانتقال إلى سطر جديد */
+    justify-content: center; /* توسيط البطاقات */
+    gap: 25px; /* مسافة بين البطاقات */
+    padding: 30px 0;
+}
+
+.topic-card {
+    background-color: var(--color-surface);
+    border-radius: 15px;
+    box-shadow: 0 6px 12px var(--color-shadow);
+    text-decoration: none;
+    color: var(--color-text-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    width: 220px; /* عرض ثابت لكل بطاقة */
+    height: 180px; /* ارتفاع ثابت لكل بطاقة */
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.topic-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.topic-card .icon {
+    font-size: 3.5em; /* حجم أكبر للأيقونة */
+    margin-bottom: 15px;
+    color: var(--color-primary); /* لون الأيقونة */
+}
+
+.topic-card h3 {
+    font-size: 1.6em; /* حجم خط لعنوان البطاقة */
+    margin: 0;
+    color: var(--color-text-primary);
+}
+
+/* تعديلات لأنواع البطاقات المحددة (يمكن تخصيص الألوان هنا) */
+.topic-card.animals .icon { color: var(--color-green); }
+.topic-card.fruits .icon { color: var(--color-orange); }
+.topic-card.vegetables .icon { color: var(--color-secondary); }
+.topic-card.human-body .icon { color: var(--color-danger); }
+.topic-card.games .icon { color: var(--color-info); }
+
+
+/* دعم RTL لكامل الصفحة (مثال) */
+[dir="rtl"] body {
+    text-align: right;
+}
+
+[dir="rtl"] .top-nav-links {
+    flex-direction: row-reverse; /* قد تحتاج لعكس الترتيب في شريط التنقل العلوي */
+}
+
+[dir="rtl"] .sidebar-game-controls label {
+    align-self: flex-end; /* لضبط محاذاة اللاصقات في RTL */
+}
+
+[dir="rtl"] .info-box h3,
+[dir="rtl"] .info-box h4 {
+    text-align: right; /* ضمان أن العناوين في RTL تبقى محاذية لليمين */
+}
+
+/* أنماط الظل المشتركة */
+.shadow {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
