@@ -8,7 +8,7 @@ import { recordActivity } from "./activity-handler.js";
 
 let humanBodyParts = []; 
 let currentIndex = 0;
-let currentHumanBodyData = null; // لتخزين بيانات الجزء المعروض حاليًا
+let currentHumanBodyData = null;
 
 
 export async function loadHumanBodyGameContent() {
@@ -39,7 +39,7 @@ export async function loadHumanBodyGameContent() {
           <p id="human-body-description">---</p>
         </div>
       </div>
-      </div>
+    </div>
   `;
 
   // الحصول على المراجع للعناصر بعد حقنها في DOM

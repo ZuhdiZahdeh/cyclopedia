@@ -218,7 +218,7 @@
     import { loadVegetablesGameContent, showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio } from '/src/js/vegetables-game.js';
     import { loadHumanBodyGameContent, showNextHumanBodyPart, showPreviousHumanBodyPart, playCurrentHumanBodyPartAudio } from '/src/js/human-body-game.js';
     import { setDirection, currentLang, loadLanguage, applyTranslations } from '/src/js/lang-handler.js';
-    import { loadAlphabetPressGameContent, playCurrentAlphabetItemAudio } from '/src/js/alphabet-press-game.js'; // تم تصدير playCurrentAlphabetItemAudio
+    import { loadAlphabetPressGameContent, playCurrentAlphabetItemAudio } from '/src/js/alphabet-press-game.js';
 
 
     const mainContentArea = document.querySelector("main.main-content");
@@ -238,34 +238,15 @@
     const alphabetPressPlayAudioSidebarBtn = document.getElementById('alphabet-press-play-audio-sidebar'); // زر الاستماع للعبة الحروف
 
 
-    // مراجع لأزرار التنقل والاستماع لكل موضوع
+    // مراجع لأزرار التنقل والاستماع لكل موضوع (هذه المراجع سيتم تهيئتها عند load***Page)
     // الحيوانات
-    const prevAnimalBtn = document.getElementById('prev-animal-btn');
-    const nextAnimalBtn = document.getElementById('next-animal-btn');
-    const playSoundAnimalBtn = document.getElementById('play-sound-btn-animal');
-    const gameLangSelectAnimal = document.getElementById('game-lang-select-animal');
-    const voiceSelectAnimal = document.getElementById('voice-select-animal');
-
+    let prevAnimalBtn, nextAnimalBtn, playSoundAnimalBtn, gameLangSelectAnimal, voiceSelectAnimal;
     // الفواكه
-    const prevFruitBtn = document.getElementById('prev-fruit-btn');
-    const nextFruitBtn = document.getElementById('next-fruit-btn');
-    const playSoundFruitBtn = document.getElementById('play-sound-btn-fruit');
-    const gameLangSelectFruit = document.getElementById('game-lang-select-fruit');
-    const voiceSelectFruit = document.getElementById('voice-select-fruit');
-
+    let prevFruitBtn, nextFruitBtn, playSoundFruitBtn, gameLangSelectFruit, voiceSelectFruit;
     // الخضروات
-    const prevVegetableBtn = document.getElementById('prev-vegetable-btn');
-    const nextVegetableBtn = document.getElementById('next-vegetable-btn');
-    const playSoundVegetableBtn = document.getElementById('play-sound-btn-vegetable');
-    const gameLangSelectVegetable = document.getElementById('game-lang-select-vegetable');
-    const voiceSelectVegetable = document.getElementById('voice-select-vegetable');
-
+    let prevVegetableBtn, nextVegetableBtn, playSoundVegetableBtn, gameLangSelectVegetable, voiceSelectVegetable;
     // جسم الإنسان
-    const prevHumanBodyBtn = document.getElementById('prev-human-body-btn');
-    const nextHumanBodyBtn = document.getElementById('next-human-body-btn');
-    const playSoundHumanBodyBtn = document.getElementById('play-sound-btn-human-body');
-    const gameLangSelectHumanBody = document.getElementById('game-lang-select-human-body');
-    const voiceSelectHumanBody = document.getElementById('voice-select-human-body');
+    let prevHumanBodyBtn, nextHumanBodyBtn, playSoundHumanBodyBtn, gameLangSelectHumanBody, voiceSelectHumanBody;
 
 
     // وظائف تحميل النماذج الثابتة (تسجيل الدخول/التسجيل/الملف الشخصي)
@@ -498,7 +479,6 @@
 
         // مستمع حدث لزر الاستماع في الشريط الجانبي للعبة الحروف
         alphabetPressPlayAudioSidebarBtn.addEventListener('click', () => {
-            // هذا يستدعي الدالة المصدرة من alphabet-press-game.js
             playCurrentAlphabetItemAudio();
         });
     }
@@ -508,7 +488,6 @@
     async function initializeSubjectControls(subjectType) {
         let langSelect, voiceSelect, playSoundBtn, prevBtn, nextBtn;
         let loadContentFunc, showNextFunc, showPrevFunc, playAudioFunc;
-        let currentSubjectId;
 
         switch(subjectType) {
             case 'animal':
@@ -521,7 +500,6 @@
                 showNextFunc = showNextAnimal;
                 showPrevFunc = showPreviousAnimal;
                 playAudioFunc = playCurrentAnimalAudio;
-                currentSubjectId = 'animals';
                 break;
             case 'fruit':
                 langSelect = gameLangSelectFruit;
@@ -533,7 +511,6 @@
                 showNextFunc = showNextFruit;
                 showPrevFunc = showPreviousFruit;
                 playAudioFunc = playCurrentFruitAudio;
-                currentSubjectId = 'fruits';
                 break;
             case 'vegetable':
                 langSelect = gameLangSelectVegetable;
@@ -545,7 +522,6 @@
                 showNextFunc = showNextVegetable;
                 showPrevFunc = showPreviousVegetable;
                 playAudioFunc = playCurrentVegetableAudio;
-                currentSubjectId = 'vegetables';
                 break;
             case 'human-body':
                 langSelect = gameLangSelectHumanBody;
@@ -557,7 +533,6 @@
                 showNextFunc = showNextHumanBodyPart;
                 showPrevFunc = showPreviousHumanBodyPart;
                 playAudioFunc = playCurrentHumanBodyPartAudio;
-                currentSubjectId = 'human-body';
                 break;
             default:
                 return;
@@ -585,7 +560,7 @@
         }
 
         // إضافة مستمعي الأحداث
-        langSelect.onchange = async () => { // استخدام onchange مباشرة لتجنب تكرار المستمعين
+        langSelect.onchange = async () => {
             const newLang = langSelect.value;
             await loadLanguage(newLang);
             applyTranslations();
@@ -593,20 +568,19 @@
             await loadContentFunc(); // إعادة تحميل محتوى الموضوع باللغة الجديدة
         };
 
-        voiceSelect.onchange = () => { // استخدام onchange مباشرة
+        voiceSelect.onchange = () => {
             // لا حاجة لإعادة تحميل المحتوى، فقط تحديث المتغير الداخلي في game.js
-            // ولكن التأثير سيظهر عند النقر على "استمع" أو التنقل.
         };
 
-        if (playSoundBtn) playSoundBtn.onclick = () => { // استخدام onclick مباشرة
+        if (playSoundBtn) playSoundBtn.onclick = () => {
             playAudioFunc(); // استدعاء دالة تشغيل الصوت المصدرة
         };
 
-        if (prevBtn) prevBtn.onclick = () => { // استخدام onclick مباشرة
+        if (prevBtn) prevBtn.onclick = () => {
             showPrevFunc(); // استدعاء دالة السابق المصدرة
         };
 
-        if (nextBtn) nextBtn.onclick = () => { // استخدام onclick مباشرة
+        if (nextBtn) nextBtn.onclick = () => {
             showNextFunc(); // استدعاء دالة التالي المصدرة
         };
 

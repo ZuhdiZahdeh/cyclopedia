@@ -32,8 +32,6 @@ export async function loadFruitsGameContent() {
             </div>
     `;
 
-    // لم نعد نحقن HTML في الشريط الجانبي هنا
-
     const fruitImage = document.getElementById("fruit-image");
     const fruitNameAr = document.getElementById("fruit-name-ar");
     const fruitNameEn = document.getElementById("fruit-name-en");
@@ -90,7 +88,7 @@ function updateFruitContent() {
     stopCurrentAudio();
 }
 
-async function fetchFruits(lang) { // تقبل اللغة كمعامل
+async function fetchFruits(lang) {
     try {
         const fruitsCollectionRef = collection(db, "categories", "fruits", "items");
         const q = query(fruitsCollectionRef);
@@ -137,8 +135,8 @@ export function playCurrentFruitAudio() {
 }
 
 function getFruitAudioPath(data, voiceType) {
-    const langFolder = document.getElementById('game-lang-select-fruit').value; // جلب اللغة من الشريط الجانبي
-    const subjectFolder = 'fruits'; // ثابتة للفواكه
+    const langFolder = document.getElementById('game-lang-select-fruit').value;
+    const subjectFolder = 'fruits';
 
     let fileName;
     if (data.voices && data.voices[voiceType]) {

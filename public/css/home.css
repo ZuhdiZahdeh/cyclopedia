@@ -1,237 +1,107 @@
-/* public/css/home.css */
+/* css/alphabet-press.css */
 
-body {
-  margin: 0;
-  font-family: 'Cairo', sans-serif;
-  background-color: var(--color-background);
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+/* أنماط خاصة بوعاء اللعبة (داخل main-content) */
+#alphabet-press-game {
+    padding: 20px;
+    /* تأكد أن هذا يظل يطابق common-components-subjects.css إذا كانت هناك قيم متجاوزة */
 }
 
-.top-navbar {
-  background-color: var(--color-info);
-  color: var(--color-white);
-  display: flex;
-  justify-content: space-between;
-  padding: 1rem;
-  flex-wrap: wrap;
-  align-items: center;
-  width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1000;
-  box-sizing: border-box;
-}
-
-.top-navbar select,
-.top-navbar a {
-  margin: 0 0.5rem;
-  color: var(--color-white);
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 1.2rem;
-}
-
-.page-layout {
-  display: flex;
-  flex: 1;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-  padding: 1rem;
-  gap: 1rem;
-  padding-top: 70px;
-  box-sizing: border-box;
-}
-
-/* الشريط الجانبي (sidebar) */
-.sidebar {
-  width: 220px;
-  padding: 1rem;
-  background-color: var(--color-surface);
-  border-radius: 8px;
-  box-shadow: 0 0 8px var(--color-shadow);
-  flex-shrink: 0;
-  height: calc(100vh - 80px);
-  position: sticky;
-  top: 70px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-/* الأقسام داخل الشريط الجانبي */
-.sidebar-section {
-  background-color: var(--color-white);
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 0 5px var(--color-shadow);
-}
-
-.sidebar-section.static-section {
-  margin-top: auto;
-}
-
-/* تنسيقات عناصر التحكم الخاصة باللعبة في الشريط الجانبي */
-.sidebar-game-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 15px;
-  border-radius: 8px;
-  background-color: var(--color-background);
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
-  align-items: stretch;
-}
-
-/* جديد: لترتيب أزرار التنقل (السابق/التالي) داخل الشريط الجانبي */
-.sidebar-navigation-buttons {
-    display: flex;
-    justify-content: space-between;
+/* أنماط لوحة المفاتيح */
+.keyboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr)); /* مرن لعرض الحروف */
     gap: 10px;
-    width: 100%;
-    margin-top: 10px;
+    padding: 20px;
+    background-color: var(--color-background); /* استخدام لون خلفية عام من colors.css */
+    border-radius: 10px;
+    box-shadow: 0 4px 8px var(--color-shadow); /* استخدام ظل من common-components-subjects.css */
+    margin-bottom: 30px;
+    max-width: 800px; /* لتحديد أقصى عرض للوحة المفاتيح */
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.sidebar-navigation-buttons button {
-    flex-grow: 1;
-    background-color: var(--color-primary); /* لون رئيسي */
-    color: var(--color-white);
+.keyboard-button {
+    background-color: var(--color-secondary); /* لون من colors.css */
+    color: var(--color-white); /* لون أبيض */
     border: none;
     border-radius: 8px;
-    padding: 10px 15px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    box-shadow: 0 2px 4px var(--color-shadow);
-}
-
-.sidebar-navigation-buttons button:hover {
-    background-color: var(--color-success); /* لون أخضر داكن */
-}
-
-.sidebar-navigation-buttons button:disabled {
-    background-color: var(--color-border); /* رمادي فاتح */
-    color: var(--color-text-secondary);
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-/* المحتوى الرئيسي */
-.main-content {
-  flex: 1;
-  padding: 1rem;
-  background-color: var(--color-surface);
-  border-radius: 8px;
-  box-shadow: 0 0 8px var(--color-shadow);
-  display: flex;
-  flex-direction: column;
-  min-height: calc(100vh - 80px - 2rem);
-}
-
-/* أنماط مخصصة لحاوية بطاقات الصفحة الرئيسية */
-.home-cards-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: center;
-    padding: 20px;
-    width: 100%;
-    max-width: 900px;
-    margin: auto;
-}
-
-/* أنماط عامة لبطاقات المواضيع في الصفحة الرئيسية */
-.topic-card {
-    background-color: var(--color-surface);
-    border-radius: 15px;
-    box-shadow: 0 5px 15px var(--color-shadow);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 25px;
-    width: 180px;
-    height: 180px;
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    text-decoration: none;
-    color: var(--color-text-primary);
-}
-
-.topic-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-}
-
-.topic-card .icon {
-    font-size: 4em;
-    margin-bottom: 10px;
-    color: var(--color-primary);
-}
-
-.topic-card h3 {
-    font-size: 1.5em;
+    padding: 15px 10px;
+    font-size: 1.8em; /* حجم الخط للحروف */
     font-weight: bold;
-    color: var(--color-text-primary);
-    margin: 0;
-    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60px; /* لتثبيت ارتفاع الأزرار */
+    box-shadow: 0 4px var(--color-shadow); /* ظل ثلاثي الأبعاد - يمكن تخصيصه في colors.css */
 }
 
-/* ألوان خاصة للأيقونات لكل موضوع */
-.topic-card.animals .icon { color: var(--color-purple); }
-.topic-card.fruits .icon { color: var(--color-secondary); }
-.topic-card.vegetables .icon { color: var(--color-success); }
-.topic-card.human-body .icon { color: var(--color-info); }
-.topic-card.games .icon { color: var(--color-accent); }
+.keyboard-button:hover {
+    background-color: var(--color-primary); /* لون مختلف عند التحويم */
+    transform: translateY(-2px);
+    box-shadow: 0 6px var(--color-shadow); /* يمكن تخصيصه في colors.css */
+}
 
+.keyboard-button:active {
+    background-color: var(--color-orange); /* لون عند الضغط */
+    transform: translateY(0);
+    box-shadow: 0 2px var(--color-shadow); /* يمكن تخصيصه في colors.css */
+}
 
-/* Media Queries for responsiveness */
-@media (max-width: 768px) {
-  .page-layout {
-    flex-direction: column;
-    align-items: center;
-    padding-top: 60px;
-  }
+/* أنماط منطقة عرض العنصر */
+#item-display-area {
+    display: flex; /* لترتيب العناصر بشكل مرن */
+    flex-direction: column; /* ترتيب رأسي */
+    align-items: center; /* توسيط العناصر */
+    padding: 25px;
+    margin-bottom: 20px;
+    background-color: var(--color-surface); /* استخدام لون من colors.css */
+    border: 1px solid var(--color-border); /* حد من colors.css */
+    border-radius: 15px;
+    box-shadow: 0 8px 16px var(--color-shadow);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
 
-  .sidebar {
-    width: 100%;
-    margin-bottom: 1rem;
-    min-height: auto;
-    position: static;
-    height: auto;
-  }
-  .top-navbar {
-    padding: 0.8rem;
-  }
-  .top-navbar a {
-    font-size: 1rem;
-  }
-  .sidebar-section.static-section {
-    margin-top: 0;
-  }
-  .sidebar-game-controls {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    gap: 0.5rem;
-    align-items: stretch;
-  }
-  .sidebar-game-controls .control-group {
-    width: 100%;
-  }
-  .sidebar-game-controls select,
-  .sidebar-game-controls button {
-    width: 100%;
-  }
-  .sidebar-navigation-buttons {
-    flex-direction: row;
-    width: 100%;
-  }
-  .sidebar-navigation-buttons button {
-    flex-grow: 1;
-  }
+#alphabet-press-image {
+    max-width: 90%;
+    max-height: 250px; /* تحديد أقصى ارتفاع للصورة */
+    border-radius: 10px;
+    margin-bottom: 15px;
+    object-fit: contain; /* لضمان عرض الصورة بالكامل داخل الأبعاد المحددة */
+}
+
+#alphabet-press-item-name {
+    font-size: 2.5em; /* حجم خط أكبر للاسم الرئيسي */
+    margin-bottom: 15px;
+    color: var(--color-text-primary); /* لون النص من colors.css */
+}
+
+/* تمييز الحرف الأول */
+.highlight-first-letter {
+    color: var(--color-orange); /* اللون البرتقالي المميز من colors.css */
+    font-size: 1.2em; /* تكبير الحرف الأول قليلاً */
+    font-weight: bold;
+}
+
+/* زر الاستماع في القسم الرئيسي (إذا كان موجودًا) - تم نقله الآن */
+/* #alphabet-press-play-audio { ... } */
+
+#game-message {
+    padding: 15px;
+    background-color: var(--color-info); /* لون رسائل المعلومات */
+    color: var(--color-white); /* لون النص */
+    border-radius: 10px;
+    text-align: center;
+    max-width: 400px;
+    margin: 20px auto;
+    box-shadow: var(--color-shadow); /* ظل خفيف */
+}
+
+/* دعم RTL لأنماط لوحة المفاتيح وعناصر التحكم */
+[dir="rtl"] .keyboard-grid {
+    /* قد لا تحتاج لتغيير إذا كان التخطيط مرنًا */
 }

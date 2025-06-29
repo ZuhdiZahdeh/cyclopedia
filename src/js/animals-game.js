@@ -1,4 +1,4 @@
-// src/js/animals-game.js
+// public/js/animals-game.js
 
 import { db } from "./firebase-config.js";
 import { getDocs, collection, query } from "firebase/firestore";
@@ -8,14 +8,12 @@ import { recordActivity } from "./activity-handler.js";
 
 let animals = [];
 let currentIndex = 0;
-// لم نعد نحتاج selectedVoice هنا، سنقرأه مباشرة من index.html
 let currentAnimalData = null; // لتخزين بيانات الحيوان المعروض حاليًا
 
 
 export async function loadAnimalsGameContent() {
   stopCurrentAudio(); // إيقاف أي صوت سابق
   const mainContentArea = document.querySelector("main.main-content");
-  // الشريط الجانبي موجود الآن في index.html، لا داعي لحقنه هنا
   const animalSidebarControls = document.getElementById("animal-sidebar-controls");
 
   if (!mainContentArea || !animalSidebarControls) {
@@ -41,10 +39,8 @@ export async function loadAnimalsGameContent() {
           <p id="animal-description">---</p>
         </div>
       </div>
-      </div>
+    </div>
   `;
-
-  // لم نعد نحقن HTML في الشريط الجانبي هنا، لأنه موجود بالفعل في index.html
 
   // الحصول على المراجع للعناصر بعد حقنها في DOM
   // العناصر في main-content
@@ -55,10 +51,7 @@ export async function loadAnimalsGameContent() {
   const animalCategory = document.getElementById("animal-category");
   const animalDescription = document.getElementById("animal-description");
 
-  // **ملاحظة:** لم نعد نحصل على مراجع playSoundBtn, voiceSelect, gameLangSelect, nextAnimalBtn, prevAnimalBtn هنا
-  // لأنه تم التعامل معها وتهيئة المستمعين لها في index.html
-
-  // **جديد: الحصول على مرجع select اللغة من الشريط الجانبي (لجلب اللغة عند الحاجة)**
+  // الحصول على مرجع select اللغة من الشريط الجانبي
   const gameLangSelect = document.getElementById('game-lang-select-animal');
   if (!gameLangSelect) {
       console.error("Language select for animal game not found.");
@@ -75,7 +68,6 @@ export async function loadAnimalsGameContent() {
     if (animalBaby) animalBaby.textContent = "غير متوفر";
     if (animalFemale) animalFemale.textContent = "غير متوفر";
     if (animalCategory) animalCategory.textContent = "غير متوفر";
-    // يمكن هنا تعطيل أزرار التنقل والاستماع عبر دالة عامة
     disableAnimalButtonsInSidebar(true);
     return;
   }
@@ -134,7 +126,6 @@ async function fetchAnimals(lang) { // تقبل اللغة كمعامل
     const itemsCollectionRef = collection(db, "categories", "animals", "items");
     const q = query(itemsCollectionRef);
     const snapshot = await getDocs(q);
-    // تصفية الحيوانات حسب اللغة المطلوبة إذا كان هناك حقل لغوي لكل حيوان
     animals = snapshot.docs.map(doc => doc.data());
     console.log("Fetched animals:", animals);
   } catch (error) {

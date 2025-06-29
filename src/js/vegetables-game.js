@@ -8,7 +8,7 @@ import { recordActivity } from "./activity-handler.js";
 
 let vegetables = [];
 let currentIndex = 0;
-let currentVegetableData = null; // لتخزين بيانات الخضروات المعروضة حاليًا
+let currentVegetableData = null;
 
 
 export async function loadVegetablesGameContent() {
@@ -37,10 +37,9 @@ export async function loadVegetablesGameContent() {
           <p id="vegetable-description">---</p>
         </div>
       </div>
-      </div>
+    </div>
   `;
 
-  // الحصول على المراجع للعناصر بعد حقنها في DOM
   const vegetableImage = document.getElementById("vegetable-image");
   const vegetableWord = document.getElementById("vegetable-word");
   const vegetableType = document.getElementById("vegetable-type");
@@ -86,8 +85,8 @@ function updateVegetableContent() {
   const nextVegetableBtn = document.getElementById('next-vegetable-btn');
 
   const name = currentVegetableData.name?.[currentLang] || currentVegetableData.name?.en || "---"; 
-  const imgSrc = `/images/vegetables/${currentVegetableData.image}`; // تأكد من أن data.image تحتوي على اسم الملف الصحيح
-
+  const imgSrc = `/images/vegetables/${currentVegetableData.image}`; 
+  
   if (vegetableImage) vegetableImage.src = imgSrc;
   if (vegetableImage) vegetableImage.alt = name;
   if (vegetableWord) vegetableWord.textContent = name;

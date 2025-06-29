@@ -70,27 +70,6 @@
 }
 
 
-/* أنماط أزرار التنقل (إذا كانت داخل game-box) - هذه الأنماط لن تستخدم داخل game-box بعد الآن، بل في الشريط الجانبي */
-.navigation-buttons {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    margin-top: 20px;
-    /* هذا النمط أصبح غير مستخدم في main-content، فقط في sidebar-navigation-buttons */
-}
-
-.navigation-buttons button {
-    /* هذا النمط أصبح غير مستخدم في main-content، فقط في sidebar-navigation-buttons button */
-}
-
-.navigation-buttons button:hover {
-    /* هذا النمط أصبح غير مستخدم في main-content، فقط في sidebar-navigation-buttons button:hover */
-}
-
-.navigation-buttons button:disabled {
-    /* هذا النمط أصبح غير مستخدم في main-content، فقط في sidebar-navigation-buttons button:disabled */
-}
-
 /* أنماط الشريط الجانبي - لتنسيق عناصر التحكم فيه */
 .sidebar-game-controls {
     display: flex;
