@@ -1,12 +1,12 @@
 // js/alphabet-press-game.js
 
-import { db } from './firebase-config.js'; // استيراد قاعدة البيانات
-import { collection, getDocs, query, where } from 'firebase/firestore'; // استيراد دوال Firestore من حزمة npm
-import { currentLang, loadLanguage, applyTranslations, setDirection } from './lang-handler.js'; // لإدارة اللغة
-import { playAudio, stopCurrentAudio } from './audio-handler.js'; // لتشغيل وإيقاف الصوت
-import { recordActivity } from './activity-handler.js'; // لتسجيل نشاط المستخدم
+import { db } from './firebase-config.js';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { currentLang, loadLanguage, applyTranslations, setDirection } from './lang-handler.js';
+import { playAudio, stopCurrentAudio } from './audio-handler.js';
+import { recordActivity } from './activity-handler.js';
 
-let allItems = []; // لتخزين جميع العناصر من الفئة المختارة
+let allItems = [];
 let currentDisplayedItem = null; // لتتبع العنصر المعروض حاليا
 
 // تعريف الحروف لكل لغة
@@ -20,84 +20,115 @@ const alphabetLetters = {
 const availableCategories = [
     { id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
     { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
-    // أضف المزيد من الفئات هنا
+    { id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables', name_he: 'ירקות' },
+    { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף האדם' },
 ];
+
+// دالة تصدير العنصر المعروض حاليا ليتم الوصول إليه من index.html
+export function getCurrentDisplayedItem() {
+    return currentDisplayedItem;
+}
+
+// دوال تصدير للوصول إلى قوائم الاختيار من index.html
+export function getAlphabetPressCategorySelect() {
+    return document.getElementById('alphabet-press-category-select');
+}
+
+export function getAlphabetPressVoiceSelect() {
+    return document.getElementById('alphabet-press-voice-select');
+}
+
 
 export async function loadAlphabetPressGameContent() {
     console.log('جارٍ تحميل محتوى لعبة اضغط على الحرف...');
 
     // حقن HTML الخاص باللعبة في المنطقة الرئيسية
     const mainContentArea = document.querySelector('.main-content');
-    const response = await fetch('/html/alphabet-press.html');
-    mainContentArea.innerHTML = await response.text();
+    try {
+        const response = await fetch('/html/alphabet-press.html');
+        if (!response.ok) {
+            throw new Error(`Failed to load alphabet-press.html: ${response.statusText}`);
+        }
+        mainContentArea.innerHTML = await response.text();
+    } catch (error) {
+        console.error("Error loading alphabet-press.html:", error);
+        mainContentArea.innerHTML = "<p style='color: red;'>فشل تحميل لعبة الحروف. يرجى التأكد من وجود ملف /html/alphabet-press.html.</p>";
+        return; // توقف التنفيذ إذا فشل تحميل HTML
+    }
 
-    // الحصول على مراجع عناصر DOM الخاصة باللعبة نفسها (غير الموجودة في الشريط الجانبي)
+    // الحصول على مراجع عناصر DOM الخاصة باللعبة نفسها (الآن بدون زر الصوت الرئيسي)
     const alphabetKeyboard = document.getElementById('alphabet-keyboard');
     const itemDisplayArea = document.getElementById('item-display-area');
     const alphabetPressImage = document.getElementById('alphabet-press-image');
     const alphabetPressItemName = document.getElementById('alphabet-press-item-name');
-    const playAudioButton = document.getElementById('alphabet-press-play-audio');
+    // **تمت إزالة: const playAudioButton = document.getElementById('alphabet-press-play-audio');**
     const gameMessage = document.getElementById('game-message');
 
     // **ملاحظة:** الحصول على مراجع عناصر التحكم من الشريط الجانبي في index.html
-    const languageSelect = document.getElementById('alphabet-press-language-select');
-    const categorySelect = document.getElementById('alphabet-press-category-select');
-    const voiceSelect = document.getElementById('alphabet-press-voice-select');
-
+    // لا داعي للحصول عليها هنا مرة أخرى، لأنها ستُمرر إلى initializeAlphabetPressSidebarControls
+    // أو يتم الوصول إليها عبر الدوال المصدرة getAlphabetPressCategorySelect/VoiceSelect()
 
     // تعيين اللغة الافتراضية وتحميل لوحة المفاتيح والعناصر
     generateKeyboard(currentLang);
-    if (categorySelect.value) {
-        await loadCategoryItems(categorySelect.value); // تأكد من انتظار تحميل العناصر
+    
+    const categorySelect = getAlphabetPressCategorySelect(); // الحصول على المرجع باستخدام الدالة المصدرة
+    if (categorySelect && categorySelect.value) {
+        await loadCategoryItems(categorySelect.value);
     } else if (availableCategories.length > 0) {
-        categorySelect.value = availableCategories[0].id;
-        await loadCategoryItems(categorySelect.value); // تأكد من انتظار تحميل العناصر
+        if (categorySelect) {
+            categorySelect.value = availableCategories[0].id;
+            await loadCategoryItems(categorySelect.value);
+        }
     }
 
-    // إضافة مستمع الحدث لزر "استمع"
-    playAudioButton.addEventListener('click', () => {
-        // ***** التحقق من currentDisplayedItem قبل محاولة الوصول إليه *****
-        if (currentDisplayedItem) {
-            const categoryId = categorySelect.value;
-            const selectedVoiceType = voiceSelect.value;
-            const audioPath = getAudioPath(currentDisplayedItem, selectedVoiceType, categoryId); // تمرير العنصر كاملاً
+    // *** تمت إزالة مستمع الحدث لزر "استمع" من هنا لأن الزر أصبح في الشريط الجانبي ***
+    // playAudioButton.addEventListener('click', () => { ... });
+
+    applyTranslations();
+}
+
+// *** دالة جديدة لتشغيل الصوت، يمكن استدعاؤها من الشريط الجانبي ***
+export function playCurrentAlphabetItemAudioFromSidebar(itemData, selectedVoiceType, categoryId) {
+    if (itemData) {
+        const audioPath = getAudioPath(itemData, selectedVoiceType, categoryId);
+        if (audioPath) {
             playAudio(audioPath);
             const currentUser = JSON.parse(localStorage.getItem("user"));
             if (currentUser) {
                 recordActivity(currentUser, categoryId);
             }
-        } else {
-            showGameMessage('يرجى اختيار حرف أولاً لعرض عنصر.', 'warning');
         }
-    });
-
-    applyTranslations();
+    } else {
+        console.warn('لا يوجد عنصر معروض لتشغيل الصوت من الشريط الجانبي.');
+        showGameMessage('يرجى اختيار حرف أولاً لعرض عنصر.', 'warning');
+    }
 }
 
-// **ملاحظة:** دوال populateLanguageAndCategorySelects لم تعد ضرورية هنا لأنها في index.html
 
 async function setLanguageAndReloadKeyboard(lang) {
-    await loadLanguage(lang); // تحميل ملف اللغة الجديد
-    applyTranslations(); // تطبيق الترجمات
-    setDirection(lang); // تعيين اتجاه الصفحة
-    document.getElementById('alphabet-press-title').textContent = lang === 'ar' ? 'لعبة اضغط على الحرف' : lang === 'en' ? 'Press the Letter Game' : 'משחק לחץ על האות';
+    await loadLanguage(lang);
+    applyTranslations();
+    setDirection(lang);
+    const titleElement = document.getElementById('alphabet-press-title');
+    if (titleElement) {
+        titleElement.textContent = lang === 'ar' ? 'لعبة اضغط على الحرف' : lang === 'en' ? 'Press the Letter Game' : 'משחק לחץ على האות';
+    }
 
-    // **ملاحظة:** تحديث الفئات في الشريط الجانبي يتم في index.html
-    // هنا فقط نعيد بناء لوحة المفاتيح
     generateKeyboard(lang);
     resetDisplay();
 
-    // بعد تغيير اللغة، أعد تحميل عناصر الفئة لضمان أنها باللغة الصحيحة
-    const categorySelect = document.getElementById('alphabet-press-category-select');
-    if (categorySelect.value) {
+    const categorySelect = getAlphabetPressCategorySelect(); // استخدم الدالة المصدرة
+    if (categorySelect && categorySelect.value) {
         await loadCategoryItems(categorySelect.value);
     }
 }
 
-// **ملاحظة:** الدالة populateCategoryNames لم تعد ضرورية هنا لأنها في index.html
-
 function generateKeyboard(lang) {
     const alphabetKeyboard = document.getElementById('alphabet-keyboard');
+    if (!alphabetKeyboard) {
+        console.error("Keyboard container not found.");
+        return;
+    }
     alphabetKeyboard.innerHTML = '';
 
     const letters = alphabetLetters[lang];
@@ -134,8 +165,8 @@ async function loadCategoryItems(categoryId) {
 function handleLetterPress(letter) {
     stopCurrentAudio();
 
-    const categorySelect = document.getElementById('alphabet-press-category-select');
-    const selectedCategoryId = categorySelect.value;
+    const categorySelect = getAlphabetPressCategorySelect(); // استخدم الدالة المصدرة
+    const selectedCategoryId = categorySelect ? categorySelect.value : 'animals';
 
     const filteredItems = allItems.filter(item => {
         return item.letter && item.letter[currentLang] && item.letter[currentLang].toLowerCase() === letter.toLowerCase();
@@ -159,58 +190,57 @@ function displayItem(itemData) {
     const itemDisplayArea = document.getElementById('item-display-area');
     const alphabetPressImage = document.getElementById('alphabet-press-image');
     const alphabetPressItemName = document.getElementById('alphabet-press-item-name');
-    const categorySelect = document.getElementById('alphabet-press-category-select');
-    const voiceSelect = document.getElementById('alphabet-press-voice-select');
+    // لا يوجد زر صوت هنا في القسم الرئيسي بعد الآن
+    // const categorySelect = getAlphabetPressCategorySelect(); // يمكن الحصول عليه هنا إذا لزم الأمر
+    // const voiceSelect = getAlphabetPressVoiceSelect(); // يمكن الحصول عليه هنا إذا لزم الأمر
 
     currentDisplayedItem = itemData; // ***** تم تعيينه هنا *****
 
-    const categoryId = categorySelect.value;
-    alphabetPressImage.src = `/images/${categoryId}/${itemData.image}`;
-    alphabetPressImage.alt = itemData.name[currentLang];
+    // استخدام دالة الحصول على العنصر من alphabet-press-game.js
+    const categorySelectFromGame = getAlphabetPressCategorySelect();
+    const categoryId = categorySelectFromGame ? categorySelectFromGame.value : 'animals';
+
+    if (alphabetPressImage) alphabetPressImage.src = `/images/${categoryId}/${itemData.image}`;
+    if (alphabetPressImage) alphabetPressImage.alt = itemData.name[currentLang];
 
     const itemName = itemData.name[currentLang];
-    if (itemName) {
+    if (alphabetPressItemName && itemName) {
         const firstLetter = itemName.charAt(0);
         const restOfName = itemName.substring(1);
         alphabetPressItemName.innerHTML = `<span class="highlight-first-letter">${firstLetter}</span>${restOfName}`;
-    } else {
+    } else if (alphabetPressItemName) {
         alphabetPressItemName.textContent = '';
     }
 
-    itemDisplayArea.style.display = 'flex';
+    if (itemDisplayArea) itemDisplayArea.style.display = 'flex';
     hideGameMessage();
 
-    const selectedVoiceType = voiceSelect.value;
-    // ***** تمرير itemData إلى getAudioPath بدلاً من currentDisplayedItem.sound_base *****
+    // *** تشغيل الصوت تلقائياً عند عرض العنصر هنا ***
+    const voiceSelectFromGame = getAlphabetPressVoiceSelect();
+    const selectedVoiceType = voiceSelectFromGame ? voiceSelectFromGame.value : 'teacher';
     const audioPath = getAudioPath(itemData, selectedVoiceType, categoryId);
-    playAudio(audioPath);
-    const currentUser = JSON.parse(localStorage.getItem("user"));
-    if (currentUser) {
-        recordActivity(currentUser, categoryId);
+    if (audioPath) {
+        playAudio(audioPath);
+        const currentUser = JSON.parse(localStorage.getItem("user"));
+        if (currentUser) {
+            recordActivity(currentUser, categoryId);
+        }
     }
 }
 
-// ***** تعديل دالة getAudioPath لتقبل العنصر كاملاً *****
 function getAudioPath(itemData, voiceType, categoryId) {
     const langFolder = currentLang;
     const subjectFolder = categoryId;
 
     let fileName;
-    // الشرط الأول هو الأهم: استخدم اسم الملف المحدد في حقل 'voices' أولاً
     if (itemData && itemData.voices && itemData.voices[voiceType]) {
         fileName = itemData.voices[voiceType];
     } else {
-        // Fallback إذا لم يتم العثور على صوت محدد لنوع الصوت
-        // في هذه الحالة، سنبني اسم الملف بناءً على baseFileName
-        // إذا كان baseFileName هو 'donkey.mp3' ونريد 'donkey_girl_ar.mp3'
-        // يجب أن تتطابق قاعدة البيانات مع أسماء الملفات الفعلية على السيرفر
-        // للتأكد من أن المسار صحيح تمامًا
         if (itemData && itemData.sound_base) {
-            // مثال: donkey.mp3 -> donkey_girl_ar.mp3
             fileName = itemData.sound_base.replace('.mp3', `_${voiceType}_${langFolder}.mp3`);
         } else {
             console.warn(`لم يتم العثور على مسار صوت لـ ${itemData?.name?.[currentLang]} بنوع الصوت ${voiceType}.`);
-            return null; // أو مسار صوت افتراضي للخطأ
+            return null;
         }
     }
     return `/audio/${langFolder}/${subjectFolder}/${fileName}`;
@@ -218,7 +248,7 @@ function getAudioPath(itemData, voiceType, categoryId) {
 
 function resetDisplay() {
     const itemDisplayArea = document.getElementById('item-display-area');
-    itemDisplayArea.style.display = 'none';
+    if (itemDisplayArea) itemDisplayArea.style.display = 'none';
     currentDisplayedItem = null;
     stopCurrentAudio();
     hideGameMessage();
@@ -226,7 +256,9 @@ function resetDisplay() {
 
 function showGameMessage(message, type) {
     const gameMessage = document.getElementById('game-message');
+    if (!gameMessage) return;
     const gameMessageParagraph = gameMessage.querySelector('p');
+    if (!gameMessageParagraph) return;
     gameMessageParagraph.textContent = message;
     gameMessage.className = 'info-box';
     if (type === 'info') {
@@ -243,5 +275,6 @@ function showGameMessage(message, type) {
 }
 
 function hideGameMessage() {
-    document.getElementById('game-message').style.display = 'none';
+    const gameMessage = document.getElementById('game-message');
+    if (gameMessage) gameMessage.style.display = 'none';
 }

@@ -169,7 +169,8 @@
                         <option value="child" data-i18n="child_voice">صوت طفل</option>
                     </select>
                 </div>
-                </div>
+                <button id="alphabet-press-play-audio-sidebar" class="control-button">🔊 استمع</button>
+            </div>
         </div>
 
         <div class="sidebar-section static-section">
@@ -217,7 +218,7 @@
     import { loadVegetablesGameContent, showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio } from '/src/js/vegetables-game.js';
     import { loadHumanBodyGameContent, showNextHumanBodyPart, showPreviousHumanBodyPart, playCurrentHumanBodyPartAudio } from '/src/js/human-body-game.js';
     import { setDirection, currentLang, loadLanguage, applyTranslations } from '/src/js/lang-handler.js';
-	import { loadAlphabetPressGameContent } from '/src/js/alphabet-press-game.js';
+	import { loadAlphabetPressGameContent, playCurrentAlphabetItemAudioFromSidebar, getCurrentDisplayedItem, getAlphabetPressCategorySelect, getAlphabetPressVoiceSelect } from '/src/js/alphabet-press-game.js';
 
     const mainContentArea = document.querySelector("main.main-content");
     const animalSidebarControls = document.getElementById("animal-sidebar-controls");
@@ -225,16 +226,10 @@
     const vegetableSidebarControls = document.getElementById("vegetable-sidebar-controls");
     const humanBodySidebarControls = document.getElementById("human-body-sidebar-controls");
     const alphabetPressSidebarControls = document.getElementById("alphabet-press-sidebar-controls");
-	console.log("alphabetPressSidebarControls reference at global scope:", alphabetPressSidebarControls); // للتحقق
+	console.log("alphabetPressSidebarControls reference at global scope:", alphabetPressSidebarControls);
 
     const welcomeMessage = document.getElementById("welcome-message");
     const homeTopicCards = document.getElementById("home-topic-cards");
-
-    // **تم حذف المراجع العالمية لعناصر التحكم في الشريط الجانبي للعبة الحروف من هنا**
-    // const alphabetPressLanguageSelect = document.getElementById('alphabet-press-language-select');
-    // const alphabetPressCategorySelect = document.getElementById('alphabet-press-category-select');
-    // const alphabetPressVoiceSelect = document.getElementById('alphabet-press-voice-select');
-
 
     // وظائف تحميل النماذج الثابتة (تسجيل الدخول/التسجيل/الملف الشخصي)
     window.loadLogin = async () => {
@@ -317,10 +312,11 @@
       const alphabetPressLanguageSelect = document.getElementById('alphabet-press-language-select');
       const alphabetPressCategorySelect = document.getElementById('alphabet-press-category-select');
       const alphabetPressVoiceSelect = document.getElementById('alphabet-press-voice-select');
+      const alphabetPressPlayAudioSidebarBtn = document.getElementById('alphabet-press-play-audio-sidebar'); // *** الحصول على مرجع الزر الجديد ***
 
-      if (alphabetPressLanguageSelect && alphabetPressCategorySelect && alphabetPressVoiceSelect) {
+      if (alphabetPressLanguageSelect && alphabetPressCategorySelect && alphabetPressVoiceSelect && alphabetPressPlayAudioSidebarBtn) {
           console.log("Found alphabet press sidebar controls, initializing...");
-          await initializeAlphabetPressSidebarControls(alphabetPressLanguageSelect, alphabetPressCategorySelect, alphabetPressVoiceSelect);
+          await initializeAlphabetPressSidebarControls(alphabetPressLanguageSelect, alphabetPressCategorySelect, alphabetPressVoiceSelect, alphabetPressPlayAudioSidebarBtn);
       } else {
           console.error("Failed to get references for alphabet press sidebar controls. Make sure the elements are present in alphabet-press.html and properly loaded.");
       }
@@ -434,7 +430,7 @@
         { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף האדם' },
     ];
 
-    async function initializeAlphabetPressSidebarControls(langSelect, catSelect, voiceSelect) {
+    async function initializeAlphabetPressSidebarControls(langSelect, catSelect, voiceSelect, playAudioBtn) {
         // تعبئة قائمة اللغات
         langSelect.innerHTML = ''; // مسح الخيارات القديمة
         ['ar', 'en', 'he'].forEach(langCode => {
@@ -466,17 +462,31 @@
                     option.textContent = category['name_' + currentLang];
                 }
             });
-            if (document.getElementById('alphabet-press-game')) {
-                 loadAlphabetPressGameContent(); // أعد تحميل اللعبة بالكامل لتحديثها
-            }
+            // لا حاجة لإعادة تحميل loadAlphabetPressGameContent() هنا، فقط تحديث البيانات
+            // سيتم التعامل مع إعادة تحميل العناصر في alphabet-press-game.js
         });
 
         catSelect.addEventListener('change', () => {
-            if (document.getElementById('alphabet-press-game')) {
-                loadAlphabetPressGameContent(); // أعد تحميل اللعبة بالكامل لتحديثها
-            }
+            // سيتم التعامل مع تغيير الفئة في alphabet-press-game.js
         });
-        // لا يوجد مستمع لـ voiceSelect هنا لأنه يتم التعامل معه في alphabet-press-game.js
+
+        // *** إضافة مستمع لزر الاستماع الجديد في الشريط الجانبي ***
+        if (playAudioBtn) {
+            playAudioBtn.addEventListener('click', () => {
+                const currentItem = getCurrentDisplayedItem(); // الحصول على العنصر المعروض حالياً من alphabet-press-game.js
+                const categorySelectFromGame = getAlphabetPressCategorySelect(); // الحصول على الـ select من اللعبة
+                const voiceSelectFromGame = getAlphabetPressVoiceSelect(); // الحصول على الـ select من اللعبة
+
+                if (currentItem && categorySelectFromGame && voiceSelectFromGame) {
+                    const categoryId = categorySelectFromGame.value;
+                    const selectedVoiceType = voiceSelectFromGame.value;
+                    playCurrentAlphabetItemAudioFromSidebar(currentItem, selectedVoiceType, categoryId);
+                } else {
+                    console.warn("لا يوجد عنصر معروض أو عناصر التحكم غير جاهزة لتشغيل الصوت من الشريط الجانبي.");
+                    // يمكنك عرض رسالة للمستخدم هنا إذا أردت
+                }
+            });
+        }
     }
 
 
@@ -593,7 +603,6 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         window.showHomePage();
-        // **تم إزالة استدعاء initializeAlphabetPressSidebarControls() من هنا**
     });
   </script>
 </body>
