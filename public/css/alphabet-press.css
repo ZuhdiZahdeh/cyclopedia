@@ -144,7 +144,42 @@
     margin: 20px auto;
     box-shadow: var(--shadow-sm);
 }
+/* css/alphabet-press.css */
 
+/* ... (الأنماط الموجودة مسبقًا) ... */
+
+.game-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.control-group { /* جديد: لتجميع اللاصق والقائمة المنسدلة */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.game-controls label {
+    font-weight: bold;
+    color: var(--color-text-primary); /* استخدام لون من colors.css */
+}
+
+.game-controls select {
+    padding: 8px 12px;
+    border: 1px solid var(--color-border); /* لون الحدود من colors.css */
+    border-radius: 5px;
+    background-color: var(--color-surface); /* لون الخلفية من colors.css */
+    color: var(--color-text-primary);
+    font-size: 1em;
+    cursor: pointer;
+}
+
+/* ... (بقية الأنماط) ... */
 /* دعم RTL لأنماط لوحة المفاتيح وعناصر التحكم */
 [dir="rtl"] .keyboard-grid {
     /* قد لا تحتاج لتغيير إذا كان التخطيط مرنًا */

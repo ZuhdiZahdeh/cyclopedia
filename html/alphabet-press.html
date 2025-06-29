@@ -1,12 +1,26 @@
 <section id="alphabet-press-game" class="game-box">
     <h2 id="alphabet-press-title" class="item-main-name">لعبة اضغط على الحرف</h2>
-    
+
     <div class="game-controls">
-        <label for="alphabet-press-language-select">اختر اللغة:</label>
-        <select id="alphabet-press-language-select"></select>
-        
-        <label for="alphabet-press-category-select">اختر الفئة:</label>
-        <select id="alphabet-press-category-select"></select>
+        <div class="control-group">
+            <label for="alphabet-press-language-select">اختر اللغة:</label>
+            <select id="alphabet-press-language-select"></select>
+        </div>
+
+        <div class="control-group">
+            <label for="alphabet-press-category-select">اختر الفئة:</label>
+            <select id="alphabet-press-category-select"></select>
+        </div>
+
+        <div class="control-group">
+            <label for="alphabet-press-voice-select">اختر الصوت:</label>
+            <select id="alphabet-press-voice-select">
+                <option value="teacher" data-i18n="teacher_voice">المعلم</option>
+                <option value="boy" data-i18n="boy_voice">صوت ولد</option>
+                <option value="girl" data-i18n="girl_voice">صوت بنت</option>
+                <option value="child" data-i18n="child_voice">صوت طفل</option>
+            </select>
+        </div>
     </div>
 
     <div id="alphabet-keyboard" class="keyboard-grid">
@@ -23,4 +37,4 @@
     <div id="game-message" class="info-box" style="display: none;">
         <p></p>
     </div>
-</section>
+</section>	
