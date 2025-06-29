@@ -6,8 +6,6 @@
     /* تأكد أن هذا يظل يطابق common-components-subjects.css إذا كانت هناك قيم متجاوزة */
 }
 
-/* ملاحظة: تم إزالة أنماط .game-controls من هنا لأنها الآن جزء من الشريط الجانبي وتتبع أنماط .sidebar-game-controls */
-
 /* أنماط لوحة المفاتيح */
 .keyboard-grid {
     display: grid;
@@ -24,8 +22,8 @@
 }
 
 .keyboard-button {
-    background-color: var(--color-secondary); /* لون من colors.css  */
-    color: var(--color-white); /* لون أبيض  */
+    background-color: var(--color-secondary); /* لون من colors.css */
+    color: var(--color-white); /* لون أبيض */
     border: none;
     border-radius: 8px;
     padding: 15px 10px;
@@ -37,19 +35,19 @@
     justify-content: center;
     align-items: center;
     height: 60px; /* لتثبيت ارتفاع الأزرار */
-    box-shadow: 0 4px var(--color-shadow-dark-secondary); /* ظل ثلاثي الأبعاد - افترض وجود متغير */
+    box-shadow: 0 4px var(--color-shadow); /* ظل ثلاثي الأبعاد - يمكن تخصيصه في colors.css */
 }
 
 .keyboard-button:hover {
-    background-color: var(--color-primary); /* لون مختلف عند التحويم  */
+    background-color: var(--color-primary); /* لون مختلف عند التحويم */
     transform: translateY(-2px);
-    box-shadow: 0 6px var(--color-shadow-dark-primary); /* افترض وجود متغير */
+    box-shadow: 0 6px var(--color-shadow); /* يمكن تخصيصه في colors.css */
 }
 
 .keyboard-button:active {
-    background-color: var(--color-orange); /* لون عند الضغط  */
+    background-color: var(--color-orange); /* لون عند الضغط */
     transform: translateY(0);
-    box-shadow: 0 2px var(--color-shadow-dark-orange); /* افترض وجود متغير */
+    box-shadow: 0 2px var(--color-shadow); /* يمكن تخصيصه في colors.css */
 }
 
 /* أنماط منطقة عرض العنصر */
@@ -59,10 +57,10 @@
     align-items: center; /* توسيط العناصر */
     padding: 25px;
     margin-bottom: 20px;
-    background-color: var(--color-surface); /* استخدام لون من colors.css  */
-    border: 1px solid var(--color-border); /* حد من colors.css  */
+    background-color: var(--color-surface); /* استخدام لون من colors.css */
+    border: 1px solid var(--color-border); /* حد من colors.css */
     border-radius: 15px;
-    box-shadow: 0 8px 16px var(--color-shadow); /* استخدام ظل من common-components-subjects.css */
+    box-shadow: 0 8px 16px var(--color-shadow);
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
@@ -79,54 +77,31 @@
 #alphabet-press-item-name {
     font-size: 2.5em; /* حجم خط أكبر للاسم الرئيسي */
     margin-bottom: 15px;
-    color: var(--color-text-primary); /* لون النص من colors.css  */
+    color: var(--color-text-primary); /* لون النص من colors.css */
 }
 
 /* تمييز الحرف الأول */
 .highlight-first-letter {
-    color: var(--color-orange); /* اللون البرتقالي المميز من colors.css  */
+    color: var(--color-orange); /* اللون البرتقالي المميز من colors.css */
     font-size: 1.2em; /* تكبير الحرف الأول قليلاً */
     font-weight: bold;
 }
 
-.control-button {
-    background-color: var(--color-success); /* زر الاستماع بلون أخضر  */
-    color: var(--color-white); /* لون أبيض  */
-    border: none;
-    border-radius: 8px;
-    padding: 12px 25px;
-    font-size: 1.1em;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 3px var(--color-shadow-dark-green); /* افترض وجود متغير */
-}
-
-.control-button:hover {
-    background-color: var(--color-primary); /* لون أغمق لـ primary عند التحويم  */
-}
-
-.control-button i {
-    font-size: 1.2em;
-}
+/* زر الاستماع في القسم الرئيسي (إذا كان موجودًا) - تم نقله الآن */
+/* #alphabet-press-play-audio { ... } */
 
 #game-message {
     padding: 15px;
-    background-color: var(--color-info); /* لون رسائل المعلومات  */
-    color: var(--color-white); /* لون النص  */
+    background-color: var(--color-info); /* لون رسائل المعلومات */
+    color: var(--color-white); /* لون النص */
     border-radius: 10px;
     text-align: center;
     max-width: 400px;
     margin: 20px auto;
-    box-shadow: var(--shadow-sm); /* ظل خفيف  */
+    box-shadow: var(--color-shadow); /* ظل خفيف */
 }
 
 /* دعم RTL لأنماط لوحة المفاتيح وعناصر التحكم */
 [dir="rtl"] .keyboard-grid {
     /* قد لا تحتاج لتغيير إذا كان التخطيط مرنًا */
 }
-
-/* ملاحظة: تم نقل .game-controls إلى الشريط الجانبي، لذا تم إزالة أنماط RTL الخاصة به من هنا */
-/* الأنماط المشتركة مثل .game-box و .info-box موجودة في common-components-subjects.css ، لذلك لا نكررها هنا. */

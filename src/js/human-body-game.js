@@ -1,19 +1,18 @@
 // public/src/js/human-body-game.js
-// هذا هو المسار الفعلي للملف ضمن مجلد public
 
 import { db } from "./firebase-config.js";
-import { getDocs, collection } from "firebase/firestore";
+import { getDocs, collection, query } from "firebase/firestore";
 import { currentLang, loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
 import { playAudio, stopCurrentAudio } from "./audio-handler.js";
 import { recordActivity } from "./activity-handler.js";
 
 let humanBodyParts = []; 
 let currentIndex = 0;
-let selectedVoice = "boy"; 
+let currentHumanBodyData = null; // لتخزين بيانات الجزء المعروض حاليًا
 
-const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
 export async function loadHumanBodyGameContent() {
+  stopCurrentAudio();
   const mainContentArea = document.querySelector("main.main-content");
   const humanBodySidebarControls = document.getElementById("human-body-sidebar-controls");
 
@@ -40,36 +39,7 @@ export async function loadHumanBodyGameContent() {
           <p id="human-body-description">---</p>
         </div>
       </div>
-      <div class="navigation-buttons">
-        <button id="prev-human-body-btn">⬅️ السابق</button>
-        <button id="next-human-body-btn">التالي ➡️</button>
       </div>
-    </div>
-  `;
-
-  // 2. حقن HTML الخاص بعناصر التحكم في الشريط الجانبي
-  humanBodySidebarControls.innerHTML = `
-    <h3 style="text-align: center;">🧠 تعرف على جسم الإنسان</h3>
-    <div class="sidebar-game-controls">
-      <div class="language-selection" style="margin-bottom: 1rem;">
-        <label for="game-lang-select-human-body">اللغة:</label>
-        <select id="game-lang-select-human-body">
-          <option value="ar">العربية</option>
-          <option value="en">English</option>
-          <option value="he">عبري</option>
-        </select>
-      </div>
-      <div class="voice-selection" style="margin-bottom: 1rem;">
-        <label for="voice-select-human-body">الصوت:</label>
-        <select id="voice-select-human-body">
-          <option value="boy">صوت ولد</option>
-          <option value="teacher">المعلم</option>
-          <option value="girl">صوت بنت</option>
-          <option value="child">صوت طفل</option>
-        </select>
-      </div>
-      <button id="play-sound-btn-human-body">🔊 استمع</button>
-    </div>
   `;
 
   // الحصول على المراجع للعناصر بعد حقنها في DOM
@@ -80,82 +50,68 @@ export async function loadHumanBodyGameContent() {
   const humanBodyFunFact = document.getElementById("human-body-fun-fact");
   const humanBodyDescription = document.getElementById("human-body-description");
 
-  const playSoundBtn = document.getElementById("play-sound-btn-human-body");
-  const voiceSelect = document.getElementById("voice-select-human-body");
-  const gameLangSelect = document.getElementById("game-lang-select-human-body");
-  
-  const nextHumanBodyBtn = document.getElementById("next-human-body-btn");
-  const prevHumanBodyBtn = document.getElementById("prev-human-body-btn");
-
-  if (!humanBodyImage || !humanBodyWord || !playSoundBtn || !nextHumanBodyBtn || !prevHumanBodyBtn || !voiceSelect || !gameLangSelect || !humanBodyFunction || !humanBodySystem || !humanBodyFunFact || !humanBodyDescription) {
-    console.error("One or more human body game/control elements not found after content injection. Check IDs.");
-    disableHumanBodyButtons(true);
-    return;
+  const gameLangSelect = document.getElementById('game-lang-select-human-body');
+  if (!gameLangSelect) {
+      console.error("Language select for human body game not found.");
+      return;
   }
-
-  gameLangSelect.value = currentLang;
-  voiceSelect.value = selectedVoice;
-
-  await fetchHumanBodyParts();
+  
+  await fetchHumanBodyParts(gameLangSelect.value);
 
   if (humanBodyParts.length === 0) {
     console.warn("No human body parts found. Please check Firestore data or rules.");
-    humanBodyImage.src = "/images/default.png";
-    humanBodyWord.textContent = "لا توجد بيانات";
-    humanBodyDescription.textContent = "لا يوجد وصف متوفر.";
-    humanBodyFunction.textContent = "غير متوفر";
-    humanBodySystem.textContent = "غير متوفر";
-    humanBodyFunFact.textContent = "غير متوفر";
-    disableHumanBodyButtons(true);
+    if (humanBodyImage) humanBodyImage.src = "/images/default.png";
+    if (humanBodyWord) humanBodyWord.textContent = "لا توجد بيانات";
+    if (humanBodyDescription) humanBodyDescription.textContent = "لا يوجد وصف متوفر.";
+    if (humanBodyFunction) humanBodyFunction.textContent = "غير متوفر";
+    if (humanBodySystem) humanBodySystem.textContent = "غير متوفر";
+    if (humanBodyFunFact) humanBodyFunFact.textContent = "غير متوفر";
+    disableHumanBodyButtonsInSidebar(true);
     return;
   }
 
-  showHumanBodyPart(currentIndex);
-
-  nextHumanBodyBtn.addEventListener("click", async () => {
-    if (currentIndex < humanBodyParts.length - 1) {
-        currentIndex++;
-        showHumanBodyPart(currentIndex);
-        if (currentUser && currentUser.uid) {
-            await recordActivity(currentUser, "human-body");
-        }
-    }
-  });
-
-  prevHumanBodyBtn.addEventListener("click", () => {
-    if (currentIndex > 0) {
-        currentIndex--;
-        showHumanBodyPart(currentIndex);
-    }
-  });
-
-  playSoundBtn.addEventListener("click", () => {
-    const soundPath = getAudioPath(humanBodyParts[currentIndex], selectedVoice);
-    if (soundPath) {
-      playAudio(soundPath);
-    } else {
-      console.warn(`No ${selectedVoice} sound available for current human body part.`);
-    }
-  });
-
-  voiceSelect.addEventListener("change", (event) => {
-    selectedVoice = event.target.value;
-  });
-
-  gameLangSelect.addEventListener("change", async (event) => {
-    const newLang = event.target.value;
-    await loadLanguage(newLang);
-    applyTranslations();
-    await fetchHumanBodyParts();
-    currentIndex = 0;
-    showHumanBodyPart(currentIndex);
-    setDirection(newLang);
-  });
+  currentIndex = 0;
+  updateHumanBodyContent();
+  disableHumanBodyButtonsInSidebar(false);
 }
 
-async function fetchHumanBodyParts() {
+function updateHumanBodyContent() {
+  if (humanBodyParts.length === 0) return;
+
+  currentHumanBodyData = humanBodyParts[currentIndex];
+    
+  const humanBodyImage = document.getElementById("human-body-image");
+  const humanBodyWord = document.getElementById("human-body-word");
+  const humanBodyFunction = document.getElementById("human-body-function");
+  const humanBodySystem = document.getElementById("human-body-system");
+  const humanBodyFunFact = document.getElementById("human-body-fun-fact");
+  const humanBodyDescription = document.getElementById("human-body-description");
+
+  const prevHumanBodyBtn = document.getElementById('prev-human-body-btn');
+  const nextHumanBodyBtn = document.getElementById('next-human-body-btn');
+
+  const name = currentHumanBodyData.name?.[currentLang] || currentHumanBodyData.name?.en || "---"; 
+  const imgSrc = `/images/human-body/${currentHumanBodyData.image}`; 
+  
+  if (humanBodyImage) humanBodyImage.src = imgSrc;
+  if (humanBodyImage) humanBodyImage.alt = name;
+  if (humanBodyWord) humanBodyWord.textContent = name;
+
+  if (humanBodyFunction) humanBodyFunction.textContent = currentHumanBodyData.function?.[currentLang] || "غير متوفر";
+  if (humanBodySystem) humanBodySystem.textContent = currentHumanBodyData.system?.[currentLang] || "غير متوفر";
+  if (humanBodyFunFact) humanBodyFunFact.textContent = currentHumanBodyData.fun_fact?.[currentLang] || "لا توجد حقائق ممتعة";
+  if (humanBodyDescription) humanBodyDescription.textContent = currentHumanBodyData.description?.[currentLang] || "لا يوجد وصف";
+
+  if (prevHumanBodyBtn) prevHumanBodyBtn.disabled = (currentIndex === 0);
+  if (nextHumanBodyBtn) nextHumanBodyBtn.disabled = (currentIndex === humanBodyParts.length - 1);
+
+  stopCurrentAudio();
+}
+
+async function fetchHumanBodyParts(lang) {
   try {
     const itemsCollectionRef = collection(db, "categories", "human-body", "items");
+    const q = query(itemsCollectionRef);
     const snapshot = await getDocs(itemsCollectionRef);
     humanBodyParts = snapshot.docs.map(doc => doc.data());
     console.log("Fetched human body parts:", humanBodyParts);
@@ -166,46 +122,65 @@ async function fetchHumanBodyParts() {
   }
 }
 
-function showHumanBodyPart(index) {
-  if (index >= 0 && index < humanBodyParts.length) {
-    const data = humanBodyParts[index];
-    
-    const name = data.name?.[currentLang] || data.name?.en || "---"; 
-    const imgSrc = `/images/human-body/${data.image}`; 
-    
-    document.getElementById("human-body-image").src = imgSrc;
-    document.getElementById("human-body-image").alt = name;
-    document.getElementById("human-body-word").textContent = name;
-
-    document.getElementById("human-body-function").textContent = data.function?.[currentLang] || "غير متوفر";
-    document.getElementById("human-body-system").textContent = data.system?.[currentLang] || "غير متوفر";
-    document.getElementById("human-body-fun-fact").textContent = data.fun_fact?.[currentLang] || "لا توجد حقائق ممتعة";
-    document.getElementById("human-body-description").textContent = data.description?.[currentLang] || "لا يوجد وصف";
-
-    document.getElementById("prev-human-body-btn").disabled = (index === 0);
-    document.getElementById("next-human-body-btn").disabled = (index === humanBodyParts.length - 1);
-
+// ***** دوال مصدّرة ليتم استدعاؤها من index.html *****
+export function showNextHumanBodyPart() {
     stopCurrentAudio();
-  }
+    if (currentIndex < humanBodyParts.length - 1) {
+        currentIndex++;
+        updateHumanBodyContent();
+        recordActivity(JSON.parse(localStorage.getItem("user")), "human-body");
+    }
 }
 
-function getAudioPath(data, voiceType) {
-  const fileName = data.voices?.[voiceType]; 
-  if (fileName) {
-    return `/audio/${currentLang}/human-body/${fileName}`;
-  }
-  return null;
+export function showPreviousHumanBodyPart() {
+    stopCurrentAudio();
+    if (currentIndex > 0) {
+        currentIndex--;
+        updateHumanBodyContent();
+        recordActivity(JSON.parse(localStorage.getItem("user")), "human-body");
+    }
 }
 
-function disableHumanBodyButtons(isDisabled) {
-    const btns = [
-        document.getElementById("play-sound-btn-human-body"),
-        document.getElementById("next-human-body-btn"),
-        document.getElementById("prev-human-body-btn"),
-        document.getElementById("voice-select-human-body"),
-        document.getElementById("game-lang-select-human-body")
-    ];
-    btns.forEach(btn => {
-        if (btn) btn.disabled = isDisabled;
-    });
+export function playCurrentHumanBodyPartAudio() {
+    if (currentHumanBodyData) {
+        const voiceSelect = document.getElementById('voice-select-human-body');
+        const selectedVoiceType = voiceSelect ? voiceSelect.value : 'boy';
+        const audioPath = getHumanBodyAudioPath(currentHumanBodyData, selectedVoiceType);
+        if (audioPath) {
+            playAudio(audioPath);
+            recordActivity(JSON.parse(localStorage.getItem("user")), "human-body");
+        }
+    } else {
+        console.warn('لا يوجد جزء جسم بشري معروض لتشغيل الصوت.');
+    }
+}
+
+function getHumanBodyAudioPath(data, voiceType) {
+  const langFolder = document.getElementById('game-lang-select-human-body').value;
+  const subjectFolder = 'human-body';
+
+  let fileName;
+  if (data.voices && data.voices[voiceType]) {
+    fileName = data.voices[voiceType];
+  } else if (data.sound_base) {
+    fileName = data.sound_base.replace('.mp3', `_${voiceType}_${langFolder}.mp3`);
+  } else {
+    console.warn(`لا يوجد مسار صوت لـ ${data.name?.[currentLang]} بنوع الصوت ${voiceType}.`);
+    return null;
+  }
+  return `/audio/${langFolder}/${subjectFolder}/${fileName}`;
+}
+
+function disableHumanBodyButtonsInSidebar(isDisabled) {
+    const playSoundBtn = document.getElementById("play-sound-btn-human-body");
+    const nextBtn = document.getElementById("next-human-body-btn");
+    const prevBtn = document.getElementById("prev-human-body-btn");
+    const voiceSelect = document.getElementById("voice-select-human-body");
+    const langSelect = document.getElementById("game-lang-select-human-body");
+
+    if (playSoundBtn) playSoundBtn.disabled = isDisabled;
+    if (nextBtn) nextBtn.disabled = isDisabled;
+    if (prevBtn) prevBtn.disabled = isDisabled;
+    if (voiceSelect) voiceSelect.disabled = isDisabled;
+    if (langSelect) langSelect.disabled = isDisabled;
 }
