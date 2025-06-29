@@ -2,7 +2,7 @@
 
 import { db } from './firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
-import { currentLang, loadLanguage, applyTranslations, setDirection } from './lang-handler.js';
+import { currentLang, loadLanguage, applyTranslations, setDirection } from './lang-handler.js'; // استيراد currentLang
 import { playAudio, stopCurrentAudio } from './audio-handler.js';
 import { recordActivity } from './activity-handler.js';
 
@@ -39,44 +39,42 @@ export async function loadMemoryGameContent() {
     // الحصول على مراجع عناصر الـ DOM بعد حقن الـ HTML
     gameBoard = document.getElementById('memory-game-board');
     gameStatusDisplay = document.getElementById('memory-game-status');
-
-    // ملاحظة: الأزرار الموجودة في الشريط الجانبي (langButtons, modeButtons, startGameButton)
-    // لا يجب الحصول على مراجعها هنا، بل في initializeMemoryGameSidebarControls
-    // لأنها موجودة في جزء مختلف من الـ DOM يتم تحميله بواسطة index.html وليس هنا.
-    // لكن for now, let's keep it simple and assume they are accessible.
-    // الأفضل هو تمريرها كمعاملات للدالة setupEventListeners
-    // أو الحصول عليها في initializeMemoryGameSidebarControls() وتعيين المستمعين هناك.
-
-    // تهيئة المستمعين للأحداث (لعناصر اللوحة الرئيسية فقط)
-    // عناصر الشريط الجانبي (langButtons, modeButtons, startGameButton) ستتم تهيئتها في initializeMemoryGameSidebarControls
-    // لتجنب فقدان المراجع عند إعادة حقن الـ HTML في mainContentArea
     
-    // جلب البيانات وبناء اللوحة لأول مرة (مهم جداً أن يتم بعد الحصول على مراجع gameBoard)
+    // جلب البيانات وبناء اللوحة لأول مرة
+    // يتم استدعاء populateTopicButtons و createBoard داخل fetchCardData
     await fetchCardData();
 }
 
 // دالة تهيئة عناصر التحكم في الشريط الجانبي للعبة الذاكرة
-// هذه الدالة ستُستدعى من index.html
+// هذه الدالة ستُستدعى من index.html ويجب أن تهتم فقط بعناصر الشريط الجانبي
 export async function initializeMemoryGameSidebarControls() {
     // الحصول على مراجع الأزرار في الشريط الجانبي بعد أن تكون موجودة في الـ DOM
     startGameButton = document.getElementById('memory-game-start-button');
     langButtons = document.querySelectorAll('.memory-game-lang-button');
     modeButtons = document.querySelectorAll('.memory-game-mode-button');
 
-    // setupEventListeners الآن سيعالج فقط المستمعين
+    // تهيئة المستمعين للأحداث لعناصر التحكم في الشريط الجانبي
     setupEventListeners();
+    
+    // بعد تهيئة أزرار اللغة، تأكد من تحديث حالتها بناءً على currentLang العالمية
+    langButtons.forEach(button => {
+        if (button.id === `memory-game-lang-${currentLang}`) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
+        }
+    });
 
-    // populateTopicButtons يتم استدعاؤها بالفعل في fetchCardData
-    // ولكن تأكد من أنها تنفذ بعد أن تكون البيانات قد وصلت.
-    // إذا كنت تحتاج لإعادة تعبئة الأزرار عند إعادة تحميل اللعبة
-    // يمكنك استدعاء populateTopicButtons هنا مرة أخرى إذا لزم الأمر.
+    // Populate topic buttons if data is already fetched
+    if (Object.keys(allCardData).length > 0) {
+        populateTopicButtons();
+    }
 }
 
 
 function setupEventListeners() {
-    // إزالة المستمعين القدامى قبل إضافة الجدد لتجنب التكرار
     if (startGameButton) {
-        startGameButton.removeEventListener('click', createBoard); // إزالة أي مستمع قديم
+        startGameButton.removeEventListener('click', createBoard);
         startGameButton.addEventListener('click', createBoard);
     }
 
@@ -93,15 +91,17 @@ function setupEventListeners() {
             button.addEventListener('click', handleModeChange);
         });
     }
+    // ملاحظة: أزرار المواضيع يتم تهيئتها بواسطة populateTopicButtons والتي تضيف المستمعين بنفسها
 }
 
 function handleLanguageChange(event) {
     langButtons.forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
-    currentLanguage = event.target.id === 'memory-game-lang-ar' ? 'ar' : 'en';
-    // تحديث اتجاه ولغة المستند بالكامل باستخدام lang-handler
-    setDirection(currentLanguage); // من lang-handler.js
-    updateCardTexts(); // فقط تحديث النصوص للبطاقات الموجودة
+    // تحديث currentLang العالمية باستخدام دالة loadLanguage من lang-handler
+    loadLanguage(event.target.id === 'memory-game-lang-ar' ? 'ar' : 'en').then(() => {
+        // بعد تحديث اللغة العالمية، قم بتحديث نصوص البطاقات المحلية في اللعبة
+        updateCardTexts();
+    });
 }
 
 function handleModeChange(event) {
@@ -112,11 +112,10 @@ function handleModeChange(event) {
 }
 
 
-// وظيفة لجلب البيانات من Firestore
 async function fetchCardData() {
     if (!db) {
-        console.error("Firestore DB not initialized.");
-        gameStatusDisplay.textContent = (currentLanguage === 'ar' ? 'فشل إعداد قاعدة البيانات.' : 'Database setup failed.');
+        console.error("Firestore DB not initialized. Cannot fetch data.");
+        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'فشل إعداد قاعدة البيانات.' : 'Database setup failed.');
         return;
     }
 
@@ -150,11 +149,10 @@ async function fetchCardData() {
         
     } catch (error) {
         console.error('فشل في جلب بيانات البطاقات من Firestore:', error);
-        gameStatusDisplay.textContent = (currentLanguage === 'ar' ? 'فشل تحميل البيانات. تحقق من اتصال الإنترنت.' : 'Failed to load data. Check internet connection.');
+        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'فشل تحميل البيانات. تحقق من اتصال الإنترنت.' : 'Failed to load data. Check internet connection.');
     }
 }
 
-// وظيفة لخلط المصفوفة (خوارزمية Fisher-Yates)
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -163,14 +161,13 @@ function shuffleArray(array) {
     return array;
 }
 
-// وظيفة لإنشاء لوحة اللعبة بالبطاقات
 function createBoard() {
     if (!gameBoard) {
         console.error("Game board element not found in createBoard.");
         return;
     }
-    gameBoard.innerHTML = ''; // مسح أي بطاقات سابقة
-    gameStatusDisplay.textContent = ''; // مسح رسائل الحالة
+    gameBoard.innerHTML = '';
+    gameStatusDisplay.textContent = '';
 
     flippedCards = [];
     matchedPairs = 0;
@@ -179,7 +176,7 @@ function createBoard() {
     const selectedTopicItems = allCardData[currentTopic];
     if (!selectedTopicItems || selectedTopicItems.length < 6) {
         console.warn(`لا توجد بيانات كافية للموضوع ${currentTopic} أو الموضوع غير موجود.`);
-        gameStatusDisplay.textContent = (currentLanguage === 'ar' ? 'لا توجد بيانات كافية لهذا الموضوع.' : 'Not enough data for this topic.');
+        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'لا توجد بيانات كافية لهذا الموضوع.' : 'Not enough data for this topic.');
         return;
     }
 
@@ -195,12 +192,12 @@ function createBoard() {
         }
         else if (currentPlayMode === 'image-word') {
             gameCardsForMode.push({ type: 'image', value: `images/${currentTopic}/${item.image_name}`, id: item.id, text_ar: item.name_ar, text_en: item.name_en });
-            gameCardsForMode.push({ type: 'word', value: (currentLanguage === 'ar' ? item.name_ar : item.name_en), id: item.id, text_ar: item.name_ar, text_en: item.name_en });
+            gameCardsForMode.push({ type: 'word', value: (currentLang === 'ar' ? item.name_ar : item.name_en), id: item.id, text_ar: item.name_ar, text_en: item.name_en });
         }
         else if (currentPlayMode === 'image-char') {
             if (item.letter_ar && item.letter_en) {
                 gameCardsForMode.push({ type: 'image', value: `images/${currentTopic}/${item.image_name}`, id: item.id, text_ar: item.name_ar, text_en: item.name_en });
-                gameCardsForMode.push({ type: 'char', value: (currentLanguage === 'ar' ? item.letter_ar : item.letter_en), id: item.id, text_ar: item.name_ar, text_en: item.name_en });
+                gameCardsForMode.push({ type: 'char', value: (currentLang === 'ar' ? item.letter_ar : item.letter_en), id: item.id, text_ar: item.name_ar, text_en: item.name_en });
             } else {
                 console.warn(`لا يوجد حرف لـ ${item.id} في الموضوع ${currentTopic}. سيتم تخطي هذا العنصر لهذا النمط.`);
             }
@@ -208,7 +205,7 @@ function createBoard() {
         else if (currentPlayMode === 'image-audio') {
             if (item.audio_ar && item.audio_en) {
                 gameCardsForMode.push({ type: 'image', value: `images/${currentTopic}/${item.image_name}`, id: item.id, text_ar: item.name_ar, text_en: item.name_en });
-                gameCardsForMode.push({ type: 'audio', value: `audio/${currentLanguage}/${currentTopic}/${currentLanguage === 'ar' ? item.audio_ar : item.audio_en}`, id: item.id, text_ar: item.name_ar, text_en: item.name_en, image_url_for_audio_card: `images/${currentTopic}/${item.image_name}` });
+                gameCardsForMode.push({ type: 'audio', value: `audio/${currentLang}/${currentTopic}/${currentLang === 'ar' ? item.audio_ar : item.audio_en}`, id: item.id, text_ar: item.name_ar, text_en: item.name_en, image_url_for_audio_card: `images/${currentTopic}/${item.image_name}` });
             } else {
                 console.warn(`لا يوجد صوت لـ ${item.id} في الموضوع ${currentTopic}. سيتم تخطي هذا العنصر لهذا النمط.`);
             }
@@ -216,7 +213,7 @@ function createBoard() {
     });
 
     if (gameCardsForMode.length < 12) {
-         gameStatusDisplay.textContent = (currentLanguage === 'ar' ? 'لا توجد عناصر كافية لهذا النمط والموضوع.' : 'Not enough items for this mode and topic.');
+         gameStatusDisplay.textContent = (currentLang === 'ar' ? 'لا توجد عناصر كافية لهذا النمط والموضوع.' : 'Not enough items for this mode and topic.');
          console.error("Not enough cards generated for the selected mode.");
          return;
     }
@@ -230,7 +227,7 @@ function createBoard() {
         cardElement.dataset.cardType = card.type;
 
         let frontContent = '';
-        let cardText = currentLanguage === 'ar' ? card.text_ar : card.text_en;
+        let cardText = currentLang === 'ar' ? card.text_ar : card.text_en;
 
         if (card.type === 'image') {
             frontContent = `<img src="${card.value}" alt="${card.id}">`;
@@ -318,7 +315,7 @@ function checkForMatch() {
     if (isMatch) {
         disableCards();
         matchedPairs++;
-        gameStatusDisplay.textContent = (currentLanguage === 'ar' ? 'لقد وجدت زوجًا!' : 'You found a pair!');
+        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'لقد وجدت زوجًا!' : 'You found a pair!');
         const currentUser = JSON.parse(localStorage.getItem("user"));
         if (currentUser) {
             recordActivity(currentUser, currentTopic);
@@ -326,12 +323,12 @@ function checkForMatch() {
 
         if (matchedPairs === 6) {
             setTimeout(() => {
-                gameStatusDisplay.textContent = (currentLanguage === 'ar' ? 'تهانينا! لقد فزت باللعبة!' : 'Congratulations! You won the game!');
+                gameStatusDisplay.textContent = (currentLang === 'ar' ? 'تهانينا! لقد فزت باللعبة!' : 'Congratulations! You won the game!');
             }, 500);
         }
     } else {
         unflipCards();
-        gameStatusDisplay.textContent = (currentLanguage === 'ar' ? 'حاول مرة أخرى.' : 'Try again.');
+        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'حاول مرة أخرى.' : 'Try again.');
     }
 }
 
@@ -364,31 +361,30 @@ function updateCardTexts() {
         if (originalItem) {
             const cardTextSpan = cardElement.querySelector('.card-text');
             if (cardTextSpan) {
-                cardTextSpan.textContent = currentLanguage === 'ar' ? originalItem.name_ar : originalItem.name_en;
+                cardTextSpan.textContent = currentLang === 'ar' ? originalItem.name_ar : originalItem.name_en;
             }
 
             if (cardType === 'word') {
                  const displaySpan = cardElement.querySelector('.card-display-text');
-                 if(displaySpan) displaySpan.textContent = currentLanguage === 'ar' ? originalItem.name_ar : originalItem.name_en;
+                 if(displaySpan) displaySpan.textContent = currentLang === 'ar' ? originalItem.name_ar : originalItem.name_en;
             } else if (cardType === 'char') {
                 const displaySpan = cardElement.querySelector('.card-display-text');
-                if(displaySpan) displaySpan.textContent = currentLanguage === 'ar' ? originalItem.letter_ar : originalItem.letter_en;
+                if(displaySpan) displaySpan.textContent = currentLang === 'ar' ? originalItem.letter_ar : originalItem.letter_en;
             } else if (cardType === 'audio') {
                 const audioElem = cardElement.querySelector('audio');
-                if(audioElem) audioElem.src = `audio/${currentLanguage}/${currentTopic}/${currentLanguage === 'ar' ? originalItem.audio_ar : originalItem.audio_en}`;
+                if(audioElem) audioElem.src = `audio/${currentLang}/${currentTopic}/${currentLang === 'ar' ? originalItem.audio_ar : originalItem.audio_en}`;
             }
         }
     });
 }
 
-// وظيفة لملء أزرار المواضيع ديناميكيًا
 const topicSelectionDiv = document.querySelector('#memory-game-sidebar-controls .topic-selection');
 export function populateTopicButtons() {
     if (!topicSelectionDiv) {
-        console.error("Topic selection div not found in memory game sidebar controls.");
+        console.error("Topic selection div not found in memory game sidebar controls for populateTopicButtons.");
         return;
     }
-    topicSelectionDiv.innerHTML = '<h3>اختر الموضوع:</h3>'; // مسح الأزرار القديمة
+    topicSelectionDiv.innerHTML = '<h3>اختر الموضوع:</h3>';
 
     const categories = Object.keys(allCardData);
     
@@ -415,9 +411,3 @@ export function populateTopicButtons() {
     });
     topicButtons = sidebarTopicButtons;
 }
-
-// `currentLang` and `setDirection` are imported from `lang-handler.js`
-// So, we don't need to define `currentLanguage` here.
-// But `currentLanguage` needs to be consistently managed.
-// Let's make sure `currentLanguage` is updated when the global `currentLang` changes.
-// The `langButtons` click handler will update `currentLanguage` which is fine.

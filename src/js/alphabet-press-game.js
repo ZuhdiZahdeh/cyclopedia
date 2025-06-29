@@ -8,8 +8,8 @@ import { recordActivity } from './activity-handler.js';
 
 let allItems = [];
 let currentDisplayedItem = null;
-export let currentAlphabetPressCategory = 'animals'; // تصدير المتغير ليمكن الوصول إليه وتعديله من index.html
-export let currentAlphabetPressVoice = 'teacher'; // تصدير المتغير
+export let currentAlphabetPressCategory = 'animals';
+export let currentAlphabetPressVoice = 'teacher';
 
 
 const alphabetLetters = {
@@ -18,7 +18,6 @@ const alphabetLetters = {
     'he': ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת']
 };
 
-// Available categories can be directly used here or fetched dynamically if needed
 const availableCategories = [
     { id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
     { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
@@ -30,14 +29,87 @@ export function getCurrentDisplayedItem() {
     return currentDisplayedItem;
 }
 
-// هذه الدوال الآن تُعدّل المتغيرات المصدرة مباشرةً
 export function updateAlphabetPressCategory(newCategory) {
     currentAlphabetPressCategory = newCategory;
-    loadCategoryItems(newCategory); // إعادة تحميل العناصر عند تغيير الفئة
+    loadCategoryItems(newCategory);
 }
 
 export function updateAlphabetPressVoice(newVoice) {
     currentAlphabetPressVoice = newVoice;
+}
+
+// ** الدالة الجديدة لتهيئة خيارات الشريط الجانبي للعبة الحروف **
+export async function populateAlphabetPressSidebarOptions() {
+    const langSelect = document.getElementById('alphabet-press-language-select');
+    const catSelect = document.getElementById('alphabet-press-category-select');
+    const voiceSelect = document.getElementById('alphabet-press-voice-select');
+    const playAudioBtn = document.getElementById('alphabet-press-play-audio-sidebar');
+
+    if (!langSelect || !catSelect || !voiceSelect || !playAudioBtn) {
+        console.error("Alphabet press sidebar control elements not found. Cannot initialize options.");
+        return;
+    }
+
+    // تعبئة قائمة اللغات
+    langSelect.innerHTML = '';
+    ['ar', 'en', 'he'].forEach(langCode => {
+        const option = document.createElement('option');
+        option.value = langCode;
+        option.textContent = { 'ar': 'العربية', 'en': 'English', 'he': 'עברית' }[langCode];
+        langSelect.appendChild(option);
+    });
+    langSelect.value = currentLang;
+
+    // تعبئة الفئات
+    catSelect.innerHTML = '';
+    availableCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.id;
+        option.textContent = category['name_' + currentLang];
+        catSelect.appendChild(option);
+    });
+    catSelect.value = currentAlphabetPressCategory; // تحديد الفئة المختارة حاليًا
+
+    // تعبئة خيارات الصوت
+    voiceSelect.innerHTML = `
+        <option value="teacher" data-i18n="teacher_voice">المعلم</option>
+        <option value="boy" data-i18n="boy_voice">صوت ولد</option>
+        <option value="girl" data-i18n="girl_voice">صوت بنت</option>
+        <option value="child" data-i18n="child_voice">صوت طفل</option>
+    `;
+    voiceSelect.value = currentAlphabetPressVoice; // تحديد الصوت المختار حاليًا
+
+
+    // المستمعون لعناصر التحكم في الشريط الجانبي للعبة الحروف
+    langSelect.addEventListener('change', async () => {
+        await loadLanguage(langSelect.value);
+        applyTranslations();
+        setDirection(langSelect.value);
+
+        // تحديث أسماء الفئات باللغة الجديدة
+        Array.from(catSelect.options).forEach(option => {
+            const category = availableCategories.find(cat => cat.id === option.value);
+            if (category) {
+                option.textContent = category['name_' + currentLang];
+            }
+        });
+        handleAlphabetPressLanguageChange(langSelect.value); // استدعاء دالة تحديث اللغة في اللعبة
+    });
+
+    catSelect.addEventListener('change', () => {
+        handleAlphabetPressCategoryChange(catSelect.value); // استدعاء دالة تحديث الفئة في اللعبة
+    });
+
+    voiceSelect.addEventListener('change', () => {
+        updateAlphabetPressVoice(voiceSelect.value); // استدعاء دالة تحديث الصوت في اللعبة
+    });
+
+    if (playAudioBtn) {
+        playAudioBtn.addEventListener('click', () => {
+            playCurrentAlphabetItemAudioFromSidebar();
+        });
+    }
+    console.log("Alphabet press sidebar options initialized.");
 }
 
 
@@ -57,19 +129,14 @@ export async function loadAlphabetPressGameContent() {
         return;
     }
 
-    // تهيئة لوحة المفاتيح بناءً على اللغة الحالية
     generateKeyboard(currentLang);
-    resetDisplay(); // مسح أي عنصر معروض سابقًا
+    resetDisplay();
 
-    // تحميل العناصر للفئة الافتراضية أو المختارة حاليا
     await loadCategoryItems(currentAlphabetPressCategory);
-
-    // تطبيق الترجمات بعد تحميل المحتوى (لضمان ترجمة عنوان اللعبة)
     applyTranslations();
 }
 
 
-// دالة عامة لتشغيل الصوت من الشريط الجانبي
 export function playCurrentAlphabetItemAudioFromSidebar() {
     if (currentDisplayedItem) {
         const categoryId = currentAlphabetPressCategory;
@@ -90,25 +157,26 @@ export function playCurrentAlphabetItemAudioFromSidebar() {
 }
 
 
-// دالة يتم استدعاؤها عند تغيير اللغة من الشريط الجانبي
 export async function handleAlphabetPressLanguageChange(newLang) {
-    await loadLanguage(newLang); // تحميل ملف اللغة الجديد
-    applyTranslations(); // تطبيق الترجمات (للصفحة كلها)
-    setDirection(newLang); // تعيين اتجاه الصفحة
+    // Note: loadLanguage, applyTranslations, setDirection are handled by index.html when global language changes
+    // This function specifically updates the game's internal state and UI dependent on language
+    // update currentLang (imported from lang-handler) to match newLang if it's not already updated globally
+    // If you want lang-handler to manage currentLang, you should not update it here directly.
+    // The current setup allows lang-handler to update currentLang and then this function is called.
 
-    // تحديث لوحة المفاتيح باللغة الجديدة
-    generateKeyboard(newLang);
-    resetDisplay(); // مسح العرض الحالي
+    // No need to loadLanguage, applyTranslations, setDirection here as it's already done globally in index.html
+    // Just ensure the keyboard and items are updated based on the new global currentLang
 
-    // إعادة تحميل عناصر الفئة لضمان أنها باللغة الصحيحة (إذا كانت البيانات تعتمد على اللغة)
+    generateKeyboard(currentLang); // Use the globally updated currentLang
+    resetDisplay();
+
     await loadCategoryItems(currentAlphabetPressCategory);
 }
 
-// دالة يتم استدعاؤها عند تغيير الفئة من الشريط الجانبي
 export async function handleAlphabetPressCategoryChange(newCategoryId) {
-    currentAlphabetPressCategory = newCategoryId; // تحديث الفئة المختارة
-    await loadCategoryItems(newCategoryId); // إعادة تحميل العناصر للفئة الجديدة
-    resetDisplay(); // مسح العرض الحالي
+    currentAlphabetPressCategory = newCategoryId;
+    await loadCategoryItems(newCategoryId);
+    resetDisplay();
 }
 
 
