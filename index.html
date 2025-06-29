@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="/css/vegetables.css" />
   <link rel="stylesheet" href="/css/human-body.css" />
   <link rel="stylesheet" href="/css/style.css" />
-  <link rel="stylesheet" href="/css/alphabet-press.css" /> 
+  <link rel="stylesheet" href="/css/alphabet-press.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 
@@ -29,7 +29,7 @@
         <a href="#" onclick="loadFruitsPage()">🍎 الفواكه</a>
         <a href="#" onclick="loadVegetablesPage()">🥦 الخضروات</a>
         <a href="#" onclick="loadHumanBodyPage()">🧠 جسم الإنسان</a>
-        <a href="#" onclick="loadAlphabetPressPage()">🎮 الألعاب</a> 
+        <a href="#" onclick="loadAlphabetPressPage()">🎮 الألعاب</a>
       </nav>
     </header>
 
@@ -133,7 +133,28 @@
 
         <div id="alphabet-press-sidebar-controls" class="sidebar-section" style="display: none;">
             <h3 style="text-align: center;">🎮 إعدادات لعبة الحروف</h3>
+            <div class="sidebar-game-controls">
+                <div class="control-group">
+                    <label for="alphabet-press-language-select">اختر اللغة:</label>
+                    <select id="alphabet-press-language-select"></select>
+                </div>
+
+                <div class="control-group">
+                    <label for="alphabet-press-category-select">اختر الفئة:</label>
+                    <select id="alphabet-press-category-select"></select>
+                </div>
+
+                <div class="control-group">
+                    <label for="alphabet-press-voice-select">اختر الصوت:</label>
+                    <select id="alphabet-press-voice-select">
+                        <option value="teacher" data-i18n="teacher_voice">المعلم</option>
+                        <option value="boy" data-i18n="boy_voice">صوت ولد</option>
+                        <option value="girl" data-i18n="girl_voice">صوت بنت</option>
+                        <option value="child" data-i18n="child_voice">صوت طفل</option>
+                    </select>
+                </div>
             </div>
+        </div>
 
         <div class="sidebar-section static-section">
           <h3>👤 حسابك</h3>
@@ -174,33 +195,30 @@
   </div>
 
   <script type="module">
-    // استيراد مكونات ودووال من ملفات JS الأخرى
-    // بما أن index.html موجود في جذر المشروع، والملفات هي public/src/js/ ،
-    // فإن المسار النسبي من index.html سيكون /src/js/
-    import { showProfileForm } from '/src/js/profile.js'; 
+    import { showProfileForm } from '/src/js/profile.js';
     import { loadAnimalsGameContent } from '/src/js/animals-game.js';
     import { loadFruitsGameContent } from '/src/js/fruits-game.js';
     import { loadVegetablesGameContent } from '/src/js/vegetables-game.js';
     import { loadHumanBodyGameContent } from '/src/js/human-body-game.js';
-    import { setDirection } from '/src/js/lang-handler.js';
-    // جديد: استيراد دالة تحميل لعبة اضغط على الحرف
+    import { setDirection, currentLang, loadLanguage, applyTranslations } from '/src/js/lang-handler.js'; // تم إضافة currentLang, loadLanguage, applyTranslations
     import { loadAlphabetPressGameContent } from '/src/js/alphabet-press-game.js';
 
-
-    // الحصول على المراجع لعناصر DOM الرئيسية في الصفحة
     const mainContentArea = document.querySelector("main.main-content");
     const animalSidebarControls = document.getElementById("animal-sidebar-controls");
     const fruitSidebarControls = document.getElementById("fruit-sidebar-controls");
     const vegetableSidebarControls = document.getElementById("vegetable-sidebar-controls");
     const humanBodySidebarControls = document.getElementById("human-body-sidebar-controls");
-    // جديد: مرجع لعناصر التحكم الجانبية للعبة اضغط على الحرف
     const alphabetPressSidebarControls = document.getElementById("alphabet-press-sidebar-controls");
 
     const welcomeMessage = document.getElementById("welcome-message");
     const homeTopicCards = document.getElementById("home-topic-cards");
 
-    // وظائف تحميل النماذج الثابتة (تسجيل الدخول/التسجيل/الملف الشخصي)
-    // هذه المسارات يجب أن تبدأ بـ / لأنها ستكون في جذر مجلد dist بعد البناء
+    // **جديد: مراجع لعناصر التحكم في الشريط الجانبي للعبة الحروف**
+    const alphabetPressLanguageSelect = document.getElementById('alphabet-press-language-select');
+    const alphabetPressCategorySelect = document.getElementById('alphabet-press-category-select');
+    const alphabetPressVoiceSelect = document.getElementById('alphabet-press-voice-select');
+
+
     window.loadLogin = async () => {
         hideAllControls();
         try {
@@ -229,57 +247,51 @@
 
     window.loadProfile = () => { showProfileForm(); hideAllControls(); };
 
-    // دالة تحميل صفحة الحيوانات
     window.loadAnimalsPage = async () => {
-      hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية أولاً
-      if (welcomeMessage) welcomeMessage.style.display = 'none'; // إخفاء رسالة الترحيب
-      if (homeTopicCards) homeTopicCards.style.display = 'none'; // إخفاء بطاقات الصفحة الرئيسية
-      await loadAnimalsGameContent(); // تحميل محتوى لعبة الحيوانات
-      showAnimalControls(); // إظهار عناصر التحكم الخاصة بالحيوانات
-      // لا داعي لـ setDirection هنا، يتم التعامل معها داخل game-lang-select
+      hideAllControls();
+      if (welcomeMessage) welcomeMessage.style.display = 'none';
+      if (homeTopicCards) homeTopicCards.style.display = 'none';
+      await loadAnimalsGameContent();
+      showAnimalControls();
     };
 
-    // دالة تحميل صفحة الفواكه
     window.loadFruitsPage = async () => {
-      hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية أولاً
+      hideAllControls();
       if (welcomeMessage) welcomeMessage.style.display = 'none';
       if (homeTopicCards) homeTopicCards.style.display = 'none';
-      await loadFruitsGameContent(); // تحميل محتوى لعبة الفواكه
-      showFruitControls(); // إظهار عناصر التحكم الخاصة بالفواكه
+      await loadFruitsGameContent();
+      showFruitControls();
     };
 
-    // دالة تحميل صفحة الخضروات
     window.loadVegetablesPage = async () => {
-      hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية أولاً
+      hideAllControls();
       if (welcomeMessage) welcomeMessage.style.display = 'none';
       if (homeTopicCards) homeTopicCards.style.display = 'none';
-      await loadVegetablesGameContent(); // تحميل محتوى لعبة الخضروات
-      showVegetableControls(); // إظهار عناصر التحكم الخاصة بالخضروات
+      await loadVegetablesGameContent();
+      showVegetableControls();
     };
 
-    // دالة تحميل صفحة جسم الإنسان
     window.loadHumanBodyPage = async () => {
-      hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية أولاً
+      hideAllControls();
       if (welcomeMessage) welcomeMessage.style.display = 'none';
       if (homeTopicCards) homeTopicCards.style.display = 'none';
-      await loadHumanBodyGameContent(); // تحميل محتوى لعبة جسم الإنسان
-      showHumanBodyControls(); // إظهار عناصر التحكم الخاصة بجسم الإنسان
+      await loadHumanBodyGameContent();
+      showHumanBodyControls();
     };
 
-    // جديد: دالة تحميل صفحة لعبة اضغط على الحرف
+    // دالة تحميل صفحة لعبة اضغط على الحرف
     window.loadAlphabetPressPage = async () => {
-      hideAllControls(); // إخفاء جميع عناصر التحكم الجانبية أولاً
+      hideAllControls();
       if (welcomeMessage) welcomeMessage.style.display = 'none';
       if (homeTopicCards) homeTopicCards.style.display = 'none';
-      // المسار هنا '/html/alphabet-press.html' بناءً على المسار الذي قدمته E:\cyclopedia\html\alphabet-press.html
-      await loadAlphabetPressGameContent(); // تمرير مسار ملف HTML للعبة
-      showAlphabetPressControls(); // إظهار عناصر التحكم الخاصة باللعبة
+      await loadAlphabetPressGameContent(); // يتم حقن محتوى اللعبة في main-content
+      showAlphabetPressControls(); // إظهار عناصر التحكم الخاصة باللعبة في الشريط الجانبي
+
+      // **جديد: تهيئة وتعبئة المستمعين لعناصر التحكم في الشريط الجانبي**
+      initializeAlphabetPressSidebarControls();
     };
 
-    // دالة العودة للصفحة الرئيسية وتحديث محتواها
     window.showHomePage = () => {
-        // إعادة حقن محتوى الصفحة الرئيسية بما في ذلك رسالة الترحيب والبطاقات
-        // نستخدم innerHTML لإعادة تعيين المحتوى بالكامل في main-content
         mainContentArea.innerHTML = `
             <h2 id="welcome-message-inner" style="display: block;">مرحبًا بك في الموسوعة!</h2>
             <div id="home-topic-cards-inner" class="home-cards-container">
@@ -305,18 +317,15 @@
                 </a>
             </div>
         `;
-        // إخفاء جميع عناصر التحكم الجانبية عند العودة للصفحة الرئيسية
         hideAllControls();
 
-        // إعادة ضبط اتجاه النص إلى اللغة الافتراضية عند العودة للرئيسية
         const defaultLang = localStorage.getItem("lang") || "ar";
         setDirection(defaultLang);
     };
 
-    // وظائف إظهار وإخفاء عناصر التحكم الجانبية (للتأكد من ظهور عنصر واحد فقط)
     function showAnimalControls() {
         if (animalSidebarControls) {
-            animalSidebarControls.style.display = 'block'; // أو 'flex' حسب التخطيط
+            animalSidebarControls.style.display = 'block';
         }
     }
 
@@ -350,7 +359,6 @@
         }
     }
 
-    // جديد: وظائف إظهار وإخفاء عناصر التحكم الجانبية لجسم الإنسان
     function showHumanBodyControls() {
         if (humanBodySidebarControls) {
             humanBodySidebarControls.style.display = 'block';
@@ -363,7 +371,6 @@
         }
     }
 
-    // جديد: وظائف إظهار وإخفاء عناصر التحكم الجانبية للعبة اضغط على الحرف
     function showAlphabetPressControls() {
         if (alphabetPressSidebarControls) {
             alphabetPressSidebarControls.style.display = 'block';
@@ -376,20 +383,83 @@
         }
     }
 
-    // دالة شاملة لإخفاء جميع عناصر التحكم في الشريط الجانبي
     function hideAllControls() {
         hideAnimalControls();
         hideFruitControls();
         hideVegetableControls();
         hideHumanBodyControls();
-        hideAlphabetPressControls(); // جديد
-        // أي أقسام جانبية مستقبلية يجب أن تضاف هنا
+        hideAlphabetPressControls();
     }
 
-    // تشغيل عند تحميل DOM بالكامل
+    // **جديد: دالة لتهيئة وتعبئة عناصر التحكم الجانبية للعبة الحروف**
+    const availableCategories = [
+        { id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
+        { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
+        // أضف المزيد من الفئات هنا بنفس النمط
+    ];
+
+    async function initializeAlphabetPressSidebarControls() {
+        // تعبئة قائمة اللغات
+        ['ar', 'en', 'he'].forEach(langCode => {
+            const option = document.createElement('option');
+            option.value = langCode;
+            option.textContent = { 'ar': 'العربية', 'en': 'English', 'he': 'עברית' }[langCode];
+            alphabetPressLanguageSelect.appendChild(option);
+        });
+        alphabetPressLanguageSelect.value = currentLang; // تعيين اللغة الحالية كقيمة افتراضية
+
+        // تعبئة الفئات
+        availableCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category['name_' + currentLang]; // عرض اسم الفئة باللغة الحالية
+            alphabetPressCategorySelect.appendChild(option);
+        });
+
+        // **جديد: إضافة مستمعي الأحداث لعناصر التحكم في الشريط الجانبي**
+        alphabetPressLanguageSelect.addEventListener('change', async () => {
+            await loadLanguage(alphabetPressLanguageSelect.value);
+            applyTranslations();
+            setDirection(alphabetPressLanguageSelect.value);
+            // تحديث أسماء الفئات باللغة الجديدة
+            Array.from(alphabetPressCategorySelect.options).forEach(option => {
+                const category = availableCategories.find(cat => cat.id === option.value);
+                if (category) {
+                    option.textContent = category['name_' + currentLang];
+                }
+            });
+            // إعادة تحميل عناصر الفئة لتعكس التغيير في اللغة
+            // (هذه الخطوة تكرر جلب البيانات، يمكن تحسينها لاحقاً لتجنب الجلب المزدوج)
+            // إذا كانت اللعبة لا تزال معروضة، أعد تحميل العناصر
+            if (document.getElementById('alphabet-press-game')) {
+                // دالة loadCategoryItems تحتاج إلى تعديل لتكون متاحة هنا
+                // أو يجب أن تتم تهيئة اللعبة بالكامل عند تغيير اللغة
+                // في الوقت الحالي، سنبقيها بسيطة ونطلب من المستخدم إعادة اختيار الفئة إذا لزم الأمر
+            }
+        });
+
+        alphabetPressCategorySelect.addEventListener('change', () => {
+            // عند تغيير الفئة في الشريط الجانبي، قم بتحديث بيانات اللعبة الرئيسية
+            // هذا يتطلب وجود طريقة لتحديث اللعبة من خارجها
+            // أفضل طريقة هي إعادة تحميل اللعبة مع الفئة الجديدة
+            if (document.getElementById('alphabet-press-game')) {
+                 // استدعاء دالة لتحميل العناصر للفئة الجديدة من alphabet-press-game.js
+                 // نحتاج لدالة في alphabet-press-game.js يمكن استدعاؤها من الخارج لتحديث العناصر
+                 // أو ببساطة، يمكننا فقط تعيين الفئة المختارة وسيقوم الضغط على الحرف باستخدامها
+                 // سنفترض أن alphabet-press-game.js سيقرأ القيمة الحالية لـ alphabet-press-category-select
+                 // عند كل ضغطة على حرف.
+            }
+        });
+
+        // لا نحتاج لمستمع حدث لـ voiceSelect هنا لأن قيمته تُقرأ عند تشغيل الصوت داخل اللعبة
+    }
+
+
     document.addEventListener('DOMContentLoaded', () => {
-        // عند تحميل الصفحة لأول مرة، قم بعرض محتوى الصفحة الرئيسية
         window.showHomePage();
+        // **جديد: تهيئة عناصر التحكم الجانبية لمرة واحدة عند تحميل الصفحة**
+        // هذا يضمن أن القوائم المنسدلة متاحة لـ `loadAlphabetPressPage` عندما يتم استدعاؤها
+        initializeAlphabetPressSidebarControls();
     });
   </script>
 </body>

@@ -2,23 +2,23 @@
 
 body {
   margin: 0;
-  font-family: 'Cairo', sans-serif;
-  background-color: #f0f8ff;
+  font-family: 'Cairo', sans-serif; /* استخدام خط القاهرة [cite: 58] */
+  background-color: var(--color-background); /* استخدام متغير اللون  */
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
 .top-navbar {
-  background-color: #0288d1;
-  color: #FFFFFF;
+  background-color: var(--color-info); /* استخدام متغير اللون  */
+  color: var(--color-white); /* استخدام متغير اللون  */
   display: flex;
   justify-content: space-between;
   padding: 1rem;
   flex-wrap: wrap;
   align-items: center;
   width: 100%;
-  position: fixed; /* *** تغيير إلى fixed ليثبت في الأعلى تمامًا *** */
+  position: fixed;
   top: 0;
   left: 0;
   z-index: 1000;
@@ -28,7 +28,7 @@ body {
 .top-navbar select,
 .top-navbar a {
   margin: 0 0.5rem;
-  color: #FFFFFF;
+  color: var(--color-white); /* استخدام متغير اللون  */
   text-decoration: none;
   font-weight: bold;
   font-size: 1.2rem;
@@ -42,7 +42,7 @@ body {
   width: 100%;
   padding: 1rem;
   gap: 1rem;
-  padding-top: 70px; /* *** تعويض ارتفاع top-navbar الثابت *** */
+  padding-top: 70px; /* تعويض ارتفاع top-navbar الثابت */
   box-sizing: border-box;
 }
 
@@ -50,88 +50,108 @@ body {
 .sidebar {
   width: 220px;
   padding: 1rem;
-  background-color: #e1f5fe;
+  background-color: var(--color-surface); /* استخدام متغير اللون  */
   border-radius: 8px;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 8px var(--color-shadow); /* استخدام متغير الظل  */
   flex-shrink: 0;
-  height: calc(100vh - 80px); /* يمتد على ارتفاع الشاشة المتبقي */
-  position: sticky; /* اجعله sticky ليثبت مع التمرير داخل الـ page-layout */
-  top: 70px; /* يثبت تحت الشريط العلوي */
-  overflow-y: auto; /* لإضافة شريط تمرير إذا كان المحتوى طويلاً */
-  display: flex; /* *** إضافة: لجعل الأقسام بداخله تترتب عموديًا *** */
-  flex-direction: column; /* *** إضافة: لترتيب الأقسام عموديًا *** */
-  gap: 1rem; /* *** إضافة: مسافة بين الأقسام في الشريط الجانبي *** */
+  height: calc(100vh - 80px);
+  position: sticky;
+  top: 70px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 /* الأقسام داخل الشريط الجانبي */
 .sidebar-section {
-  background-color: white; /* خلفية بيضاء للأقسام الداخلية */
+  background-color: var(--color-white); /* خلفية بيضاء للأقسام الداخلية  */
   padding: 1rem;
   border-radius: 8px;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.05); /* ظل خفيف */
+  box-shadow: 0 0 5px var(--color-shadow); /* ظل خفيف  */
 }
 
 .sidebar-section.static-section {
-  margin-top: auto; /* *** يدفع القسم السفلي إلى أسفل الشريط الجانبي *** */
+  margin-top: auto;
 }
 
 /* تنسيقات عناصر التحكم الخاصة باللعبة في الشريط الجانبي */
 .sidebar-game-controls {
   display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  align-items: center; /* توسيط العناصر داخل هذا القسم */
+  flex-direction: column; /* ترتيب رأسي لعناصر التحكم */
+  gap: 10px; /* مسافة بين مجموعات التحكم */
+  padding: 15px;
+  border-radius: 8px;
+  background-color: var(--color-background); /* خلفية خفيفة لمجموعة التحكم  */
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.05); /* ظل داخلي خفيف */
+  align-items: stretch; /* تجعل العناصر تمتد لتأخذ العرض الكامل */
+}
+
+/* جديد: لتجميع اللاصق والقائمة المنسدلة داخل الشريط الجانبي */
+.sidebar-game-controls .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: flex-start; /* محاذاة العناصر إلى بداية المجموعة */
+    width: 100%; /* تأخذ العرض الكامل للمجموعة */
 }
 
 .sidebar-game-controls h3 {
-    color: var(--color-primary); /* لون العنوان */
+    color: var(--color-primary); /* لون العنوان  */
     margin-top: 0;
     margin-bottom: 1rem;
-}
-
-.sidebar-game-controls .language-selection,
-.sidebar-game-controls .voice-selection {
-  display: flex;
-  flex-direction: column; /* جعل الزر والقائمة المنسدلة تظهر فوق بعضها */
-  align-items: center; /* توسيط المكونات */
-  width: 100%; /* تأخذ العرض الكامل المتاح */
+    text-align: center; /* لتوسيط العنوان */
+    width: 100%;
 }
 
 .sidebar-game-controls label {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.2rem; /* مسافة أقل بين اللاصق والقائمة/الزر */
   font-weight: bold;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary); /* لون النص  */
+  align-self: flex-start; /* محاذاة اللاصق إلى بداية المجموعة */
 }
 
 .sidebar-game-controls select {
-  width: 80%; /* عرض القائمة المنسدلة */
+  width: 100%; /* عرض القائمة المنسدلة داخل المجموعة */
   padding: 0.5rem;
   border-radius: 5px;
-  border: 1px solid var(--color-primary);
-  background-color: #f9f9f9;
+  border: 1px solid var(--color-border); /* حد من colors.css  */
+  background-color: var(--color-surface); /* خلفية  */
+  color: var(--color-text-primary); /* نص  */
   font-size: 1rem;
+  cursor: pointer;
 }
 
 .sidebar-game-controls button {
-  width: 90%; /* عرض الأزرار */
+  width: 100%; /* عرض الأزرار داخل المجموعة */
   margin-top: 0.8rem; /* مسافة بين الأزرار */
+  background-color: var(--color-info); /* لون من colors.css  */
+  color: var(--color-white); /* لون أبيض  */
+  border: none;
+  border-radius: 8px;
+  padding: 12px 25px;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  box-shadow: 0 3px var(--color-shadow-dark-info); /* افترض وجود متغير */
 }
+
+.sidebar-game-controls button:hover {
+    background-color: var(--color-dark-info); /* لون أغمق لـ info عند التحويم */
+}
+
 
 /* المحتوى الرئيسي */
 .main-content {
   flex: 1;
   padding: 1rem;
-  background-color: white;
+  background-color: var(--color-surface); /* استخدام متغير اللون  */
   border-radius: 8px;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 8px var(--color-shadow); /* استخدام متغير الظل  */
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 80px - 2rem);
 }
-
-/* public/css/home.css */
-
-/* ... (الأنماط الموجودة مسبقًا في home.css) ... */
 
 /* أنماط مخصصة لحاوية بطاقات الصفحة الرئيسية */
 .home-cards-container {
@@ -141,54 +161,54 @@ body {
     justify-content: center;
     padding: 20px;
     width: 100%;
-    max-width: 900px; /* لضبط عرض الحاوية على الشاشات الكبيرة */
-    margin: auto; /* لتوسيط الحاوية */
+    max-width: 900px;
+    margin: auto;
 }
 
 /* أنماط عامة لبطاقات المواضيع في الصفحة الرئيسية */
 .topic-card {
-    background-color: var(--color-surface); /* استخدام متغير اللون للخلفية */
-    border-radius: 15px; /* زوايا دائرية */
-    box-shadow: 0 5px 15px var(--color-shadow); /* ظل للبطاقة */
+    background-color: var(--color-surface); /* استخدام متغير اللون للخلفية  */
+    border-radius: 15px;
+    box-shadow: 0 5px 15px var(--color-shadow); /* ظل للبطاقة  */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 25px;
-    width: 180px; /* حجم البطاقة */
+    width: 180px;
     height: 180px;
     cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease; /* تأثير الانتقال عند التحويم */
-    text-decoration: none; /* إزالة خط التسطير من الروابط */
-    color: var(--color-text-primary); /* لون النص الأساسي */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-decoration: none;
+    color: var(--color-text-primary); /* لون النص الأساسي  */
 }
 
 .topic-card:hover {
-    transform: translateY(-5px); /* رفع البطاقة قليلاً عند التحويم */
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* زيادة الظل عند التحويم */
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .topic-card .icon {
-    font-size: 4em; /* حجم الأيقونة */
+    font-size: 4em;
     margin-bottom: 10px;
-    color: var(--color-primary); /* لون افتراضي للأيقونة */
+    color: var(--color-primary); /* لون افتراضي للأيقونة  */
 }
 
 .topic-card h3 {
     font-size: 1.5em;
     font-weight: bold;
-    color: var(--color-text-primary);
+    color: var(--color-text-primary); /* لون النص  */
     margin: 0;
     text-align: center;
 }
 
 /* ألوان خاصة للأيقونات لكل موضوع */
-.topic-card.animals .icon { color: var(--color-purple); }
-.topic-card.fruits .icon { color: var(--color-secondary); }
-.topic-card.vegetables .icon { color: var(--color-success); }
-.topic-card.human-body .icon { color: var(--color-info); } /* جديد: لون أيقونة جسم الإنسان */
+.topic-card.animals .icon { color: var(--color-purple); } /* لون بنفسجي  */
+.topic-card.fruits .icon { color: var(--color-secondary); } /* لون برتقالي  */
+.topic-card.vegetables .icon { color: var(--color-success); } /* لون أخضر  */
+.topic-card.human-body .icon { color: var(--color-info); } /* لون أزرق  */
+.topic-card.games .icon { color: var(--color-accent); } /* لون جديد للألعاب  */
 
-/* ... (نهاية الأنماط الموجودة مسبقًا في home.css) ... */
 
 /* Media Queries for responsiveness */
 @media (max-width: 768px) {
@@ -211,21 +231,26 @@ body {
   .top-navbar a {
     font-size: 1rem;
   }
-  /* على الجوال، اجعل الأقسام في الشريط الجانبي تترتب بشكل طبيعي */
   .sidebar-section.static-section {
     margin-top: 0;
   }
+  /* على الجوال، اجعل الأقسام في الشريط الجانبي تترتب بشكل طبيعي */
   .sidebar-game-controls {
-    flex-direction: row; /* الأزرار واللغة والصوت جنبًا إلى جنب على الجوال */
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column; /* الأزرار واللغة والصوت في عمود على الجوال */
+    flex-wrap: nowrap;
+    justify-content: flex-start;
     gap: 0.5rem;
+    align-items: stretch; /* تجعل عناصر التحكم تمتد على العرض الكامل */
   }
-  .sidebar-game-controls .language-selection,
-  .sidebar-game-controls .voice-selection {
-    width: 48%; /* لكل منها نصف العرض تقريبًا */
+  .sidebar-game-controls .control-group { /* جديد: لضمان الترتيب العمودي على الجوال */
+    width: 100%;
   }
+  .sidebar-game-controls select,
   .sidebar-game-controls button {
-    width: 48%; /* الأزرار تأخذ نصف العرض تقريبًا */
+    width: 100%; /* اجعل عناصر التحكم تأخذ عرض 100% على الجوال */
+  }
+  .sidebar-game-controls .language-selection, /* يمكن إزالة هذه لأن .control-group تكفي */
+  .sidebar-game-controls .voice-selection {
+    width: 100%;
   }
 }

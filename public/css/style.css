@@ -10,8 +10,8 @@ html, body {
   font-weight: 400;
 
   color-scheme: light dark;
-  color: var(--color-text);
-  background-color: #242424;
+  color: var(--color-text-primary); /* استخدام متغير اللون  */
+  background-color: var(--color-background); /* استخدام متغير اللون  */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -19,14 +19,9 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ... بقية الـ CSS ... */
-
 #app {
   display: flex;
   flex-direction: column;
   min-height: 100vh; /* *** مهم: اجعل #app يمتد على كامل ارتفاع الشاشة *** */
   width: 100%; /* تأكد أن #app يأخذ كامل عرض الـ body */
-  /* أزل: max-width, margin, padding, text-align إذا كانت موجودة هنا */
 }
-
-/* ... بقية style.css ... */
