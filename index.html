@@ -126,7 +126,8 @@
             <div class="sidebar-game-controls">
                 <div class="control-group">
                     <label for="game-lang-select-human-body">اللغة:</label>
-                    <select id="game-lang-select-human-body"> <option value="ar">العربية</option>
+                    <select id="game-lang-select-human-body">
+                        <option value="ar">العربية</option>
                         <option value="en">English</option>
                         <option value="he">عبري</option>
                     </select>
@@ -149,7 +150,8 @@
         </div>
 
        <div id="alphabet-press-sidebar-controls" class="sidebar-section" style="display: none;">
-            <h3 id="alphabet-press-title" class="item-main-name" style="text-align: center;">🎮 لعبة الحروف</h3> <div class="sidebar-game-controls">
+            <h3 id="alphabet-press-title" class="item-main-name" style="text-align: center;">🎮 لعبة الحروف</h3>
+            <div class="sidebar-game-controls">
                 <div class="control-group">
                     <label for="alphabet-press-language-select">اختر اللغة:</label>
                     <select id="alphabet-press-language-select"></select>
@@ -177,20 +179,28 @@
             <h3 style="text-align: center;">🃏 إعدادات لعبة الذاكرة</h3>
             <div class="sidebar-game-controls memory-game-controls">
                 <div class="control-group">
-                    <h3>اختر اللغة:</h3>
-                    <button id="memory-game-lang-ar" class="memory-game-lang-button active">العربية</button>
-                    <button id="memory-game-lang-en" class="memory-game-lang-button">English</button>
+                    <label for="memory-game-lang-select">اختر اللغة:</label>
+                    <select id="memory-game-lang-select">
+                        <option value="ar">العربية</option>
+                        <option value="en">English</option>
+                        <option value="he">عبري</option>
+                    </select>
                 </div>
+
                 <div class="control-group topic-selection">
                     <h3>اختر الموضوع:</h3>
+                    </div>
+                
+                <div class="control-group">
+                    <label for="memory-game-mode-select">نمط اللعب:</label>
+                    <select id="memory-game-mode-select">
+                        <option value="image-image">صورة - صورة</option>
+                        <option value="image-word">صورة - كلمة</option>
+                        <option value="image-char">صورة - حرف</option>
+                        <option value="image-audio">صورة - صوت</option>
+                    </select>
                 </div>
-                <div class="control-group play-mode-selection">
-                    <h3>نمط اللعب:</h3>
-                    <button id="memory-game-mode-image-image" class="memory-game-mode-button active">صورة - صورة</button>
-                    <button id="memory-game-mode-image-word" class="memory-game-mode-button">صورة - كلمة</button>
-                    <button id="memory-game-mode-image-char" class="memory-game-mode-button">صورة - حرف</button>
-                    <button id="memory-game-mode-image-audio" class="memory-game-mode-button">صورة - صوت</button>
-                </div>
+                
                 <button id="memory-game-start-button" class="memory-game-start-button">ابدأ اللعب</button>
             </div>
         </div>
@@ -424,8 +434,8 @@
     const availableCategories = [
         { id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
         { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
-        { id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables', name_he: 'ירقات' },
-        { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף האדם' },
+        { id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables', name_he: 'ירקות' },
+        { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף الأדם' },
     ];
 
     // دالة initializeSubjectControls العامة لتهيئة عناصر التحكم لكل موضوع
