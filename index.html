@@ -26,7 +26,7 @@
     <header class="top-navbar shadow">
       <nav class="top-nav-links">
         <a href="#" onclick="showHomePage()">🏠 الرئيسية</a>
-        <a href="#" onclick="loadAnimalsPage()">📚 الحيوانات</a>
+        <a href="#" onclick="loadAnimalsPage()">🐾 الحيوانات</a>
         <a href="#" onclick="loadFruitsPage()">🍎 الفواكه</a>
         <a href="#" onclick="loadVegetablesPage()">🥦 الخضروات</a>
         <a href="#" onclick="loadHumanBodyPage()">🧠 جسم الإنسان</a>
@@ -183,13 +183,15 @@
                     <select id="memory-game-lang-select">
                         <option value="ar">العربية</option>
                         <option value="en">English</option>
-                        <option value="he">عبري</option>
+                        <option value="he">עברית</option>
                     </select>
                 </div>
 
-                <div class="control-group topic-selection">
-                    <h3>اختر الموضوع:</h3>
-                    </div>
+                <div class="control-group">
+                    <label for="memory-game-topic-select">اختر الموضوع:</label>
+                    <select id="memory-game-topic-select">
+                        </select>
+                </div>
                 
                 <div class="control-group">
                     <label for="memory-game-mode-select">نمط اللعب:</label>
@@ -435,7 +437,7 @@
         { id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
         { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
         { id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables', name_he: 'ירקות' },
-        { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף الأדם' },
+        { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף האדם' },
     ];
 
     // دالة initializeSubjectControls العامة لتهيئة عناصر التحكم لكل موضوع
