@@ -141,6 +141,7 @@ async function fetchCardData() {
             
             categoriesData[categoryName] = itemsSnapshot.docs.map(itemDoc => {
                 const data = itemDoc.data();
+				console.log("Firestore Document Data:", data); // **** أضف هذا السطر ****
                 return {
                     id: itemDoc.id,
                     image_name: data.image,
