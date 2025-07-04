@@ -20,7 +20,7 @@
 
 /* نمط لاسم العنصر الرئيسي (الحيوان، الفاكهة) - H2 */
 .item-main-name {
-    font-size: 1.8em;
+    font-size: 2em; /* تم تعديل الحجم إلى 2em */
     font-weight: bold;
     color: var(--color-orange);
     margin-bottom: 10px;
@@ -35,13 +35,13 @@
 /* نمط لتلوين الحرف الأول من الاسم الرئيسي */
 .item-main-name .highlight-first-letter { /* استخدام فئة بدلاً من ::first-letter مباشرة إذا كنت تطبقها بـ JS */
     color: var(--color-success);
-    font-size: 1em;
+    /* تم إزالة font-size: 1em; هنا */
     /* تأكد أنه لا يوجد `text-decoration: underline` أو `border-bottom` هنا */
 }
 /* إذا كنت تستخدم ::first-letter مباشرة: */
 .item-main-name::first-letter {
     color: var(--color-success);
-    font-size: 1em;
+    /* تم إزالة font-size: 1em; هنا */
 }
 
 
