@@ -25,7 +25,7 @@
     color: var(--color-orange);
     margin-bottom: 10px;
     position: relative;
-    display: inline-block; /* لضمان تطبيق text-align: center بشكل صحيح */
+    display: inline; /* لضمان تطبيق text-align: center بشكل صحيح */
     text-align: center;
     width: 100%;
     text-decoration: none; /* إزالة أي خط سفلي محتمل */
@@ -34,13 +34,13 @@
 
 /* نمط لتلوين الحرف الأول من الاسم الرئيسي */
 .item-main-name .highlight-first-letter { /* استخدام فئة بدلاً من ::first-letter مباشرة إذا كنت تطبقها بـ JS */
-    color: var(--color-danger);
+    color: var(--color-success);
     font-size: 1em;
     /* تأكد أنه لا يوجد `text-decoration: underline` أو `border-bottom` هنا */
 }
 /* إذا كنت تستخدم ::first-letter مباشرة: */
 .item-main-name::first-letter {
-    color: var(--color-danger);
+    color: var(--color-success);
     font-size: 1em;
 }
 
