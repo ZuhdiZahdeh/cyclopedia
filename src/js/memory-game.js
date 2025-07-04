@@ -28,7 +28,7 @@ export async function loadMemoryGameContent() {
 
     const mainContentArea = document.querySelector('.main-content');
     mainContentArea.innerHTML = `
-        <h1>لعبة الذاكرة</h1>
+       
         <div class="memory-game-grid" id="memory-game-board">
             </div>
         <div class="game-status" id="memory-game-status">
