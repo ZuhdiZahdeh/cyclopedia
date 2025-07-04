@@ -35,13 +35,13 @@
 /* نمط لتلوين الحرف الأول من الاسم الرئيسي */
 .item-main-name .highlight-first-letter { /* استخدام فئة بدلاً من ::first-letter مباشرة إذا كنت تطبقها بـ JS */
     color: var(--color-danger);
-    font-size: 1.2em;
+    font-size: 1em;
     /* تأكد أنه لا يوجد `text-decoration: underline` أو `border-bottom` هنا */
 }
 /* إذا كنت تستخدم ::first-letter مباشرة: */
 .item-main-name::first-letter {
     color: var(--color-danger);
-    font-size: 1.2em;
+    font-size: 1em;
 }
 
 
