@@ -56,6 +56,17 @@ export async function loadHumanBodyGameContent() {
       return;
   }
   
+  // 🔴 إضافة مستمع حدث التغيير للقائمة المنسدلة للغة
+  gameLangSelect.addEventListener('change', async () => {
+      stopCurrentAudio(); // إيقاف أي صوت حالي
+      // قم بإعادة جلب البيانات باللغة الجديدة التي تم اختيارها
+      await fetchHumanBodyParts(gameLangSelect.value); 
+      currentIndex = 0; // أعد تعيين الفهرس لبدء من العنصر الأول باللغة الجديدة
+      updateHumanBodyContent(); // حدث الواجهة بالبيانات الجديدة
+      applyTranslations(); // تأكد من تطبيق الترجمات على جميع عناصر الواجهة
+      setDirection(gameLangSelect.value); // تحديث اتجاه النص (RTL/LTR)
+  });
+
   await fetchHumanBodyParts(gameLangSelect.value);
 
   if (humanBodyParts.length === 0) {
@@ -160,10 +171,17 @@ function getHumanBodyAudioPath(data, voiceType) {
   const subjectFolder = 'human-body';
 
   let fileName;
+  // الأولوية لحقل voices المحدد بالكامل (مثال: bones_boy_en.mp3)
   if (data.voices && data.voices[voiceType]) {
     fileName = data.voices[voiceType];
-  } else if (data.sound_base) {
-    fileName = data.sound_base.replace('.mp3', `_${voiceType}_${langFolder}.mp3`);
+  } 
+  // إذا لم يكن هناك مسار محدد في voices، نستخدم sound_base ونبني المسار
+  // بما أن sound_base أصبح بدون امتداد، فإن .replace('.mp3', ...) لن يؤثر
+  // وسيتم بناء اسم الملف بالشكل الصحيح (مثال: bones_boy_en.mp3)
+  else if (data.sound_base) {
+    // هذا السطر سيعمل بشكل صحيح الآن لأن data.sound_base لا يحتوي على .mp3
+    // ولذا لن يقوم بالاستبدال بل سيضيف اللاحقة مباشرة
+    fileName = `${data.sound_base}_${voiceType}_${langFolder}.mp3`;
   } else {
     console.warn(`لا يوجد مسار صوت لـ ${data.name?.[currentLang]} بنوع الصوت ${voiceType}.`);
     return null;
