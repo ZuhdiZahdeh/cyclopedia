@@ -64,7 +64,7 @@ export async function loadVegetablesGameContent() {
     document.getElementById('next-vegetable-btn'),
     document.getElementById('prev-vegetable-btn'),
     loadVegetablesGameContent, // دالة تحميل المحتوى للاستدعاء عند تغيير اللغة
-    playCurrentVegetableAu	dio, // دالة تشغيل الصوت
+    playCurrentVegetableAudio, // دالة تشغيل الصوت
     showPreviousVegetable, // دالة السابق
     showNextVegetable // دالة التالي
   );
