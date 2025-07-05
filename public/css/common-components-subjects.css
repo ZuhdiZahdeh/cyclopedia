@@ -20,7 +20,7 @@
 
 /* نمط لاسم العنصر الرئيسي (الحيوان، الفاكهة) - H2 */
 .item-main-name {
-    font-size: 2em; /* تم تعديل الحجم إلى 2em */
+    font-size: 2.8em; /* تم تعديل الحجم إلى 2em */
     font-weight: bold;
     color: var(--color-orange);
     margin-bottom: 10px;
