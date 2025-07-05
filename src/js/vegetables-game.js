@@ -216,3 +216,8 @@ function setupGameControls(langSelect, voiceSelect, playSoundBtn, nextBtn, prevB
         showNextFunc();
     };
 }
+export {
+  showNextVegetable,
+  showPreviousVegetable,
+  playCurrentVegetableAudio
+};
