@@ -139,7 +139,7 @@ function playCurrentFruitAudio() {
         console.warn('لا توجد فاكهة معروضة لتشغيل الصوت.');
     }
 }
-
+=====================================================
 function getFruitAudioPath(data, voiceType) {
   const langFolder = document.getElementById('game-lang-select-fruit').value;
   const subjectFolder = 'fruits';
@@ -147,21 +147,29 @@ function getFruitAudioPath(data, voiceType) {
   let fileName;
   // الأولوية لحقل voices المحدد بالكامل (مثال: apple_boy_en.mp3)
   // يتم بناء المفتاح ديناميكيًا (مثال: "boy_ar", "girl_en")
-  if (data.voices && data.voices[`${voiceType}_${langFolder}`]) {
-    fileName = data.voices[`${voiceType}_${langFolder}`];
-  }
-  // إذا لم يكن هناك مسار محدد في voices، نستخدم sound_base ونبني المسار
-  // بما أن sound_base أصبح بدون امتداد، فإن .replace('.mp3', ...) لن يؤثر
-  // وسيتم بناء اسم الملف بالشكل الصحيح (مثال: apple_boy_en.mp3)
-  else if (data.sound_base) {
+  // ✅ الصياغة الصحيحة لحقل voices: boy_ar, girl_en...
+  const voiceKey = `${voiceType}_${langFolder}`;
+
+  if (data.voices && data.voices[voiceKey]) {
+    fileName = data.voices[voiceKey];
+    console.log(`✅ Found in voices: ${voiceKey} → ${fileName}`);
+  } else if (data.sound_base) {
     fileName = `${data.sound_base}_${voiceType}_${langFolder}.mp3`;
+    console.warn(`⚠️ Used fallback from sound_base: ${fileName}`);
   } else {
-    console.warn(`لا يوجد مسار صوت لـ ${data.name?.[currentLang]} بنوع الصوت ${voiceType} واللغة ${langFolder}.`);
+    console.error(`❌ Neither voices nor sound_base available for ${data.name?.[currentLang] || "unknown"}`);
     return null;
   }
-  return `/audio/${langFolder}/${subjectFolder}/${fileName}`;
-}
 
+  const audioPath = `/audio/${langFolder}/${subjectFolder}/${fileName}`;
+  console.log(`🎧 Full audio path: ${audioPath}`);
+  return audioPath;
+}
+---------------------------
+
+
+
+===========================================
 function disableFruitButtonsInSidebar(isDisabled) {
     const playSoundBtn = document.getElementById("play-sound-btn-fruit");
     const nextBtn = document.getElementById("next-fruit-btn");
