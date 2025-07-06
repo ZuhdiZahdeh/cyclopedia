@@ -97,8 +97,11 @@ function displayFruit(fruitData) {
 
     if (fruitNameAr) fruitNameAr.innerText = fruitData.name?.ar || "---";
     if (fruitNameEn) fruitNameEn.innerText = fruitData.name?.en || "---";
-    if (fruitImage) fruitImage.src = fruitData.image || "";
-    if (fruitImage) fruitImage.alt = fruitData.name?.en || "Fruit image";
+	   // ✅ إصلاح مسار الصورة بناءً على اسم الملف فقط
+    if (fruitImage && fruitData.image) {
+        fruitImage.src = `/images/fruits/${fruitData.image}`;
+        fruitImage.alt = fruitData.name?.en || "Fruit image";
+    }
     if (fruitDescriptionAr) fruitDescriptionAr.innerText = fruitData.description?.ar || "---";
     if (fruitDescriptionEn) fruitDescriptionEn.innerText = fruitData.description?.en || "---";
 

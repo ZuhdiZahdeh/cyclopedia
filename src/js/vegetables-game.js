@@ -97,8 +97,10 @@ function displayVegetable(vegetableData) {
     const vegetableBenefits = document.getElementById("vegetable-benefits");
 
     if (vegetableWord) vegetableWord.innerText = vegetableData.name?.[currentLang] || "---";
-    if (vegetableImage) vegetableImage.src = vegetableData.image || "";
-    if (vegetableImage) vegetableImage.alt = vegetableData.name?.en || "Vegetable image";
+	if (vegetableImage && vegetableData.image) {
+    vegetableImage.src = `/images/vegetables/${vegetableData.image}`;
+    vegetableImage.alt = vegetableData.name?.en || "Vegetable image";
+}
     if (vegetableType) vegetableType.innerText = vegetableData.type?.[currentLang] || "---";
     if (vegetableBenefits) vegetableBenefits.innerText = vegetableData.benefits?.[currentLang] || "---";
 
