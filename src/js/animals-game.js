@@ -168,14 +168,17 @@ export function playCurrentAnimalAudio() {
 }
 
 function getAnimalAudioPath(data, voiceType) {
-  const langFolder = document.getElementById('game-lang-select-animal').value;   // جلب اللغة من الشريط الجانبي
-  const subjectFolder = 'animals';  // ثابتة للحيوانات
+  const langFolder = document.getElementById('game-lang-select-animal').value;
+  const subjectFolder = 'animals';
 
   let fileName;
 
-  if (data.voices && data.voices[`${voiceType}_${langFolder}`]) {
-    fileName = data.voices[`${voiceType}_${langFolder}`];
-    console.log(`✅ Found in voices: ${voiceType}_${langFolder} → ${fileName}`);
+  // ✅ الصياغة الصحيحة لحقل voices: boy_ar, girl_en...
+  const voiceKey = `${voiceType}_${langFolder}`;
+
+  if (data.voices && data.voices[voiceKey]) {
+    fileName = data.voices[voiceKey];
+    console.log(`✅ Found in voices: ${voiceKey} → ${fileName}`);
   } else if (data.sound_base) {
     fileName = `${data.sound_base}_${voiceType}_${langFolder}.mp3`;
     console.warn(`⚠️ Used fallback from sound_base: ${fileName}`);
