@@ -168,19 +168,25 @@ export function playCurrentAnimalAudio() {
 }
 
 function getAnimalAudioPath(data, voiceType) {
-  const langFolder = document.getElementById('game-lang-select-animal').value; // جلب اللغة من الشريط الجانبي
-  const subjectFolder = 'animals'; // ثابتة للحيوانات
+  const langFolder = document.getElementById('game-lang-select-animal').value;   // جلب اللغة من الشريط الجانبي
+  const subjectFolder = 'animals';  // ثابتة للحيوانات
 
   let fileName;
-  if (data.voices && data.voices[voiceType]) {
-    fileName = data.voices[voiceType];
+
+  if (data.voices && data.voices[`${voiceType}_${langFolder}`]) {
+    fileName = data.voices[`${voiceType}_${langFolder}`];
+    console.log(`✅ Found in voices: ${voiceType}_${langFolder} → ${fileName}`);
   } else if (data.sound_base) {
-    fileName = data.sound_base.replace('.mp3', `_${voiceType}_${langFolder}.mp3`);
+    fileName = `${data.sound_base}_${voiceType}_${langFolder}.mp3`;
+    console.warn(`⚠️ Used fallback from sound_base: ${fileName}`);
   } else {
-    console.warn(`لا يوجد مسار صوت لـ ${data.name?.[currentLang]} بنوع الصوت ${voiceType}.`);
+    console.error(`❌ Neither voices nor sound_base available for ${data.name?.[currentLang] || "unknown"}`);
     return null;
   }
-  return `/audio/${langFolder}/${subjectFolder}/${fileName}`;
+
+  const audioPath = `/audio/${langFolder}/${subjectFolder}/${fileName}`;
+  console.log(`🎧 Full audio path: ${audioPath}`);
+  return audioPath;
 }
 
 function disableAnimalButtonsInSidebar(isDisabled) {
