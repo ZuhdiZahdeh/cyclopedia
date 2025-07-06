@@ -1,5 +1,3 @@
-// src/js/vegetables-game.js
-
 import { db } from "./firebase-config.js";
 import { getDocs, collection, query } from "firebase/firestore";
 import { currentLang, loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
@@ -10,14 +8,13 @@ let vegetables = [];
 let currentIndex = 0;
 let currentVegetableData = null;
 
-
 export async function loadVegetablesGameContent() {
   stopCurrentAudio();
   const mainContentArea = document.querySelector("main.main-content");
   const vegetableSidebarControls = document.getElementById("vegetable-sidebar-controls");
 
   if (!mainContentArea || !vegetableSidebarControls) {
-    console.error("Main content area or vegetable sidebar controls not found.");
+    console.error("❌ Main content area or vegetable sidebar controls not found.");
     return;
   }
 
@@ -56,23 +53,31 @@ export async function loadVegetablesGameContent() {
     </div>
   `;
 
-
   setupGameControls(
     document.getElementById('game-lang-select-vegetable'),
     document.getElementById('voice-select-vegetable'),
     document.getElementById('play-sound-btn-vegetable'),
     document.getElementById('next-vegetable-btn'),
     document.getElementById('prev-vegetable-btn'),
-    loadVegetablesGameContent, // دالة تحميل المحتوى للاستدعاء عند تغيير اللغة
-    playCurrentVegetableAudio, // دالة تشغيل الصوت
-    showPreviousVegetable, // دالة السابق
-    showNextVegetable // دالة التالي
+    loadVegetablesGameContent,
+    playCurrentVegetableAudio,
+    showPreviousVegetable,
+    showNextVegetable
   );
 
   try {
-    const q = query(collection(db, "vegetables"));
+    const q = query(collection(db, "categories", "vegetables", "items")); // ✅ تصحيح المسار
     const querySnapshot = await getDocs(q);
     vegetables = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    console.log(`✅ تم تحميل ${vegetables.length} خضروات.`);
+    console.table(vegetables.map(v => ({
+      id: v.id,
+      name_ar: v.name?.ar,
+      image: v.image,
+      sound_base: v.sound_base,
+      voices: v.voices ? Object.keys(v.voices) : []
+    })));
 
     if (vegetables.length > 0) {
       currentIndex = 0;
@@ -83,141 +88,145 @@ export async function loadVegetablesGameContent() {
       disableVegetableButtonsInSidebar(true);
     }
   } catch (error) {
-    console.error("Error loading vegetables data:", error);
-    mainContentArea.innerHTML = `<p class="error-message">حدث خطأ أثناء تحميل بيانات الخضروات. يرجى المحاولة مرة أخرى لاحقاً.</p>`;
+    console.error("❌ خطأ أثناء تحميل بيانات الخضروات:", error);
+    mainContentArea.innerHTML = `<p class="error-message">حدث خطأ أثناء تحميل بيانات الخضروات. يرجى المحاولة لاحقاً.</p>`;
     disableVegetableButtonsInSidebar(true);
   }
 }
 
 function displayVegetable(vegetableData) {
-    currentVegetableData = vegetableData;
-    const vegetableWord = document.getElementById("vegetable-word");
-    const vegetableImage = document.getElementById("vegetable-image");
-    const vegetableType = document.getElementById("vegetable-type");
-    const vegetableBenefits = document.getElementById("vegetable-benefits");
+  currentVegetableData = vegetableData;
+  const vegetableWord = document.getElementById("vegetable-word");
+  const vegetableImage = document.getElementById("vegetable-image");
+  const vegetableType = document.getElementById("vegetable-type");
+  const vegetableBenefits = document.getElementById("vegetable-benefits");
 
-    if (vegetableWord) vegetableWord.innerText = vegetableData.name?.[currentLang] || "---";
-	if (vegetableImage && vegetableData.image) {
+  if (vegetableWord) vegetableWord.innerText = vegetableData.name?.[currentLang] || "---";
+  if (vegetableImage && vegetableData.image) {
     vegetableImage.src = `/images/vegetables/${vegetableData.image}`;
     vegetableImage.alt = vegetableData.name?.en || "Vegetable image";
-}
-    if (vegetableType) vegetableType.innerText = vegetableData.type?.[currentLang] || "---";
-    if (vegetableBenefits) vegetableBenefits.innerText = vegetableData.benefits?.[currentLang] || "---";
+  }
+  if (vegetableType) vegetableType.innerText = vegetableData.type?.[currentLang] || "---";
+  if (vegetableBenefits) vegetableBenefits.innerText = vegetableData.benefits?.[currentLang] || "---";
 
-    const nextBtn = document.getElementById("next-vegetable-btn");
-    const prevBtn = document.getElementById("prev-vegetable-btn");
-    if (nextBtn) nextBtn.disabled = (currentIndex >= vegetables.length - 1);
-    if (prevBtn) prevBtn.disabled = (currentIndex <= 0);
+  const nextBtn = document.getElementById("next-vegetable-btn");
+  const prevBtn = document.getElementById("prev-vegetable-btn");
+  if (nextBtn) nextBtn.disabled = (currentIndex >= vegetables.length - 1);
+  if (prevBtn) prevBtn.disabled = (currentIndex <= 0);
 
-    applyTranslations();
+  applyTranslations();
 }
 
 function showNextVegetable() {
-    stopCurrentAudio();
-    if (currentIndex < vegetables.length - 1) {
-        currentIndex++;
-        displayVegetable(vegetables[currentIndex]);
-    }
+  stopCurrentAudio();
+  if (currentIndex < vegetables.length - 1) {
+    currentIndex++;
+    displayVegetable(vegetables[currentIndex]);
+  }
 }
 
 function showPreviousVegetable() {
-    stopCurrentAudio();
-    if (currentIndex > 0) {
-        currentIndex--;
-        displayVegetable(vegetables[currentIndex]);
-    }
+  stopCurrentAudio();
+  if (currentIndex > 0) {
+    currentIndex--;
+    displayVegetable(vegetables[currentIndex]);
+  }
 }
 
 function playCurrentVegetableAudio() {
-    if (currentVegetableData) {
-        const voiceType = document.getElementById('voice-select-vegetable').value;
-        const audioPath = getVegetableAudioPath(currentVegetableData, voiceType);
-        if (audioPath) {
-            playAudio(audioPath);
-            recordActivity(JSON.parse(localStorage.getItem("user")), "vegetables");
-        }
-    } else {
-        console.warn('لا توجد خضروات معروضة لتشغيل الصوت.');
+  if (currentVegetableData) {
+    const voiceType = document.getElementById('voice-select-vegetable').value;
+    const audioPath = getVegetableAudioPath(currentVegetableData, voiceType);
+    if (audioPath) {
+      playAudio(audioPath);
+      recordActivity(JSON.parse(localStorage.getItem("user")), "vegetables");
     }
+  } else {
+    console.warn('⚠️ لا توجد خضروات معروضة لتشغيل الصوت.');
+  }
 }
 
 function getVegetableAudioPath(data, voiceType) {
   const langFolder = document.getElementById('game-lang-select-vegetable').value;
   const subjectFolder = 'vegetables';
 
+  const voiceKey = `${voiceType}_${langFolder}`;
   let fileName;
-  // الأولوية لحقل voices المحدد بالكامل (مثال: carrot_boy_en.mp3)
-  if (data.voices && data.voices[`${voiceType}_${langFolder}`]) {
-    fileName = data.voices[`${voiceType}_${langFolder}`];
-  }
-  // إذا لم يكن هناك مسار محدد في voices، نستخدم sound_base ونبني المسار
-  else if (data.sound_base) {
+
+  if (data.voices && data.voices[voiceKey]) {
+    fileName = data.voices[voiceKey];
+    console.log(`✅ Found voice: ${voiceKey} → ${fileName}`);
+  } else if (data.sound_base) {
     fileName = `${data.sound_base}_${voiceType}_${langFolder}.mp3`;
+    console.warn(`⚠️ Used fallback from sound_base: ${fileName}`);
   } else {
-    console.warn(`لا يوجد مسار صوت لـ ${data.name?.[currentLang]} بنوع الصوت ${voiceType} واللغة ${langFolder}.`);
+    console.error(`❌ لا يوجد مسار صوتي لـ ${data.name?.[currentLang]}`);
     return null;
   }
-  return `/audio/${langFolder}/${subjectFolder}/${fileName}`;
+
+  const audioPath = `/audio/${langFolder}/${subjectFolder}/${fileName}`;
+  console.log(`🎧 Full audio path: ${audioPath}`);
+  return audioPath;
 }
 
 function disableVegetableButtonsInSidebar(isDisabled) {
-    const playSoundBtn = document.getElementById("play-sound-btn-vegetable");
-    const nextBtn = document.getElementById("next-vegetable-btn");
-    const prevBtn = document.getElementById("prev-vegetable-btn");
-    const voiceSelect = document.getElementById("voice-select-vegetable");
-    const langSelect = document.getElementById("game-lang-select-vegetable");
+  const playSoundBtn = document.getElementById("play-sound-btn-vegetable");
+  const nextBtn = document.getElementById("next-vegetable-btn");
+  const prevBtn = document.getElementById("prev-vegetable-btn");
+  const voiceSelect = document.getElementById("voice-select-vegetable");
+  const langSelect = document.getElementById("game-lang-select-vegetable");
 
-    if (playSoundBtn) playSoundBtn.disabled = isDisabled;
-    if (nextBtn) nextBtn.disabled = isDisabled;
-    if (prevBtn) prevBtn.disabled = isDisabled;
-    if (voiceSelect) voiceSelect.disabled = isDisabled;
-    if (langSelect) langSelect.disabled = isDisabled;
+  if (playSoundBtn) playSoundBtn.disabled = isDisabled;
+  if (nextBtn) nextBtn.disabled = isDisabled;
+  if (prevBtn) prevBtn.disabled = isDisabled;
+  if (voiceSelect) voiceSelect.disabled = isDisabled;
+  if (langSelect) langSelect.disabled = isDisabled;
 }
 
-// دالة مساعدة لتهيئة عناصر التحكم (تم استيرادها أو نسخها من مكان مركزي إذا كانت مشتركة)
 function setupGameControls(langSelect, voiceSelect, playSoundBtn, nextBtn, prevBtn, loadContentFunc, playAudioFunc, showPrevFunc, showNextFunc) {
-    if (langSelect && langSelect.options.length === 0) {
-        ['ar', 'en', 'he'].forEach(langCode => {
-            const option = document.createElement('option');
-            option.value = langCode;
-            option.textContent = { 'ar': 'العربية', 'en': 'English', 'he': 'עברית' }[langCode];
-            langSelect.appendChild(option);
-        });
-        langSelect.value = currentLang;
-    } else if (langSelect) {
-        langSelect.value = currentLang;
-    }
+  if (langSelect && langSelect.options.length === 0) {
+    ['ar', 'en', 'he'].forEach(langCode => {
+      const option = document.createElement('option');
+      option.value = langCode;
+      option.textContent = { 'ar': 'العربية', 'en': 'English', 'he': 'עברית' }[langCode];
+      langSelect.appendChild(option);
+    });
+    langSelect.value = currentLang;
+  } else if (langSelect) {
+    langSelect.value = currentLang;
+  }
 
-    if (voiceSelect && voiceSelect.options.length === 0) {
-        ['teacher', 'boy', 'girl', 'child'].forEach(voiceType => {
-            const option = document.createElement('option');
-            option.value = voiceType;
-            option.textContent = { 'teacher': 'المعلم', 'boy': 'صوت ولد', 'girl': 'صوت بنت', 'child': 'صوت طفل' }[voiceType];
-            voiceSelect.appendChild(option);
-        });
-        voiceSelect.value = 'teacher';
-    }
+  if (voiceSelect && voiceSelect.options.length === 0) {
+    ['teacher', 'boy', 'girl', 'child'].forEach(voiceType => {
+      const option = document.createElement('option');
+      option.value = voiceType;
+      option.textContent = { 'teacher': 'المعلم', 'boy': 'صوت ولد', 'girl': 'صوت بنت', 'child': 'صوت طفل' }[voiceType];
+      voiceSelect.appendChild(option);
+    });
+    voiceSelect.value = 'teacher';
+  }
 
-    langSelect.onchange = async () => {
-        const newLang = langSelect.value;
-        await loadLanguage(newLang);
-        applyTranslations();
-        setDirection(newLang);
-        await loadContentFunc();
-    };
+  langSelect.onchange = async () => {
+    const newLang = langSelect.value;
+    await loadLanguage(newLang);
+    applyTranslations();
+    setDirection(newLang);
+    await loadContentFunc();
+  };
 
-    if (playSoundBtn) playSoundBtn.onclick = () => {
-        playAudioFunc();
-    };
+  if (playSoundBtn) playSoundBtn.onclick = () => {
+    playAudioFunc();
+  };
 
-    if (prevBtn) prevBtn.onclick = () => {
-        showPrevFunc();
-    };
+  if (prevBtn) prevBtn.onclick = () => {
+    showPrevFunc();
+  };
 
-    if (nextBtn) nextBtn.onclick = () => {
-        showNextFunc();
-    };
+  if (nextBtn) nextBtn.onclick = () => {
+    showNextFunc();
+  };
 }
+
 export {
   showNextVegetable,
   showPreviousVegetable,
