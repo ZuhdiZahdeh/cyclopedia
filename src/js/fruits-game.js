@@ -20,7 +20,6 @@ export async function loadFruitsGameContent() {
         return;
     }
 
-    // 1. حقن HTML الخاص بلعبة الفواكه في منطقة المحتوى الرئيسية (بدون أزرار التنقل)
     mainContentArea.innerHTML = `
         <div class="game-box">
             <h2 id="fruit-name-ar" class="item-main-name">---</h2>
@@ -37,7 +36,6 @@ export async function loadFruitsGameContent() {
         </div>
     `;
 
-    // 2. حقن عناصر التحكم في الشريط الجانبي
     fruitSidebarControls.innerHTML = `
         <div class="sidebar-game-controls">
             <div class="control-group">
@@ -53,26 +51,34 @@ export async function loadFruitsGameContent() {
         </div>
     `;
 
-    // تهيئة عناصر التحكم في الشريط الجانبي
     setupGameControls(
         document.getElementById('game-lang-select-fruit'),
         document.getElementById('voice-select-fruit'),
         document.getElementById('play-sound-btn-fruit'),
         document.getElementById('next-fruit-btn'),
         document.getElementById('prev-fruit-btn'),
-        loadFruitsGameContent, // دالة تحميل المحتوى للاستدعاء عند تغيير اللغة
-        playCurrentFruitAudio, // دالة تشغيل الصوت
-        showPreviousFruit, // دالة السابق
-        showNextFruit // دالة التالي
+        loadFruitsGameContent,
+        playCurrentFruitAudio,
+        showPreviousFruit,
+        showNextFruit
     );
 
-    // تحميل البيانات من Firestore
     try {
-        const q = query(collection(db, "fruits"));
+        const q = query(collection(db, "categories", "fruits", "items")); // ✅ التصحيح هنا
         const querySnapshot = await getDocs(q);
         fruits = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+        console.log(`✅ تم تحميل ${fruits.length} عنصر من مجموعة الفواكه.`);
+
         if (fruits.length > 0) {
+            console.table(fruits.map(f => ({
+                id: f.id,
+                name_ar: f.name?.ar,
+                image: f.image,
+                sound_base: f.sound_base,
+                voices: f.voices ? Object.keys(f.voices) : []
+            })));
+
             currentIndex = 0;
             displayFruit(fruits[currentIndex]);
             disableFruitButtonsInSidebar(false);
@@ -81,8 +87,8 @@ export async function loadFruitsGameContent() {
             disableFruitButtonsInSidebar(true);
         }
     } catch (error) {
-        console.error("Error loading fruits data:", error);
-        mainContentArea.innerHTML = `<p class="error-message">حدث خطأ أثناء تحميل بيانات الفواكه. يرجى المحاولة مرة أخرى لاحقاً.</p>`;
+        console.error("❌ خطأ أثناء تحميل بيانات الفواكه:", error);
+        mainContentArea.innerHTML = `<p class="error-message">حدث خطأ أثناء تحميل بيانات الفواكه. يرجى المحاولة لاحقاً.</p>`;
         disableFruitButtonsInSidebar(true);
     }
 }
@@ -97,7 +103,6 @@ function displayFruit(fruitData) {
 
     if (fruitNameAr) fruitNameAr.innerText = fruitData.name?.ar || "---";
     if (fruitNameEn) fruitNameEn.innerText = fruitData.name?.en || "---";
-	   // ✅ إصلاح مسار الصورة بناءً على اسم الملف فقط
     if (fruitImage && fruitData.image) {
         fruitImage.src = `/images/fruits/${fruitData.image}`;
         fruitImage.alt = fruitData.name?.en || "Fruit image";
@@ -105,13 +110,12 @@ function displayFruit(fruitData) {
     if (fruitDescriptionAr) fruitDescriptionAr.innerText = fruitData.description?.ar || "---";
     if (fruitDescriptionEn) fruitDescriptionEn.innerText = fruitData.description?.en || "---";
 
-    // تحديث حالة أزرار التنقل
     const nextBtn = document.getElementById("next-fruit-btn");
     const prevBtn = document.getElementById("prev-fruit-btn");
     if (nextBtn) nextBtn.disabled = (currentIndex >= fruits.length - 1);
     if (prevBtn) prevBtn.disabled = (currentIndex <= 0);
 
-    applyTranslations(); // تطبيق الترجمات بعد تحديث المحتوى
+    applyTranslations();
 }
 
 function showNextFruit() {
@@ -139,34 +143,31 @@ function playCurrentFruitAudio() {
             recordActivity(JSON.parse(localStorage.getItem("user")), "fruits");
         }
     } else {
-        console.warn('لا توجد فاكهة معروضة لتشغيل الصوت.');
+        console.warn('⚠️ لا توجد فاكهة معروضة لتشغيل الصوت.');
     }
 }
 
 function getFruitAudioPath(data, voiceType) {
-  const langFolder = document.getElementById('game-lang-select-fruit').value;
-  const subjectFolder = 'fruits';
+    const langFolder = document.getElementById('game-lang-select-fruit').value;
+    const subjectFolder = 'fruits';
 
-  let fileName;
-  // الأولوية لحقل voices المحدد بالكامل (مثال: apple_boy_en.mp3)
-  // يتم بناء المفتاح ديناميكيًا (مثال: "boy_ar", "girl_en")
-  // ✅ الصياغة الصحيحة لحقل voices: boy_ar, girl_en...
-  const voiceKey = `${voiceType}_${langFolder}`;
+    const voiceKey = `${voiceType}_${langFolder}`;
+    let fileName;
 
-  if (data.voices && data.voices[voiceKey]) {
-    fileName = data.voices[voiceKey];
-    console.log(`✅ Found in voices: ${voiceKey} → ${fileName}`);
-  } else if (data.sound_base) {
-    fileName = `${data.sound_base}_${voiceType}_${langFolder}.mp3`;
-    console.warn(`⚠️ Used fallback from sound_base: ${fileName}`);
-  } else {
-    console.error(`❌ Neither voices nor sound_base available for ${data.name?.[currentLang] || "unknown"}`);
-    return null;
-  }
+    if (data.voices && data.voices[voiceKey]) {
+        fileName = data.voices[voiceKey];
+        console.log(`✅ Found voice file: ${voiceKey} → ${fileName}`);
+    } else if (data.sound_base) {
+        fileName = `${data.sound_base}_${voiceType}_${langFolder}.mp3`;
+        console.warn(`⚠️ Used fallback from sound_base: ${fileName}`);
+    } else {
+        console.error(`❌ No voice or sound_base for: ${data.name?.[currentLang]}`);
+        return null;
+    }
 
-  const audioPath = `/audio/${langFolder}/${subjectFolder}/${fileName}`;
-  console.log(`🎧 Full audio path: ${audioPath}`);
-  return audioPath;
+    const audioPath = `/audio/${langFolder}/${subjectFolder}/${fileName}`;
+    console.log(`🎧 Full audio path: ${audioPath}`);
+    return audioPath;
 }
 
 function disableFruitButtonsInSidebar(isDisabled) {
@@ -183,9 +184,7 @@ function disableFruitButtonsInSidebar(isDisabled) {
     if (langSelect) langSelect.disabled = isDisabled;
 }
 
-// دالة مساعدة لتهيئة عناصر التحكم (يمكن إعادة استخدامها للألعاب الأخرى)
 function setupGameControls(langSelect, voiceSelect, playSoundBtn, nextBtn, prevBtn, loadContentFunc, playAudioFunc, showPrevFunc, showNextFunc) {
-    // تهيئة قائمة اللغات
     if (langSelect && langSelect.options.length === 0) {
         ['ar', 'en', 'he'].forEach(langCode => {
             const option = document.createElement('option');
@@ -198,7 +197,6 @@ function setupGameControls(langSelect, voiceSelect, playSoundBtn, nextBtn, prevB
         langSelect.value = currentLang;
     }
 
-    // تهيئة قائمة الأصوات
     if (voiceSelect && voiceSelect.options.length === 0) {
         ['teacher', 'boy', 'girl', 'child'].forEach(voiceType => {
             const option = document.createElement('option');
@@ -214,7 +212,7 @@ function setupGameControls(langSelect, voiceSelect, playSoundBtn, nextBtn, prevB
         await loadLanguage(newLang);
         applyTranslations();
         setDirection(newLang);
-        await loadContentFunc(); // إعادة تحميل المحتوى باللغة الجديدة
+        await loadContentFunc();
     };
 
     if (playSoundBtn) playSoundBtn.onclick = () => {
@@ -229,8 +227,9 @@ function setupGameControls(langSelect, voiceSelect, playSoundBtn, nextBtn, prevB
         showNextFunc();
     };
 }
+
 export {
-  showNextFruit,
-  showPreviousFruit,
-  playCurrentFruitAudio
+    showNextFruit,
+    showPreviousFruit,
+    playCurrentFruitAudio
 };
