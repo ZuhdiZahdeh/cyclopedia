@@ -139,7 +139,7 @@ function playCurrentFruitAudio() {
         console.warn('لا توجد فاكهة معروضة لتشغيل الصوت.');
     }
 }
-=====================================================
+
 function getFruitAudioPath(data, voiceType) {
   const langFolder = document.getElementById('game-lang-select-fruit').value;
   const subjectFolder = 'fruits';
@@ -165,11 +165,7 @@ function getFruitAudioPath(data, voiceType) {
   console.log(`🎧 Full audio path: ${audioPath}`);
   return audioPath;
 }
----------------------------
 
-
-
-===========================================
 function disableFruitButtonsInSidebar(isDisabled) {
     const playSoundBtn = document.getElementById("play-sound-btn-fruit");
     const nextBtn = document.getElementById("next-fruit-btn");
