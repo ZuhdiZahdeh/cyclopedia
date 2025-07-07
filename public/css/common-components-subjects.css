@@ -23,7 +23,8 @@
     font-size: 2.8em; /* تم تعديل الحجم إلى 2em */
     font-weight: bold;
     color: var(--color-orange);
-    margin-bottom: 10px;
+    margin-top: 10px;
+	margin-bottom: 10px;
     position: relative;
     display: inline; /* لضمان تطبيق text-align: center بشكل صحيح */
     text-align: center;
