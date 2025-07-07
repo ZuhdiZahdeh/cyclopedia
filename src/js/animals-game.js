@@ -114,7 +114,7 @@ function updateAnimalContent() {
     if (animalName) {
       const firstLetter = animalName.charAt(0);
       const restOfName = animalName.substring(1);
-      animalWord.innerHTML = `<span class="item-main-name">${firstLetter}</span>${restOfName}`;
+      animalWord.innerHTML = `${firstLetter}${restOfName}`;
     } else {
       animalWord.textContent = '';
     }

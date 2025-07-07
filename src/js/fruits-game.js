@@ -24,7 +24,6 @@ export async function loadFruitsGameContent() {
         <div class="game-box">
             <h2 id="fruit-name-ar" class="item-main-name">---</h2>
             <img id="fruit-image" src="" alt="Fruit" />
-            <h3 id="fruit-name-en" class="fruit-name-en">---</h3>
             <div class="info-box"> <h4>الوصف:</h4>
                 <p id="fruit-description-ar" class="fruit-description-ar"></p>
                 <p id="fruit-description-en" class="fruit-description-en"></p>
