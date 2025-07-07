@@ -8,11 +8,11 @@ import { recordActivity } from "./activity-handler.js";
 
 let animals = [];
 let currentIndex = 0;
-let currentAnimalData = null; // لتخزين بيانات الحيوان المعروض حاليًا
-
+let currentAnimalData = null;
 
 export async function loadAnimalsGameContent() {
-  stopCurrentAudio(); // إيقاف أي صوت سابق
+  stopCurrentAudio();
+
   const mainContentArea = document.querySelector("main.main-content");
   const animalSidebarControls = document.getElementById("animal-sidebar-controls");
 
@@ -21,29 +21,26 @@ export async function loadAnimalsGameContent() {
     return;
   }
 
-  // 1. حقن HTML الخاص بلعبة الحيوانات في منطقة المحتوى الرئيسية (بدون أزرار التنقل)
   mainContentArea.innerHTML = `
     <div class="game-box">
       <h2 id="animal-word" class="item-main-name"></h2>
       <img id="animal-image" src="" alt="animal" />
       
-      <div class="animal-details-section info-box">
+      <div class="animal-details-section info-box" id="animal-details-section" style="display:none;">
         <h3>تفاصيل إضافية:</h3>
         <ul id="animal-details-list">
           <li><strong>اسم الابناء:</strong> <span id="animal-baby">---</span></li>
           <li><strong>اسم الزوجة:</strong> <span id="animal-female">---</span></li>
           <li><strong>الصنف:</strong> <span id="animal-category">---</span></li>
         </ul>
-        <div class="animal-description-box info-box">
-          <h4>الوصف:</h4>
-          <p id="animal-description">---</p>
-        </div>
+      </div>
+      <div class="animal-description-box info-box" id="animal-description-box" style="display:none;">
+        <h4>الوصف:</h4>
+        <p id="animal-description">---</p>
       </div>
     </div>
   `;
 
-  // الحصول على المراجع للعناصر بعد حقنها في DOM
-  // العناصر في main-content
   const animalImage = document.getElementById("animal-image");
   const animalWord = document.getElementById("animal-word");
   const animalBaby = document.getElementById("animal-baby");
@@ -51,17 +48,16 @@ export async function loadAnimalsGameContent() {
   const animalCategory = document.getElementById("animal-category");
   const animalDescription = document.getElementById("animal-description");
 
-  // الحصول على مرجع select اللغة من الشريط الجانبي
   const gameLangSelect = document.getElementById('game-lang-select-animal');
   if (!gameLangSelect) {
-      console.error("Language select for animal game not found.");
-      return;
+    console.error("Language select for animal game not found.");
+    return;
   }
 
-  await fetchAnimals(gameLangSelect.value); // جلب الحيوانات بناءً على اللغة المختارة
+  await fetchAnimals(gameLangSelect.value);
 
   if (animals.length === 0) {
-    console.warn("No animals found for this category and language. Please check Firestore data or rules.");
+    console.warn("No animals found for this category and language.");
     if (animalImage) animalImage.src = "/images/default.png";
     if (animalWord) animalWord.textContent = "لا توجد بيانات";
     if (animalDescription) animalDescription.textContent = "لا يوجد وصف متوفر.";
@@ -72,56 +68,73 @@ export async function loadAnimalsGameContent() {
     return;
   }
 
-  currentIndex = 0; // إعادة ضبط الفهرس عند تحميل المحتوى
-  updateAnimalContent(); // عرض أول حيوان
-  disableAnimalButtonsInSidebar(false); // تمكين الأزرار بعد تحميل المحتوى
+  currentIndex = 0;
+  updateAnimalContent();
+  disableAnimalButtonsInSidebar(false);
+
+  // زر إظهار/إخفاء الوصف والتفاصيل
+  const descriptionBox = document.getElementById("animal-description-box");
+  const detailsBox = document.getElementById("animal-details-section");
+
+  const toggleDescBtn = document.getElementById("toggle-description-btn");
+  const toggleDetailsBtn = document.getElementById("toggle-details-btn");
+
+  if (toggleDescBtn && descriptionBox) {
+    toggleDescBtn.onclick = () => {
+      descriptionBox.style.display = (descriptionBox.style.display === "none") ? "block" : "none";
+    };
+  }
+
+  if (toggleDetailsBtn && detailsBox) {
+    toggleDetailsBtn.onclick = () => {
+      detailsBox.style.display = (detailsBox.style.display === "none") ? "block" : "none";
+    };
+  }
 }
 
-// دالة تحديث محتوى الحيوان المعروض
 function updateAnimalContent() {
-    if (animals.length === 0) return;
+  if (animals.length === 0) return;
 
-    currentAnimalData = animals[currentIndex];
+  currentAnimalData = animals[currentIndex];
 
-    const animalImage = document.getElementById('animal-image');
-    const animalWord = document.getElementById('animal-word');
-    const animalDescription = document.getElementById('animal-description');
-    const animalBaby = document.getElementById("animal-baby");
-    const animalFemale = document.getElementById("animal-female");
-    const animalCategory = document.getElementById("animal-category");
+  const animalImage = document.getElementById('animal-image');
+  const animalWord = document.getElementById('animal-word');
+  const animalDescription = document.getElementById('animal-description');
+  const animalBaby = document.getElementById("animal-baby");
+  const animalFemale = document.getElementById("animal-female");
+  const animalCategory = document.getElementById("animal-category");
 
-    const prevAnimalBtn = document.getElementById('prev-animal-btn');
-    const nextAnimalBtn = document.getElementById('next-animal-btn');
+  const prevAnimalBtn = document.getElementById('prev-animal-btn');
+  const nextAnimalBtn = document.getElementById('next-animal-btn');
 
-    if (animalImage) animalImage.src = `/images/animals/${currentAnimalData.image}`;
-    if (animalImage) animalImage.alt = currentAnimalData.name[currentLang];
-    if (animalWord) {
-        const animalName = currentAnimalData.name[currentLang];
-        if (animalName) {
-            const firstLetter = animalName.charAt(0);
-            const restOfName = animalName.substring(1);
-            animalWord.innerHTML = `<span class="item-main-name">${firstLetter}</span>${restOfName}`;
-        } else {
-            animalWord.textContent = '';
-        }
+  if (animalImage) animalImage.src = `/images/animals/${currentAnimalData.image}`;
+  if (animalImage) animalImage.alt = currentAnimalData.name[currentLang];
+  if (animalWord) {
+    const animalName = currentAnimalData.name[currentLang];
+    if (animalName) {
+      const firstLetter = animalName.charAt(0);
+      const restOfName = animalName.substring(1);
+      animalWord.innerHTML = `<span class="item-main-name">${firstLetter}</span>${restOfName}`;
+    } else {
+      animalWord.textContent = '';
     }
-    if (animalDescription) animalDescription.textContent = currentAnimalData.description?.[currentLang] || "لا يوجد وصف";
-
-    if (animalBaby) animalBaby.textContent = currentAnimalData.baby?.[currentLang] || "غير معروف";
-    if (animalFemale) animalFemale.textContent = currentAnimalData.female?.[currentLang] || "غير معروف";
-    if (animalCategory) animalCategory.textContent = Array.isArray(currentAnimalData.classification) // استخدام classification بدلاً من category
+  }
+  if (animalDescription) animalDescription.textContent = currentAnimalData.description?.[currentLang] || "لا يوجد وصف";
+  if (animalBaby) animalBaby.textContent = currentAnimalData.baby?.[currentLang] || "غير معروف";
+  if (animalFemale) animalFemale.textContent = currentAnimalData.female?.[currentLang] || "غير معروف";
+  if (animalCategory) {
+    animalCategory.textContent = Array.isArray(currentAnimalData.classification)
       ? currentAnimalData.classification.map(cat => (typeof cat === 'object' && cat !== null && cat[currentLang]) ? cat[currentLang] : cat).join(", ")
       : (currentAnimalData.classification?.[currentLang] || "غير معروف");
+  }
 
+  if (prevAnimalBtn) prevAnimalBtn.disabled = currentIndex === 0;
+  if (nextAnimalBtn) nextAnimalBtn.disabled = currentIndex === animals.length - 1;
 
-    // تحديث حالة أزرار التنقل في الشريط الجانبي
-    if (prevAnimalBtn) prevAnimalBtn.disabled = currentIndex === 0;
-    if (nextAnimalBtn) nextAnimalBtn.disabled = currentIndex === animals.length - 1;
-
-    stopCurrentAudio();
+  stopCurrentAudio();
 }
 
-async function fetchAnimals(lang) { // تقبل اللغة كمعامل
+async function fetchAnimals(lang) {
   try {
     const itemsCollectionRef = collection(db, "categories", "animals", "items");
     const q = query(itemsCollectionRef);
@@ -134,37 +147,36 @@ async function fetchAnimals(lang) { // تقبل اللغة كمعامل
   }
 }
 
-// ***** دوال مصدّرة ليتم استدعاؤها من index.html *****
 export function showNextAnimal() {
-    stopCurrentAudio();
-    if (currentIndex < animals.length - 1) {
-        currentIndex++;
-        updateAnimalContent();
-        recordActivity(JSON.parse(localStorage.getItem("user")), "animals");
-    }
+  stopCurrentAudio();
+  if (currentIndex < animals.length - 1) {
+    currentIndex++;
+    updateAnimalContent();
+    recordActivity(JSON.parse(localStorage.getItem("user")), "animals");
+  }
 }
 
 export function showPreviousAnimal() {
-    stopCurrentAudio();
-    if (currentIndex > 0) {
-        currentIndex--;
-        updateAnimalContent();
-        recordActivity(JSON.parse(localStorage.getItem("user")), "animals");
-    }
+  stopCurrentAudio();
+  if (currentIndex > 0) {
+    currentIndex--;
+    updateAnimalContent();
+    recordActivity(JSON.parse(localStorage.getItem("user")), "animals");
+  }
 }
 
 export function playCurrentAnimalAudio() {
-    if (currentAnimalData) {
-        const voiceSelect = document.getElementById('voice-select-animal');
-        const selectedVoiceType = voiceSelect ? voiceSelect.value : 'boy';
-        const audioPath = getAnimalAudioPath(currentAnimalData, selectedVoiceType);
-        if (audioPath) {
-            playAudio(audioPath);
-            recordActivity(JSON.parse(localStorage.getItem("user")), "animals");
-        }
-    } else {
-        console.warn('لا يوجد حيوان معروض لتشغيل الصوت.');
+  if (currentAnimalData) {
+    const voiceSelect = document.getElementById('voice-select-animal');
+    const selectedVoiceType = voiceSelect ? voiceSelect.value : 'boy';
+    const audioPath = getAnimalAudioPath(currentAnimalData, selectedVoiceType);
+    if (audioPath) {
+      playAudio(audioPath);
+      recordActivity(JSON.parse(localStorage.getItem("user")), "animals");
     }
+  } else {
+    console.warn('لا يوجد حيوان معروض لتشغيل الصوت.');
+  }
 }
 
 function getAnimalAudioPath(data, voiceType) {
@@ -172,8 +184,6 @@ function getAnimalAudioPath(data, voiceType) {
   const subjectFolder = 'animals';
 
   let fileName;
-
-  // ✅ الصياغة الصحيحة لحقل voices: boy_ar, girl_en...
   const voiceKey = `${voiceType}_${langFolder}`;
 
   if (data.voices && data.voices[voiceKey]) {
@@ -193,15 +203,15 @@ function getAnimalAudioPath(data, voiceType) {
 }
 
 function disableAnimalButtonsInSidebar(isDisabled) {
-    const playSoundBtn = document.getElementById("play-sound-btn-animal");
-    const nextBtn = document.getElementById("next-animal-btn");
-    const prevBtn = document.getElementById("prev-animal-btn");
-    const voiceSelect = document.getElementById("voice-select-animal");
-    const langSelect = document.getElementById("game-lang-select-animal");
+  const playSoundBtn = document.getElementById("play-sound-btn-animal");
+  const nextBtn = document.getElementById("next-animal-btn");
+  const prevBtn = document.getElementById("prev-animal-btn");
+  const voiceSelect = document.getElementById("voice-select-animal");
+  const langSelect = document.getElementById("game-lang-select-animal");
 
-    if (playSoundBtn) playSoundBtn.disabled = isDisabled;
-    if (nextBtn) nextBtn.disabled = isDisabled;
-    if (prevBtn) prevBtn.disabled = isDisabled;
-    if (voiceSelect) voiceSelect.disabled = isDisabled;
-    if (langSelect) langSelect.disabled = isDisabled;
+  if (playSoundBtn) playSoundBtn.disabled = isDisabled;
+  if (nextBtn) nextBtn.disabled = isDisabled;
+  if (prevBtn) prevBtn.disabled = isDisabled;
+  if (voiceSelect) voiceSelect.disabled = isDisabled;
+  if (langSelect) langSelect.disabled = isDisabled;
 }
