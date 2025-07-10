@@ -9,9 +9,9 @@ import { recordActivity } from './activity-handler.js';
 // المتغيرات التي ستستخدم عبر اللعبة، معرفة في النطاق العلوي للوحدة
 let gameBoard;
 let startGameButton;
-let langSelect;
-let topicSelect;
-let modeSelect;
+let langSelect;   // تم تغيير الاسم: كان langButtons
+let topicSelect;  // تم إضافة هذا المتغير للتحكم في قائمة الموضوع المنسدلة
+let modeSelect;   // تم تغيير الاسم: كان modeButtons
 let gameStatusDisplay;
 
 let cards = [];
@@ -19,23 +19,16 @@ let flippedCards = [];
 let matchedPairs = 0;
 let lockBoard = false;
 
-let allCardData = {};
-export let currentTopic = 'animals';
-let currentPlayMode = 'image-image';
-
-// ✅ إضافة قائمة الفئات المتاحة بشكل ثابت (حل بديل لعدم تغيير هيكلة DB)
-const availableMemoryGameCategories = [
-    { id: 'animals', name_ar: 'حيوانات', name_en: 'Animals' },
-    { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits' },
-    { id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables' },
-    { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body' },
-];
+let allCardData = {}; 
+let currentTopic = 'animals'; 
+let currentPlayMode = 'image-image'; 
 
 export async function loadMemoryGameContent() {
     console.log('جارٍ تحميل محتوى لعبة الذاكرة...');
 
     const mainContentArea = document.querySelector('.main-content');
     mainContentArea.innerHTML = `
+       
         <div class="memory-game-grid" id="memory-game-board">
             </div>
         <div class="game-status" id="memory-game-status">
@@ -45,19 +38,20 @@ export async function loadMemoryGameContent() {
     gameBoard = document.getElementById('memory-game-board');
     gameStatusDisplay = document.getElementById('memory-game-status');
     
-    await fetchCardData(); // ستستخدم هذه الدالة الآن قائمة الفئات الثابتة
+    await fetchCardData();
 }
 
 export async function initializeMemoryGameSidebarControls() {
     console.log("Initializing Memory Game Sidebar Controls...");
     
     startGameButton = document.getElementById('memory-game-start-button');
-    langSelect = document.getElementById('memory-game-lang-select');
-    topicSelect = document.getElementById('memory-game-topic-select');
-    modeSelect = document.getElementById('memory-game-mode-select');
+    langSelect = document.getElementById('memory-game-lang-select'); // الحصول على مرجع الـ select
+    topicSelect = document.getElementById('memory-game-topic-select'); // الحصول على مرجع الـ select
+    modeSelect = document.getElementById('memory-game-mode-select'); // الحصول على مرجع الـ select
 
     setupEventListeners();
     
+    // تعيين القيمة الافتراضية للغة ونمط اللعب
     if (langSelect) {
         langSelect.value = currentLang;
     }
@@ -65,8 +59,12 @@ export async function initializeMemoryGameSidebarControls() {
         modeSelect.value = currentPlayMode;
     }
 
-    // ✅ دائماً قم بملء خيارات الموضوعات من القائمة الثابتة
-    populateTopicOptions();
+    // Populate topic options if data is already fetched
+    if (Object.keys(allCardData).length > 0) {
+        populateTopicOptions(); // استدعاء الدالة الجديدة لملء الـ select
+    } else {
+        console.log("allCardData is empty, populateTopicOptions will be called after fetchCardData.");
+    }
 }
 
 
@@ -76,35 +74,37 @@ function setupEventListeners() {
         startGameButton.addEventListener('click', createBoard);
     }
 
-    if (langSelect) {
-        langSelect.removeEventListener('change', handleLanguageChange);
+    if (langSelect) { // تغيير من langButtons
+        langSelect.removeEventListener('change', handleLanguageChange); // تغيير الحدث من click إلى change
         langSelect.addEventListener('change', handleLanguageChange);
     }
 
-    if (topicSelect) {
+    if (topicSelect) { // إضافة مستمع حدث للموضوع
         topicSelect.removeEventListener('change', handleTopicChange);
         topicSelect.addEventListener('change', handleTopicChange);
     }
 
-    if (modeSelect) {
-        modeSelect.removeEventListener('change', handleModeChange);
+    if (modeSelect) { // تغيير من modeButtons
+        modeSelect.removeEventListener('change', handleModeChange); // تغيير الحدث من click إلى change
         modeSelect.addEventListener('change', handleModeChange);
     }
 }
 
 function handleLanguageChange(event) {
-    loadLanguage(event.target.value).then(() => {
+    // لم يعد هناك حاجة لإزالة/إضافة فئة 'active' مع الـ select
+    loadLanguage(event.target.value).then(() => { // استخدام event.target.value
         updateCardTexts();
     });
 }
 
-function handleTopicChange(event) {
-    currentTopic = event.target.value;
-    createBoard();
+function handleTopicChange(event) { // دالة جديدة للتعامل مع تغيير الموضوع
+    currentTopic = event.target.value; // استخدام event.target.value
+    createBoard(); // إعادة إنشاء اللوحة بالموضوع الجديد
 }
 
 function handleModeChange(event) {
-    currentPlayMode = event.target.value;
+    // لم يعد هناك حاجة لإزالة/إضافة فئة 'active' مع الـ select
+    currentPlayMode = event.target.value; // استخدام event.target.value
     createBoard();
 }
 
@@ -117,20 +117,22 @@ async function fetchCardData() {
     }
 
     try {
+        const categoriesSnapshot = await getDocs(collection(db, "categories"));
+        
         const categoriesData = {};
-        // ✅ التعديل هنا: نمر على قائمة الفئات المتاحة الثابتة بدلاً من جلب مستندات الفئات
-        for (const category of availableMemoryGameCategories) {
-            const categoryName = category.id; // نستخدم الـ ID كاسم للفئة
+        for (const doc of categoriesSnapshot.docs) {
+            const categoryName = doc.id;
             const itemsCollectionRef = collection(db, "categories", categoryName, "items");
             const itemsSnapshot = await getDocs(itemsCollectionRef);
             
             categoriesData[categoryName] = itemsSnapshot.docs.map(itemDoc => {
                 const data = itemDoc.data();
+                // console.log("Firestore Document Data:", data); // يمكنك إزالة هذا بعد التحقق
                 return {
                     id: itemDoc.id,
                     image_name: data.image,
-                    name_ar: data.name?.ar || '',
-                    name_en: data.name?.en || '',
+                    name_ar: data.name.ar,
+                    name_en: data.name.en,
                     letter_ar: data.letter ? data.letter.ar : '',
                     letter_en: data.letter ? data.letter.en : '',
                     audio_ar: data.voices && data.voices.ar ? data.voices.ar : '',
@@ -140,7 +142,7 @@ async function fetchCardData() {
         }
         allCardData = categoriesData;
         
-        // لا نحتاج لاستدعاء populateTopicOptions هنا لأنها تستدعى في initializeMemoryGameSidebarControls
+        populateTopicOptions(); // استدعاء الدالة الجديدة لملء قائمة المواضيع المنسدلة
         createBoard(); 
         
     } catch (error) {
@@ -374,24 +376,31 @@ function updateCardTexts() {
     });
 }
 
-// ✅ الدالة الجديدة لملء قائمة المواضيع المنسدلة باستخدام القائمة الثابتة
-export function populateTopicOptions() {
-    const topicSelectElement = document.getElementById('memory-game-topic-select');
+// دالة populateTopicButtons الأصلية التي كانت تنشئ أزرار
+// الآن سنغيرها لـ populateTopicOptions (جديدة) لتعمل مع الـ select
+// const topicSelectionDiv = document.querySelector('#memory-game-sidebar-controls .topic-selection');
+// export function populateTopicButtons() { ... }
+
+// الدالة الجديدة لملء قائمة المواضيع المنسدلة
+export function populateTopicOptions() { // تم تغيير الاسم
+    const topicSelectElement = document.getElementById('memory-game-topic-select'); // الحصول على الـ select
     if (!topicSelectElement) {
         console.error("Topic select element not found in memory game sidebar controls.");
         return;
     }
-    topicSelectElement.innerHTML = '';
+    topicSelectElement.innerHTML = ''; // مسح الخيارات القديمة
 
-    // نمر على القائمة الثابتة بدلاً من مفاتيح allCardData
-    availableMemoryGameCategories.forEach(category => {
+    const categories = Object.keys(allCardData);
+    
+    categories.forEach(topicKey => {
         const option = document.createElement('option');
-        option.value = category.id;
-        // نستخدم أسماء الفئات المترجمة من القائمة الثابتة
-        option.textContent = currentLang === 'ar' ? category.name_ar : category.name_en;
+        option.value = topicKey;
+        // يمكنك استخدام الترجمة هنا إذا كان لديك ترجمة لأسماء الفئات
+        option.textContent = topicKey.charAt(0).toUpperCase() + topicKey.slice(1); // مثال: تحويل "animals" إلى "Animals"
         
         topicSelectElement.appendChild(option);
     });
 
+    // تعيين القيمة الافتراضية للـ select بناءً على currentTopic
     topicSelectElement.value = currentTopic;
 }
