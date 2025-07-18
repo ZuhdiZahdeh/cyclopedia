@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>موسوعة الأطفال التفاعلية</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>مرحبًا بك في موسوعتك التعليمية</h1>
+    <nav>
+      <ul>
+        <li><button onclick="loadSubject('animals')">🐾 الحيوانات</button></li>
+        <li><button onclick="loadSubject('fruits')">🍎 الفواكه</button></li>
+        <li><button onclick="loadSubject('vegetables')">🥦 الخضروات</button></li>
+        <li><button onclick="loadSubject('human-body')">🧍‍♂️ جسم الإنسان</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="main-content">
+    <p>اختر موضوعًا من الأعلى لبدء التعلم.</p>
+  </main>
+
+  <!-- عناصر تحكم لكل موضوع -->
+  <aside>
+    <div id="animals-sidebar-controls" class="sidebar-controls" style="display:none">
+      <select id="game-lang-select-animals"></select>
+      <select id="voice-select-animals"></select>
+      <button id="play-sound-btn-animals">🔊 استمع</button>
+      <button id="prev-animals-btn">⏮ السابق</button>
+      <button id="next-animals-btn">⏭ التالي</button>
+    </div>
+
+    <div id="fruits-sidebar-controls" class="sidebar-controls" style="display:none">
+      <select id="game-lang-select-fruits"></select>
+      <select id="voice-select-fruits"></select>
+      <button id="play-sound-btn-fruits">🔊 استمع</button>
+      <button id="prev-fruits-btn">⏮ السابق</button>
+      <button id="next-fruits-btn">⏭ التالي</button>
+    </div>
+
+    <div id="vegetables-sidebar-controls" class="sidebar-controls" style="display:none">
+      <select id="game-lang-select-vegetables"></select>
+      <select id="voice-select-vegetables"></select>
+      <button id="play-sound-btn-vegetables">🔊 استمع</button>
+      <button id="prev-vegetables-btn">⏮ السابق</button>
+      <button id="next-vegetables-btn">⏭ التالي</button>
+    </div>
+
+    <div id="human-body-sidebar-controls" class="sidebar-controls" style="display:none">
+      <select id="game-lang-select-human-body"></select>
+      <select id="voice-select-human-body"></select>
+      <button id="play-sound-btn-human-body">🔊 استمع</button>
+      <button id="prev-human-body-btn">⏮ السابق</button>
+      <button id="next-human-body-btn">⏭ التالي</button>
+    </div>
+
+    <button id="toggle-description-btn">📃 عرض/إخفاء الوصف</button>
+    <button id="toggle-details-btn">ℹ️ عرض/إخفاء التفاصيل</button>
+  </aside>
+
+  <script type="module">
+    import {
+      loadSubjectGameContent,
+      showNextItem,
+      showPreviousItem,
+      playCurrentItemAudio
+    } from '/src/js/subject-game.js';
+
+    import { loadLanguage, applyTranslations, setDirection, currentLang } from '/src/js/lang-handler.js';
+
+    async function initializeSubjectControls(subjectType) {
+      const langSelect = document.getElementById(`game-lang-select-${subjectType}`);
+      const voiceSelect = document.getElementById(`voice-select-${subjectType}`);
+      const playSoundBtn = document.getElementById(`play-sound-btn-${subjectType}`);
+      const prevBtn = document.getElementById(`prev-${subjectType}-btn`);
+      const nextBtn = document.getElementById(`next-${subjectType}-btn`);
+
+      if (!langSelect || !voiceSelect) return;
+
+      if (langSelect.options.length === 0) {
+        ['ar', 'en', 'he'].forEach(langCode => {
+          const option = document.createElement('option');
+          option.value = langCode;
+          option.textContent = { 'ar': 'العربية', 'en': 'English', 'he': 'עברית' }[langCode];
+          langSelect.appendChild(option);
+        });
+        langSelect.value = currentLang;
+      }
+
+      if (voiceSelect.options.length === 0) {
+        ['teacher', 'boy', 'girl', 'child'].forEach(voiceType => {
+          const option = document.createElement('option');
+          option.value = voiceType;
+          option.textContent = { 'teacher': 'المعلم', 'boy': 'صوت ولد', 'girl': 'صوت بنت', 'child': 'صوت طفل' }[voiceType];
+          voiceSelect.appendChild(option);
+        });
+        voiceSelect.value = 'teacher';
+      }
+
+      langSelect.onchange = async () => {
+        const newLang = langSelect.value;
+        await loadLanguage(newLang);
+        applyTranslations();
+        setDirection(newLang);
+        await loadSubjectGameContent(subjectType);
+      };
+
+      if (playSoundBtn) playSoundBtn.onclick = () => playCurrentItemAudio(subjectType);
+      if (prevBtn) prevBtn.onclick = () => showPreviousItem(subjectType);
+      if (nextBtn) nextBtn.onclick = () => showNextItem(subjectType);
+
+      applyTranslations();
+    }
+
+    function hideAllControls() {
+      ["animals", "fruits", "vegetables", "human-body"].forEach(type => {
+        const el = document.getElementById(`${type}-sidebar-controls`);
+        if (el) el.style.display = 'none';
+      });
+    }
+
+    async function loadSubject(subjectType) {
+      hideAllControls();
+      const sidebar = document.getElementById(`${subjectType}-sidebar-controls`);
+      if (sidebar) sidebar.style.display = 'block';
+
+      await loadSubjectGameContent(subjectType);
+      await initializeSubjectControls(subjectType);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      applyTranslations();
+    });
+  </script>
+</body>
+</html>
