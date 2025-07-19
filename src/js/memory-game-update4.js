@@ -1,5 +1,4 @@
 // E:\cyclopedia\src\js\memory-game.js
-// E:\cyclopedia\src\js\memory-game.js
 
 import { db } from './firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
@@ -10,9 +9,9 @@ import { recordActivity } from './activity-handler.js';
 // المتغيرات التي ستستخدم عبر اللعبة، معرفة في النطاق العلوي للوحدة
 let gameBoard;
 let startGameButton;
-let langSelect;
-let topicSelect;
-let modeSelect;
+let langSelect;   // تم تغيير الاسم: كان langButtons
+let topicSelect;  // تم إضافة هذا المتغير للتحكم في قائمة الموضوع المنسدلة
+let modeSelect;   // تم تغيير الاسم: كان modeButtons
 let gameStatusDisplay;
 
 let cards = [];
@@ -20,16 +19,16 @@ let flippedCards = [];
 let matchedPairs = 0;
 let lockBoard = false;
 
-let allCardData = {};
-let currentTopic = 'animals';
-let currentPlayMode = 'image-image';
+let allCardData = {}; 
+let currentTopic = 'animals'; 
+let currentPlayMode = 'image-image'; 
 
 export async function loadMemoryGameContent() {
     console.log('جارٍ تحميل محتوى لعبة الذاكرة...');
 
     const mainContentArea = document.querySelector('.main-content');
     mainContentArea.innerHTML = `
-
+       
         <div class="memory-game-grid" id="memory-game-board">
             </div>
         <div class="game-status" id="memory-game-status">
@@ -38,20 +37,20 @@ export async function loadMemoryGameContent() {
 
     gameBoard = document.getElementById('memory-game-board');
     gameStatusDisplay = document.getElementById('memory-game-status');
-
+    
     await fetchCardData();
 }
 
 export async function initializeMemoryGameSidebarControls() {
     console.log("Initializing Memory Game Sidebar Controls...");
-
+    
     startGameButton = document.getElementById('memory-game-start-button');
-    langSelect = document.getElementById('memory-game-lang-select');
-    topicSelect = document.getElementById('memory-game-topic-select');
-    modeSelect = document.getElementById('memory-game-mode-select');
+    langSelect = document.getElementById('memory-game-lang-select'); // الحصول على مرجع الـ select
+    topicSelect = document.getElementById('memory-game-topic-select'); // الحصول على مرجع الـ select
+    modeSelect = document.getElementById('memory-game-mode-select'); // الحصول على مرجع الـ select
 
     setupEventListeners();
-
+    
     // تعيين القيمة الافتراضية للغة ونمط اللعب
     if (langSelect) {
         langSelect.value = currentLang;
@@ -62,11 +61,12 @@ export async function initializeMemoryGameSidebarControls() {
 
     // Populate topic options if data is already fetched
     if (Object.keys(allCardData).length > 0) {
-        populateTopicOptions();
+        populateTopicOptions(); // استدعاء الدالة الجديدة لملء الـ select
     } else {
         console.log("allCardData is empty, populateTopicOptions will be called after fetchCardData.");
     }
 }
+
 
 function setupEventListeners() {
     if (startGameButton) {
@@ -74,61 +74,38 @@ function setupEventListeners() {
         startGameButton.addEventListener('click', createBoard);
     }
 
-    if (langSelect) {
-        langSelect.removeEventListener('change', handleLanguageChange);
+    if (langSelect) { // تغيير من langButtons
+        langSelect.removeEventListener('change', handleLanguageChange); // تغيير الحدث من click إلى change
         langSelect.addEventListener('change', handleLanguageChange);
     }
 
-    if (topicSelect) {
+    if (topicSelect) { // إضافة مستمع حدث للموضوع
         topicSelect.removeEventListener('change', handleTopicChange);
         topicSelect.addEventListener('change', handleTopicChange);
     }
 
-    if (modeSelect) {
-        modeSelect.removeEventListener('change', handleModeChange);
+    if (modeSelect) { // تغيير من modeButtons
+        modeSelect.removeEventListener('change', handleModeChange); // تغيير الحدث من click إلى change
         modeSelect.addEventListener('change', handleModeChange);
     }
 }
 
 function handleLanguageChange(event) {
-    loadLanguage(event.target.value).then(() => {
-        // تحديث اتجاه الصفحة بناءً على اللغة الجديدة
-        setDirection(event.target.value);
+    // لم يعد هناك حاجة لإزالة/إضافة فئة 'active' مع الـ select
+    loadLanguage(event.target.value).then(() => { // استخدام event.target.value
         updateCardTexts();
     });
 }
 
-function handleTopicChange(event) {
-    currentTopic = event.target.value;
+function handleTopicChange(event) { // دالة جديدة للتعامل مع تغيير الموضوع
+    currentTopic = event.target.value; // استخدام event.target.value
     createBoard(); // إعادة إنشاء اللوحة بالموضوع الجديد
 }
 
 function handleModeChange(event) {
-    currentPlayMode = event.target.value;
+    // لم يعد هناك حاجة لإزالة/إضافة فئة 'active' مع الـ select
+    currentPlayMode = event.target.value; // استخدام event.target.value
     createBoard();
-}
-
-/**
- * دالة مساعدة للحصول على النص أو مسار الصوت أو الحرف الصحيح بناءً على اللغة الحالية.
- * @param {object} item - كائن البيانات للعنصر (من Firebase).
- * @param {string} type - نوع البيانات المطلوب ('name', 'letter', 'audio').
- * @returns {string} النص أو مسار الصوت أو الحرف المناسب للغة الحالية.
- */
-function getTextForCurrentLang(item, type) {
-    if (type === 'name') {
-        if (currentLang === 'ar') return item.name_ar;
-        if (currentLang === 'en') return item.name_en;
-        if (currentLang === 'he') return item.name_he;
-    } else if (type === 'letter') {
-        if (currentLang === 'ar') return item.letter_ar;
-        if (currentLang === 'en') return item.letter_en;
-        if (currentLang === 'he') return item.letter_he;
-    } else if (type === 'audio') {
-        if (currentLang === 'ar') return item.audio_ar;
-        if (currentLang === 'en') return item.audio_en;
-        if (currentLang === 'he') return item.audio_he;
-    }
-    return ''; // أو يمكن أن تكون قيمة افتراضية مناسبة
 }
 
 
@@ -141,35 +118,33 @@ async function fetchCardData() {
 
     try {
         const categoriesSnapshot = await getDocs(collection(db, "categories"));
-
+        
         const categoriesData = {};
         for (const doc of categoriesSnapshot.docs) {
             const categoryName = doc.id;
             const itemsCollectionRef = collection(db, "categories", categoryName, "items");
             const itemsSnapshot = await getDocs(itemsCollectionRef);
-
+            
             categoriesData[categoryName] = itemsSnapshot.docs.map(itemDoc => {
                 const data = itemDoc.data();
+                // console.log("Firestore Document Data:", data); // يمكنك إزالة هذا بعد التحقق
                 return {
                     id: itemDoc.id,
                     image_name: data.image,
                     name_ar: data.name.ar,
                     name_en: data.name.en,
-                    name_he: data.name.he || '', // أضف جلب الاسم العبري
                     letter_ar: data.letter ? data.letter.ar : '',
                     letter_en: data.letter ? data.letter.en : '',
-                    letter_he: data.letter ? data.letter.he : '', // أضف جلب الحرف العبري
                     audio_ar: data.voices && data.voices.ar ? data.voices.ar : '',
                     audio_en: data.voices && data.voices.en ? data.voices.en : '',
-                    audio_he: data.voices && data.voices.he ? data.voices.he : '', // أضف جلب الصوت العبري
                 };
             });
         }
         allCardData = categoriesData;
-
-        populateTopicOptions();
-        createBoard();
-
+        
+        populateTopicOptions(); // استدعاء الدالة الجديدة لملء قائمة المواضيع المنسدلة
+        createBoard(); 
+        
     } catch (error) {
         console.error('فشل في جلب بيانات البطاقات من Firestore:', error);
         gameStatusDisplay.textContent = (currentLang === 'ar' ? 'فشل تحميل البيانات. تحقق من اتصال الإنترنت.' : 'Failed to load data. Check internet connection.');
@@ -204,64 +179,40 @@ function createBoard() {
     }
 
     const shuffledTopicItems = shuffleArray([...selectedTopicItems]);
-    const chosenItems = shuffledTopicItems.slice(0, 6); // نختار 6 عناصر لإنشاء 12 بطاقة
+    const chosenItems = shuffledTopicItems.slice(0, 6);
 
     const gameCardsForMode = [];
 
     chosenItems.forEach(item => {
-        // بيانات النص لجميع اللغات لحفظها في البطاقة
-        const cardTextData = {
-            text_ar: item.name_ar,
-            text_en: item.name_en,
-            text_he: item.name_he
-        };
-
         if (currentPlayMode === 'image-image') {
-            gameCardsForMode.push({ type: 'image', value: `images/${currentTopic}/${item.image_name}`, id: item.id, ...cardTextData });
-            gameCardsForMode.push({ type: 'image', value: `images/${currentTopic}/${item.image_name}`, id: item.id, ...cardTextData });
+            gameCardsForMode.push({ type: 'image', value: `images/${currentTopic}/${item.image_name}`, id: item.id, text_ar: item.name_ar, text_en: item.name_en });
+            gameCardsForMode.push({ type: 'image', value: `images/${currentTopic}/${item.image_name}`, id: item.id, text_ar: item.name_ar, text_en: item.name_en });
         }
         else if (currentPlayMode === 'image-word') {
-            // تحقق من وجود الاسم باللغة العبرية قبل إضافته
-            if (item.name_he) {
-                gameCardsForMode.push({ type: 'image', value: `images/${currentTopic}/${item.image_name}`, id: item.id, ...cardTextData });
-                // استخدام getTextForCurrentLang للحصول على النص المناسب للغة الحالية
-                gameCardsForMode.push({ type: 'word', value: getTextForCurrentLang(item, 'name'), id: item.id, ...cardTextData });
-            } else {
-                console.warn(`لا يوجد اسم عبري لـ ${item.id} في الموضوع ${currentTopic}. سيتم تخطي هذا العنصر لهذا النمط.`);
-            }
+            gameCardsForMode.push({ type: 'image', value: `images/${currentTopic}/${item.image_name}`, id: item.id, text_ar: item.name_ar, text_en: item.name_en });
+            gameCardsForMode.push({ type: 'word', value: (currentLang === 'ar' ? item.name_ar : item.name_en), id: item.id, text_ar: item.name_ar, text_en: item.name_en });
         }
         else if (currentPlayMode === 'image-char') {
-            // تحقق من وجود الحروف في جميع اللغات
-            if (item.letter_ar && item.letter_en && item.letter_he) {
-                gameCardsForMode.push({ type: 'image', value: `images/${currentTopic}/${item.image_name}`, id: item.id, ...cardTextData });
-                // استخدام getTextForCurrentLang للحصول على الحرف المناسب للغة الحالية
-                gameCardsForMode.push({ type: 'char', value: getTextForCurrentLang(item, 'letter'), id: item.id, ...cardTextData });
+            if (item.letter_ar && item.letter_en) {
+                gameCardsForMode.push({ type: 'image', value: `images/${currentTopic}/${item.image_name}`, id: item.id, text_ar: item.name_ar, text_en: item.name_en });
+                gameCardsForMode.push({ type: 'char', value: (currentLang === 'ar' ? item.letter_ar : item.letter_en), id: item.id, text_ar: item.name_ar, text_en: item.name_en });
             } else {
-                console.warn(`لا يوجد حرف لـ ${item.id} في الموضوع ${currentTopic} لجميع اللغات المطلوبة. سيتم تخطي هذا العنصر لهذا النمط.`);
+                console.warn(`لا يوجد حرف لـ ${item.id} في الموضوع ${currentTopic}. سيتم تخطي هذا العنصر لهذا النمط.`);
             }
         }
         else if (currentPlayMode === 'image-audio') {
-            // تحقق من وجود الصوتيات في جميع اللغات
-            if (item.audio_ar && item.audio_en && item.audio_he) {
-                gameCardsForMode.push({ type: 'image', value: `images/${currentTopic}/${item.image_name}`, id: item.id, ...cardTextData });
-                // استخدام getTextForCurrentLang للحصول على مسار الصوت المناسب للغة الحالية
-                gameCardsForMode.push({
-                    type: 'audio',
-                    value: `audio/${currentLang}/${currentTopic}/${getTextForCurrentLang(item, 'audio')}`,
-                    id: item.id,
-                    ...cardTextData,
-                    image_url_for_audio_card: `images/${currentTopic}/${item.image_name}`
-                });
+            if (item.audio_ar && item.audio_en) {
+                gameCardsForMode.push({ type: 'image', value: `images/${currentTopic}/${item.image_name}`, id: item.id, text_ar: item.name_ar, text_en: item.name_en });
+                gameCardsForMode.push({ type: 'audio', value: `audio/${currentLang}/${currentTopic}/${currentLang === 'ar' ? item.audio_ar : item.audio_en}`, id: item.id, text_ar: item.name_ar, text_en: item.name_en, image_url_for_audio_card: `images/${currentTopic}/${item.image_name}` });
             } else {
-                console.warn(`لا يوجد صوت لـ ${item.id} في الموضوع ${currentTopic} لجميع اللغات المطلوبة. سيتم تخطي هذا العنصر لهذا النمط.`);
+                console.warn(`لا يوجد صوت لـ ${item.id} في الموضوع ${currentTopic}. سيتم تخطي هذا العنصر لهذا النمط.`);
             }
         }
     });
 
-    // يجب أن تكون هناك 12 بطاقة (6 أزواج) للعبة كاملة
     if (gameCardsForMode.length < 12) {
          gameStatusDisplay.textContent = (currentLang === 'ar' ? 'لا توجد عناصر كافية لهذا النمط والموضوع.' : 'Not enough items for this mode and topic.');
-         console.error("Not enough cards generated for the selected mode. Generated:", gameCardsForMode.length);
+         console.error("Not enough cards generated for the selected mode.");
          return;
     }
 
@@ -274,18 +225,12 @@ function createBoard() {
         cardElement.dataset.cardType = card.type;
 
         let frontContent = '';
+        let cardText = currentLang === 'ar' ? card.text_ar : card.text_en;
 
         if (card.type === 'image') {
             frontContent = `<img src="${card.value}" alt="${card.id}">`;
         } else if (card.type === 'word' || card.type === 'char') {
-            // card.value يحتوي بالفعل على النص باللغة الصحيحة بفضل getTextForCurrentLang في مرحلة الإنشاء
             frontContent = `<span class="card-display-text">${card.value}</span>`;
-            // تعيين اتجاه النص للبطاقات النصية بناءً على اللغة الحالية
-            if (currentLang === 'he') {
-                cardElement.querySelector('.card-display-text').style.direction = 'rtl';
-            } else {
-                 cardElement.querySelector('.card-display-text').style.direction = 'ltr';
-            }
         } else if (card.type === 'audio') {
             frontContent = `
                 <img src="${card.image_url_for_audio_card}" alt="${card.id}">
@@ -300,12 +245,12 @@ function createBoard() {
             </div>
             <div class="back-face"></div>
         `;
-
+        
         if (card.type === 'audio') {
             const playButton = cardElement.querySelector('.play-audio-btn');
             if (playButton) {
                 playButton.addEventListener('click', (e) => {
-                    e.stopPropagation(); // منع قلب البطاقة عند النقر على زر التشغيل
+                    e.stopPropagation();
                     const audio = cardElement.querySelector('audio');
                     if (audio) {
                         playAudio(audio.src);
@@ -323,22 +268,10 @@ function createBoard() {
 
 function flipCard() {
     if (lockBoard) return;
-    // التأكد أن البطاقة ليست هي نفسها التي تم قلبها أولاً
     if (this === flippedCards[0]) return;
-    // منع قلب البطاقات المطابقة مرة أخرى
-    if (this.classList.contains('matched')) return;
 
     this.classList.add('flipped');
     flippedCards.push(this);
-
-    // إذا كانت البطاقة التي تم قلبها من نوع "صوت"، قم بتشغيل الصوت
-    if (this.dataset.cardType === 'audio') {
-        const audio = this.querySelector('audio');
-        if (audio) {
-            playAudio(audio.src);
-        }
-    }
-
 
     if (flippedCards.length === 2) {
         lockBoard = true;
@@ -355,7 +288,6 @@ function checkForMatch() {
 
     let isMatch = false;
 
-    // الشرط الأساسي للمطابقة هو تطابق الـ ID
     if (firstCardId === secondCardId) {
         if (currentPlayMode === 'image-image') {
             isMatch = (firstCardType === 'image' && secondCardType === 'image');
@@ -380,20 +312,20 @@ function checkForMatch() {
     if (isMatch) {
         disableCards();
         matchedPairs++;
-        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'لقد وجدت زوجًا!' : currentLang === 'he' ? 'מצאת זוג!' : 'You found a pair!');
+        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'لقد وجدت زوجًا!' : 'You found a pair!');
         const currentUser = JSON.parse(localStorage.getItem("user"));
         if (currentUser) {
             recordActivity(currentUser, currentTopic);
         }
 
-        if (matchedPairs === 6) { // 6 أزواج تعني نهاية اللعبة (12 بطاقة)
+        if (matchedPairs === 6) {
             setTimeout(() => {
-                gameStatusDisplay.textContent = (currentLang === 'ar' ? 'تهانينا! لقد فزت باللعبة!' : currentLang === 'he' ? 'מזל טוב! ניצחת במשחק!' : 'Congratulations! You won the game!');
+                gameStatusDisplay.textContent = (currentLang === 'ar' ? 'تهانينا! لقد فزت باللعبة!' : 'Congratulations! You won the game!');
             }, 500);
         }
     } else {
         unflipCards();
-        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'حاول مرة أخرى.' : currentLang === 'he' ? 'נסה שוב.' : 'Try again.');
+        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'حاول مرة أخرى.' : 'Try again.');
     }
 }
 
@@ -424,38 +356,33 @@ function updateCardTexts() {
         const originalItem = topicItems ? topicItems.find(data => data.id === cardId) : null;
 
         if (originalItem) {
-            // تحديث محتوى البطاقة بناءً على نوعها واللغة الحالية
-            const displaySpan = cardElement.querySelector('.card-display-text');
-            if (displaySpan) {
-                if (cardType === 'word') {
-                    displaySpan.textContent = getTextForCurrentLang(originalItem, 'name');
-                } else if (cardType === 'char') {
-                    displaySpan.textContent = getTextForCurrentLang(originalItem, 'letter');
-                }
-
-                // تحديث اتجاه النص للبطاقات النصية عند تغيير اللغة
-                if (cardType === 'word' || cardType === 'char') {
-                    if (currentLang === 'he') {
-                        displaySpan.style.direction = 'rtl';
-                    } else {
-                        displaySpan.style.direction = 'ltr';
-                    }
-                }
+            const cardTextSpan = cardElement.querySelector('.card-text');
+            if (cardTextSpan) {
+                cardTextSpan.textContent = currentLang === 'ar' ? originalItem.name_ar : originalItem.name_en;
             }
 
-            // تحديث مسار الصوت لبطاقات الصوت
-            if (cardType === 'audio') {
+            if (cardType === 'word') {
+                 const displaySpan = cardElement.querySelector('.card-display-text');
+                 if(displaySpan) displaySpan.textContent = currentLang === 'ar' ? originalItem.name_ar : originalItem.name_en;
+            } else if (cardType === 'char') {
+                const displaySpan = cardElement.querySelector('.card-display-text');
+                if(displaySpan) displaySpan.textContent = currentLang === 'ar' ? originalItem.letter_ar : originalItem.letter_en;
+            } else if (cardType === 'audio') {
                 const audioElem = cardElement.querySelector('audio');
-                if (audioElem) {
-                    audioElem.src = `audio/${currentLang}/${currentTopic}/${getTextForCurrentLang(originalItem, 'audio')}`;
-                }
+                if(audioElem) audioElem.src = `audio/${currentLang}/${currentTopic}/${currentLang === 'ar' ? originalItem.audio_ar : originalItem.audio_en}`;
             }
         }
     });
 }
 
-export function populateTopicOptions() {
-    const topicSelectElement = document.getElementById('memory-game-topic-select');
+// دالة populateTopicButtons الأصلية التي كانت تنشئ أزرار
+// الآن سنغيرها لـ populateTopicOptions (جديدة) لتعمل مع الـ select
+// const topicSelectionDiv = document.querySelector('#memory-game-sidebar-controls .topic-selection');
+// export function populateTopicButtons() { ... }
+
+// الدالة الجديدة لملء قائمة المواضيع المنسدلة
+export function populateTopicOptions() { // تم تغيير الاسم
+    const topicSelectElement = document.getElementById('memory-game-topic-select'); // الحصول على الـ select
     if (!topicSelectElement) {
         console.error("Topic select element not found in memory game sidebar controls.");
         return;
@@ -463,14 +390,13 @@ export function populateTopicOptions() {
     topicSelectElement.innerHTML = ''; // مسح الخيارات القديمة
 
     const categories = Object.keys(allCardData);
-
+    
     categories.forEach(topicKey => {
         const option = document.createElement('option');
         option.value = topicKey;
-        // هنا يمكنك إضافة ترجمة لأسماء الفئات إذا كانت متوفرة لديك
-        // حالياً، يتم عرض اسم المفتاح Capitalized
-        option.textContent = topicKey.charAt(0).toUpperCase() + topicKey.slice(1);
-
+        // يمكنك استخدام الترجمة هنا إذا كان لديك ترجمة لأسماء الفئات
+        option.textContent = topicKey.charAt(0).toUpperCase() + topicKey.slice(1); // مثال: تحويل "animals" إلى "Animals"
+        
         topicSelectElement.appendChild(option);
     });
 
