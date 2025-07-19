@@ -278,14 +278,7 @@ function createBoard() {
         if (card.type === 'image') {
             frontContent = `<img src="${card.value}" alt="${card.id}">`;
         } else if (card.type === 'word' || card.type === 'char') {
-            // card.value يحتوي بالفعل على النص باللغة الصحيحة بفضل getTextForCurrentLang في مرحلة الإنشاء
             frontContent = `<span class="card-display-text">${card.value}</span>`;
-            // تعيين اتجاه النص للبطاقات النصية بناءً على اللغة الحالية
-            if (currentLang === 'he') {
-                cardElement.querySelector('.card-display-text').style.direction = 'rtl';
-            } else {
-                 cardElement.querySelector('.card-display-text').style.direction = 'ltr';
-            }
         } else if (card.type === 'audio') {
             frontContent = `
                 <img src="${card.image_url_for_audio_card}" alt="${card.id}">
@@ -300,6 +293,19 @@ function createBoard() {
             </div>
             <div class="back-face"></div>
         `;
+
+        // ✨ نقل هذا الجزء ليأتي بعد تعيين innerHTML ✨
+        if (card.type === 'word' || card.type === 'char') {
+            const displaySpan = cardElement.querySelector('.card-display-text');
+            if (displaySpan) { // تحقق مرة أخرى للتأكد من وجود العنصر
+                if (currentLang === 'he') {
+                    displaySpan.style.direction = 'rtl';
+                } else {
+                    displaySpan.style.direction = 'ltr';
+                }
+            }
+        }
+        // ✨ نهاية الجزء المنقول ✨
 
         if (card.type === 'audio') {
             const playButton = cardElement.querySelector('.play-audio-btn');
