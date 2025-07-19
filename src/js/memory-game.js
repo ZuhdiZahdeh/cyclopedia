@@ -242,7 +242,6 @@ function createBoard() {
         cardElement.innerHTML = `
             <div class="front-face">
                 ${frontContent}
-                <span class="card-text">${cardText}</span>
             </div>
             <div class="back-face"></div>
         `;
