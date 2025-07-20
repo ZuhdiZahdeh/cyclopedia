@@ -8,18 +8,20 @@
 
 /* أنماط لوحة المفاتيح */
 .keyboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr)); /* مرن لعرض الحروف */
-    gap: 10px;
-    padding: 20px;
-    background-color: var(--color-background); /* استخدام لون خلفية عام من colors.css */
-    border-radius: 10px;
-    box-shadow: 0 4px 8px var(--color-shadow); /* استخدام ظل من common-components-subjects.css */
-    margin-bottom: 30px;
-    max-width: 800px; /* لتحديد أقصى عرض للوحة المفاتيح */
-    margin-left: auto;
-    margin-right: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+  gap: 10px;
+  padding: 20px;
+  background-color: var(--color-background);
+  border-radius: 10px;
+  box-shadow: 0 4px 8px var(--color-shadow);
+  margin-bottom: 30px;
+  width: 100%;                /* ✅ لتقييد الحجم داخل البطاقة */
+  max-width: 100%;            /* ✅ إزالة القيد 800px على الشاشات الصغيرة */
+  box-sizing: border-box;     /* ✅ يشمل الـ padding ضمن الحجم */
+  overflow: hidden;           /* ✅ يمنع العناصر من الخروج */
 }
+
 
 .keyboard-button {
     background-color: var(--color-secondary); /* لون من colors.css */
@@ -104,4 +106,13 @@
 /* دعم RTL لأنماط لوحة المفاتيح وعناصر التحكم */
 [dir="rtl"] .keyboard-grid {
     /* قد لا تحتاج لتغيير إذا كان التخطيط مرنًا */
+}
+@media (max-width: 768px) {
+  .keyboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(30px, 1fr));
+    gap: 10px;
+    padding: 10px;
+    max-width: 100%;
+    margin: 0 auto;
+  }
 }

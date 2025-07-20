@@ -200,17 +200,4 @@ html, body {
     padding: 20px 0;
     gap: 15px; /* ضبط المسافة بين البطاقات للشاشات الأصغر */
   }
-.keyboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(30px, 1fr)); /* مرن لعرض الحروف */
-    gap: 10px;
-    padding: 10px;
-    background-color: var(--color-background); /* استخدام لون خلفية عام من colors.css */
-    border-radius: 5px;
-    box-shadow: 0 4px 8px var(--color-shadow); /* استخدام ظل من common-components-subjects.css */
-    margin-bottom: 5px;
-    max-width: 360px; /* لتحديد أقصى عرض للوحة المفاتيح */
-    margin-left: auto;
-    margin-right: auto;
-}
 }
