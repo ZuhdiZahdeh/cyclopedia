@@ -116,4 +116,11 @@
     max-width: 100%;
     margin: 0 auto;
   }
+  .keyboard-button {
+  padding: 5px 5px;
+  font-size: 2em;
+  }
+  html, body {
+  line-height: 1;
+  }
 }
