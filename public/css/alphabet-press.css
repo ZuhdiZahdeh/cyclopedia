@@ -78,6 +78,7 @@
 
 #alphabet-press-item-name {
     font-size: 2.5em; /* حجم خط أكبر للاسم الرئيسي */
+	text-align: center;
     margin-bottom: 15px;
     color: var(--color-text-primary); /* لون النص من colors.css */
 }
