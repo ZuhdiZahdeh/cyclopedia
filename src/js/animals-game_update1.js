@@ -33,10 +33,6 @@ export async function loadAnimalsGameContent() {
           <li><strong>اسم الزوجة:</strong> <span id="animal-female">---</span></li>
           <li><strong>الصنف:</strong> <span id="animal-category">---</span></li>
         </ul>
-        <div class="baby-animal-section" style="display:none;">
-            <h4>صورة الابن:</h4>
-            <img id="baby-animal-image" src="" alt="baby animal" style="max-width: 150px; margin-top: 10px;"/>
-        </div>
       </div>
       <div class="animal-description-box info-box" id="animal-description-box" style="display:none;">
         <h4>الوصف:</h4>
@@ -51,7 +47,6 @@ export async function loadAnimalsGameContent() {
   const animalFemale = document.getElementById("animal-female");
   const animalCategory = document.getElementById("animal-category");
   const animalDescription = document.getElementById("animal-description");
-  const babyAnimalImage = document.getElementById("baby-animal-image"); // New
 
   const gameLangSelect = document.getElementById('game-lang-select-animal');
   if (!gameLangSelect) {
@@ -69,7 +64,6 @@ export async function loadAnimalsGameContent() {
     if (animalBaby) animalBaby.textContent = "غير متوفر";
     if (animalFemale) animalFemale.textContent = "غير متوفر";
     if (animalCategory) animalCategory.textContent = "غير متوفر";
-    if (babyAnimalImage) babyAnimalImage.src = "/images/default.png"; // New
     disableAnimalButtonsInSidebar(true);
     return;
   }
@@ -81,11 +75,9 @@ export async function loadAnimalsGameContent() {
   // زر إظهار/إخفاء الوصف والتفاصيل
   const descriptionBox = document.getElementById("animal-description-box");
   const detailsBox = document.getElementById("animal-details-section");
-  const babyAnimalSection = detailsBox.querySelector(".baby-animal-section"); // New
 
   const toggleDescBtn = document.getElementById("toggle-description-btn");
   const toggleDetailsBtn = document.getElementById("toggle-details-btn");
-  const toggleBabyImageBtn = document.getElementById("toggle-baby-image-btn"); // New
 
   if (toggleDescBtn && descriptionBox) {
     toggleDescBtn.onclick = () => {
@@ -96,13 +88,6 @@ export async function loadAnimalsGameContent() {
   if (toggleDetailsBtn && detailsBox) {
     toggleDetailsBtn.onclick = () => {
       detailsBox.style.display = (detailsBox.style.display === "none") ? "block" : "none";
-    };
-  }
-
-  // New: Toggle baby animal image
-  if (toggleBabyImageBtn && babyAnimalSection) {
-    toggleBabyImageBtn.onclick = () => {
-        babyAnimalSection.style.display = (babyAnimalSection.style.display === "none") ? "block" : "none";
     };
   }
 }
@@ -118,7 +103,6 @@ function updateAnimalContent() {
   const animalBaby = document.getElementById("animal-baby");
   const animalFemale = document.getElementById("animal-female");
   const animalCategory = document.getElementById("animal-category");
-  const babyAnimalImage = document.getElementById("baby-animal-image"); // New
 
   const prevAnimalBtn = document.getElementById('prev-animal-btn');
   const nextAnimalBtn = document.getElementById('next-animal-btn');
@@ -142,18 +126,6 @@ function updateAnimalContent() {
     animalCategory.textContent = Array.isArray(currentAnimalData.classification)
       ? currentAnimalData.classification.map(cat => (typeof cat === 'object' && cat !== null && cat[currentLang]) ? cat[currentLang] : cat).join(", ")
       : (currentAnimalData.classification?.[currentLang] || "غير معروف");
-  }
-
-  // New: Update baby animal image
-  if (babyAnimalImage) {
-    const babyImagePath = currentAnimalData.baby?.image_path;
-    if (babyImagePath) {
-        babyAnimalImage.src = `/${babyImagePath}`;
-        babyAnimalImage.alt = currentAnimalData.baby?.name?.[currentLang] || "baby animal";
-    } else {
-        babyAnimalImage.src = "/images/default.png"; // Fallback
-        babyAnimalImage.alt = "No baby animal image available";
-    }
   }
 
   if (prevAnimalBtn) prevAnimalBtn.disabled = currentIndex === 0;
@@ -207,21 +179,6 @@ export function playCurrentAnimalAudio() {
   }
 }
 
-// New: Function to play baby animal audio
-export function playCurrentBabyAnimalAudio() {
-    if (currentAnimalData && currentAnimalData.baby) {
-        const voiceSelect = document.getElementById('voice-select-animal');
-        const selectedVoiceType = voiceSelect ? voiceSelect.value : 'boy';
-        const audioPath = getBabyAnimalAudioPath(currentAnimalData.baby, selectedVoiceType);
-        if (audioPath) {
-            playAudio(audioPath);
-            recordActivity(JSON.parse(localStorage.getItem("user")), "animals_baby_audio");
-        }
-    } else {
-        console.warn('لا توجد بيانات لاسم ابن الحيوان لتشغيل الصوت.');
-    }
-}
-
 function getAnimalAudioPath(data, voiceType) {
   const langFolder = document.getElementById('game-lang-select-animal').value;
   const subjectFolder = 'animals';
@@ -245,42 +202,16 @@ function getAnimalAudioPath(data, voiceType) {
   return audioPath;
 }
 
-// New: Function to get baby animal audio path
-function getBabyAnimalAudioPath(babyData, voiceType) {
-    const langFolder = document.getElementById('game-lang-select-animal').value;
-    // Assuming baby animal sounds are in 'baby_animals' subfolder
-    const subjectFolder = 'animals/baby_animals'; 
-
-    let fileName;
-    const voiceKey = voiceType; // The voice key directly corresponds to boy/girl/teacher
-
-    if (babyData.sound && babyData.sound[langFolder] && babyData.sound[langFolder][voiceKey]) {
-        fileName = babyData.sound[langFolder][voiceKey].split('/').pop(); // Extract file name from full path
-        console.log(`✅ Found in baby voices: ${langFolder} → ${voiceKey} → ${fileName}`);
-    } else {
-        console.error(`❌ Baby animal sound not available for ${babyData.name?.[currentLang] || "unknown"} in ${langFolder} for voice type ${voiceKey}`);
-        return null;
-    }
-
-    const audioPath = `/audio/${langFolder}/${subjectFolder}/${fileName}`;
-    console.log(`🎧 Full baby animal audio path: ${audioPath}`);
-    return audioPath;
-}
-
 function disableAnimalButtonsInSidebar(isDisabled) {
   const playSoundBtn = document.getElementById("play-sound-btn-animal");
   const nextBtn = document.getElementById("next-animal-btn");
   const prevBtn = document.getElementById("prev-animal-btn");
   const voiceSelect = document.getElementById("voice-select-animal");
   const langSelect = document.getElementById("game-lang-select-animal");
-  const playBabySoundBtn = document.getElementById("play-baby-sound-btn-animal"); // New
-  const toggleBabyImageBtn = document.getElementById("toggle-baby-image-btn"); // New
 
   if (playSoundBtn) playSoundBtn.disabled = isDisabled;
   if (nextBtn) nextBtn.disabled = isDisabled;
   if (prevBtn) prevBtn.disabled = isDisabled;
   if (voiceSelect) voiceSelect.disabled = isDisabled;
   if (langSelect) langSelect.disabled = isDisabled;
-  if (playBabySoundBtn) playBabySoundBtn.disabled = isDisabled; // New
-  if (toggleBabyImageBtn) toggleBabyImageBtn.disabled = isDisabled; // New
 }

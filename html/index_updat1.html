@@ -66,10 +66,6 @@
 				<button id="toggle-description-btn" class="control-button">📖 عرض الوصف</button>
 				<button id="toggle-details-btn" class="control-button">🧾 عرض التفاصيل</button>
 			</div>
-            <div class="control-group">
-                <button id="toggle-baby-image-btn" class="control-button">👶 عرض صورة الابن</button>
-                <button id="play-baby-sound-btn-animal" class="control-button">🔊 استمع لابن الحيوان</button>
-            </div>
           </div>
         </div>
 
@@ -258,7 +254,7 @@
 
   <script type="module">
     import { showProfileForm } from '/src/js/profile.js';
-    import { loadAnimalsGameContent, showNextAnimal, showPreviousAnimal, playCurrentAnimalAudio, playCurrentBabyAnimalAudio } from '/src/js/animals-game.js';
+    import { loadAnimalsGameContent, showNextAnimal, showPreviousAnimal, playCurrentAnimalAudio } from '/src/js/animals-game.js';
     import { loadFruitsGameContent, showNextFruit, showPreviousFruit, playCurrentFruitAudio } from '/src/js/fruits-game.js';
     import { loadVegetablesGameContent, showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio } from '/src/js/vegetables-game.js';
     import { loadHumanBodyGameContent, showNextHumanBodyPart, showPreviousHumanBodyPart, playCurrentHumanBodyPartAudio } from '/src/js/human-body-game.js';
@@ -452,9 +448,6 @@
     async function initializeSubjectControls(subjectType) {
         let langSelect, voiceSelect, playSoundBtn, prevBtn, nextBtn;
         let loadContentFunc, showNextFunc, showPrevFunc, playAudioFunc;
-        // New variables for baby animal controls
-        let toggleBabyImageBtn, playBabySoundBtn; 
-        let playBabyAudioFunc;
 
         switch(subjectType) {
             case 'animal':
@@ -467,9 +460,6 @@
                 showNextFunc = showNextAnimal;
                 showPrevFunc = showPreviousAnimal;
                 playAudioFunc = playCurrentAnimalAudio;
-                toggleBabyImageBtn = document.getElementById('toggle-baby-image-btn'); // New
-                playBabySoundBtn = document.getElementById('play-baby-sound-btn-animal'); // New
-                playBabyAudioFunc = playCurrentBabyAnimalAudio; // New
                 break;
             case 'fruit':
                 langSelect = document.getElementById('game-lang-select-fruit');
@@ -558,25 +548,6 @@
         if (nextBtn) nextBtn.onclick = () => {
             showNextFunc();
         };
-
-        // New event listeners for baby animal buttons
-        if (toggleBabyImageBtn) {
-            toggleBabyImageBtn.onclick = () => {
-                // The actual toggling logic is within loadAnimalsGameContent as it manipulates the DOM directly.
-                // This button just triggers the display property of the relevant section.
-                const detailsBox = document.getElementById("animal-details-section");
-                const babyAnimalSection = detailsBox ? detailsBox.querySelector(".baby-animal-section") : null;
-                if (babyAnimalSection) {
-                    babyAnimalSection.style.display = (babyAnimalSection.style.display === "none") ? "block" : "none";
-                }
-            };
-        }
-
-        if (playBabySoundBtn) {
-            playBabySoundBtn.onclick = () => {
-                playBabyAudioFunc();
-            };
-        }
 
         applyTranslations();
     }
