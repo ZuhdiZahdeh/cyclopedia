@@ -294,139 +294,139 @@
   </div>
 
   <script type="module">
-    import { showProfileForm } from '/src/js/profile.js';
-    import { loadAnimalsGameContent, showNextAnimal, showPreviousAnimal, playCurrentAnimalAudio, playCurrentBabyAnimalAudio } from '/src/js/animals-game.js';
-    import { loadFruitsGameContent, showNextFruit, showPreviousFruit, playCurrentFruitAudio } from '/src/js/fruits-game.js';
-    import { loadVegetablesGameContent, showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio } from '/src/js/vegetables-game.js';
-    import { loadHumanBodyGameContent, showNextHumanBodyPart, showPreviousHumanBodyPart, playCurrentHumanBodyPartAudio } from '/src/js/human-body-game.js';
-    import { setDirection, currentLang, loadLanguage, applyTranslations } from '/src/js/lang-handler.js';
+		import { showProfileForm } from '/src/js/profile.js';
+		import { loadAnimalsGameContent, showNextAnimal, showPreviousAnimal, playCurrentAnimalAudio, playCurrentBabyAnimalAudio } from '/src/js/animals-game.js';
+		import { loadFruitsGameContent, showNextFruit, showPreviousFruit, playCurrentFruitAudio } from '/src/js/fruits-game.js';
+		import { loadVegetablesGameContent, showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio } from '/src/js/vegetables-game.js';
+		import { loadHumanBodyGameContent, showNextHumanBodyPart, showPreviousHumanBodyPart, playCurrentHumanBodyPartAudio } from '/src/js/human-body-game.js';
+		import { setDirection, currentLang, loadLanguage, applyTranslations } from '/src/js/lang-handler.js';
 
-    // 296: استيراد لعبة المهن
-    import { loadProfessionsGameContent, showNextProfession, showPreviousProfession, playCurrentProfessionAudio } from '/src/js/professions-game.js';
+		// 296: استيراد لعبة المهن
+		import { loadProfessionsGameContent, showNextProfession, showPreviousProfession, playCurrentProfessionAudio } from '/src/js/professions-game.js';
+		
+		import { loadAlphabetPressGameContent, playCurrentAlphabetItemAudioFromSidebar, getCurrentDisplayedItem, handleAlphabetPressLanguageChange,
+			handleAlphabetPressCategoryChange, updateAlphabetPressVoice, populateAlphabetPressSidebarOptions } from '/src/js/alphabet-press-game.js';
+		import { loadMemoryGameContent, initializeMemoryGameSidebarControls } from '/src/js/memory-game.js';
+
+
+		const mainContentArea = document.querySelector("main.main-content");
+		const animalSidebarControls = document.getElementById("animal-sidebar-controls");
+		const fruitSidebarControls = document.getElementById("fruit-sidebar-controls");
+		const vegetableSidebarControls = document.getElementById("vegetable-sidebar-controls");
+		const humanBodySidebarControls = document.getElementById("human-body-sidebar-controls");
+		const alphabetPressSidebarControls = document.getElementById("alphabet-press-sidebar-controls");
+		const memoryGameSidebarControls = document.getElementById("memory-game-sidebar-controls"); 
+		// 297: عنصر التحكم الجانبي للمهن
+		const professionSidebarControls = document.getElementById("profession-sidebar-controls");
+		
+		const welcomeMessage = document.getElementById("welcome-message");
+		const homeTopicCards = document.getElementById("home-topic-cards");
+
+		window.loadLogin = async () => {
+			hideAllControls();
+			try {
+				const response = await fetch('/users/login-form.html');
+				if (!response.ok) throw new Error('Failed to load login form');
+				const loginFormHtml = await response.text();
+				mainContentArea.innerHTML = loginFormHtml;
+			} catch (error) {
+				console.error('Error loading login form:', error);
+				mainContentArea.innerHTML = '<p style="color: red;">تعذر تحميل نموذج تسجيل الدخول. يرجى المحاولة لاحقاً.</p>';
+			}
+		};
+
+		window.loadRegister = async () => {
+			hideAllControls();
+			try {
+				const response = await fetch('/users/register-form.html');
+				if (!response.ok) throw new Error('Failed to load register form');
+				const registerFormHtml = await response.text();
+				mainContentArea.innerHTML = registerFormHtml;
+			} catch (error) {
+				console.error('Error loading register form:', error);
+				mainContentArea.innerHTML = '<p style="color: red;">تعذر تحميل نموذج التسجيل. يرجى المحاولة لاحقاً.</p>';
+			}
+		};
+
+		window.loadProfile = () => { showProfileForm(); hideAllControls(); };
+
+		window.loadAnimalsPage = async () => {
+		  hideAllControls();
+		  if (welcomeMessage) welcomeMessage.style.display = 'none';
+		  if (homeTopicCards) homeTopicCards.style.display = 'none';
+		  await loadAnimalsGameContent();
+		  showAnimalControls();
+		  initializeSubjectControls('animal');
+		};
+
+		window.loadFruitsPage = async () => {
+		  hideAllControls();
+		  if (welcomeMessage) welcomeMessage.style.display = 'none';
+		  if (homeTopicCards) homeTopicCards.style.display = 'none';
+		  await loadFruitsGameContent();
+		  showFruitControls();
+		  initializeSubjectControls('fruit');
+		};
+
+		window.loadVegetablesPage = async () => {
+		  hideAllControls();
+		  if (welcomeMessage) welcomeMessage.style.display = 'none';
+		  if (homeTopicCards) homeTopicCards.style.display = 'none';
+		  await loadVegetablesGameContent();
+		  showVegetableControls();
+		  initializeSubjectControls('vegetable');
+		};
+
+		window.loadHumanBodyPage = async () => {
+		  hideAllControls();
+		  if (welcomeMessage) welcomeMessage.style.display = 'none';
+		  if (homeTopicCards) homeTopicCards.style.display = 'none';
+		  await loadHumanBodyGameContent();
+		  showHumanBodyControls();
+		  initializeSubjectControls('human-body');
+		};
+
+		// دالة تحميل صفحة المهن 
+			window.loadProfessionsPage = async () => {
+			  hideAllControls();
+			  if (welcomeMessage) welcomeMessage.style.display = 'none';
+			  if (homeTopicCards) homeTopicCards.style.display = 'none';
+			  await loadProfessionsGameContent();
+			  // 361: إظهار شريط التحكم للمهن
+			  if (professionSidebarControls) professionSidebarControls.style.display = 'block';
+			  initializeSubjectControls('profession');
+			};
 	
-    import { loadAlphabetPressGameContent, playCurrentAlphabetItemAudioFromSidebar, getCurrentDisplayedItem, handleAlphabetPressLanguageChange,
-        handleAlphabetPressCategoryChange, updateAlphabetPressVoice, populateAlphabetPressSidebarOptions } from '/src/js/alphabet-press-game.js';
-    import { loadMemoryGameContent, initializeMemoryGameSidebarControls } from '/src/js/memory-game.js';
+		// دالة تحميل صفحة لعبة اضغط على الحرف
+		window.loadAlphabetPressPage = async () => {
+		  hideAllControls();
+		  if (welcomeMessage) welcomeMessage.style.display = 'none';
+		  if (homeTopicCards) homeTopicCards.style.display = 'none';
+		  
+		  showAlphabetPressControls(); // اجعل عناصر الشريط الجانبي مرئية أولاً
+		  await populateAlphabetPressSidebarOptions(); // استدعاء دالة تهيئة الخيارات من alphabet-press-game.js
+		  await loadAlphabetPressGameContent(); // ثم قم بتحميل محتوى اللعبة في المنطقة الرئيسية
+		};
 
+		// دالة تحميل صفحة لعبة الذاكرة
+		window.loadMemoryGamePage = async () => {
+			hideAllControls();
+			if (welcomeMessage) welcomeMessage.style.display = 'none';
+			if (homeTopicCards) homeTopicCards.style.display = 'none';
+			
+			// قم بتهيئة عناصر التحكم في الشريط الجانبي أولاً
+			if (memoryGameSidebarControls) {
+				await initializeMemoryGameSidebarControls();
+				showMemoryGameControls();
+			} else {
+				console.error("Memory game sidebar controls not found. Cannot initialize.");
+			}
 
-    const mainContentArea = document.querySelector("main.main-content");
-    const animalSidebarControls = document.getElementById("animal-sidebar-controls");
-    const fruitSidebarControls = document.getElementById("fruit-sidebar-controls");
-    const vegetableSidebarControls = document.getElementById("vegetable-sidebar-controls");
-    const humanBodySidebarControls = document.getElementById("human-body-sidebar-controls");
-    const alphabetPressSidebarControls = document.getElementById("alphabet-press-sidebar-controls");
-    const memoryGameSidebarControls = document.getElementById("memory-game-sidebar-controls"); 
-    // 297: عنصر التحكم الجانبي للمهن
-    const professionSidebarControls = document.getElementById("profession-sidebar-controls");
-	
-    const welcomeMessage = document.getElementById("welcome-message");
-    const homeTopicCards = document.getElementById("home-topic-cards");
+			await loadMemoryGameContent(); 
+		};
 
-    window.loadLogin = async () => {
-        hideAllControls();
-        try {
-            const response = await fetch('/users/login-form.html');
-            if (!response.ok) throw new Error('Failed to load login form');
-            const loginFormHtml = await response.text();
-            mainContentArea.innerHTML = loginFormHtml;
-        } catch (error) {
-            console.error('Error loading login form:', error);
-            mainContentArea.innerHTML = '<p style="color: red;">تعذر تحميل نموذج تسجيل الدخول. يرجى المحاولة لاحقاً.</p>';
-        }
-    };
-
-    window.loadRegister = async () => {
-        hideAllControls();
-        try {
-            const response = await fetch('/users/register-form.html');
-            if (!response.ok) throw new Error('Failed to load register form');
-            const registerFormHtml = await response.text();
-            mainContentArea.innerHTML = registerFormHtml;
-        } catch (error) {
-            console.error('Error loading register form:', error);
-            mainContentArea.innerHTML = '<p style="color: red;">تعذر تحميل نموذج التسجيل. يرجى المحاولة لاحقاً.</p>';
-        }
-    };
-
-    window.loadProfile = () => { showProfileForm(); hideAllControls(); };
-
-    window.loadAnimalsPage = async () => {
-      hideAllControls();
-      if (welcomeMessage) welcomeMessage.style.display = 'none';
-      if (homeTopicCards) homeTopicCards.style.display = 'none';
-      await loadAnimalsGameContent();
-      showAnimalControls();
-      initializeSubjectControls('animal');
-    };
-
-    window.loadFruitsPage = async () => {
-      hideAllControls();
-      if (welcomeMessage) welcomeMessage.style.display = 'none';
-      if (homeTopicCards) homeTopicCards.style.display = 'none';
-      await loadFruitsGameContent();
-      showFruitControls();
-      initializeSubjectControls('fruit');
-    };
-
-    window.loadVegetablesPage = async () => {
-      hideAllControls();
-      if (welcomeMessage) welcomeMessage.style.display = 'none';
-      if (homeTopicCards) homeTopicCards.style.display = 'none';
-      await loadVegetablesGameContent();
-      showVegetableControls();
-      initializeSubjectControls('vegetable');
-    };
-
-    window.loadHumanBodyPage = async () => {
-      hideAllControls();
-      if (welcomeMessage) welcomeMessage.style.display = 'none';
-      if (homeTopicCards) homeTopicCards.style.display = 'none';
-      await loadHumanBodyGameContent();
-      showHumanBodyControls();
-      initializeSubjectControls('human-body');
-    };
-
-// دالة تحميل صفحة المهن 
-	window.loadProfessionsPage = async () => {
-      hideAllControls();
-      if (welcomeMessage) welcomeMessage.style.display = 'none';
-      if (homeTopicCards) homeTopicCards.style.display = 'none';
-      await loadProfessionsGameContent();
-      // 361: إظهار شريط التحكم للمهن
-      if (professionSidebarControls) professionSidebarControls.style.display = 'block';
-      initializeSubjectControls('profession');
-    };
-	
-    // دالة تحميل صفحة لعبة اضغط على الحرف
-    window.loadAlphabetPressPage = async () => {
-      hideAllControls();
-      if (welcomeMessage) welcomeMessage.style.display = 'none';
-      if (homeTopicCards) homeTopicCards.style.display = 'none';
-      
-      showAlphabetPressControls(); // اجعل عناصر الشريط الجانبي مرئية أولاً
-      await populateAlphabetPressSidebarOptions(); // استدعاء دالة تهيئة الخيارات من alphabet-press-game.js
-      await loadAlphabetPressGameContent(); // ثم قم بتحميل محتوى اللعبة في المنطقة الرئيسية
-    };
-
-    // دالة تحميل صفحة لعبة الذاكرة
-    window.loadMemoryGamePage = async () => {
-        hideAllControls();
-        if (welcomeMessage) welcomeMessage.style.display = 'none';
-        if (homeTopicCards) homeTopicCards.style.display = 'none';
-        
-        // قم بتهيئة عناصر التحكم في الشريط الجانبي أولاً
-        if (memoryGameSidebarControls) {
-            await initializeMemoryGameSidebarControls();
-            showMemoryGameControls();
-        } else {
-            console.error("Memory game sidebar controls not found. Cannot initialize.");
-        }
-
-        await loadMemoryGameContent(); 
-    };
-
-    window.showHomePage = () => {
-        mainContentArea.innerHTML = `
+		window.showHomePage = () => {
+			mainContentArea.innerHTML = `
             <h2 id="welcome-message-inner" style="display: block;">مرحبًا بك في الموسوعة!</h2>
             <div id="home-topic-cards-inner" class="home-cards-container">
                 <a href="#" class="topic-card animals" onclick="loadAnimalsPage(); return false;">
@@ -452,233 +452,203 @@
                     <span class="icon">🧠</span>
                     <h3>لعبة الذاكرة</h3>
                 </a>
-			
-	window.showHomePage = () => {
-		mainContentArea.innerHTML = `
-			<h2 id="welcome-message-inner" style="display: block;">مرحبًا بك في الموسوعة!</h2>
-			<div id="home-topic-cards-inner" class="home-cards-container">
-				<a href="#" class="topic-card animals" onclick="loadAnimalsPage(); return false;">
-				<span class="icon">🐾</span>
-				<h3>الحيوانات</h3>
-				</a>
-				<a href="#" class="topic-card fruits" onclick="loadFruitsPage(); return false;">
-				<span class="icon">🍎</span>
-				<h3>الفواكه</h3>
-				</a>
-				<a href="#" class="topic-card vegetables" onclick="loadVegetablesPage(); return false;">
-				<span class="icon">🥦</span>
-				<h3>الخضروات</h3>
-				</a>
-				<a href="#" class="topic-card human-body" onclick="loadHumanBodyPage(); return false;">
-				<span class="icon">🧠</span>
-				<h3>جسم الإنسان</h3>
-				</a>
-				<a href="#" class="topic-card games" onclick="loadAlphabetPressPage(); return false;">
-				<span class="icon">🔠</span>
-				<h3>لعبة الحروف</h3>
-				</a>
-				<a href="#" class="topic-card games" onclick="loadMemoryGamePage(); return false;">
-				<span class="icon">🧠</span>
-				<h3>لعبة الذاكرة</h3>
-				</a>
 				<!-- بطاقة المهن المفقودة -->
-				<a href="#" class="topic-card professions" onclick="loadProfessionsPage(); return false;">
-				<span class="icon">👷‍♂️</span>
-				<h3>المهن</h3>
-				</a>
-			</div>
-		  `;
-		  hideAllControls();
-		  const defaultLang = localStorage.getItem("lang") || "ar";
-		  setDirection(defaultLang);
+						<a href="#" class="topic-card professions" onclick="loadProfessionsPage(); return false;">
+						<span class="icon">👷‍♂️</span>
+						<h3>المهن</h3>
+						</a>
+					</div>
+				  `;
+				  hideAllControls();
+				  const defaultLang = localStorage.getItem("lang") || "ar";
+				  setDirection(defaultLang);
 		};
 
 
-    function showAnimalControls() { if (animalSidebarControls) { animalSidebarControls.style.display = 'block'; } }
-    function hideAnimalControls() { if (animalSidebarControls) { animalSidebarControls.style.display = 'none'; } }
-    function showFruitControls() { if (fruitSidebarControls) { fruitSidebarControls.style.display = 'block'; } }
-    function hideFruitControls() { if (fruitSidebarControls) { fruitSidebarControls.style.display = 'none'; } }
-    function showVegetableControls() { if (vegetableSidebarControls) { vegetableSidebarControls.style.display = 'block'; } }
-    function hideVegetableControls() { if (vegetableSidebarControls) { vegetableSidebarControls.style.display = 'none'; } }
-    function showHumanBodyControls() { if (humanBodySidebarControls) { humanBodySidebarControls.style.display = 'block'; } }
-    function hideHumanBodyControls() { if (humanBodySidebarControls) { humanBodySidebarControls.style.display = 'none'; } }
-    function showAlphabetPressControls() { if (alphabetPressSidebarControls) { alphabetPressSidebarControls.style.display = 'block'; } }
-    function hideAlphabetPressControls() { if (alphabetPressSidebarControls) { alphabetPressSidebarControls.style.display = 'none'; } }
-    function showMemoryGameControls() { if (memoryGameSidebarControls) { memoryGameSidebarControls.style.display = 'block'; } }
-    function hideMemoryGameControls() { if (memoryGameSidebarControls) { memoryGameSidebarControls.style.display = 'none'; } }
-    function hideAllControls() {
-        hideAnimalControls();
-        hideFruitControls();
-        hideVegetableControls();
-        hideHumanBodyControls();
-        hideAlphabetPressControls();
-        hideMemoryGameControls();
-		      // 367: إخفاء التحكم بالمهن
-      if (professionSidebarControls) professionSidebarControls.style.display = 'none';
-    }
+		function showAnimalControls() { if (animalSidebarControls) { animalSidebarControls.style.display = 'block'; } }
+		function hideAnimalControls() { if (animalSidebarControls) { animalSidebarControls.style.display = 'none'; } }
+		function showFruitControls() { if (fruitSidebarControls) { fruitSidebarControls.style.display = 'block'; } }
+		function hideFruitControls() { if (fruitSidebarControls) { fruitSidebarControls.style.display = 'none'; } }
+		function showVegetableControls() { if (vegetableSidebarControls) { vegetableSidebarControls.style.display = 'block'; } }
+		function hideVegetableControls() { if (vegetableSidebarControls) { vegetableSidebarControls.style.display = 'none'; } }
+		function showHumanBodyControls() { if (humanBodySidebarControls) { humanBodySidebarControls.style.display = 'block'; } }
+		function hideHumanBodyControls() { if (humanBodySidebarControls) { humanBodySidebarControls.style.display = 'none'; } }
+		function showAlphabetPressControls() { if (alphabetPressSidebarControls) { alphabetPressSidebarControls.style.display = 'block'; } }
+		function hideAlphabetPressControls() { if (alphabetPressSidebarControls) { alphabetPressSidebarControls.style.display = 'none'; } }
+		function showMemoryGameControls() { if (memoryGameSidebarControls) { memoryGameSidebarControls.style.display = 'block'; } }
+		function hideMemoryGameControls() { if (memoryGameSidebarControls) { memoryGameSidebarControls.style.display = 'none'; } }
+			function hideAllControls() {
+			hideAnimalControls();
+			hideFruitControls();
+			hideVegetableControls();
+			hideHumanBodyControls();
+			hideAlphabetPressControls();
+			hideMemoryGameControls();
+				  // 367: إخفاء التحكم بالمهن
+		  if (professionSidebarControls) professionSidebarControls.style.display = 'none';
+			}
 
-    const availableCategories = [
-        { id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
-        { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
-        { id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables', name_he: 'ירקות' },
-        { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף האדם' },
-		{ id: 'profession', name_ar: 'المهن', name_en: 'Profession', name_he: 'מקצועות' },
-    ];
+			const availableCategories = [
+				{ id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
+				{ id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
+				{ id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables', name_he: 'ירקות' },
+				{ id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף האדם' },
+				{ id: 'profession', name_ar: 'المهن', name_en: 'Profession', name_he: 'מקצועות' },
+			];
 
-    // دالة initializeSubjectControls العامة لتهيئة عناصر التحكم لكل موضوع
-    async function initializeSubjectControls(subjectType) {
-        let langSelect, voiceSelect, playSoundBtn, prevBtn, nextBtn;
-        let loadContentFunc, showNextFunc, showPrevFunc, playAudioFunc;
-        // New variables for baby animal controls
-        let toggleBabyImageBtn, playBabySoundBtn; 
-        let playBabyAudioFunc;
+				// دالة initializeSubjectControls العامة لتهيئة عناصر التحكم لكل موضوع
+				async function initializeSubjectControls(subjectType) {
+						let langSelect, voiceSelect, playSoundBtn, prevBtn, nextBtn;
+						let loadContentFunc, showNextFunc, showPrevFunc, playAudioFunc;
+						// New variables for baby animal controls
+						let toggleBabyImageBtn, playBabySoundBtn; 
+						let playBabyAudioFunc;
 
-        switch(subjectType) {
-            case 'animal':
-                langSelect = document.getElementById('game-lang-select-animal');
-                voiceSelect = document.getElementById('voice-select-animal');
-                playSoundBtn = document.getElementById('play-sound-btn-animal');
-                prevBtn = document.getElementById('prev-animal-btn');
-                nextBtn = document.getElementById('next-animal-btn');
-                loadContentFunc = loadAnimalsGameContent;
-                showNextFunc = showNextAnimal;
-                showPrevFunc = showPreviousAnimal;
-                playAudioFunc = playCurrentAnimalAudio;
-                toggleBabyImageBtn = document.getElementById('toggle-baby-image-btn'); // New
-                playBabySoundBtn = document.getElementById('play-baby-sound-btn-animal'); // New
-                playBabyAudioFunc = playCurrentBabyAnimalAudio; // New
-                break;
-            case 'fruit':
-                langSelect = document.getElementById('game-lang-select-fruit');
-                voiceSelect = document.getElementById('voice-select-fruit');
-                playSoundBtn = document.getElementById('play-sound-btn-fruit');
-                prevBtn = document.getElementById('prev-fruit-btn');
-                nextBtn = document.getElementById('next-fruit-btn');
-                loadContentFunc = loadFruitsGameContent;
-                showNextFunc = showNextFruit;
-                showPrevFunc = showPreviousFruit;
-                playAudioFunc = playCurrentFruitAudio;
-                break;
-            case 'vegetable':
-                langSelect = document.getElementById('game-lang-select-vegetable');
-                voiceSelect = document.getElementById('voice-select-vegetable');
-                playSoundBtn = document.getElementById('play-sound-btn-vegetable');
-                prevBtn = document.getElementById('prev-vegetable-btn');
-                nextBtn = document.getElementById('next-vegetable-btn');
-                loadContentFunc = loadVegetablesGameContent;
-                showNextFunc = showNextVegetable;
-                showPrevFunc = showPreviousVegetable;
-                playAudioFunc = playCurrentVegetableAudio;
-                break;
-            case 'human-body':
-                langSelect = document.getElementById('game-lang-select-human-body');
-                voiceSelect = document.getElementById('voice-select-human-body');
-                playSoundBtn = document.getElementById('play-sound-btn-human-body');
-                prevBtn = document.getElementById('prev-human-body-btn');
-                nextBtn = document.getElementById('next-human-body-btn');
-                loadContentFunc = loadHumanBodyGameContent;
-                showNextFunc = showNextHumanBodyPart;
-                showPrevFunc = showPreviousHumanBodyPart;
-                playAudioFunc = playCurrentHumanBodyPartAudio;
-                break;
-			case 'profession':
-				langSelect = document.getElementById('game-lang-select-profession');
-				voiceSelect = document.getElementById('voice-select-profession');
-				playSoundBtn = document.getElementById('play-sound-btn-profession');
-				const toggleDescBtn = document.getElementById('toggle-description-btn-profession');
-				if (toggleDescBtn) toggleDescBtn.onclick = () => {
-				const descBox = document.getElementById('profession-description-box');
-				descBox.style.display = descBox.style.display === 'none' ? 'block' : 'none';
-				};
-				prevBtn = document.getElementById('prev-profession-btn');
-				nextBtn = document.getElementById('next-profession-btn');
-				loadContentFunc = loadProfessionsGameContent;
-				showNextFunc = showNextProfession;
-				showPrevFunc = showPreviousProfession;
-				playAudioFunc = playCurrentProfessionAudio;
-				break;
+						switch(subjectType) {
+							case 'animal':
+								langSelect = document.getElementById('game-lang-select-animal');
+								voiceSelect = document.getElementById('voice-select-animal');
+								playSoundBtn = document.getElementById('play-sound-btn-animal');
+								prevBtn = document.getElementById('prev-animal-btn');
+								nextBtn = document.getElementById('next-animal-btn');
+								loadContentFunc = loadAnimalsGameContent;
+								showNextFunc = showNextAnimal;
+								showPrevFunc = showPreviousAnimal;
+								playAudioFunc = playCurrentAnimalAudio;
+								toggleBabyImageBtn = document.getElementById('toggle-baby-image-btn'); // New
+								playBabySoundBtn = document.getElementById('play-baby-sound-btn-animal'); // New
+								playBabyAudioFunc = playCurrentBabyAnimalAudio; // New
+								break;
+							case 'fruit':
+								langSelect = document.getElementById('game-lang-select-fruit');
+								voiceSelect = document.getElementById('voice-select-fruit');
+								playSoundBtn = document.getElementById('play-sound-btn-fruit');
+								prevBtn = document.getElementById('prev-fruit-btn');
+								nextBtn = document.getElementById('next-fruit-btn');
+								loadContentFunc = loadFruitsGameContent;
+								showNextFunc = showNextFruit;
+								showPrevFunc = showPreviousFruit;
+								playAudioFunc = playCurrentFruitAudio;
+								break;
+							case 'vegetable':
+								langSelect = document.getElementById('game-lang-select-vegetable');
+								voiceSelect = document.getElementById('voice-select-vegetable');
+								playSoundBtn = document.getElementById('play-sound-btn-vegetable');
+								prevBtn = document.getElementById('prev-vegetable-btn');
+								nextBtn = document.getElementById('next-vegetable-btn');
+								loadContentFunc = loadVegetablesGameContent;
+								showNextFunc = showNextVegetable;
+								showPrevFunc = showPreviousVegetable;
+								playAudioFunc = playCurrentVegetableAudio;
+								break;
+							case 'human-body':
+								langSelect = document.getElementById('game-lang-select-human-body');
+								voiceSelect = document.getElementById('voice-select-human-body');
+								playSoundBtn = document.getElementById('play-sound-btn-human-body');
+								prevBtn = document.getElementById('prev-human-body-btn');
+								nextBtn = document.getElementById('next-human-body-btn');
+								loadContentFunc = loadHumanBodyGameContent;
+								showNextFunc = showNextHumanBodyPart;
+								showPrevFunc = showPreviousHumanBodyPart;
+								playAudioFunc = playCurrentHumanBodyPartAudio;
+								break;
+							case 'profession':
+								langSelect = document.getElementById('game-lang-select-profession');
+								voiceSelect = document.getElementById('voice-select-profession');
+								playSoundBtn = document.getElementById('play-sound-btn-profession');
+								const toggleDescBtn = document.getElementById('toggle-description-btn-profession');
+								if (toggleDescBtn) toggleDescBtn.onclick = () => {
+								const descBox = document.getElementById('profession-description-box');
+								descBox.style.display = descBox.style.display === 'none' ? 'block' : 'none';
+								};
+								prevBtn = document.getElementById('prev-profession-btn');
+								nextBtn = document.getElementById('next-profession-btn');
+								loadContentFunc = loadProfessionsGameContent;
+								showNextFunc = showNextProfession;
+								showPrevFunc = showPreviousProfession;
+								playAudioFunc = playCurrentProfessionAudio;
+								break;
 
-            default:
-            return;
-        }
+							default:
+							return;
+						}
 
-        if (!langSelect || !voiceSelect) {
-            console.error(`عناصر التحكم لنوع الموضوع '${subjectType}' لم يتم العثور عليها في DOM.`);
-            return;
-        }
+					if (!langSelect || !voiceSelect) {
+						console.error(`عناصر التحكم لنوع الموضوع '${subjectType}' لم يتم العثور عليها في DOM.`);
+						return;
+					}
 
-        if (langSelect.options.length === 0) {
-            ['ar', 'en', 'he'].forEach(langCode => {
-                const option = document.createElement('option');
-                option.value = langCode;
-                option.textContent = { 'ar': 'العربية', 'en': 'English', 'he': 'עברית' }[langCode];
-                langSelect.appendChild(option);
-            });
-            langSelect.value = currentLang;
-        }
+					if (langSelect.options.length === 0) {
+						['ar', 'en', 'he'].forEach(langCode => {
+							const option = document.createElement('option');
+							option.value = langCode;
+							option.textContent = { 'ar': 'العربية', 'en': 'English', 'he': 'עברית' }[langCode];
+							langSelect.appendChild(option);
+						});
+						langSelect.value = currentLang;
+					}
 
-        if (voiceSelect.options.length === 0) {
-            ['teacher', 'boy', 'girl', 'child'].forEach(voiceType => {
-                const option = document.createElement('option');
-                option.value = voiceType;
-                option.textContent = { 'teacher': 'المعلم', 'boy': 'صوت ولد', 'girl': 'صوت بنت', 'child': 'صوت طفل' }[voiceType];
-                voiceSelect.appendChild(option);
-            });
-            voiceSelect.value = 'teacher';
-        }
+					if (voiceSelect.options.length === 0) {
+						['teacher', 'boy', 'girl', 'child'].forEach(voiceType => {
+							const option = document.createElement('option');
+							option.value = voiceType;
+							option.textContent = { 'teacher': 'المعلم', 'boy': 'صوت ولد', 'girl': 'صوت بنت', 'child': 'صوت طفل' }[voiceType];
+							voiceSelect.appendChild(option);
+						});
+						voiceSelect.value = 'teacher';
+					}
 
-        langSelect.onchange = async () => {
-            const newLang = langSelect.value;
-            await loadLanguage(newLang);
-            applyTranslations();
-            setDirection(newLang);
-            await loadContentFunc();
-        };
+					langSelect.onchange = async () => {
+						const newLang = langSelect.value;
+						await loadLanguage(newLang);
+						applyTranslations();
+						setDirection(newLang);
+						await loadContentFunc();
+					};
 
-        voiceSelect.onchange = () => {
-            // منطق تحديث الصوت في ملف اللعبة الخاص بالموضوع (مثل animals-game.js)
-            // هذه الأزرار لا تمرر القيمة مباشرة إلى الدالة، بل الدالة تستخدم قيمة الـ select
-            // ولذلك لا حاجة لدالة update هنا
-        };
+					voiceSelect.onchange = () => {
+						// منطق تحديث الصوت في ملف اللعبة الخاص بالموضوع (مثل animals-game.js)
+						// هذه الأزرار لا تمرر القيمة مباشرة إلى الدالة، بل الدالة تستخدم قيمة الـ select
+						// ولذلك لا حاجة لدالة update هنا
+					};
 
-        if (playSoundBtn) playSoundBtn.onclick = () => {
-            playAudioFunc();
-        };
+					if (playSoundBtn) playSoundBtn.onclick = () => {
+						playAudioFunc();
+					};
 
-        if (prevBtn) prevBtn.onclick = () => {
-            showPrevFunc();
-        };
+					if (prevBtn) prevBtn.onclick = () => {
+						showPrevFunc();
+					};
 
-        if (nextBtn) nextBtn.onclick = () => {
-            showNextFunc();
-        };
+					if (nextBtn) nextBtn.onclick = () => {
+						showNextFunc();
+					};
 
-        // New event listeners for baby animal buttons
-        if (toggleBabyImageBtn) {
-            toggleBabyImageBtn.onclick = () => {
-                // The actual toggling logic is within loadAnimalsGameContent as it manipulates the DOM directly.
-                // This button just triggers the display property of the relevant section.
-                const detailsBox = document.getElementById("animal-details-section");
-                const babyAnimalSection = detailsBox ? detailsBox.querySelector(".baby-animal-section") : null;
-                if (babyAnimalSection) {
-                    babyAnimalSection.style.display = (babyAnimalSection.style.display === "none") ? "block" : "none";
-                }
-            };
-        }
+					// New event listeners for baby animal buttons
+					if (toggleBabyImageBtn) {
+						toggleBabyImageBtn.onclick = () => {
+							// The actual toggling logic is within loadAnimalsGameContent as it manipulates the DOM directly.
+							// This button just triggers the display property of the relevant section.
+							const detailsBox = document.getElementById("animal-details-section");
+							const babyAnimalSection = detailsBox ? detailsBox.querySelector(".baby-animal-section") : null;
+							if (babyAnimalSection) {
+								babyAnimalSection.style.display = (babyAnimalSection.style.display === "none") ? "block" : "none";
+							}
+						};
+					}
 
-        if (playBabySoundBtn) {
-            playBabySoundBtn.onclick = () => {
-                playBabyAudioFunc();
-            };
-        }
+					if (playBabySoundBtn) {
+						playBabySoundBtn.onclick = () => {
+							playBabyAudioFunc();
+						};
+					}
 
-        applyTranslations();
-    }
-
-
-    document.addEventListener('DOMContentLoaded', () => {
-        window.showHomePage();
-    });
+					applyTranslations();
+				}
+				
+						document.addEventListener('DOMContentLoaded', () => {
+						window.showHomePage();
+					});
   </script>
 </body>
 </html>
