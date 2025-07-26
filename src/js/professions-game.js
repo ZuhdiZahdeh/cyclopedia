@@ -119,14 +119,16 @@ function updateProfessionContent() {
   stopCurrentAudio();
 }
 
-async function fetchProfessions(lang) {
+async function fetchProfessions() {
   try {
-    const colRef = collection(db, "categories", "professions", "items");
-    const q = query(colRef);
-    const snapshot = await getDocs(q);
-    professions = snapshot.docs.map(doc => doc.data());
+    // اقرأ مباشرةً من مجموعة "professions" في الجذر
+    const colRef = collection(db, "professions");
+    const q      = query(colRef);
+    const snap   = await getDocs(q);
+    // احصل على بيانات كل وثيقة
+    professions = snap.docs.map(doc => doc.data());
   } catch (err) {
-    console.error("Error fetching professions:", err);
+    console.error("Error fetching professions from Firestore:", err);
     professions = [];
   }
 }
