@@ -13,7 +13,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
 
         // صفحات الموسوعة التعليمية
-        animals: resolve(__dirname, 'cyclopedia-app/html/animals.html'),
+		// animals: resolve(__dirname, 'cyclopedia-app/html/animals.html'),
         birds: resolve(__dirname, 'cyclopedia-app/html/birds.html'),
         body: resolve(__dirname, 'cyclopedia-app/html/body.html'),
         colors: resolve(__dirname, 'cyclopedia-app/html/colors-page.html'),
