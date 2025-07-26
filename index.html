@@ -452,13 +452,47 @@
                     <span class="icon">🧠</span>
                     <h3>لعبة الذاكرة</h3>
                 </a>
-            </div>
-        `;
-        hideAllControls();
+			
+	window.showHomePage = () => {
+		mainContentArea.innerHTML = `
+			<h2 id="welcome-message-inner" style="display: block;">مرحبًا بك في الموسوعة!</h2>
+			<div id="home-topic-cards-inner" class="home-cards-container">
+				<a href="#" class="topic-card animals" onclick="loadAnimalsPage(); return false;">
+				<span class="icon">🐾</span>
+				<h3>الحيوانات</h3>
+				</a>
+				<a href="#" class="topic-card fruits" onclick="loadFruitsPage(); return false;">
+				<span class="icon">🍎</span>
+				<h3>الفواكه</h3>
+				</a>
+				<a href="#" class="topic-card vegetables" onclick="loadVegetablesPage(); return false;">
+				<span class="icon">🥦</span>
+				<h3>الخضروات</h3>
+				</a>
+				<a href="#" class="topic-card human-body" onclick="loadHumanBodyPage(); return false;">
+				<span class="icon">🧠</span>
+				<h3>جسم الإنسان</h3>
+				</a>
+				<a href="#" class="topic-card games" onclick="loadAlphabetPressPage(); return false;">
+				<span class="icon">🔠</span>
+				<h3>لعبة الحروف</h3>
+				</a>
+				<a href="#" class="topic-card games" onclick="loadMemoryGamePage(); return false;">
+				<span class="icon">🧠</span>
+				<h3>لعبة الذاكرة</h3>
+				</a>
+				<!-- بطاقة المهن المفقودة -->
+				<a href="#" class="topic-card professions" onclick="loadProfessionsPage(); return false;">
+				<span class="icon">👷‍♂️</span>
+				<h3>المهن</h3>
+				</a>
+			</div>
+		  `;
+		  hideAllControls();
+		  const defaultLang = localStorage.getItem("lang") || "ar";
+		  setDirection(defaultLang);
+		};
 
-        const defaultLang = localStorage.getItem("lang") || "ar";
-        setDirection(defaultLang);
-    };
 
     function showAnimalControls() { if (animalSidebarControls) { animalSidebarControls.style.display = 'block'; } }
     function hideAnimalControls() { if (animalSidebarControls) { animalSidebarControls.style.display = 'none'; } }
