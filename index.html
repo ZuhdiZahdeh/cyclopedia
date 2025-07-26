@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="/css/fruits.css" />
   <link rel="stylesheet" href="/css/vegetables.css" />
   <link rel="stylesheet" href="/css/human-body.css" />
+  <link rel="stylesheet" href="/css/professions.css" />
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/alphabet-press.css" />
   <link rel="stylesheet" href="/css/memory-game.css" />
@@ -30,6 +31,7 @@
         <a href="#" onclick="loadFruitsPage()">🍎 الفواكه</a>
         <a href="#" onclick="loadVegetablesPage()">🥦 الخضروات</a>
         <a href="#" onclick="loadHumanBodyPage()">🧠 جسم الإنسان</a>
+		<a href="#" onclick="loadProfessionsPage()">👷‍♂️ المهن</a>
         <a href="#" onclick="loadAlphabetPressPage()">🎮 لعبة الحروف</a>
         <a href="#" onclick="loadMemoryGamePage()">🃏 الذاكرة</a>
       </nav>
@@ -156,7 +158,37 @@
                 </div>
             </div>
         </div>
-
+ <!-- 144: قسم تحكم المهن -->
+        <div id="profession-sidebar-controls" class="sidebar-section" style="display: none;">
+          <h3 style="text-align: center;">👷‍♂️ تعرف على المهن</h3>
+          <div class="sidebar-game-controls">
+            <div class="control-group">
+              <label for="game-lang-select-profession">اللغة:</label>
+              <select id="game-lang-select-profession">
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+                <option value="he">עברית</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label for="voice-select-profession">الصوت:</label>
+              <select id="voice-select-profession">
+                <option value="teacher">المعلم</option>
+                <option value="boy">صوت ولد</option>
+                <option value="girl">صوت بنت</option>
+              </select>
+            </div>
+            <button id="play-sound-btn-profession" class="control-button">🔊 استمع</button>
+            <div class="sidebar-navigation-buttons">
+              <button id="prev-profession-btn" class="control-button">⬅️ السابق</button>
+              <button id="next-profession-btn" class="control-button">التالي ➡️</button>
+            </div>
+            <div class="control-group">
+              <button id="toggle-description-btn-profession" class="control-button">📖 عرض الوصف</button>
+            </div>
+          </div>
+        </div>
+        <!-- نهاية قسم التحكم بالمهـن -->
        <div id="alphabet-press-sidebar-controls" class="sidebar-section" style="display: none;">
             <h3 id="alphabet-press-title" style="text-align: center;">🎮 لعبة الحروف</h3>
             <div class="sidebar-game-controls">
@@ -244,6 +276,11 @@
             <a href="#" class="topic-card human-body" onclick="loadHumanBodyPage(); return false;"> <span class="icon">🧠</span>
                 <h3>جسم الإنسان</h3>
             </a>
+			          <!-- 286: بطاقة المهن -->
+			<a href="#" class="topic-card professions" onclick="loadProfessionsPage(); return false;">
+            <span class="icon">👷‍♂️</span>
+				<h3>المهن</h3>
+			 </a>
             <a href="#" class="topic-card games" onclick="loadAlphabetPressPage(); return false;">
                 <span class="icon">🔠</span>
                 <h3>لعبة الحروف</h3> </a>
@@ -263,21 +300,13 @@
     import { loadVegetablesGameContent, showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio } from '/src/js/vegetables-game.js';
     import { loadHumanBodyGameContent, showNextHumanBodyPart, showPreviousHumanBodyPart, playCurrentHumanBodyPartAudio } from '/src/js/human-body-game.js';
     import { setDirection, currentLang, loadLanguage, applyTranslations } from '/src/js/lang-handler.js';
-	
-    import {
-        loadAlphabetPressGameContent,
-        playCurrentAlphabetItemAudioFromSidebar,
-        getCurrentDisplayedItem,
-        handleAlphabetPressLanguageChange,
-        handleAlphabetPressCategoryChange,
-        updateAlphabetPressVoice,
-        populateAlphabetPressSidebarOptions
-    } from '/src/js/alphabet-press-game.js';
 
-    import {
-        loadMemoryGameContent,
-        initializeMemoryGameSidebarControls
-    } from '/src/js/memory-game.js';
+    // 296: استيراد لعبة المهن
+    import { loadProfessionsGameContent, showNextProfession, showPreviousProfession, playCurrentProfessionAudio } from '/src/js/professions-game.js';
+	
+    import { loadAlphabetPressGameContent, playCurrentAlphabetItemAudioFromSidebar, getCurrentDisplayedItem, handleAlphabetPressLanguageChange,
+        handleAlphabetPressCategoryChange, updateAlphabetPressVoice, populateAlphabetPressSidebarOptions } from '/src/js/alphabet-press-game.js';
+    import { loadMemoryGameContent, initializeMemoryGameSidebarControls } from '/src/js/memory-game.js';
 
 
     const mainContentArea = document.querySelector("main.main-content");
@@ -287,7 +316,9 @@
     const humanBodySidebarControls = document.getElementById("human-body-sidebar-controls");
     const alphabetPressSidebarControls = document.getElementById("alphabet-press-sidebar-controls");
     const memoryGameSidebarControls = document.getElementById("memory-game-sidebar-controls"); 
-
+    // 297: عنصر التحكم الجانبي للمهن
+    const professionSidebarControls = document.getElementById("profession-sidebar-controls");
+	
     const welcomeMessage = document.getElementById("welcome-message");
     const homeTopicCards = document.getElementById("home-topic-cards");
 
@@ -355,6 +386,17 @@
       initializeSubjectControls('human-body');
     };
 
+// دالة تحميل صفحة المهن 
+	window.loadProfessionsPage = async () => {
+      hideAllControls();
+      if (welcomeMessage) welcomeMessage.style.display = 'none';
+      if (homeTopicCards) homeTopicCards.style.display = 'none';
+      await loadProfessionsGameContent();
+      // 361: إظهار شريط التحكم للمهن
+      if (professionSidebarControls) professionSidebarControls.style.display = 'block';
+      initializeSubjectControls('profession');
+    };
+	
     // دالة تحميل صفحة لعبة اضغط على الحرف
     window.loadAlphabetPressPage = async () => {
       hideAllControls();
@@ -430,8 +472,6 @@
     function hideAlphabetPressControls() { if (alphabetPressSidebarControls) { alphabetPressSidebarControls.style.display = 'none'; } }
     function showMemoryGameControls() { if (memoryGameSidebarControls) { memoryGameSidebarControls.style.display = 'block'; } }
     function hideMemoryGameControls() { if (memoryGameSidebarControls) { memoryGameSidebarControls.style.display = 'none'; } }
-
-
     function hideAllControls() {
         hideAnimalControls();
         hideFruitControls();
@@ -439,6 +479,8 @@
         hideHumanBodyControls();
         hideAlphabetPressControls();
         hideMemoryGameControls();
+		      // 367: إخفاء التحكم بالمهن
+      if (professionSidebarControls) professionSidebarControls.style.display = 'none';
     }
 
     const availableCategories = [
@@ -446,6 +488,7 @@
         { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
         { id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables', name_he: 'ירקות' },
         { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף האדם' },
+		{ id: 'profession', name_ar: 'المهن', name_en: 'Profession', name_he: 'מקצועות' },
     ];
 
     // دالة initializeSubjectControls العامة لتهيئة عناصر التحكم لكل موضوع
@@ -504,8 +547,25 @@
                 showPrevFunc = showPreviousHumanBodyPart;
                 playAudioFunc = playCurrentHumanBodyPartAudio;
                 break;
+			case 'profession':
+				langSelect = document.getElementById('game-lang-select-profession');
+				voiceSelect = document.getElementById('voice-select-profession');
+				playSoundBtn = document.getElementById('play-sound-btn-profession');
+				const toggleDescBtn = document.getElementById('toggle-description-btn-profession');
+				if (toggleDescBtn) toggleDescBtn.onclick = () => {
+				const descBox = document.getElementById('profession-description-box');
+				descBox.style.display = descBox.style.display === 'none' ? 'block' : 'none';
+				};
+				prevBtn = document.getElementById('prev-profession-btn');
+				nextBtn = document.getElementById('next-profession-btn');
+				loadContentFunc = loadProfessionsGameContent;
+				showNextFunc = showNextProfession;
+				showPrevFunc = showPreviousProfession;
+				playAudioFunc = playCurrentProfessionAudio;
+				break;
+
             default:
-                return;
+            return;
         }
 
         if (!langSelect || !voiceSelect) {
