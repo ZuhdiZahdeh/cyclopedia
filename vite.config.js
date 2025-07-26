@@ -1,40 +1,34 @@
-// E:\cyclopedia\vite.config.js
+// vite.config.js
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-  // المسار الأساسي العام عند النشر.
-  // './' يعني أن الأصول سيتم خدمتها من نفس الدليل النسبي للملفات المخرجة.
-  // هذا حيوي لـ GitHub Pages أو الاستضافة التي لا تخدم من جذر المسار.
-  base: './', 
-  
+  base: './',
   build: {
-    // دليل الإخراج الذي سيتم فيه وضع الملفات المجمعة
-    outDir: 'dist', 
+    outDir: 'dist',
+    sourcemap: true,
     rollupOptions: {
       input: {
-        // تحديد ملف الإدخال الرئيسي لـ Rollup.
-        // بما أن index.html موجود في الجذر، فإن مساره هو __dirname + 'index.html'
+        // الصفحة الرئيسية
         main: resolve(__dirname, 'index.html'),
-        // **Vite سيتعامل تلقائيًا مع مجلد public/ كأصول ثابتة.**
-        // **لذلك، ملفات JS داخل public/src/js/ لا تحتاج لأن تكون هنا كمدخلات Rollup.**
-        // Rollup (جزء من Vite) سيجدها عبر عبارات import في index.html
-        // طالما أن المسارات في index.html صحيحة بالنسبة لمجلد public بعد النشر.
-      },
-    },
-    // تمكين إنتاج خرائط المصدر (source maps) لسهولة التصحيح
-    sourcemap: true,
-  },
-  // مجلد public هو المجلد الافتراضي لـ Vite للأصول الثابتة، لا حاجة لتعريفه صراحة هنا
-  // publicDir: 'public', // هذا هو الافتراضي وعادة لا يحتاج إلى تعريف
-  
-  // لا نحتاج إلى alias هنا إذا كانت المسارات في index.html تشير مباشرة إلى public/src/js/
-  // و Vite يتعامل مع publicDir بشكل صحيح.
-  // إذا كنت تفضل استخدام @src في الاستيرادات (مثال: import { x } from '@src/js/file.js';)
-  // فيمكنك إبقائه:
-  // resolve: {
-  //   alias: {
-  //     '@src': resolve(__dirname, 'public/src'), 
-  //   },
-  // },
+
+        // صفحات الموسوعة التعليمية
+        animals: resolve(__dirname, 'cyclopedia-app/html/animals.html'),
+        birds: resolve(__dirname, 'cyclopedia-app/html/birds.html'),
+        body: resolve(__dirname, 'cyclopedia-app/html/body.html'),
+        colors: resolve(__dirname, 'cyclopedia-app/html/colors-page.html'),
+        fruits: resolve(__dirname, 'cyclopedia-app/html/fruits.html'),
+        vegetables: resolve(__dirname, 'cyclopedia-app/html/vegetables.html'),
+        humanBody: resolve(__dirname, 'cyclopedia-app/html/human-body.html'),
+        plants: resolve(__dirname, 'cyclopedia-app/html/plants.html'),
+        fish: resolve(__dirname, 'cyclopedia-app/html/fish.html'),
+        transport: resolve(__dirname, 'cyclopedia-app/html/transport.html'),
+        numbers: resolve(__dirname, 'cyclopedia-app/html/numbers.html'),
+        time: resolve(__dirname, 'cyclopedia-app/html/time.html'),
+
+        // ✅ صفحة المهن الجديدة
+        professions: resolve(__dirname, 'cyclopedia-app/html/professions.html')
+      }
+    }
+  }
 });
