@@ -2,8 +2,9 @@
 
 /* أنماط خاصة بصور الفواكه */
 #fruit-image {
-    width: 250px;
-    height: 250px;
+    width: 80%;
+    max-width: 400px;
+    height: 300px;
     object-fit: contain;
     border-radius: 8px;
     border: 2px solid var(--color-secondary); /* استخدام متغير اللون للحدود (برتقالي) */

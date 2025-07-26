@@ -3,7 +3,7 @@
 #profession-image {
     width: 80%;
     max-width: 400px;
-    height: 400px;
+    height: 300px;
     object-fit: contain;
     border-radius: 15px;
     border: 3px solid var(--color-purple);
