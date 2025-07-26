@@ -27,65 +27,9 @@
     <button id="toggle-description-btn">📃 عرض/إخفاء الوصف</button>
     <button id="toggle-details-btn">ℹ️ عرض/إخفاء التفاصيل</button>
   </aside>
-
-  <script type="module">
-    import {
-      loadSubjectGameContent,
-      showNextItem,
-      showPreviousItem,
-      playCurrentItemAudio
-    } from '/src/js/subject-game.js';
-
-    import { loadLanguage, applyTranslations, setDirection, currentLang } from '/src/js/lang-handler.js';
-
-    async function initializeSubjectControls(subjectType) {
-      const langSelect = document.getElementById(`game-lang-select-${subjectType}`);
-      const voiceSelect = document.getElementById(`voice-select-${subjectType}`);
-      const playSoundBtn = document.getElementById(`play-sound-btn-${subjectType}`);
-      const prevBtn = document.getElementById(`prev-${subjectType}-btn`);
-      const nextBtn = document.getElementById(`next-${subjectType}-btn`);
-
-      if (!langSelect || !voiceSelect) return;
-
-      if (langSelect.options.length === 0) {
-        ['ar', 'en', 'he'].forEach(langCode => {
-          const option = document.createElement('option');
-          option.value = langCode;
-          option.textContent = { 'ar': 'العربية', 'en': 'English', 'he': 'עברית' }[langCode];
-          langSelect.appendChild(option);
-        });
-        langSelect.value = currentLang;
-      }
-
-      if (voiceSelect.options.length === 0) {
-        ['teacher', 'boy', 'girl', 'child'].forEach(voiceType => {
-          const option = document.createElement('option');
-          option.value = voiceType;
-          option.textContent = { 'teacher': 'المعلم', 'boy': 'صوت ولد', 'girl': 'صوت بنت', 'child': 'صوت طفل' }[voiceType];
-          voiceSelect.appendChild(option);
-        });
-        voiceSelect.value = 'teacher';
-      }
-
-      langSelect.onchange = async () => {
-        const newLang = langSelect.value;
-        await loadLanguage(newLang);
-        applyTranslations();
-        setDirection(newLang);
-        await loadSubjectGameContent(subjectType);
-      };
-
-      if (playSoundBtn) playSoundBtn.onclick = () => playCurrentItemAudio(subjectType);
-      if (prevBtn) prevBtn.onclick = () => showPreviousItem(subjectType);
-      if (nextBtn) nextBtn.onclick = () => showNextItem(subjectType);
-
-      applyTranslations();
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      await loadSubjectGameContent('fruits');
-      await initializeSubjectControls('fruits');
-    });
+    <script type="module">
+    import { startGame } from '/src/js/fruits-game.js';
+    startGame("fruits");
   </script>
 </body>
 </html>
