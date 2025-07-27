@@ -24,7 +24,7 @@ export default defineConfig({
         // transport: resolve(__dirname, 'html/transport.html'),
         // numbers: resolve(__dirname, 'html/numbers.html'),
         // time: resolve(__dirname, 'html/time.html'),
-        // ✅ صفحة المهن الجديدة
+		tools-match: resolve(__dirname, 'html/tools-match.html'),
         professions: resolve(__dirname, 'html/professions.html')
       }
     }
