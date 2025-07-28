@@ -8,7 +8,7 @@ window.addEventListener("DOMContentLoaded", () => {
   handleAuthUI(); // لإظهار أزرار الدخول والخروج
 });
 
-// ✅ هذه الدالة لإدارة واجهة الدخول والخروج
+// ✅ إدارة واجهة الدخول والخروج
 function handleAuthUI() {
   const isLoggedIn = localStorage.getItem("user");
 
@@ -33,3 +33,14 @@ function handleAuthUI() {
     location.reload();
   });
 }
+
+// ✅ تحميل لعبة "من صاحب الأداة؟" ديناميكيًا وتشغيلها فورًا
+window.loadToolsMatchPage = async () => {
+  const mainContentArea = document.querySelector("main.main-content");
+  const response = await fetch('/html/tools-match.html');
+  const html = await response.text();
+  mainContentArea.innerHTML = html;
+
+  const module = await import("/src/js/tools-match-game.js");
+  module.loadToolsMatchGameContent(); // ✅ يبدأ اللعبة مباشرة دون زر
+};

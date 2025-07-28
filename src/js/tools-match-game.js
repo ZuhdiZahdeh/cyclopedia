@@ -1,134 +1,132 @@
-// tools-match-game.js
-// tools-match-game.js
-
+import { getDocs, collection } from "firebase/firestore";
 import { db } from "./firebase-config.js";
-import { getDocs, collection, query } from "firebase/firestore";
-import { currentLang, loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
-import { playAudio } from "./audio-handler.js";
+import { currentLang, applyTranslations, setDirection } from "./lang-handler.js";
+import { playAudio, stopCurrentAudio } from "./audio-handler.js";
 import { recordActivity } from "./activity-handler.js";
 
 let tools = [];
 let professions = [];
-let currentTool = null;
-let correctProfession = null;
-let options = [];
+let currentMode = "image-to-images"; // أو: word-to-images, word-to-words
+let currentChallenge = null;
 
 export async function loadToolsMatchGameContent() {
-  const mainContentArea = document.querySelector("main.main-content");
+  const mainContent = document.querySelector("main.main-content");
   const sidebar = document.querySelector("aside.sidebar");
-  if (!mainContentArea || !sidebar) return;
 
-  applyTranslations();
-  setDirection(currentLang);
-
-  mainContentArea.innerHTML = `
-    <div class="game-box tool-match">
-      <h2 data-i18n="who_uses_this_tool">من يستخدم هذه الأداة؟</h2>
-      <div id="tool-question-container" class="tool-question-container"></div>
-      <div id="profession-options" class="options-box"></div>
+  mainContent.innerHTML = `
+    <div id="tools-match-container">
+      <h2 data-i18n="tools_game_title">من صاحب الأداة؟</h2>
+      <p data-i18n="tools_game_instructions">اختر المهنة الصحيحة التي تستخدم هذه الأداة.</p>
+      <div id="tools-match-question"></div>
+      <div id="tools-match-options"></div>
     </div>
   `;
 
   sidebar.innerHTML = `
-    <button id="next-tool-btn" class="sidebar-btn" data-i18n="next">التالي</button>
-    <button id="change-mode-btn" class="sidebar-btn" data-i18n="change_mode">تغيير الشكل</button>
+    <button id="next-question-btn" class="tools-btn">التالي</button>
+    <button id="change-mode-btn" class="tools-btn">تغيير الشكل</button>
   `;
 
-  document.getElementById("next-tool-btn").onclick = () => generateNewChallenge();
-  document.getElementById("change-mode-btn").onclick = () => switchMode();
+  document.getElementById("next-question-btn").addEventListener("click", generateNewChallenge);
+  document.getElementById("change-mode-btn").addEventListener("click", changeDisplayMode);
 
   await fetchToolsAndProfessions();
   generateNewChallenge();
+
+  applyTranslations();
+  setDirection(currentLang);
 }
 
 async function fetchToolsAndProfessions() {
-  try {
-    const toolsSnap = await getDocs(collection(db, "profession_tools"));
-    tools = toolsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const toolsSnapshot = await getDocs(collection(db, "tools"));
+  tools = toolsSnapshot.docs.map(doc => doc.data());
 
-    const profSnap = await getDocs(collection(db, "professions"));
-    professions = profSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch (err) {
-    console.error("Error fetching tools or professions:", err);
-  }
-}
-
-let currentMode = 0;
-const modes = ["image-to-images", "word-to-images", "word-to-words"];
-
-function switchMode() {
-  currentMode = (currentMode + 1) % modes.length;
-  generateNewChallenge();
+  const professionsSnapshot = await getDocs(collection(db, "professions"));
+  professions = professionsSnapshot.docs.map(doc => doc.data());
 }
 
 function generateNewChallenge() {
+  stopCurrentAudio();
+  const questionEl = document.getElementById("tools-match-question");
+  const optionsEl = document.getElementById("tools-match-options");
+  questionEl.innerHTML = "";
+  optionsEl.innerHTML = "";
+
   const tool = tools[Math.floor(Math.random() * tools.length)];
-  currentTool = tool;
+  const correctProfession = professions.find(p => p.tools?.includes(tool.id));
+  if (!correctProfession) return generateNewChallenge();
 
-  const matchingProfs = professions.filter(p => p.tools?.includes(tool.id));
-  if (matchingProfs.length === 0) return generateNewChallenge();
-  correctProfession = matchingProfs[Math.floor(Math.random() * matchingProfs.length)];
+  currentChallenge = { tool, correctProfession };
 
-  const wrongOptions = professions.filter(p => !p.tools?.includes(tool.id));
-  const shuffledWrong = wrongOptions.sort(() => 0.5 - Math.random()).slice(0, 2);
-  options = [...shuffledWrong, correctProfession].sort(() => 0.5 - Math.random());
+  const otherProfessions = professions
+    .filter(p => p.name && p.name[currentLang])
+    .filter(p => p !== correctProfession)
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 3);
 
-  displayToolAndOptions();
-}
+  const options = [...otherProfessions, correctProfession].sort(() => 0.5 - Math.random());
 
-function displayToolAndOptions() {
-  const container = document.getElementById("tool-question-container");
-  const optionsBox = document.getElementById("profession-options");
-  container.innerHTML = "";
-  optionsBox.innerHTML = "";
-
-  if (modes[currentMode] === "image-to-images") {
+  if (currentMode === "image-to-images") {
     const img = document.createElement("img");
-    img.src = `/${currentTool.image_path}`;
-    img.alt = currentTool.name?.[currentLang] || "tool";
+    img.src = "/" + tool.image_path;
+    img.alt = tool.name[currentLang];
     img.className = "tool-image";
-    container.appendChild(img);
+    img.onclick = () => playAudio(tool.sound?.[currentLang]?.teacher);
+    questionEl.appendChild(img);
 
-  } else if (modes[currentMode] === "word-to-images") {
-    const word = document.createElement("h3");
-    word.textContent = currentTool.name?.[currentLang] || "؟";
-    container.appendChild(word);
+    options.forEach(p => {
+      const option = document.createElement("img");
+      option.src = "/images/professions/" + p.image_file;
+      option.alt = p.name[currentLang];
+      option.className = "profession-option";
+      option.onclick = () => checkAnswer(p);
+      optionsEl.appendChild(option);
+    });
+  } else if (currentMode === "word-to-images") {
+    const span = document.createElement("span");
+    span.textContent = tool.name[currentLang];
+    span.className = "tool-word";
+    span.onclick = () => playAudio(tool.sound?.[currentLang]?.teacher);
+    questionEl.appendChild(span);
 
-  } else if (modes[currentMode] === "word-to-words") {
-    const word = document.createElement("h3");
-    word.textContent = currentTool.name?.[currentLang] || "؟";
-    container.appendChild(word);
+    options.forEach(p => {
+      const option = document.createElement("img");
+      option.src = "/images/professions/" + p.image_file;
+      option.alt = p.name[currentLang];
+      option.className = "profession-option";
+      option.onclick = () => checkAnswer(p);
+      optionsEl.appendChild(option);
+    });
+  } else {
+    const span = document.createElement("span");
+    span.textContent = tool.name[currentLang];
+    span.className = "tool-word";
+    span.onclick = () => playAudio(tool.sound?.[currentLang]?.teacher);
+    questionEl.appendChild(span);
+
+    options.forEach(p => {
+      const option = document.createElement("button");
+      option.textContent = p.name[currentLang];
+      option.className = "profession-option-btn";
+      option.onclick = () => checkAnswer(p);
+      optionsEl.appendChild(option);
+    });
   }
-
-  options.forEach(prof => {
-    const btn = document.createElement("button");
-    btn.className = "profession-option-btn";
-
-    if (modes[currentMode] === "word-to-words") {
-      btn.innerHTML = `<span>${prof.name?.[currentLang]}</span>`;
-    } else {
-      btn.innerHTML = `
-        <img src="/${prof.image_path}" alt="${prof.name?.[currentLang]}" />
-        <span>${prof.name?.[currentLang]}</span>
-      `;
-    }
-
-    btn.onclick = () => handleAnswer(prof);
-    optionsBox.appendChild(btn);
-  });
 }
 
-function handleAnswer(selectedProf) {
-  const isCorrect = selectedProf.id === correctProfession.id;
-  if (isCorrect) {
-    alert("✔️ أحسنت! الإجابة صحيحة.");
-    recordActivity(JSON.parse(localStorage.getItem("user")), "tools_match_success");
-    playAudio("/audio/success/success_toolMatch_a.mp3");
+function changeDisplayMode() {
+  const modes = ["image-to-images", "word-to-images", "word-to-words"];
+  const currentIndex = modes.indexOf(currentMode);
+  currentMode = modes[(currentIndex + 1) % modes.length];
+  generateNewChallenge();
+}
 
-  } else {
-    alert("❌ حاول مرة أخرى.");
-    recordActivity(JSON.parse(localStorage.getItem("user")), "tools_match_fail");
-    playAudio("/audio/fail/fail_toolMatch_a.mp3");
-  }
-  setTimeout(generateNewChallenge, 1000);
+function checkAnswer(selected) {
+  const isCorrect = selected === currentChallenge.correctProfession;
+  recordActivity("tools-game", {
+    correct: isCorrect,
+    tool: currentChallenge.tool.id,
+    profession: selected.name[currentLang]
+  });
+  playAudio(isCorrect ? "audio/common/correct.mp3" : "audio/common/wrong.mp3");
 }
