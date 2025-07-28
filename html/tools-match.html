@@ -1,27 +1,6 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <title>من صاحب الأداة؟</title>
-  <link rel="stylesheet" href="/css/tools-match.css" />
-</head>
-<body>
-  <main class="main-content">
-    <div class="tools-game-intro">
-      <h2 data-i18n="tools_game_title">من صاحب الأداة؟</h2>
-      <p data-i18n="tools_game_instructions">
-        شاهد الأداة، واختر المهنة التي تستخدمها! يمكنك تغيير طريقة العرض.
-      </p>
-      <img src="/images/icons/tools-match.png" alt="Tool Match Game" class="tool-image"/>
-      <button id="start-tools-game" class="start-btn">ابدأ اللعبة</button>
-    </div>
-  </main>
-
-  <script type="module">
-    import { loadToolsMatchGameContent } from "/src/js/tools-match-game.js";
-    document.getElementById("start-tools-game").onclick = () => {
-      loadToolsMatchGameContent();
-    };
-  </script>
-</body>
-</html>
+<a href="#" onclick="loadToolsMatchPage(); return false;" class="game-icon-link">
+  <span class="game-icon">
+    <img src="/images/icons/tools-match.png" alt="Tools Match Game" />
+    <h3 data-i18n="tools_game_title">من صاحب الأداة؟</h3>
+  </span>
+</a>
