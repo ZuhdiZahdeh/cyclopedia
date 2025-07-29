@@ -126,7 +126,7 @@ function updateToolContent() {
 
 async function fetchTools() {
   try {
-    const colRef = collection(db, "tools");
+    const colRef = collection(db, "profession_tools");
     const q = query(colRef);
     const snap = await getDocs(q);
     tools = snap.docs.map(doc => doc.data());
