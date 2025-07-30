@@ -4,8 +4,8 @@
 	"version": "0.0.0",
 	"scripts": {
 	  "dev": "vite",
-	  "build": "vite build && node copy-html.js",
-	  "deploy-clean": "npm run build && node clean-copy.js && firebase deploy",
+	  "build": "vite build",
+	  "deploy-clean": "npm run build && node clean-dist-merged.js && firebase deploy",
 	  "serve": "vite preview"
 	},
 	"dependencies": {
