@@ -324,38 +324,82 @@
 </main>
 </div>
 </div>
+
 <script type="module">
-		import { showProfileForm } from '/src/js/profile.js';
-		import { loadAnimalsGameContent, showNextAnimal, showPreviousAnimal, playCurrentAnimalAudio, playCurrentBabyAnimalAudio } from '/src/js/animals-game.js';
-		import { loadFruitsGameContent, showNextFruit, showPreviousFruit, playCurrentFruitAudio } from '/src/js/fruits-game.js';
-		import { loadVegetablesGameContent, showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio } from '/src/js/vegetables-game.js';
-		import { loadHumanBodyGameContent, showNextHumanBodyPart, showPreviousHumanBodyPart, playCurrentHumanBodyPartAudio } from '/src/js/human-body-game.js';
-		import { setDirection, currentLang, loadLanguage, applyTranslations } from '/src/js/lang-handler.js';
+  import { showProfileForm } from '/src/js/profile.js';
+  import {
+    loadAnimalsGameContent, showNextAnimal, showPreviousAnimal,
+    playCurrentAnimalAudio, playCurrentBabyAnimalAudio
+  } from '/src/js/animals-game.js';
 
-		// 296: استيراد لعبة المهن
-		import { loadToolsGameContent, showNextTool, showPreviousTool, playCurrentToolAudio } from '/src/js/tools-game.js';
-		import { loadProfessionsGameContent, showNextProfession, showPreviousProfession, playCurrentProfessionAudio } from '/src/js/professions-game.js';
-		
-		import { loadAlphabetPressGameContent, playCurrentAlphabetItemAudioFromSidebar, getCurrentDisplayedItem, handleAlphabetPressLanguageChange,
-			handleAlphabetPressCategoryChange, updateAlphabetPressVoice, populateAlphabetPressSidebarOptions } from '/src/js/alphabet-press-game.js';
-		import { loadMemoryGameContent, initializeMemoryGameSidebarControls } from '/src/js/memory-game.js';
+  import {
+    loadFruitsGameContent, showNextFruit, showPreviousFruit, playCurrentFruitAudio
+  } from '/src/js/fruits-game.js';
 
+  import {
+    loadVegetablesGameContent, showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio
+  } from '/src/js/vegetables-game.js';
 
-		const mainContentArea = document.querySelector("main.main-content");
-		const animalSidebarControls = document.getElementById("animal-sidebar-controls");
-		const fruitSidebarControls = document.getElementById("fruit-sidebar-controls");
-		const vegetableSidebarControls = document.getElementById("vegetable-sidebar-controls");
-		const humanBodySidebarControls = document.getElementById("human-body-sidebar-controls");
-		const alphabetPressSidebarControls = document.getElementById("alphabet-press-sidebar-controls");
-		const memoryGameSidebarControls = document.getElementById("memory-game-sidebar-controls");
-const toolsSidebarControls = document.getElementById("tools-sidebar-controls"); 
-		// 297: عنصر التحكم الجانبي للمهن
-		const professionSidebarControls = document.getElementById("profession-sidebar-controls");
-		
-		const welcomeMessage = document.getElementById("welcome-message");
-		const homeTopicCards = document.getElementById("home-topic-cards");
+  import {
+    loadHumanBodyGameContent, showNextHumanBodyPart, showPreviousHumanBodyPart, playCurrentHumanBodyPartAudio
+  } from '/src/js/human-body-game.js';
 
-		window.loadLogin = async () => {
+  import {
+    loadToolsGameContent, showNextTool, showPreviousTool, playCurrentToolAudio
+  } from '/src/js/tools-game.js';
+
+  import {
+    loadProfessionsGameContent, showNextProfession, showPreviousProfession, playCurrentProfessionAudio
+  } from '/src/js/professions-game.js';
+
+  import {
+    loadAlphabetPressGameContent, playCurrentAlphabetItemAudioFromSidebar,
+    getCurrentDisplayedItem, handleAlphabetPressLanguageChange,
+    handleAlphabetPressCategoryChange, updateAlphabetPressVoice, populateAlphabetPressSidebarOptions
+  } from '/src/js/alphabet-press-game.js';
+
+  import {
+    loadMemoryGameContent, initializeMemoryGameSidebarControls
+  } from '/src/js/memory-game.js';
+
+  import {
+    loadToolsMatchGameContent
+  } from '/src/js/tools-match-game.js';
+
+  import {
+    setDirection, currentLang, loadLanguage, applyTranslations
+  } from '/src/js/lang-handler.js';
+
+  const mainContentArea = document.querySelector("main.main-content");
+  const animalSidebarControls = document.getElementById("animal-sidebar-controls");
+  const fruitSidebarControls = document.getElementById("fruit-sidebar-controls");
+  const vegetableSidebarControls = document.getElementById("vegetable-sidebar-controls");
+  const humanBodySidebarControls = document.getElementById("human-body-sidebar-controls");
+  const alphabetPressSidebarControls = document.getElementById("alphabet-press-sidebar-controls");
+  const memoryGameSidebarControls = document.getElementById("memory-game-sidebar-controls");
+  const toolsSidebarControls = document.getElementById("tools-sidebar-controls");
+  const professionSidebarControls = document.getElementById("profession-sidebar-controls");
+
+  const welcomeMessage = document.getElementById("welcome-message");
+  const homeTopicCards = document.getElementById("home-topic-cards");
+	// دالة تحميل لعبة من صاحب الأداة 
+  window.loadToolsMatchPage = async () => {
+    hideAllControls();
+    if (welcomeMessage) welcomeMessage.style.display = 'none';
+    if (homeTopicCards) homeTopicCards.style.display = 'none';
+    try {
+      const response = await fetch('/html/tools-match.html');
+      const html = await response.text();
+      mainContentArea.innerHTML = html;
+      await loadToolsMatchGameContent(); // ✅ تفعيل اللعبة بعد تحميل HTML
+    } catch (error) {
+      mainContentArea.innerHTML = '<p>تعذر تحميل اللعبة</p>';
+      console.error(error);
+    }
+  };
+
+  // تابع باقي الدوال هنا بدون تعديل...
+  window.loadLogin = async () => {
 			hideAllControls();
 			try {
 				const response = await fetch('/users/login-form.html');
@@ -457,19 +501,6 @@ const toolsSidebarControls = document.getElementById("tools-sidebar-controls");
 
 			await loadMemoryGameContent(); 
 		};
-		// دالة تحميل صفحة من صاحب الأداة 
-		window.loadToolsMatchPage = async () => {
-		  hideAllControls();
-		  if (welcomeMessage) welcomeMessage.style.display = 'none';
-		  if (homeTopicCards) homeTopicCards.style.display = 'none';
-		  try {
-			const response = await fetch('/html/tools-match.html');
-			const html = await response.text();
-			mainContentArea.innerHTML = html;
-		  } catch (error) {
-			mainContentArea.innerHTML = '<p>تعذر تحميل اللعبة</p>';
-		  }
-		};
 
 		window.showHomePage = () => {
 			mainContentArea.innerHTML = `
@@ -498,7 +529,7 @@ const toolsSidebarControls = document.getElementById("tools-sidebar-controls");
                     <span class="icon">🧠</span>
                     <h3>لعبة الذاكرة</h3>
                 </a>
-				<!-- بطاقة المهن المفقودة -->
+				
 						<a href="#" class="topic-card professions" onclick="loadProfessionsPage(); return false;">
 						<span class="icon">👷‍♂️</span>
 						<h3>المهن</h3>
@@ -524,11 +555,10 @@ const toolsSidebarControls = document.getElementById("tools-sidebar-controls");
 		function showMemoryGameControls() { if (memoryGameSidebarControls) { memoryGameSidebarControls.style.display = 'block'; } }
 		function hideMemoryGameControls() { if (memoryGameSidebarControls) { memoryGameSidebarControls.style.display = 'none'; } }
 		function hideAllControls() { hideAnimalControls(); hideFruitControls(); hideVegetableControls(); hideHumanBodyControls(); hideAlphabetPressControls(); hideMemoryGameControls();
-				  // 367: إخفاء التحكم بالمهن
-  hideToolsControls();
+				 hideToolsControls(); 
+				 // 367: إخفاء التحكم بالمهن
 		  if (professionSidebarControls) professionSidebarControls.style.display = 'none';
 			}
-
 			const availableCategories = [
 				{ id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
 				{ id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
@@ -714,12 +744,13 @@ const toolsSidebarControls = document.getElementById("tools-sidebar-controls");
         };
 
 
+
         document.addEventListener('DOMContentLoaded', () => {
 						window.showHomePage();
 					});
   
         function showToolsControls() { if (toolsSidebarControls) toolsSidebarControls.style.display = 'block'; }
         function hideToolsControls() { if (toolsSidebarControls) toolsSidebarControls.style.display = 'none'; }
-        </script>
+</script>
 </body>
 </html>

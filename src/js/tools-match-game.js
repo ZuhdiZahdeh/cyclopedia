@@ -1,7 +1,6 @@
-// src/js/tools-match-game.js
 import { db } from "./firebase-config.js";
-import { collection, getDocs } from "firebase/firestore";
-import { currentLang, translate, applyTranslations } from "./lang-handler.js";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { currentLang as globalLang, applyTranslations } from "./lang-handler.js";
 import { playAudio, stopCurrentAudio } from "./audio-handler.js";
 import { recordActivity } from "./activity-handler.js";
 
@@ -9,20 +8,19 @@ let allTools = [];
 let allProfessions = [];
 let currentTool = null;
 
+// الدالة الرئيسية لتشغيل اللعبة
 export async function loadToolsMatchGameContent() {
   stopCurrentAudio();
   const mainContent = document.querySelector("main.main-content");
 
   mainContent.innerHTML = `
-    <div class="game-container">
+    <section class="tools-match-game-section">
       <h2 data-i18n="tools_match_title">من صاحب الأداة؟</h2>
-      <div class="tool-display">
-        <img id="tool-image" src="" alt="Tool" />
-      </div>
+      <div class="tool-display"></div>
       <div id="profession-options" class="options-grid"></div>
-      <div id="result-message"></div>
+      <div id="result-message" class="result-message"></div>
       <button id="next-button" class="next-btn" style="display:none" data-i18n="next">التالي</button>
-    </div>
+    </section>
   `;
 
   applyTranslations();
@@ -31,70 +29,127 @@ export async function loadToolsMatchGameContent() {
   showNewTool();
 
   document.getElementById("next-button").onclick = showNewTool;
+  const replayBtn = document.getElementById("tools-match-replay-sound-btn");
+  if (replayBtn) replayBtn.onclick = () => {
+    const voice = getVoice();
+    const lang = getLang();
+    const sound = currentTool?.sound?.[lang]?.[voice];
+    if (sound) playAudio(sound);
+  };
 }
 
+// جلب البيانات من Firestore
 async function loadAllData() {
   const toolsSnap = await getDocs(collection(db, "profession_tools"));
-  allTools = toolsSnap.docs.map(doc => doc.data());
+  allTools = toolsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-  // جمع كل المهن من الأدوات
   const professionSet = new Set();
-  allTools.forEach(tool => {
-    (tool.professions || []).forEach(p => professionSet.add(p));
-  });
+  allTools.forEach(tool => (tool.professions || []).forEach(p => professionSet.add(p)));
   allProfessions = Array.from(professionSet);
 }
 
+// عرض أداة جديدة
 function showNewTool() {
   document.getElementById("result-message").textContent = "";
   document.getElementById("next-button").style.display = "none";
 
   currentTool = getRandomItem(allTools);
-  const toolImage = document.getElementById("tool-image");
-  toolImage.src = "/" + currentTool.image_path;
-  toolImage.alt = currentTool.name?.[currentLang] || "Tool";
-
-  // تشغيل صوت الأداة (اختياري)
-  const soundPath = currentTool?.sound?.[currentLang]?.boy;
-  if (soundPath) playAudio(soundPath);
-
+  showTool(currentTool);
   showProfessionOptions(currentTool);
 }
 
-function showProfessionOptions(tool) {
+// عرض الأداة حسب الوضع
+function showTool(tool) {
+  const container = document.querySelector(".tool-display");
+  const mode = getMode();
+  const lang = getLang();
+  const voice = getVoice();
+
+  container.innerHTML = "";
+
+  if (mode.startsWith("image")) {
+    const img = document.createElement("img");
+    img.src = "/" + tool.image_path;
+    img.alt = tool.name?.[lang] || "";
+    img.classList.add("tool-image");
+    img.onclick = () => {
+      const sound = tool.sound?.[lang]?.[voice];
+      if (sound) playAudio(sound);
+    };
+    container.appendChild(img);
+  }
+
+  if (mode.startsWith("text")) {
+    const textEl = document.createElement("div");
+    textEl.textContent = tool.name?.[lang] || "؟";
+    textEl.classList.add("tool-name");
+    textEl.onclick = () => {
+      const sound = tool.sound?.[lang]?.[voice];
+      if (sound) playAudio(sound);
+    };
+    container.appendChild(textEl);
+  }
+
+  if (mode.startsWith("sound")) {
+    const sound = tool.sound?.[lang]?.[voice];
+    if (sound) playAudio(sound);
+  }
+}
+
+// عرض خيارات المهن
+async function showProfessionOptions(tool) {
   const correct = getRandomItem(tool.professions);
-  const wrongOptions = getRandomItems(allProfessions.filter(p => !tool.professions.includes(p)), 3);
+  const wrongOptions = getRandomItems(
+    allProfessions.filter(p => !tool.professions.includes(p)),
+    3
+  );
   const options = shuffleArray([correct, ...wrongOptions]);
 
   const container = document.getElementById("profession-options");
   container.innerHTML = "";
 
-  options.forEach(prof => {
+  for (const professionId of options) {
     const btn = document.createElement("button");
     btn.className = "option-btn";
-    btn.textContent = translateProfession(prof);
-    btn.onclick = () => checkAnswer(prof, correct);
+
+    const profSnap = await getDoc(doc(db, "professions", professionId));
+    if (!profSnap.exists()) continue;
+    const prof = profSnap.data();
+    const lang = getLang();
+    const mode = getMode();
+
+    if (mode.endsWith("image")) {
+      const img = document.createElement("img");
+      img.src = "/" + prof.image_path;
+      img.alt = prof.name?.[lang] || professionId;
+      img.style.width = "100px";
+      btn.appendChild(img);
+    } else {
+      btn.textContent = prof.name?.[lang] || professionId;
+    }
+
+    btn.onclick = () => checkAnswer(professionId, correct);
     container.appendChild(btn);
-  });
+  }
 }
 
+// التحقق من الإجابة
 function checkAnswer(selected, correct) {
   const result = document.getElementById("result-message");
   const nextBtn = document.getElementById("next-button");
 
   if (selected === correct) {
-    result.textContent = translate("correct_answer") || "إجابة صحيحة!";
+    result.textContent = "إجابة صحيحة!";
     result.style.color = "green";
     playAudio("audio/common/correct.mp3");
   } else {
-    result.textContent = translate("wrong_answer") || "إجابة خاطئة!";
+    result.textContent = "إجابة خاطئة!";
     result.style.color = "red";
     playAudio("audio/common/wrong.mp3");
   }
 
-  // تسجيل النشاط
   recordActivity("tools-match", {
-    tool: currentTool.name?.[currentLang],
+    tool: currentTool.name?.[getLang()],
     selected,
     correct,
     success: selected === correct
@@ -104,23 +159,26 @@ function checkAnswer(selected, correct) {
 }
 
 // أدوات مساعدة
+function getLang() {
+  return document.getElementById("tools-match-lang-select")?.value || globalLang;
+}
+function getVoice() {
+  return document.getElementById("tools-match-voice-select")?.value || "boy";
+}
+function getMode() {
+  return document.getElementById("tools-match-display-mode")?.value || "image-text";
+}
+
 function getRandomItem(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
-
 function getRandomItems(arr, count) {
   const shuffled = shuffleArray([...arr]);
   return shuffled.slice(0, count);
 }
-
 function shuffleArray(arr) {
   return arr.sort(() => Math.random() - 0.5);
 }
 
-function translateProfession(professionId) {
-  // يمكن لاحقًا ربطه بقاعدة بيانات المهن لعرض الاسم المترجم
-  // الآن نعرض الاسم كما هو
-  return professionId;
-}
-// ربط الدالة بالـ window لتكون متاحة من index.html
+// لتفعيل الدالة من index.html
 window.loadToolsMatchGameContent = loadToolsMatchGameContent;

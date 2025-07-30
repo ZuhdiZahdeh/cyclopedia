@@ -98,3 +98,58 @@
     border-color: #555;
   }
 }
+
+
+
+/* ====== عناصر التحكم الجانبي ====== */
+
+.sidebar-game-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 10px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.control-group label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.control-group select,
+.control-button {
+  padding: 8px;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #aaa;
+  background-color: #fff;
+  transition: background-color 0.3s;
+}
+
+.control-button {
+  cursor: pointer;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+}
+
+.control-button:hover {
+  background-color: #45a049;
+}
+
+.sidebar-section {
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f8f8f8;
+}
+
+.sidebar-section h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
