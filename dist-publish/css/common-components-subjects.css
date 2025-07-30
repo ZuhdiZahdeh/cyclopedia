@@ -1,0 +1,141 @@
+/* public/css/common-components-subjects.css */
+
+/* نمط لـ game-box لتوسيط المحتوى داخل main-content (يستخدم في game-box) */
+.game-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 0px 20px;
+    background-color: var(--color-surface);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px var(--color-shadow);
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    /* تأكد أن أقصى عرض لا يتعارض مع .main-content */
+    max-width: 900px; /* مثال: لتقييد عرض صندوق اللعبة داخل المحتوى الرئيسي */
+    margin: 0 auto; /* لتوسيط game-box داخل main-content */
+}
+
+/* نمط لاسم العنصر الرئيسي (الحيوان، الفاكهة) - H2 */
+.item-main-name {
+    font-size: 2.8em; /* تم تعديل الحجم إلى 2em */
+    font-weight: bold;
+    color: var(--color-orange);
+    margin-top: 10px;
+	margin-bottom: 10px;
+    position: relative;
+    display: inline; /* لضمان تطبيق text-align: center بشكل صحيح */
+    text-align: center;
+    width: 100%;
+    text-decoration: none; /* إزالة أي خط سفلي محتمل */
+    border-bottom: none; /* إزالة أي حدود سفلية محتملة */
+}
+
+/* نمط لتلوين الحرف الأول من الاسم الرئيسي */
+.item-main-name .highlight-first-letter { /* استخدام فئة بدلاً من ::first-letter مباشرة إذا كنت تطبقها بـ JS */
+    color: var(--color-success);
+    /* تم إزالة font-size: 1em; هنا */
+    /* تأكد أنه لا يوجد `text-decoration: underline` أو `border-bottom` هنا */
+}
+/* إذا كنت تستخدم ::first-letter مباشرة: */
+.item-main-name::first-letter {
+    color: var(--color-success);
+    /* تم إزالة font-size: 1em; هنا */
+}
+
+
+/* نمط حاوية الوصف والتفاصيل المشتركة */
+.info-box {
+    margin-top: 15px;
+    padding: 15px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background-color: var(--color-surface);
+    text-align: justify;
+    width: 100%;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* نمط للعناوين H3 و H4 داخل الحاويات المشتركة */
+.info-box h3,
+.info-box h4 {
+    font-family: var(--font-ar-heading);
+    font-weight: bold;
+    font-size: 1.5em;
+    color: var(--color-primary);
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: right; /* للحفاظ على المحاذاة لليمين في اللغة العربية */
+}
+
+.info-box h4 {
+    font-size: 1.3em;
+    color: var(--color-accent);
+}
+
+
+/* أنماط الشريط الجانبي - لتنسيق عناصر التحكم فيه */
+.sidebar-game-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: var(--color-background);
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+    align-items: stretch;
+}
+
+/* لتجميع اللاصق والقائمة المنسدلة داخل الشريط الجانبي */
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.sidebar-game-controls label {
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+}
+
+.sidebar-game-controls select,
+.sidebar-game-controls button {
+    width: 100%;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid var(--color-border);
+    font-size: 1em;
+}
+
+.sidebar-game-controls button {
+    background-color: var(--color-info);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    box-shadow: 0 3px var(--color-shadow);
+}
+
+.sidebar-game-controls button:hover {
+    background-color: var(--color-info);
+    filter: brightness(85%);
+}
+
+/* أزرار التنقل (السابق/التالي) في الشريط الجانبي */
+.sidebar-navigation-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between; /* توزيع المساحة بين الأزرار */
+    width: 100%;
+}
+
+.sidebar-navigation-buttons button {
+    flex-grow: 1; /* للسماح للأزرار بالتمدد لملء المساحة المتاحة */
+    text-align: center;
+}

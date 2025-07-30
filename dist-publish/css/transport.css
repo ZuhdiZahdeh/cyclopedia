@@ -1,0 +1,25 @@
+/* cyclopedia-app/public/css/transport.css */
+.transport-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.transport-entry {
+  background-color: #e8f4ff;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.transport-entry:hover {
+  transform: scale(1.05);
+}
+
+.transport-entry img {
+  width: 100px;
+  height: auto;
+  cursor: pointer;
+}

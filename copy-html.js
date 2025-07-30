@@ -1,4 +1,4 @@
-// copy-html.js
+// copy-html.js - نسخة آمنة مع كشف الأخطاء
 import fs from 'fs';
 import path from 'path';
 
@@ -10,10 +10,19 @@ if (!fs.existsSync(targetDir)) {
 }
 
 fs.readdirSync(sourceDir).forEach((file) => {
-  if (file.endsWith('.html')) {
-    const srcFile = path.join(sourceDir, file);
-    const destFile = path.join(targetDir, file);
-    fs.copyFileSync(srcFile, destFile);
-    console.log(`✅ Copied ${file} to dist/html/`);
+  try {
+    if (file.endsWith('.html')) {
+      const srcFile = path.join(sourceDir, file);
+      const destFile = path.join(targetDir, file);
+
+      if (fs.existsSync(srcFile)) {
+        fs.copyFileSync(srcFile, destFile);
+        console.log(`✅ Copied ${file} to dist/html/`);
+      } else {
+        console.warn(`⚠️ File not found: ${srcFile}`);
+      }
+    }
+  } catch (err) {
+    console.error(`❌ Failed to copy ${file}:`, err.message);
   }
 });

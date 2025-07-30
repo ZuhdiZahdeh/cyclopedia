@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>الفواكه - موسوعة الأطفال</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>🍎 موسوعة الفواكه</h1>
+    <button onclick="location.href='index.html'">العودة للرئيسية</button>
+  </header>
+
+  <main class="main-content">
+    <p>جاري تحميل محتوى الفواكه...</p>
+  </main>
+
+  <aside>
+    <div id="fruits-sidebar-controls" class="sidebar-controls">
+      <select id="game-lang-select-fruits"></select>
+      <select id="voice-select-fruits"></select>
+      <button id="play-sound-btn-fruits">🔊 استمع</button>
+      <button id="prev-fruits-btn">⏮ السابق</button>
+      <button id="next-fruits-btn">⏭ التالي</button>
+    </div>
+    <button id="toggle-description-btn">📃 عرض/إخفاء الوصف</button>
+    <button id="toggle-details-btn">ℹ️ عرض/إخفاء التفاصيل</button>
+  </aside>
+    <script type="module">
+    import { startGame } from '/src/js/fruits-game.js';
+    startGame("fruits");
+  </script>
+</body>
+</html>
