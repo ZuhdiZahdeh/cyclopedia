@@ -122,3 +122,5 @@ function translateProfession(professionId) {
   // الآن نعرض الاسم كما هو
   return professionId;
 }
+// ربط الدالة بالـ window لتكون متاحة من index.html
+window.loadToolsMatchGameContent = loadToolsMatchGameContent;
