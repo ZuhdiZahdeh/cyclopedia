@@ -383,20 +383,26 @@
   const welcomeMessage = document.getElementById("welcome-message");
   const homeTopicCards = document.getElementById("home-topic-cards");
 	// دالة تحميل لعبة من صاحب الأداة 
-  window.loadToolsMatchPage = async () => {
-    hideAllControls();
-    if (welcomeMessage) welcomeMessage.style.display = 'none';
-    if (homeTopicCards) homeTopicCards.style.display = 'none';
-    try {
-      const response = await fetch('/html/tools-match-controls.html');
-      const html = await response.text();
-      mainContentArea.innerHTML = html;
-      await loadToolsMatchGameContent(); // ✅ تفعيل اللعبة بعد تحميل HTML
-    } catch (error) {
-      mainContentArea.innerHTML = '<p>تعذر تحميل اللعبة</p>';
-      console.error(error);
-    }
-  };
+	window.loadToolsMatchPage = async () => {
+	  hideAllControls();
+	  if (welcomeMessage) welcomeMessage.style.display = 'none';
+	  if (homeTopicCards) homeTopicCards.style.display = 'none';
+	  try {
+		const response = await fetch('/html/tools-match-controls.html');
+		const html = await response.text();
+		mainContentArea.innerHTML = html;
+
+		// ✅ أظهر الشريط الجانبي لأزرار اللعبة
+		const toolsMatchSidebarControls = document.getElementById("tools-match-sidebar-controls");
+		if (toolsMatchSidebarControls) toolsMatchSidebarControls.style.display = "block";
+
+		await loadToolsMatchGameContent();
+	  } catch (error) {
+		mainContentArea.innerHTML = '<p>تعذر تحميل اللعبة</p>';
+		console.error(error);
+	  }
+	};
+
 
   // تابع باقي الدوال هنا بدون تعديل...
   window.loadLogin = async () => {

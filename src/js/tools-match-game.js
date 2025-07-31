@@ -8,9 +8,13 @@ let allTools = [];
 let allProfessions = [];
 let currentTool = null;
 
-// الدالة الرئيسية لتشغيل اللعبة
 export async function loadToolsMatchGameContent() {
   stopCurrentAudio();
+
+  if (!localStorage.getItem("lang")) {
+    localStorage.setItem("lang", "ar");
+  }
+
   const mainContent = document.querySelector("main.main-content");
 
   mainContent.innerHTML = `
@@ -29,6 +33,7 @@ export async function loadToolsMatchGameContent() {
   showNewTool();
 
   document.getElementById("next-button").onclick = showNewTool;
+
   const replayBtn = document.getElementById("tools-match-replay-sound-btn");
   if (replayBtn) replayBtn.onclick = () => {
     const voice = getVoice();
@@ -36,6 +41,27 @@ export async function loadToolsMatchGameContent() {
     const sound = currentTool?.sound?.[lang]?.[voice];
     if (sound) playAudio(sound);
   };
+
+  // ✅ التفاعل مع تغييرات الإعدادات
+  const langSelect = document.getElementById("tools-match-lang-select");
+  const modeSelect = document.getElementById("tools-match-display-mode");
+  const voiceSelect = document.getElementById("tools-match-voice-select");
+
+  if (langSelect) {
+    langSelect.value = getLang();
+    langSelect.onchange = () => {
+      localStorage.setItem("lang", langSelect.value);
+      loadToolsMatchGameContent();
+    };
+  }
+
+  if (modeSelect) {
+    modeSelect.onchange = () => loadToolsMatchGameContent();
+  }
+
+  if (voiceSelect) {
+    voiceSelect.onchange = () => loadToolsMatchGameContent();
+  }
 }
 
 // جلب البيانات من Firestore
@@ -58,7 +84,7 @@ function showNewTool() {
   showProfessionOptions(currentTool);
 }
 
-// عرض الأداة حسب الوضع
+// عرض الأداة
 function showTool(tool) {
   const container = document.querySelector(".tool-display");
   const mode = getMode();
@@ -160,7 +186,7 @@ function checkAnswer(selected, correct) {
 
 // أدوات مساعدة
 function getLang() {
-  return document.getElementById("tools-match-lang-select")?.value || globalLang;
+  return document.getElementById("tools-match-lang-select")?.value || localStorage.getItem("lang") || globalLang;
 }
 function getVoice() {
   return document.getElementById("tools-match-voice-select")?.value || "boy";
@@ -180,5 +206,4 @@ function shuffleArray(arr) {
   return arr.sort(() => Math.random() - 0.5);
 }
 
-// لتفعيل الدالة من index.html
 window.loadToolsMatchGameContent = loadToolsMatchGameContent;
