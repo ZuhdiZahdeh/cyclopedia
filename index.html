@@ -388,7 +388,7 @@
     if (welcomeMessage) welcomeMessage.style.display = 'none';
     if (homeTopicCards) homeTopicCards.style.display = 'none';
     try {
-      const response = await fetch('/html/tools-match.html');
+      const response = await fetch('/html/tools-match-controls.html');
       const html = await response.text();
       mainContentArea.innerHTML = html;
       await loadToolsMatchGameContent(); // ✅ تفعيل اللعبة بعد تحميل HTML

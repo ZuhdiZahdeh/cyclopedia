@@ -17,7 +17,6 @@ function deleteUnwantedFiles(dir) {
         ignoredExtensions.some(ext => file.endsWith(ext));
 
       if (shouldIgnore) {
-        console.warn("🧹 حذف:", fullPath);
         fs.unlinkSync(fullPath);
       }
     }
@@ -27,18 +26,9 @@ function deleteUnwantedFiles(dir) {
 function copyDir(srcRelative, destRelative) {
   const src = path.resolve(srcRelative);
   const dest = path.resolve(destRelative);
-
   if (fs.existsSync(src)) {
-    fs.cpSync(src, dest, {
-      recursive: true,
-      filter: (srcFile) => {
-        console.log("📄 نسخ:", srcFile);
-        return true;
-      }
-    });
+    fs.cpSync(src, dest, { recursive: true });
     console.log(`✅ تم نسخ ${srcRelative} إلى ${destRelative}`);
-  } else {
-    console.warn(`⚠️ لم يتم العثور على المجلد ${srcRelative}`);
   }
 }
 
