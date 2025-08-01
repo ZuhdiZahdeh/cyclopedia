@@ -3,7 +3,7 @@
 
 import { db } from './firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
-import { currentLang, loadLanguage, applyTranslations, setDirection } from './lang-handler.js';
+import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from './lang-handler.js';
 import { playAudio, stopCurrentAudio } from './audio-handler.js';
 import { recordActivity } from './activity-handler.js';
 
@@ -51,10 +51,10 @@ export async function initializeMemoryGameSidebarControls() {
     modeSelect = document.getElementById('memory-game-mode-select');
 
     setupEventListeners();
-
+const lang = getCurrentLang();
     // تعيين القيمة الافتراضية للغة ونمط اللعب
     if (langSelect) {
-        langSelect.value = currentLang;
+        langSelect.value = lang;
     }
     if (modeSelect) {
         modeSelect.value = currentPlayMode;
@@ -115,27 +115,19 @@ function handleModeChange(event) {
  * @returns {string} النص أو مسار الصوت أو الحرف المناسب للغة الحالية.
  */
 function getTextForCurrentLang(item, type) {
-    if (type === 'name') {
-        if (currentLang === 'ar') return item.name_ar;
-        if (currentLang === 'en') return item.name_en;
-        if (currentLang === 'he') return item.name_he;
-    } else if (type === 'letter') {
-        if (currentLang === 'ar') return item.letter_ar;
-        if (currentLang === 'en') return item.letter_en;
-        if (currentLang === 'he') return item.letter_he;
-    } else if (type === 'audio') {
-        if (currentLang === 'ar') return item.audio_ar;
-        if (currentLang === 'en') return item.audio_en;
-        if (currentLang === 'he') return item.audio_he;
-    }
+    const lang = getCurrentLang();
+    if (type === 'name') return item[`name_${lang}`];
+    if (type === 'letter') return item[`letter_${lang}`];
+    if (type === 'audio') return item[`audio_${lang}`];
     return ''; // أو يمكن أن تكون قيمة افتراضية مناسبة
 }
 
 
 async function fetchCardData() {
+	const lang = getCurrentLang();
     if (!db) {
         console.error("Firestore DB not initialized. Cannot fetch data.");
-        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'فشل إعداد قاعدة البيانات.' : 'Database setup failed.');
+        gameStatusDisplay.textContent = (lang === 'ar' ? 'فشل إعداد قاعدة البيانات.' : 'Database setup failed.');
         return;
     }
 
@@ -171,8 +163,8 @@ async function fetchCardData() {
         createBoard();
 
     } catch (error) {
-        console.error('فشل في جلب بيانات البطاقات من Firestore:', error);
-        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'فشل تحميل البيانات. تحقق من اتصال الإنترنت.' : 'Failed to load data. Check internet connection.');
+        console.error('فشل تحميل البيانات:', error);
+        gameStatusDisplay.textContent = (lang === 'ar' ? 'فشل تحميل البيانات.' : lang === 'he' ? 'שגיאה בטעינת נתונים' : 'Failed to load data.');
     }
 }
 
@@ -185,6 +177,7 @@ function shuffleArray(array) {
 }
 
 function createBoard() {
+	const lang = getCurrentLang();
     if (!gameBoard) {
         console.error("Game board element not found in createBoard.");
         return;
@@ -199,7 +192,7 @@ function createBoard() {
     const selectedTopicItems = allCardData[currentTopic];
     if (!selectedTopicItems || selectedTopicItems.length < 6) {
         console.warn(`لا توجد بيانات كافية للموضوع ${currentTopic} أو الموضوع غير موجود.`);
-        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'لا توجد بيانات كافية لهذا الموضوع.' : 'Not enough data for this topic.');
+        gameStatusDisplay.textContent = (lang === 'ar' ? 'لا توجد بيانات كافية لهذا الموضوع.' : 'Not enough data for this topic.');
         return;
     }
 
@@ -247,7 +240,7 @@ function createBoard() {
                 // استخدام getTextForCurrentLang للحصول على مسار الصوت المناسب للغة الحالية
                 gameCardsForMode.push({
                     type: 'audio',
-                    value: `audio/${currentLang}/${currentTopic}/${getTextForCurrentLang(item, 'audio')}`,
+                    value: `audio/${lang}/${currentTopic}/${getTextForCurrentLang(item, 'audio')}`,
                     id: item.id,
                     ...cardTextData,
                     image_url_for_audio_card: `images/${currentTopic}/${item.image_name}`
@@ -260,7 +253,7 @@ function createBoard() {
 
     // يجب أن تكون هناك 12 بطاقة (6 أزواج) للعبة كاملة
     if (gameCardsForMode.length < 12) {
-         gameStatusDisplay.textContent = (currentLang === 'ar' ? 'لا توجد عناصر كافية لهذا النمط والموضوع.' : 'Not enough items for this mode and topic.');
+         gameStatusDisplay.textContent = (lang === 'ar' ? 'لا توجد عناصر كافية لهذا النمط والموضوع.' : 'Not enough items for this mode and topic.');
          console.error("Not enough cards generated for the selected mode. Generated:", gameCardsForMode.length);
          return;
     }
@@ -298,7 +291,7 @@ function createBoard() {
         if (card.type === 'word' || card.type === 'char') {
             const displaySpan = cardElement.querySelector('.card-display-text');
             if (displaySpan) { // تحقق مرة أخرى للتأكد من وجود العنصر
-                if (currentLang === 'he') {
+                if (lang === 'he') {
                     displaySpan.style.direction = 'rtl';
                 } else {
                     displaySpan.style.direction = 'ltr';
@@ -353,6 +346,7 @@ function flipCard() {
 }
 
 function checkForMatch() {
+	const lang = getCurrentLang();
     const [firstCard, secondCard] = flippedCards;
     const firstCardId = firstCard.dataset.cardId;
     const secondCardId = secondCard.dataset.cardId;
@@ -386,7 +380,7 @@ function checkForMatch() {
     if (isMatch) {
         disableCards();
         matchedPairs++;
-        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'لقد وجدت زوجًا!' : currentLang === 'he' ? 'מצאת זוג!' : 'You found a pair!');
+        gameStatusDisplay.textContent = (lang === 'ar' ? 'لقد وجدت زوجًا!' : lang === 'he' ? 'מצאת זוג!' : 'You found a pair!');
         const currentUser = JSON.parse(localStorage.getItem("user"));
         if (currentUser) {
             recordActivity(currentUser, currentTopic);
@@ -394,12 +388,12 @@ function checkForMatch() {
 
         if (matchedPairs === 6) { // 6 أزواج تعني نهاية اللعبة (12 بطاقة)
             setTimeout(() => {
-                gameStatusDisplay.textContent = (currentLang === 'ar' ? 'تهانينا! لقد فزت باللعبة!' : currentLang === 'he' ? 'מזל טוב! ניצחת במשחק!' : 'Congratulations! You won the game!');
+                gameStatusDisplay.textContent = (lang === 'ar' ? 'تهانينا! لقد فزت باللعبة!' : lang === 'he' ? 'מזל טוב! ניצחת במשחק!' : 'Congratulations! You won the game!');
             }, 500);
         }
     } else {
         unflipCards();
-        gameStatusDisplay.textContent = (currentLang === 'ar' ? 'حاول مرة أخرى.' : currentLang === 'he' ? 'נסה שוב.' : 'Try again.');
+        gameStatusDisplay.textContent = (lang === 'ar' ? 'حاول مرة أخرى.' : lang === 'he' ? 'נסה שוב.' : 'Try again.');
     }
 }
 
@@ -423,6 +417,8 @@ function resetBoard() {
 }
 
 function updateCardTexts() {
+	const lang = getCurrentLang();
+	
     cards.forEach(cardElement => {
         const cardId = cardElement.dataset.cardId;
         const cardType = cardElement.dataset.cardType;
@@ -441,7 +437,7 @@ function updateCardTexts() {
 
                 // تحديث اتجاه النص للبطاقات النصية عند تغيير اللغة
                 if (cardType === 'word' || cardType === 'char') {
-                    if (currentLang === 'he') {
+                    if (lang === 'he') {
                         displaySpan.style.direction = 'rtl';
                     } else {
                         displaySpan.style.direction = 'ltr';
@@ -453,7 +449,7 @@ function updateCardTexts() {
             if (cardType === 'audio') {
                 const audioElem = cardElement.querySelector('audio');
                 if (audioElem) {
-                    audioElem.src = `audio/${currentLang}/${currentTopic}/${getTextForCurrentLang(originalItem, 'audio')}`;
+                    audioElem.src = `audio/${lang}/${currentTopic}/${getTextForCurrentLang(originalItem, 'audio')}`;
                 }
             }
         }
