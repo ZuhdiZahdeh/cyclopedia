@@ -2,7 +2,7 @@
 
 import { db } from "./firebase-config.js";
 import { getDocs, collection, query } from "firebase/firestore";
-import { currentLang, loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
+import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
 import { playAudio, stopCurrentAudio } from "./audio-handler.js";
 import { recordActivity } from "./activity-handler.js";
 
@@ -155,7 +155,7 @@ function getVegetableAudioPath(data, voiceType) {
     fileName = `${data.sound_base}_${voiceType}_${langFolder}.mp3`;
     console.warn(`⚠️ Used fallback from sound_base: ${fileName}`);
   } else {
-    console.error(`❌ لا يوجد مسار صوتي لـ ${data.name?.[currentLang]}`);
+    console.error(`❌ لا يوجد مسار صوتي لـ ${data.name?.[getCurrentLang()]}`);
     return null;
   }
 
@@ -186,9 +186,9 @@ function setupGameControls(langSelect, voiceSelect, playSoundBtn, nextBtn, prevB
       option.textContent = { 'ar': 'العربية', 'en': 'English', 'he': 'עברית' }[langCode];
       langSelect.appendChild(option);
     });
-    langSelect.value = currentLang;
+    langSelect.value = getCurrentLang();
   } else if (langSelect) {
-    langSelect.value = currentLang;
+    langSelect.value = getCurrentLang();
   }
 
   if (voiceSelect && voiceSelect.options.length === 0) {

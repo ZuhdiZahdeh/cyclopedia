@@ -2,7 +2,7 @@
 
 import { db } from "./firebase-config.js";
 import { getDocs, collection, query } from "firebase/firestore";
-import { currentLang, loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
+import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
 import { playAudio, stopCurrentAudio } from "./audio-handler.js";
 import { recordActivity } from "./activity-handler.js";
 
@@ -101,17 +101,17 @@ function updateHumanBodyContent() {
   const prevHumanBodyBtn = document.getElementById('prev-human-body-btn');
   const nextHumanBodyBtn = document.getElementById('next-human-body-btn');
 
-  const name = currentHumanBodyData.name?.[currentLang] || currentHumanBodyData.name?.en || "---"; 
+  const name = currentHumanBodyData.name?.[getCurrentLang()] || currentHumanBodyData.name?.en || "---"; 
   const imgSrc = `/images/human-body/${currentHumanBodyData.image}`; 
   
   if (humanBodyImage) humanBodyImage.src = imgSrc;
   if (humanBodyImage) humanBodyImage.alt = name;
   if (humanBodyWord) humanBodyWord.textContent = name;
 
-  if (humanBodyFunction) humanBodyFunction.textContent = currentHumanBodyData.function?.[currentLang] || "غير متوفر";
-  if (humanBodySystem) humanBodySystem.textContent = currentHumanBodyData.system?.[currentLang] || "غير متوفر";
-  if (humanBodyFunFact) humanBodyFunFact.textContent = currentHumanBodyData.fun_fact?.[currentLang] || "لا توجد حقائق ممتعة";
-  if (humanBodyDescription) humanBodyDescription.textContent = currentHumanBodyData.description?.[currentLang] || "لا يوجد وصف";
+  if (humanBodyFunction) humanBodyFunction.textContent = currentHumanBodyData.function?.[getCurrentLang()] || "غير متوفر";
+  if (humanBodySystem) humanBodySystem.textContent = currentHumanBodyData.system?.[getCurrentLang()] || "غير متوفر";
+  if (humanBodyFunFact) humanBodyFunFact.textContent = currentHumanBodyData.fun_fact?.[getCurrentLang()] || "لا توجد حقائق ممتعة";
+  if (humanBodyDescription) humanBodyDescription.textContent = currentHumanBodyData.description?.[getCurrentLang()] || "لا يوجد وصف";
 
   if (prevHumanBodyBtn) prevHumanBodyBtn.disabled = (currentIndex === 0);
   if (nextHumanBodyBtn) nextHumanBodyBtn.disabled = (currentIndex === humanBodyParts.length - 1);
@@ -183,7 +183,7 @@ function getHumanBodyAudioPath(data, voiceType) {
     // ولذا لن يقوم بالاستبدال بل سيضيف اللاحقة مباشرة
     fileName = `${data.sound_base}_${voiceType}_${langFolder}.mp3`;
   } else {
-    console.warn(`لا يوجد مسار صوت لـ ${data.name?.[currentLang]} بنوع الصوت ${voiceType}.`);
+    console.warn(`لا يوجد مسار صوت لـ ${data.name?.[getCurrentLang()]} بنوع الصوت ${voiceType}.`);
     return null;
   }
   return `/audio/${langFolder}/${subjectFolder}/${fileName}`;
