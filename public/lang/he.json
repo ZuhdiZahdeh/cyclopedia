@@ -41,5 +41,28 @@
   "select_category": "בחר קטגוריה",
   "listen_again": "האזן שוב",
   "correct": "נכון!",
-  "wrong": "שגוי!"
+  "wrong": "שגוי!",
+  "professions": {
+    "Blacksmith": "נפח",
+    "Baker": "אופה",
+    "Cook": "טבח",
+    "Policeman": "שוטר",
+    "Engineer": "מהנדס",
+    "Architect": "אדריכל",
+    "Teacher": "מורה",
+    "Doctor": "רופא",
+    "Nurse": "אחות",
+    "Carpenter": "נגר",
+    "Photographer": "צלם",
+    "Artist": "אמן",
+    "Mechanic": "מכונאי",
+    "Plumber": "אינסטלטור",
+    "Electrician": "חשמלאי",
+    "Farmer": "חקלאי",
+    "Construction_worker": "פועל בניין",
+    "Driver": "נהג",
+    "Barber": "ספר",
+    "Tailor": "חייט",
+    "Welder": "רתך"
+  }
 }

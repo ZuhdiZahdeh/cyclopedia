@@ -52,5 +52,28 @@
   "select_category": "اختر الفئة",
   "listen_again": "استمع مرة أخرى",
   "correct": "صحيح!",
-  "wrong": "خطأ!"
+  "wrong": "خطأ!",
+  "professions": {
+    "Blacksmith": "حداد",
+    "Baker": "خباز",
+    "Cook": "طباخ",
+    "Policeman": "شرطي",
+    "Engineer": "مهندس",
+    "Architect": "معماري",
+    "Teacher": "معلم",
+    "Doctor": "طبيب",
+    "Nurse": "ممرضة",
+    "Carpenter": "نجار",
+    "Photographer": "مصور",
+    "Artist": "فنان",
+    "Mechanic": "ميكانيكي",
+    "Plumber": "سباك",
+    "Electrician": "كهربائي",
+    "Farmer": "مزارع",
+    "Construction_worker": "عامل بناء",
+    "Driver": "سائق",
+    "Barber": "حلاق",
+    "Tailor": "خياط",
+    "Welder": "لحام"
+  }
 }

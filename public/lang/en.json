@@ -52,5 +52,28 @@
   "select_category": "Select Category",
   "listen_again": "Listen Again",
   "correct": "Correct!",
-  "wrong": "Wrong!"
+  "wrong": "Wrong!",
+  "professions": {
+    "Blacksmith": "Blacksmith",
+    "Baker": "Baker",
+    "Cook": "Cook",
+    "Policeman": "Policeman",
+    "Engineer": "Engineer",
+    "Architect": "Architect",
+    "Teacher": "Teacher",
+    "Doctor": "Doctor",
+    "Nurse": "Nurse",
+    "Carpenter": "Carpenter",
+    "Photographer": "Photographer",
+    "Artist": "Artist",
+    "Mechanic": "Mechanic",
+    "Plumber": "Plumber",
+    "Electrician": "Electrician",
+    "Farmer": "Farmer",
+    "Construction_worker": "Construction Worker",
+    "Driver": "Driver",
+    "Barber": "Barber",
+    "Tailor": "Tailor",
+    "Welder": "Welder"
+  }
 }
