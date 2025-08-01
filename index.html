@@ -374,6 +374,20 @@
     setDirection, getCurrentLang, loadLanguage, applyTranslations
   } from '/src/js/lang-handler.js';
 
+ import { initializeSubjectControls } from '/src/js/initializeSubjectControls.js';
+
+  // مثال لتشغيل الدالة عند تحميل الصفحة
+  const supportedSubjects = [
+    'animal', 'fruit', 'vegetable', 'human-body', 'profession', 'tools', 'alphabet-press', 'memory-game'
+  ];
+
+  const mainContent = document.querySelector('main.main-content');
+  if (mainContent) {
+    const subjectType = mainContent.getAttribute('data-subject-type');
+    if (subjectType && supportedSubjects.includes(subjectType)) {
+      initializeSubjectControls(subjectType);
+    }
+  }
   const mainContentArea = document.querySelector("main.main-content");
   const animalSidebarControls = document.getElementById("animal-sidebar-controls");
   const fruitSidebarControls = document.getElementById("fruit-sidebar-controls");
