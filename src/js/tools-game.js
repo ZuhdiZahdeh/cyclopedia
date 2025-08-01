@@ -2,8 +2,7 @@
 
 import { db } from "./firebase-config.js";
 import { getDocs, collection, query } from "firebase/firestore";
-import {
-  getCurrentLang(), loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
+import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
 import { playAudio, stopCurrentAudio } from "./audio-handler.js";
 import { recordActivity } from "./activity-handler.js";
 
