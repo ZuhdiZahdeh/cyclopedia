@@ -1,5 +1,3 @@
-// نسخة محدثة من vegetables-game.js لتشغيل الصوت عند الضغط على اسم الخضار أو صورتها
-
 import { db } from "./firebase-config.js";
 import { getDocs, collection, query } from "firebase/firestore";
 import { currentLang, loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
@@ -24,6 +22,7 @@ export async function loadVegetablesGameContent() {
     <div class="game-box">
       <h2 id="vegetable-word" class="item-main-name">---</h2>
       <img id="vegetable-image" src="" alt="vegetable" />
+      
       <div class="vegetable-details-section info-box">
         <h3>حقائق عن الخضروات:</h3>
         <ul id="vegetable-details-list">
@@ -31,6 +30,7 @@ export async function loadVegetablesGameContent() {
           <li><strong>الفوائد:</strong> <span id="vegetable-benefits">---</span></li>
         </ul>
       </div>
+
       <div class="navigation-buttons">
         <button id="prev-vegetable-btn" class="nav-button">السابق</button>
         <button id="next-vegetable-btn" class="nav-button">التالي</button>
@@ -40,16 +40,16 @@ export async function loadVegetablesGameContent() {
 
   vegetableSidebarControls.innerHTML = `
     <div class="sidebar-game-controls">
-      <div class="control-group">
-        <label for="game-lang-select-vegetable">لغة اللعبة:</label>
-        <select id="game-lang-select-vegetable"></select>
-      </div>
-      <div class="control-group">
-        <label for="voice-select-vegetable">نوع الصوت:</label>
-        <select id="voice-select-vegetable"></select>
-      </div>
-      <button id="play-sound-btn-vegetable" class="action-button">تشغيل الصوت</button>
-      <button id="view-all-vegetables-btn" class="action-button">عرض كل الخضروات</button>
+        <div class="control-group">
+            <label for="game-lang-select-vegetable">لغة اللعبة:</label>
+            <select id="game-lang-select-vegetable"></select>
+        </div>
+        <div class="control-group">
+            <label for="voice-select-vegetable">نوع الصوت:</label>
+            <select id="voice-select-vegetable"></select>
+        </div>
+        <button id="play-sound-btn-vegetable" class="action-button">تشغيل الصوت</button>
+        <button id="view-all-vegetables-btn" class="action-button">عرض كل الخضروات</button>
     </div>
   `;
 
@@ -66,9 +66,18 @@ export async function loadVegetablesGameContent() {
   );
 
   try {
-    const q = query(collection(db, "categories", "vegetables", "items"));
+    const q = query(collection(db, "categories", "vegetables", "items")); // ✅ تصحيح المسار
     const querySnapshot = await getDocs(q);
     vegetables = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    console.log(`✅ تم تحميل ${vegetables.length} خضروات.`);
+    console.table(vegetables.map(v => ({
+      id: v.id,
+      name_ar: v.name?.ar,
+      image: v.image,
+      sound_base: v.sound_base,
+      voices: v.voices ? Object.keys(v.voices) : []
+    })));
 
     if (vegetables.length > 0) {
       currentIndex = 0;
@@ -85,19 +94,17 @@ export async function loadVegetablesGameContent() {
   }
 }
 
-function displayVegetable(vegetableData) { currentVegetableData = vegetableData;
+function displayVegetable(vegetableData) {
+  currentVegetableData = vegetableData;
   const vegetableWord = document.getElementById("vegetable-word");
   const vegetableImage = document.getElementById("vegetable-image");
   const vegetableType = document.getElementById("vegetable-type");
   const vegetableBenefits = document.getElementById("vegetable-benefits");
 
-  if (vegetableWord) { vegetableWord.innerText = vegetableData.name?.[currentLang] || "---";
-    vegetableWord.onclick = playCurrentVegetableAudio; // ✅ تشغيل الصوت عند الضغط على الاسم
-  }
+  if (vegetableWord) vegetableWord.innerText = vegetableData.name?.[currentLang] || "---";
   if (vegetableImage && vegetableData.image) {
     vegetableImage.src = `/images/vegetables/${vegetableData.image}`;
     vegetableImage.alt = vegetableData.name?.en || "Vegetable image";
-    vegetableImage.onclick = playCurrentVegetableAudio; // ✅ تشغيل الصوت عند الضغط على الصورة
   }
   if (vegetableType) vegetableType.innerText = vegetableData.type?.[currentLang] || "---";
   if (vegetableBenefits) vegetableBenefits.innerText = vegetableData.benefits?.[currentLang] || "---";
@@ -109,8 +116,6 @@ function displayVegetable(vegetableData) { currentVegetableData = vegetableData;
 
   applyTranslations();
 }
-
-// باقي الدوال: showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio, getVegetableAudioPath, disableVegetableButtonsInSidebar, setupGameControls كما هي بدون تعديل
 
 function showNextVegetable() {
   stopCurrentAudio();

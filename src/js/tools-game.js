@@ -1,4 +1,4 @@
-// نسخة معدلة من tools-game.js لاستخدام ملفات الترجمة بدلاً من الترجمة اليدوية
+// نسخة محدثة من tools-game.js لتفعيل تشغيل الصوت عند الضغط على الصورة أو الاسم
 
 import { db } from "./firebase-config.js";
 import { getDocs, collection, query } from "firebase/firestore";
@@ -104,6 +104,10 @@ function updateToolContent() {
 
   document.getElementById("prev-tools-btn").disabled = currentIndex === 0;
   document.getElementById("next-tools-btn").disabled = currentIndex === tools.length - 1;
+
+  // ✅ تشغيل الصوت عند الضغط على الاسم أو الصورة
+  img.onclick = playCurrentToolAudio;
+  nameEl.onclick = playCurrentToolAudio;
 
   stopCurrentAudio();
 }

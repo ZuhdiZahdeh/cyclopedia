@@ -1,13 +1,8 @@
-// نسخة محدثة من professions-game.js لتشغيل الصوت عند الضغط على اسم المهنة أو صورتها
+// public/js/professions-game.js
 
 import { db } from "./firebase-config.js";
 import { getDocs, collection, query } from "firebase/firestore";
-import {
-  currentLang,
-  loadLanguage,
-  applyTranslations,
-  setDirection
-} from "./lang-handler.js";
+import { currentLang, loadLanguage, applyTranslations, setDirection } from "./lang-handler.js";
 import { playAudio, stopCurrentAudio } from "./audio-handler.js";
 import { recordActivity } from "./activity-handler.js";
 
@@ -63,6 +58,7 @@ export async function loadProfessionsGameContent() {
   updateProfessionContent();
   disableProfessionButtons(false);
 
+  // Language change
   langSelect.onchange = async () => {
     const newLang = langSelect.value;
     await loadLanguage(newLang);
@@ -71,9 +67,18 @@ export async function loadProfessionsGameContent() {
     await loadProfessionsGameContent();
   };
 
-  if (playSoundBtn) playSoundBtn.onclick = () => playCurrentProfessionAudio();
-  if (prevBtn) prevBtn.onclick = () => showPreviousProfession();
-  if (nextBtn) nextBtn.onclick = () => showNextProfession();
+  // Voice select: no dynamic reload needed; used in playCurrentProfessionAudio
+
+  // Button events
+  if (playSoundBtn) playSoundBtn.onclick = () => {
+    playCurrentProfessionAudio();
+  };
+  if (prevBtn) prevBtn.onclick = () => {
+    showPreviousProfession();
+  };
+  if (nextBtn) nextBtn.onclick = () => {
+    showNextProfession();
+  };
   if (toggleDescBtn) toggleDescBtn.onclick = () => {
     const descBox = document.getElementById("profession-description-box");
     descBox.style.display = descBox.style.display === "none" ? "block" : "none";
@@ -92,15 +97,17 @@ function updateProfessionContent() {
   const nameEl = document.getElementById("profession-name");
   const descEl = document.getElementById("profession-description");
 
+  // Update image
   img.src = `/${currentProfessionData.image_path}`;
   img.alt = currentProfessionData.name[currentLang];
-  img.onclick = playCurrentProfessionAudio; // ✅ تشغيل الصوت عند الضغط على الصورة
 
+  // Update name
   nameEl.textContent = currentProfessionData.name[currentLang] || "";
-  nameEl.onclick = playCurrentProfessionAudio; // ✅ تشغيل الصوت عند الضغط على الاسم
 
+  // Update description
   descEl.textContent = currentProfessionData.description?.[currentLang] || "لا يوجد وصف.";
 
+  // Prev/Next button states
   document.getElementById("prev-profession-btn").disabled = currentIndex === 0;
   document.getElementById("next-profession-btn").disabled = currentIndex === professions.length - 1;
 
@@ -109,9 +116,11 @@ function updateProfessionContent() {
 
 async function fetchProfessions() {
   try {
+    // اقرأ مباشرةً من مجموعة "professions" في الجذر
     const colRef = collection(db, "professions");
-    const q = query(colRef);
-    const snap = await getDocs(q);
+    const q      = query(colRef);
+    const snap   = await getDocs(q);
+    // احصل على بيانات كل وثيقة
     professions = snap.docs.map(doc => doc.data());
   } catch (err) {
     console.error("Error fetching professions from Firestore:", err);
@@ -141,6 +150,7 @@ export function playCurrentProfessionAudio() {
   if (currentProfessionData) {
     const selectedVoice = document.getElementById("voice-select-profession").value;
     const lang = document.getElementById("game-lang-select-profession").value;
+    const audioKey = `${selectedVoice}_${lang}`;
     const fileName = currentProfessionData.sound?.[lang]?.[selectedVoice];
     if (!fileName) {
       console.error("Audio not available for this profession/voice/lang");
@@ -155,15 +165,9 @@ export function playCurrentProfessionAudio() {
 }
 
 function disableProfessionButtons(isDisabled) {
-  [
-    "play-sound-btn-profession",
-    "prev-profession-btn",
-    "next-profession-btn",
-    "toggle-description-btn-profession",
-    "game-lang-select-profession",
-    "voice-select-profession"
-  ].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.disabled = isDisabled;
-  });
+  ["play-sound-btn-profession", "prev-profession-btn", "next-profession-btn", "toggle-description-btn-profession", "game-lang-select-profession", "voice-select-profession"]
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = isDisabled;
+    });
 }
