@@ -1,76 +1,55 @@
-// public/js/lang-handler.js
-
-
 let currentLang = localStorage.getItem("lang") || "ar";
-let currentVoice = localStorage.getItem("voice") || "boy";
-let translations = {};
 
-export { currentLang, currentVoice, translate, loadLanguage, applyTranslations, setDirection };
-
-
-// عند تحميل الصفحة: تأكد أن اللغة محفوظة أو استخدم العربية كافتراضية
-if (!localStorage.getItem("lang")) {
-  localStorage.setItem("lang", "ar");
-  currentLang = "ar";
+// ✅ دالة استرجاع اللغة الحالية
+export function getCurrentLang() {
+  return currentLang;
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  await loadLanguage(currentLang);
-  applyTranslations();
-  setDirection(currentLang);
-});
+// ✅ دالة ضبط اللغة
+export function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem("lang", lang);
+  setDirection(lang);
+  loadLanguage(lang);
+  document.dispatchEvent(new CustomEvent('languageChanged', { detail: lang }));
+}
 
-/**
- * تحميل ملف لغة وتحديث الترجمات
- * @param {string} lang 
- * @returns {Promise<Object>} كائن الترجمة
- */
-async function loadLanguage(lang) {
+// ✅ تحميل ملف الترجمة وتطبيقه
+export async function loadLanguage(lang) {
   try {
-    const res = await fetch(`/lang/${lang}.json`);
-    translations = await res.json();
-    currentLang = lang;
-    localStorage.setItem("lang", lang);
-    setDirection(lang);
-
-    // 🔁 إرسال حدث عند تغيير اللغة ليستفيد منه الآخرون
-    document.dispatchEvent(new CustomEvent('languageChanged', { detail: lang }));
-
-    return translations;
-  } catch (e) {
-    console.error(`❌ فشل تحميل ملف اللغة '${lang}':`, e);
-    if (lang !== "ar") {
-      console.warn("⏪ محاولة تحميل اللغة الافتراضية 'ar'");
-      return await loadLanguage("ar");
-    }
+    const response = await fetch(`/lang/${lang}.json`);
+    const translations = await response.json();
+    applyTranslations(translations);
+  } catch (error) {
+    console.error("خطأ في تحميل ملف الترجمة:", error);
   }
 }
 
-/**
- * ترجم مفتاح معين من ملف اللغة
- * @param {string} key 
- * @returns {string}
- */
-function translate(key) {
-  return translations[key] || key;
+// ✅ ضبط اتجاه الصفحة حسب اللغة
+export function setDirection(lang) {
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.setAttribute("dir", dir);
+  document.documentElement.setAttribute("lang", lang);
 }
 
-/**
- * تطبيق الترجمة على جميع العناصر بـ data-i18n
- */
-function applyTranslations() {
-  document.querySelectorAll("[data-i18n]").forEach((el) => {
-    const key = el.getAttribute("data-i18n");
-    el.innerText = translate(key);
+// ✅ تطبيق الترجمة على العناصر التي تملك data-i18n
+export function applyTranslations(translations) {
+  document.querySelectorAll('[data-i18n]').forEach(element => {
+    const key = element.getAttribute('data-i18n');
+    if (translations[key]) {
+      element.innerHTML = translations[key];
+    }
   });
 }
 
-/**
- * ضبط اتجاه النص واللغة على عنصر <html>
- * @param {string} lang 
- */
-function setDirection(lang) {
-  const dir = (lang === "ar" || lang === "he") ? "rtl" : "ltr";
-  document.documentElement.setAttribute("lang", lang);
-  document.documentElement.setAttribute("dir", dir);
+// ✅ دالة ترجمة يدوية لمفتاح معين (اختيارية)
+export async function translate(key) {
+  try {
+    const response = await fetch(`/lang/${currentLang}.json`);
+    const translations = await response.json();
+    return translations[key] || key;
+  } catch (error) {
+    console.error("فشل في الترجمة:", error);
+    return key;
+  }
 }
