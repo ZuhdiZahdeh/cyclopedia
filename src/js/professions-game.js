@@ -142,17 +142,23 @@ export function playCurrentProfessionAudio() {
     const selectedVoice = document.getElementById("voice-select-profession").value;
     const lang = document.getElementById("game-lang-select-profession").value;
     const fileName = currentProfessionData.sound?.[lang]?.[selectedVoice];
+
+    console.log("🎧 Trying to play:", fileName, "lang:", lang, "voice:", selectedVoice);
+
     if (!fileName) {
-      console.error("Audio not available for this profession/voice/lang");
+      console.error("❌ Audio not available for this profession/voice/lang");
       return;
     }
+
     const path = `/${fileName}`;
+    console.log("✅ Playing audio:", path);
     playAudio(path);
     recordActivity(JSON.parse(localStorage.getItem("user")), "professions_audio");
   } else {
-    console.warn("No profession selected for audio playback.");
+    console.warn("⚠️ No profession selected for audio playback.");
   }
 }
+
 
 function disableProfessionButtons(isDisabled) {
   [
