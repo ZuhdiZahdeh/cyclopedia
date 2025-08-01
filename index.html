@@ -27,53 +27,53 @@
 <div id="app">
 <header class="top-navbar shadow">
 <nav class="top-nav-links">
-<a href="#" onclick="showHomePage()">🏠 الرئيسية</a>
-<a href="#" onclick="loadAnimalsPage()">🐾 الحيوانات</a>
-<a href="#" onclick="loadFruitsPage()">🍎 الفواكه</a>
-<a href="#" onclick="loadVegetablesPage()">🥦 الخضروات</a>
-<a href="#" onclick="loadHumanBodyPage()">🧠 جسم الإنسان</a>
-<a href="#" onclick="loadProfessionsPage()">👷‍♂️ المهن</a>
-<a href="#" onclick="loadToolsPage()">🧰 الأدوات</a>
-<a href="#" onclick="loadAlphabetPressPage()">🎮 لعبة الحروف</a>
-<a href="#" onclick="loadMemoryGamePage()">🃏 الذاكرة</a>
-<a href="#" onclick="loadToolsMatchPage()">🧰 من صاحب الأداة؟</a>
+<a href="#" onclick="showHomePage()" data-i18n="home">🏠 الرئيسية</a>
+<a href="#" onclick="loadAnimalsPage()" data-i18n="animals">🐾 الحيوانات</a>
+<a href="#" onclick="loadFruitsPage()" data-i18n="fruits">🍎 الفواكه</a>
+<a href="#" onclick="loadVegetablesPage()" data-i18n="vegetables">🥦 الخضروات</a>
+<a href="#" onclick="loadHumanBodyPage()" data-i18n="human_body">🧠 جسم الإنسان</a>
+<a href="#" onclick="loadProfessionsPage()" data-i18n="professions">👷‍♂️ المهن</a>
+<a href="#" onclick="loadToolsPage()" data-i18n="tools">🧰 الأدوات</a>
+<a href="#" onclick="loadAlphabetPressPage()" data-i18n="alphabet_game">🎮 لعبة الحروف</a>
+<a href="#" onclick="loadMemoryGamePage()" data-i18n="memory_game">🃏 الذاكرة</a>
+<a href="#" onclick="loadToolsMatchPage()" data-i18n="tools_match_game">🧰 من صاحب الأداة؟</a>
 </nav>
 </header>
 <div class="page-layout">
 <aside class="sidebar shadow">
 <!-- قسم التحكم بصفحة الحيوانات -->
 <div class="sidebar-section" id="animal-sidebar-controls" style="display: none;">
-<h3 style="text-align: center;">🐾 تعرف على الحيوانات</h3>
+<h3 style="text-align: center;" data-i18n="learn_about_animals">🐾 تعرف على الحيوانات</h3>
 <div class="sidebar-game-controls">
 <div class="control-group">
-<label for="game-lang-select-animal">اللغة:</label>
+<label for="game-lang-select-animal" data-i18n="Language">اللغة:</label>
 <select id="game-lang-select-animal">
-<option value="ar">العربية</option>
-<option value="en">English</option>
-<option value="he">عبري</option>
+<option value="ar" data-i18n="lang_arabic">العربية</option>
+<option value="en" data-i18n="lang_english">English</option>
+<option value="he" data-i18n="lang_hebrew">עברית</option>
 </select>
 </div>
 <div class="control-group">
-<label for="voice-select-animal">الصوت:</label>
+<label for="voice-select-animal" data-i18n="Voice">الصوت:</label>
 <select id="voice-select-animal">
-<option value="teacher">المعلم</option>
-<option value="boy">صوت ولد</option>
-<option value="girl">صوت بنت</option>
-<option value="child">صوت طفل</option>
+<option data-i18n="teacher_voice" value="teacher">المعلم</option>
+<option data-i18n="boy_voice" value="boy">صوت ولد</option>
+<option data-i18n="girl_voice" value="girl">صوت بنت</option>
+<option data-i18n="child_voice" value="child">صوت طفل</option>
 </select>
 </div>
-<button class="control-button" id="play-sound-btn-animal">🔊 استمع</button>
+<button class="control-button" id="play-sound-btn-animal" data-i18n="listen">🔊 استمع</button>
 <div class="sidebar-navigation-buttons">
-<button class="control-button" id="prev-animal-btn">⬅️ السابق</button>
-<button class="control-button" id="next-animal-btn">التالي ➡️</button>
+<button class="control-button" id="prev-animal-btn" data-i18n="previous">⬅️ السابق</button>
+<button class="control-button" id="next-animal-btn" data-i18n="next">التالي ➡️</button>
 </div>
 <div class="control-group">
-<button class="control-button" id="toggle-description-btn">📖 عرض الوصف</button>
-<button class="control-button" id="toggle-details-btn">🧾 عرض التفاصيل</button>
+<button class="control-button" id="toggle-description-btn" data-i18n="show_description">📖 عرض الوصف</button>
+<button class="control-button" id="toggle-details-btn" data-i18n="show_details">🧾 عرض التفاصيل</button>
 </div>
 <div class="control-group">
-<button class="control-button" id="toggle-baby-image-btn">👶 عرض صورة الابن</button>
-<button class="control-button" id="play-baby-sound-btn-animal">🔊 استمع لابن الحيوان</button>
+<button class="control-button" id="toggle-baby-image-btn" data-i18n="show_baby_image">👶 عرض صورة الابن</button>
+<button class="control-button" id="play-baby-sound-btn-animal" data-i18n="listen_baby_animal">🔊 استمع لابن الحيوان</button>
 </div>
 </div>
 </div>
@@ -84,24 +84,24 @@
 <div class="control-group">
 <label for="game-lang-select-fruit">اللغة:</label>
 <select id="game-lang-select-fruit">
-<option value="ar">العربية</option>
-<option value="en">English</option>
-<option value="he">عبري</option>
+<option value="ar" data-i18n="lang_arabic">العربية</option>
+<option value="en" data-i18n="lang_english">English</option>
+<option value="he" data-i18n="lang_hebrew">עברית</option>
 </select>
 </div>
 <div class="control-group">
-<label for="voice-select-fruit">الصوت:</label>
+<label for="voice-select-fruit" data-i18n="Voice">الصوت:</label>
 <select id="voice-select-fruit">
-<option value="teacher">المعلم</option>
-<option value="boy">صوت ولد</option>
-<option value="girl">صوت بنت</option>
-<option value="child">صوت طفل</option>
+<option data-i18n="teacher_voice" value="teacher">المعلم</option>
+<option data-i18n="boy_voice" value="boy">صوت ولد</option>
+<option data-i18n="girl_voice" value="girl">صوت بنت</option>
+<option data-i18n="child_voice" value="child">صوت طفل</option>
 </select>
 </div>
-<button class="control-button" id="play-sound-btn-fruit">🔊 استمع</button>
+<button class="control-button" id="play-sound-btn-fruit" data-i18n="listen">🔊 استمع</button>
 <div class="sidebar-navigation-buttons">
-<button class="control-button" id="prev-fruit-btn">⬅️ السابق</button>
-<button class="control-button" id="next-fruit-btn">التالي ➡️</button>
+<button class="control-button" id="prev-fruit-btn" data-i18n="previous">⬅️ السابق</button>
+<button class="control-button" id="next-fruit-btn" data-i18n="next">التالي ➡️</button>
 </div>
 </div>
 </div>
@@ -112,24 +112,24 @@
 <div class="control-group">
 <label for="game-lang-select-vegetable">اللغة:</label>
 <select id="game-lang-select-vegetable">
-<option value="ar">العربية</option>
-<option value="en">English</option>
-<option value="he">عبري</option>
+<option value="ar" data-i18n="lang_arabic">العربية</option>
+<option value="en" data-i18n="lang_english">English</option>
+<option value="he" data-i18n="lang_hebrew">עברית</option>
 </select>
 </div>
 <div class="control-group">
-<label for="voice-select-vegetable">الصوت:</label>
+<label for="voice-select-vegetable" data-i18n="Voice">الصوت:</label>
 <select id="voice-select-vegetable">
-<option value="teacher">المعلم</option>
-<option value="boy">صوت ولد</option>
-<option value="girl">صوت بنت</option>
-<option value="child">صوت طفل</option>
+<option data-i18n="teacher_voice" value="teacher">المعلم</option>
+<option data-i18n="boy_voice" value="boy">صوت ولد</option>
+<option data-i18n="girl_voice" value="girl">صوت بنت</option>
+<option data-i18n="child_voice" value="child">صوت طفل</option>
 </select>
 </div>
-<button class="control-button" id="play-sound-btn-vegetable">🔊 استمع</button>
+<button class="control-button" id="play-sound-btn-vegetable" data-i18n="listen">🔊 استمع</button>
 <div class="sidebar-navigation-buttons">
-<button class="control-button" id="prev-vegetable-btn">⬅️ السابق</button>
-<button class="control-button" id="next-vegetable-btn">التالي ➡️</button>
+<button class="control-button" id="prev-vegetable-btn" data-i18n="previous">⬅️ السابق</button>
+<button class="control-button" id="next-vegetable-btn" data-i18n="next">التالي ➡️</button>
 </div>
 </div>
 </div>
@@ -140,24 +140,24 @@
 <div class="control-group">
 <label for="game-lang-select-human-body">اللغة:</label>
 <select id="game-lang-select-human-body">
-<option value="ar">العربية</option>
-<option value="en">English</option>
-<option value="he">عبري</option>
+<option value="ar" data-i18n="lang_arabic">العربية</option>
+<option value="en" data-i18n="lang_english">English</option>
+<option value="he" data-i18n="lang_hebrew">עברית</option>
 </select>
 </div>
 <div class="control-group">
-<label for="voice-select-human-body">الصوت:</label>
+<label for="voice-select-human-body" data-i18n="Voice">الصوت:</label>
 <select id="voice-select-human-body">
-<option value="teacher">المعلم</option>
-<option value="boy">صوت ولد</option>
-<option value="girl">صوت بنت</option>
-<option value="child">صوت طفل</option>
+<option data-i18n="teacher_voice" value="teacher">المعلم</option>
+<option data-i18n="boy_voice" value="boy">صوت ولد</option>
+<option data-i18n="girl_voice" value="girl">صوت بنت</option>
+<option data-i18n="child_voice" value="child">صوت طفل</option>
 </select>
 </div>
-<button class="control-button" id="play-sound-btn-human-body">🔊 استمع</button>
+<button class="control-button" id="play-sound-btn-human-body" data-i18n="listen">🔊 استمع</button>
 <div class="sidebar-navigation-buttons">
-<button class="control-button" id="prev-human-body-btn">⬅️ السابق</button>
-<button class="control-button" id="next-human-body-btn">التالي ➡️</button>
+<button class="control-button" id="prev-human-body-btn" data-i18n="previous">⬅️ السابق</button>
+<button class="control-button" id="next-human-body-btn" data-i18n="next">التالي ➡️</button>
 </div>
 </div>
 </div>
@@ -168,26 +168,27 @@
 <div class="control-group">
 <label for="game-lang-select-profession">اللغة:</label>
 <select id="game-lang-select-profession">
-<option value="ar">العربية</option>
-<option value="en">English</option>
-<option value="he">עברית</option>
+<option value="ar" data-i18n="lang_arabic">العربية</option>
+<option value="en" data-i18n="lang_english">English</option>
+<option value="he" data-i18n="lang_hebrew">עברית</option>
 </select>
 </div>
 <div class="control-group">
-<label for="voice-select-profession">الصوت:</label>
+<label for="voice-select-profession" data-i18n="Voice">الصوت:</label>
 <select id="voice-select-profession">
-<option value="teacher">المعلم</option>
-<option value="boy">صوت ولد</option>
-<option value="girl">صوت بنت</option>
+<option data-i18n="teacher_voice" value="teacher">المعلم</option>
+<option data-i18n="boy_voice" value="boy">صوت ولد</option>
+<option data-i18n="girl_voice" value="girl">صوت بنت</option>
+<option data-i18n="child_voice" value="child">صوت طفل</option>
 </select>
 </div>
-<button class="control-button" id="play-sound-btn-profession">🔊 استمع</button>
+<button class="control-button" id="play-sound-btn-profession" data-i18n="listen">🔊 استمع</button>
 <div class="sidebar-navigation-buttons">
-<button class="control-button" id="prev-profession-btn">⬅️ السابق</button>
-<button class="control-button" id="next-profession-btn">التالي ➡️</button>
+<button class="control-button" id="prev-profession-btn" data-i18n="previous">⬅️ السابق</button>
+<button class="control-button" id="next-profession-btn" data-i18n="next">التالي ➡️</button>
 </div>
 <div class="control-group">
-<button class="control-button" id="toggle-description-btn-profession">📖 عرض الوصف</button>
+<button class="control-button" id="toggle-description-btn-profession" data-i18n="show_description">📖 عرض الوصف</button>
 </div>
 </div>
 </div>
@@ -199,26 +200,27 @@
 <div class="control-group">
 <label for="game-lang-select-tools">اللغة:</label>
 <select id="game-lang-select-tools">
-<option value="ar">العربية</option>
-<option value="en">English</option>
-<option value="he">עברית</option>
+<option value="ar" data-i18n="lang_arabic">العربية</option>
+<option value="en" data-i18n="lang_english">English</option>
+<option value="he" data-i18n="lang_hebrew">עברית</option>
 </select>
 </div>
 <div class="control-group">
-<label for="voice-select-tools">الصوت:</label>
+<label for="voice-select-tools" data-i18n="Voice">الصوت:</label>
 <select id="voice-select-tools">
-<option value="teacher">المعلم</option>
-<option value="boy">صوت ولد</option>
-<option value="girl">صوت بنت</option>
+<option data-i18n="teacher_voice" value="teacher">المعلم</option>
+<option data-i18n="boy_voice" value="boy">صوت ولد</option>
+<option data-i18n="girl_voice" value="girl">صوت بنت</option>
+<option data-i18n="child_voice" value="child">صوت طفل</option>
 </select>
 </div>
-<button class="control-button" id="play-sound-btn-tools">🔊 استمع</button>
+<button class="control-button" id="play-sound-btn-tools" data-i18n="listen">🔊 استمع</button>
 <div class="sidebar-navigation-buttons">
-<button class="control-button" id="prev-tools-btn">⬅️ السابق</button>
-<button class="control-button" id="next-tools-btn">التالي ➡️</button>
+<button class="control-button" id="prev-tools-btn" data-i18n="previous">⬅️ السابق</button>
+<button class="control-button" id="next-tools-btn" data-i18n="next">التالي ➡️</button>
 </div>
 <div class="control-group">
-<button class="control-button" id="toggle-description-btn-tools">📖 عرض الوصف</button>
+<button class="control-button" id="toggle-description-btn-tools"  data-i18n="show_description">📖 عرض الوصف</button>
 </div>
 </div>
 </div>
@@ -235,7 +237,7 @@
 <select id="alphabet-press-category-select"></select>
 </div>
 <div class="control-group">
-<label for="alphabet-press-voice-select">اختر الصوت:</label>
+<label for="alphabet-press-voice-select" data-i18n="Voice">الصوت:</label>
 <select id="alphabet-press-voice-select">
 <option data-i18n="teacher_voice" value="teacher">المعلم</option>
 <option data-i18n="boy_voice" value="boy">صوت ولد</option>
@@ -243,49 +245,51 @@
 <option data-i18n="child_voice" value="child">صوت طفل</option>
 </select>
 </div>
-<button class="control-button" id="alphabet-press-play-audio-sidebar">🔊 استمع</button>
+<button class="control-button" id="alphabet-press-play-audio-sidebar" data-i18n="listen">🔊 استمع</button>
 </div>
 </div>
 <div class="sidebar-section" id="memory-game-sidebar-controls" style="display: none;">
-<h3 style="text-align: center;">🃏 إعدادات لعبة الذاكرة</h3>
+<h3 style="text-align: center;" data-i18n="memory_game_settings">🃏 إعدادات لعبة الذاكرة</h3>
 <div class="sidebar-game-controls memory-game-controls">
 <div class="control-group">
-<label for="memory-game-lang-select">اختر اللغة:</label>
+<label for="memory-game-lang-select" data-i18n="select_language">اختر اللغة:</label>
 <select id="memory-game-lang-select">
-<option value="ar">العربية</option>
-<option value="en">English</option>
-<option value="he">עברית</option>
+<option value="ar" data-i18n="lang_arabic">العربية</option>
+<option value="en" data-i18n="lang_english">English</option>
+<option value="he" data-i18n="lang_hebrew">עברית</option>
 </select>
 </div>
 <div class="control-group">
-<label for="memory-game-topic-select">اختر الموضوع:</label>
+<label for="memory-game-topic-select" data-i18n="select_topic">اختر الموضوع:</label>
 <select id="memory-game-topic-select">
 </select>
 </div>
-<div class="control-group">
-<label for="memory-game-mode-select">نمط اللعب:</label>
-<select id="memory-game-mode-select">
-<option value="image-image">صورة - صورة</option>
-<option value="image-word">صورة - كلمة</option>
-<option value="image-char">صورة - حرف</option>
-<option value="image-audio">صورة - صوت</option>
-</select>
-</div>
-<button class="memory-game-start-button" id="memory-game-start-button">ابدأ اللعب</button>
-</div>
-</div>
+
+	<div class="control-group">
+		<label for="memory-game-mode-select" data-i18n="play_mode">نمط اللعب:</label>
+		<select id="memory-game-mode-select">
+			<option value="image-image" data-i18n="image_image">صورة - صورة</option>
+			<option value="image-word" data-i18n="image_word">صورة - كلمة</option>
+			<option value="image-char" data-i18n="image_char">صورة - حرف</option>
+			<option value="image-audio" data-i18n="image_audio">صورة - صوت</option>
+		</select>
+	</div>
+	<button class="memory-game-start-button" id="memory-game-start-button" data-i18n="start_game">ابدأ اللعب</button>
+	</div>
+	</div>
 <div class="sidebar-section static-section">
-<h3>👤 حسابك</h3>
-<ul>
-<li><a href="#" onclick="loadLogin()">تسجيل الدخول</a></li>
-<li><a href="#" onclick="loadRegister()">تسجيل جديد</a></li>
-<li><a href="#" onclick="loadProfile()">الملف الشخصي</a></li>
-<li><a href="/users/my-report.html">سجل النقاط</a></li>
-</ul>
+<h3 class="sidebar-title" data-i18n="your_account">👤 حسابك</h3>
+    <div class="account-actions">
+        <a href="#" id="login-btn" onclick="loadLogin()" class="nav-btn" data-i18n="login">تسجيل الدخول</a>
+        <a href="#" id="register-btn" onclick="loadRegister()" class="nav-btn" data-i18n="register">إنشاء حساب</a>
+        <a href="#" id="my-profile-btn" onclick="loadProfile()" class="nav-btn" data-i18n="my_profile">الملف الشخصي</a>
+		<a href="/users/my-report.html" id="my-report-btn"  class="nav-btn" data-i18n="my_profile">سجل النقاط</a>
+		<a href="#" id="logout-btn" class="nav-btn" data-i18n="logout">تسجيل خروج</a>
+    </div>
 </div>
 </aside>
 <main class="main-content">
-<h2 id="welcome-message" style="display: block;">مرحبًا بك في الموسوعة!</h2>
+<h2 id="welcome-message" style="display: block;" data-i18n="welcome_message_short">مرحبًا بك في الموسوعة!</h2>
 <div class="home-cards-container" id="home-topic-cards">
 <a class="topic-card animals" href="#" onclick="loadAnimalsPage(); return false;">
 <span class="icon">🐾</span>
