@@ -98,3 +98,9 @@ export async function loadProfessionsGameContent() {
   document.getElementById("next-profession-btn")?.addEventListener("click", showNextProfession);
   document.getElementById("toggle-description-btn-profession")?.addEventListener("click", toggleDescription);
 }
+// فقط لو كنت بحاجة لاستخدامهم خارجيًا
+export {
+  showNextProfession,
+  showPreviousProfession,
+  playCurrentProfessionAudio
+};
