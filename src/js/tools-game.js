@@ -3,7 +3,7 @@
 import { db } from "./firebase-config.js";
 import { getDocs, collection, query } from "firebase/firestore";
 import {
-  currentLang,
+  getCurrentLang(),
   loadLanguage,
   applyTranslations,
   setDirection
@@ -92,14 +92,14 @@ function updateToolContent() {
   const parent = imageContainer.parentElement;
   imageContainer.remove();
 
-  nameEl.textContent = currentToolData.name?.[currentLang] || "";
-  descEl.textContent = currentToolData.description?.[currentLang] || "لا يوجد وصف.";
+  nameEl.textContent = currentToolData.name?.[getCurrentLang()] || "";
+  descEl.textContent = currentToolData.description?.[getCurrentLang()] || "لا يوجد وصف.";
   profEl.textContent = (currentToolData.professions || []).map(translateProfessionName).join("، ");
 
   const img = document.createElement("img");
   img.id = "tool-image";
   img.src = `/${currentToolData.image_path}`;
-  img.alt = currentToolData.name?.[currentLang] || "";
+  img.alt = currentToolData.name?.[getCurrentLang()] || "";
   parent.insertBefore(img, parent.children[1]);
 
   document.getElementById("prev-tools-btn").disabled = currentIndex === 0;
