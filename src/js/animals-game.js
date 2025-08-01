@@ -110,61 +110,60 @@ export async function loadAnimalsGameContent() {
 function updateAnimalContent() {
   const lang = getCurrentLang();
 
-  const animalImage = document.getElementById("animal-image");
-  const animalWord = document.getElementById("animal-word");
   if (animals.length === 0) return;
 
   currentAnimalData = animals[currentIndex];
 
-  const animalImage = document.getElementById('animal-image');
-  const animalWord = document.getElementById('animal-word');
-  const animalDescription = document.getElementById('animal-description');
+  
+  const animalWord = document.getElementById("animal-word");
+  const animalDescription = document.getElementById("animal-description");
   const animalBaby = document.getElementById("animal-baby");
   const animalFemale = document.getElementById("animal-female");
   const animalCategory = document.getElementById("animal-category");
-  const babyAnimalImage = document.getElementById("baby-animal-image"); // New
+  const babyAnimalImage = document.getElementById("baby-animal-image");
+  const prevAnimalBtn = document.getElementById("prev-animal-btn");
+  const nextAnimalBtn = document.getElementById("next-animal-btn");
 
-  const prevAnimalBtn = document.getElementById('prev-animal-btn');
-  const nextAnimalBtn = document.getElementById('next-animal-btn');
+  const animalName = currentAnimalData.name[lang] || "";
 
-if (animalImage) {
+  // ✅ تحديث الصورة
+  if (animalImage) {
     animalImage.src = `/images/animals/${currentAnimalData.image}`;
-    animalImage.alt = currentAnimalData.name[lang];
-    animalImage.onclick = playCurrentAnimalAudio; // ✅ تشغيل الصوت عند الضغط على الصورة
-	animalImage.classList.add("clickable-image");
+    animalImage.alt = animalName;
+    animalImage.onclick = playCurrentAnimalAudio;
+    animalImage.classList.add("clickable-image");
   }
-  
+
+  // ✅ تحديث الاسم
   if (animalWord) {
-    const animalName = currentAnimalData.name[lang];
     if (animalName) {
-      const firstLetter = animalName.charAt(0);
-      const restOfName = animalName.substring(1);
-      animalWord.innerHTML = `${firstLetter}${restOfName}`;
+      animalWord.innerHTML = `<span class="highlight-first-letter">${animalName[0]}</span>${animalName.slice(1)}`;
     } else {
       animalWord.textContent = '';
     }
-    animalWord.onclick = playCurrentAnimalAudio; // ✅ تشغيل الصوت عند الضغط على الاسم
-	animalWord.classList.add("clickable-text");
+    animalWord.onclick = playCurrentAnimalAudio;
+    animalWord.classList.add("clickable-text");
   }
-  
+
+  // ✅ تحديث المعلومات الأخرى
   if (animalDescription) animalDescription.textContent = currentAnimalData.description?.[lang] || "لا يوجد وصف";
   if (animalBaby) animalBaby.textContent = currentAnimalData.baby?.[lang] || "غير معروف";
   if (animalFemale) animalFemale.textContent = currentAnimalData.female?.[lang] || "غير معروف";
+
   if (animalCategory) {
     animalCategory.textContent = Array.isArray(currentAnimalData.classification)
       ? currentAnimalData.classification.map(cat => (typeof cat === 'object' && cat !== null && cat[lang]) ? cat[lang] : cat).join(", ")
       : (currentAnimalData.classification?.[lang] || "غير معروف");
   }
 
-  // New: Update baby animal image
   if (babyAnimalImage) {
     const babyImagePath = currentAnimalData.baby?.image_path;
     if (babyImagePath) {
-        babyAnimalImage.src = `/${babyImagePath}`;
-        babyAnimalImage.alt = currentAnimalData.baby?.name?.[lang] || "baby animal";
+      babyAnimalImage.src = `/${babyImagePath}`;
+      babyAnimalImage.alt = currentAnimalData.baby?.name?.[lang] || "صورة الابن";
     } else {
-        babyAnimalImage.src = "/images/default.png"; // Fallback
-        babyAnimalImage.alt = "No baby animal image available";
+      babyAnimalImage.src = "/images/default.png";
+      babyAnimalImage.alt = "لا توجد صورة للابن";
     }
   }
 
