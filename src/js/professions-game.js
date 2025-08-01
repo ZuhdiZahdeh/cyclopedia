@@ -1,108 +1,100 @@
-// professions-game.js - نسخة نهائية مع تشغيل الصوت عند الضغط على الصورة أو الاسم
-
 import { db } from "./firebase-config.js";
-import {
-  getDocs,
-  collection,
-  query
-} from "firebase/firestore";
-
-import {
-  currentLang,
-  currentVoice,
-  loadLanguage,
-  applyTranslations,
-  setDirection
-} from "./lang-handler.js";
-
+import { collection, getDocs } from "firebase/firestore";
 import { playAudio, stopCurrentAudio } from "./audio-handler.js";
+import { currentLang } from "./lang-handler.js";
 import { recordActivity } from "./activity-handler.js";
 
 let professions = [];
-let currentIndex = 0;
+let currentProfessionIndex = 0;
 let currentProfessionData = null;
 
-export async function loadProfessionsGameContent() {
-  stopCurrentAudio();
-  const mainContentArea = document.querySelector("main.main-content");
-  const response = await fetch("/html/professions.html");
-  const html = await response.text();
-  mainContentArea.innerHTML = html;
-
-  await loadLanguage();
-  applyTranslations();
-  setDirection();
-
-  await loadProfessions();
-  setupEventListeners();
-  showProfession(currentIndex);
+// تحميل المهن من Firestore
+async function loadProfessionsFromDB() {
+  const snapshot = await getDocs(collection(db, "professions"));
+  professions = snapshot.docs.map(doc => doc.data());
 }
 
-async function loadProfessions() {
-  const querySnapshot = await getDocs(query(collection(db, "professions")));
-  professions = querySnapshot.docs.map(doc => doc.data());
-}
-
-function setupEventListeners() {
-  document.getElementById("next-btn")?.addEventListener("click", () => {
-    stopCurrentAudio();
-    currentIndex = (currentIndex + 1) % professions.length;
-    showProfession(currentIndex);
-  });
-
-  document.getElementById("prev-btn")?.addEventListener("click", () => {
-    stopCurrentAudio();
-    currentIndex = (currentIndex - 1 + professions.length) % professions.length;
-    showProfession(currentIndex);
-  });
-
-  document.getElementById("play-sound-btn")?.addEventListener("click", () => {
-    playCurrentProfessionAudio();
-  });
-
-  document.getElementById("show-description-btn")?.addEventListener("click", () => {
-    const descDiv = document.getElementById("profession-description");
-    descDiv.classList.toggle("hidden");
-  });
-}
-
+// عرض مهنة حسب الفهرس
 function showProfession(index) {
-  const profession = professions[index];
-  if (!profession) return;
-  displayProfession(profession);
-  recordActivity("view_profession", profession.name?.[currentLang] || "");
-}
+  if (index < 0 || index >= professions.length) return;
 
-function displayProfession(professionData) {
-  currentProfessionData = professionData;
+  currentProfessionIndex = index;
+  currentProfessionData = professions[index];
 
   const nameEl = document.getElementById("profession-name");
-  const imageEl = document.getElementById("profession-image");
-
-  nameEl.textContent = professionData.name?.[currentLang] || "---";
-  imageEl.src = `/${professionData.image_path}`;
-  imageEl.alt = professionData.name?.en || "profession";
-
-  nameEl.style.cursor = "pointer";
-  imageEl.style.cursor = "pointer";
-  nameEl.onclick = playCurrentProfessionAudio;
-  imageEl.onclick = playCurrentProfessionAudio;
-
+  const imgEl = document.getElementById("profession-image");
   const descEl = document.getElementById("profession-description");
-  descEl.innerHTML = `
-    <strong class="section-title">الوصف:</strong>
-    <p>${professionData.description?.[currentLang] || ""}</p>
-    <p><strong>المهن المرتبطة:</strong> ${(professionData.related_professions || [])
-      .map(name => name)
-      .join(", ")}</p>`;
+
+  nameEl.textContent = currentProfessionData.name?.[currentLang] || "";
+  imgEl.src = currentProfessionData.image_path || "";
+  imgEl.alt = nameEl.textContent;
+
+  descEl.textContent = currentProfessionData.description?.[currentLang] || "";
+  descEl.classList.add("hidden");
+
+  // مؤشر يد عند المرور على الصورة والاسم
+  imgEl.style.cursor = "pointer";
+  nameEl.style.cursor = "pointer";
+
+  // تشغيل الصوت عند الضغط على الصورة أو الاسم
+  imgEl.onclick = () => playCurrentProfessionAudio();
+  nameEl.onclick = () => playCurrentProfessionAudio();
+
+  // سجل النشاط
+  recordActivity("profession_view", {
+    name: currentProfessionData.name?.[currentLang] || "",
+  });
 }
 
+// تشغيل الصوت الحالي
 function playCurrentProfessionAudio() {
-  if (!currentProfessionData?.sound?.[currentLang]?.[currentVoice]) return;
-  playAudio(currentProfessionData.sound[currentLang][currentVoice]);
+  if (!currentProfessionData) return;
+
+  const voiceSelect = document.getElementById("voice-select-profession");
+  const voiceType = voiceSelect?.value || "teacher";
+  const soundPath = currentProfessionData.sound?.[currentLang]?.[voiceType];
+
+  if (soundPath) {
+    playAudio(soundPath);
+  }
 }
-export {
-  showNextProfession,
-  showPreviousProfession,
-  playCurrentProfessionAudio
-};
+
+// عرض التالي
+function showNextProfession() {
+  const nextIndex = (currentProfessionIndex + 1) % professions.length;
+  showProfession(nextIndex);
+}
+
+// عرض السابق
+function showPreviousProfession() {
+  const prevIndex = (currentProfessionIndex - 1 + professions.length) % professions.length;
+  showProfession(prevIndex);
+}
+
+// تبديل وصف المهنة
+function toggleDescription() {
+  const descEl = document.getElementById("profession-description");
+  if (descEl) {
+    descEl.classList.toggle("hidden");
+  }
+}
+
+// تحميل صفحة المهن كاملة
+export async function loadProfessionsGameContent() {
+  stopCurrentAudio();
+  const mainContent = document.querySelector("main.main-content");
+  const response = await fetch("/html/professions.html");
+  mainContent.innerHTML = await response.text();
+
+  // إظهار أدوات التحكم الجانبية
+  document.getElementById("profession-sidebar-controls").style.display = "block";
+
+  await loadProfessionsFromDB();
+  showProfession(0);
+
+  // ربط الأحداث
+  document.getElementById("play-sound-btn-profession")?.addEventListener("click", playCurrentProfessionAudio);
+  document.getElementById("prev-profession-btn")?.addEventListener("click", showPreviousProfession);
+  document.getElementById("next-profession-btn")?.addEventListener("click", showNextProfession);
+  document.getElementById("toggle-description-btn-profession")?.addEventListener("click", toggleDescription);
+}

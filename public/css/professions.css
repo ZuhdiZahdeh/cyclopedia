@@ -33,3 +33,6 @@
     margin-bottom: 10px;
     text-align: right;
 }
+.clickable-text, .clickable-image {
+  cursor: pointer;
+}
