@@ -102,7 +102,6 @@ function playCurrentProfessionAudio() {
   playAudio(currentProfessionData.sound[currentLang][currentVoice]);
 }
 export {
-  loadProfessionsGameContent,
   showNextProfession,
   showPreviousProfession,
   playCurrentProfessionAudio
