@@ -53,6 +53,12 @@
   "listen_again": "Listen Again",
   "correct": "Correct!",
   "wrong": "Wrong!",
+  "additional_details": "Additional Details:",
+  "baby_name": "Baby Name:",
+  "female_name": "Female Name:",
+  "category": "Category:",
+  "baby_image": "Baby Image:",
+  "description_title": "Description:",
   "professions": {
     "Blacksmith": "Blacksmith",
     "Baker": "Baker",

@@ -21,29 +21,29 @@ export async function loadAnimalsGameContent() {
     return;
   }
 
-  mainContentArea.innerHTML = `
-    <div class="game-box">
-      <h2 id="animal-word" class="item-main-name"></h2>
-      <img id="animal-image" src="" alt="animal" />
-      
-      <div class="animal-details-section info-box" id="animal-details-section" style="display:none;">
-        <h3>تفاصيل إضافية:</h3>
-        <ul id="animal-details-list">
-          <li><strong>اسم الابناء:</strong> <span id="animal-baby">---</span></li>
-          <li><strong>اسم الزوجة:</strong> <span id="animal-female">---</span></li>
-          <li><strong>الصنف:</strong> <span id="animal-category">---</span></li>
-        </ul>
-        <div class="baby-animal-section" style="display:none;">
-            <h4>صورة الابن:</h4>
-            <img id="baby-animal-image" src="" alt="baby animal" style="max-width: 150px; margin-top: 10px;"/>
-        </div>
-      </div>
-      <div class="animal-description-box info-box" id="animal-description-box" style="display:none;">
-        <h4>الوصف:</h4>
-        <p id="animal-description">---</p>
+mainContentArea.innerHTML = `
+  <div class="game-box">
+    <h2 id="animal-word" class="item-main-name"></h2>
+    <img id="animal-image" src="" alt="animal" />
+    
+    <div class="animal-details-section info-box" id="animal-details-section" style="display:none;">
+      <h3 data-i18n="additional_details">تفاصيل إضافية:</h3>
+      <ul id="animal-details-list">
+        <li><strong data-i18n="baby_name">اسم الابناء:</strong> <span id="animal-baby">---</span></li>
+        <li><strong data-i18n="female_name">اسم الزوجة:</strong> <span id="animal-female">---</span></li>
+        <li><strong data-i18n="category">الصنف:</strong> <span id="animal-category">---</span></li>
+      </ul>
+      <div class="baby-animal-section" style="display:none;">
+          <h4 data-i18n="baby_image">صورة الابن:</h4>
+          <img id="baby-animal-image" src="" alt="baby animal" style="max-width: 150px; margin-top: 10px;"/>
       </div>
     </div>
-  `;
+    <div class="animal-description-box info-box" id="animal-description-box" style="display:none;">
+      <h4 data-i18n="description_title">الوصف:</h4>
+      <p id="animal-description">---</p>
+    </div>
+  </div>
+`;
 
   const animalImage = document.getElementById("animal-image");
   const animalWord = document.getElementById("animal-word");

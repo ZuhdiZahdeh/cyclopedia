@@ -53,6 +53,12 @@
   "listen_again": "استمع مرة أخرى",
   "correct": "صحيح!",
   "wrong": "خطأ!",
+  "additional_details": "تفاصيل إضافية:",
+  "baby_name": "اسم الابناء:",
+  "female_name": "اسم الزوجة:",
+  "category": "الصنف:",
+  "baby_image": "صورة الابن:",
+  "description_title": "الوصف:",
   "professions": {
     "Blacksmith": "حداد",
     "Baker": "خباز",

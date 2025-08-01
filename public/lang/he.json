@@ -42,6 +42,12 @@
   "listen_again": "האזן שוב",
   "correct": "נכון!",
   "wrong": "שגוי!",
+  "additional_details": "פרטים נוספים:",
+  "baby_name": "שם הצאצא:",
+  "female_name": "שם הנקבה:",
+  "category": "קטגוריה:",
+  "baby_image": "תמונת הצאצא:",
+  "description_title": "תיאור:",
   "professions": {
     "Blacksmith": "נפח",
     "Baker": "אופה",
