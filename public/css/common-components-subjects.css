@@ -139,3 +139,7 @@
     flex-grow: 1; /* للسماح للأزرار بالتمدد لملء المساحة المتاحة */
     text-align: center;
 }
+.clickable-text,
+.clickable-image {
+  cursor: pointer;
+}
