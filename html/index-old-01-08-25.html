@@ -591,7 +591,171 @@
 				{ id: 'profession', name_ar: 'المهن', name_en: 'Profession', name_he: 'מקצועות' },
 			];
 
+				// دالة initializeSubjectControls العامة لتهيئة عناصر التحكم لكل موضوع
+				async function initializeSubjectControls(subjectType) {
+						let langSelect, voiceSelect, playSoundBtn, prevBtn, nextBtn;
+						let loadContentFunc, showNextFunc, showPrevFunc, playAudioFunc;
+						// New variables for baby animal controls
+						let toggleBabyImageBtn, playBabySoundBtn; 
+						let playBabyAudioFunc;
 
+						switch(subjectType) {
+							case 'animal':
+								langSelect = document.getElementById('game-lang-select-animal');
+								voiceSelect = document.getElementById('voice-select-animal');
+								playSoundBtn = document.getElementById('play-sound-btn-animal');
+								prevBtn = document.getElementById('prev-animal-btn');
+								nextBtn = document.getElementById('next-animal-btn');
+								loadContentFunc = loadAnimalsGameContent;
+								showNextFunc = showNextAnimal;
+								showPrevFunc = showPreviousAnimal;
+								playAudioFunc = playCurrentAnimalAudio;
+								toggleBabyImageBtn = document.getElementById('toggle-baby-image-btn'); // New
+								playBabySoundBtn = document.getElementById('play-baby-sound-btn-animal'); // New
+								playBabyAudioFunc = playCurrentBabyAnimalAudio; // New
+								break;
+							case 'fruit':
+								langSelect = document.getElementById('game-lang-select-fruit');
+								voiceSelect = document.getElementById('voice-select-fruit');
+								playSoundBtn = document.getElementById('play-sound-btn-fruit');
+								prevBtn = document.getElementById('prev-fruit-btn');
+								nextBtn = document.getElementById('next-fruit-btn');
+								loadContentFunc = loadFruitsGameContent;
+								showNextFunc = showNextFruit;
+								showPrevFunc = showPreviousFruit;
+								playAudioFunc = playCurrentFruitAudio;
+								break;
+							case 'vegetable':
+								langSelect = document.getElementById('game-lang-select-vegetable');
+								voiceSelect = document.getElementById('voice-select-vegetable');
+								playSoundBtn = document.getElementById('play-sound-btn-vegetable');
+								prevBtn = document.getElementById('prev-vegetable-btn');
+								nextBtn = document.getElementById('next-vegetable-btn');
+								loadContentFunc = loadVegetablesGameContent;
+								showNextFunc = showNextVegetable;
+								showPrevFunc = showPreviousVegetable;
+								playAudioFunc = playCurrentVegetableAudio;
+								break;
+							case 'human-body':
+								langSelect = document.getElementById('game-lang-select-human-body');
+								voiceSelect = document.getElementById('voice-select-human-body');
+								playSoundBtn = document.getElementById('play-sound-btn-human-body');
+								prevBtn = document.getElementById('prev-human-body-btn');
+								nextBtn = document.getElementById('next-human-body-btn');
+								loadContentFunc = loadHumanBodyGameContent;
+								showNextFunc = showNextHumanBodyPart;
+								showPrevFunc = showPreviousHumanBodyPart;
+								playAudioFunc = playCurrentHumanBodyPartAudio;
+								break;
+							case 'profession':
+								langSelect = document.getElementById('game-lang-select-profession');
+								voiceSelect = document.getElementById('voice-select-profession');
+								playSoundBtn = document.getElementById('play-sound-btn-profession');
+								const toggleDescBtn = document.getElementById('toggle-description-btn-profession');
+								if (toggleDescBtn) toggleDescBtn.onclick = () => {
+								const descBox = document.getElementById('profession-description-box');
+								descBox.style.display = descBox.style.display === 'none' ? 'block' : 'none';
+								};
+								prevBtn = document.getElementById('prev-profession-btn');
+								nextBtn = document.getElementById('next-profession-btn');
+								loadContentFunc = loadProfessionsGameContent;
+								showNextFunc = showNextProfession;
+								showPrevFunc = showPreviousProfession;
+								playAudioFunc = playCurrentProfessionAudio;
+								break;
+							case 'tools':
+							  langSelect = document.getElementById('game-lang-select-tools');
+							  voiceSelect = document.getElementById('voice-select-tools');
+							  playSoundBtn = document.getElementById('play-sound-btn-tools');
+							  prevBtn = document.getElementById('prev-tools-btn');
+							  nextBtn = document.getElementById('next-tools-btn');
+							  loadContentFunc = loadToolsGameContent;
+							  showNextFunc = showNextTool;
+							  showPrevFunc = showPreviousTool;
+							  playAudioFunc = playCurrentToolAudio;
+							  const toggleDescBtnTools = document.getElementById('toggle-description-btn-tools');
+							  if (toggleDescBtnTools) toggleDescBtnTools.onclick = () => {
+								const descBox = document.getElementById('tool-description-box');
+								if (descBox) descBox.style.display = descBox.style.display === 'none' ? 'block' : 'none';
+							  };
+							  break;
+
+							default:
+							return;
+						}
+
+					if (!langSelect || !voiceSelect) {
+						console.error(`عناصر التحكم لنوع الموضوع '${subjectType}' لم يتم العثور عليها في DOM.`);
+						return;
+					}
+
+					if (langSelect.options.length === 0) {
+						['ar', 'en', 'he'].forEach(langCode => {
+							const option = document.createElement('option');
+							option.value = langCode;
+							option.textContent = { 'ar': 'العربية', 'en': 'English', 'he': 'עברית' }[langCode];
+							langSelect.appendChild(option);
+						});
+						langSelect.value = getCurrentLang();
+					}
+
+					if (voiceSelect.options.length === 0) {
+						['teacher', 'boy', 'girl', 'child'].forEach(voiceType => {
+							const option = document.createElement('option');
+							option.value = voiceType;
+							option.textContent = { 'teacher': 'المعلم', 'boy': 'صوت ولد', 'girl': 'صوت بنت', 'child': 'صوت طفل' }[voiceType];
+							voiceSelect.appendChild(option);
+						});
+						voiceSelect.value = 'teacher';
+					}
+
+					langSelect.onchange = async () => {
+						const newLang = langSelect.value;
+						await loadLanguage(newLang);
+						applyTranslations();
+						setDirection(newLang);
+						await loadContentFunc();
+					};
+
+					voiceSelect.onchange = () => {
+						// منطق تحديث الصوت في ملف اللعبة الخاص بالموضوع (مثل animals-game.js)
+						// هذه الأزرار لا تمرر القيمة مباشرة إلى الدالة، بل الدالة تستخدم قيمة الـ select
+						// ولذلك لا حاجة لدالة update هنا
+					};
+
+					if (playSoundBtn) playSoundBtn.onclick = () => {
+						playAudioFunc();
+					};
+
+					if (prevBtn) prevBtn.onclick = () => {
+						showPrevFunc();
+					};
+
+					if (nextBtn) nextBtn.onclick = () => {
+						showNextFunc();
+					};
+
+					// New event listeners for baby animal buttons
+					if (toggleBabyImageBtn) {
+						toggleBabyImageBtn.onclick = () => {
+							// The actual toggling logic is within loadAnimalsGameContent as it manipulates the DOM directly.
+							// This button just triggers the display property of the relevant section.
+							const detailsBox = document.getElementById("animal-details-section");
+							const babyAnimalSection = detailsBox ? detailsBox.querySelector(".baby-animal-section") : null;
+							if (babyAnimalSection) {
+								babyAnimalSection.style.display = (babyAnimalSection.style.display === "none") ? "block" : "none";
+							}
+						};
+					}
+
+					if (playBabySoundBtn) {
+						playBabySoundBtn.onclick = () => {
+							playBabyAudioFunc();
+						};
+					}
+
+					applyTranslations();
+				}
 				
 		// صفحة الأدوات				
         window.loadToolsPage = async () => {
