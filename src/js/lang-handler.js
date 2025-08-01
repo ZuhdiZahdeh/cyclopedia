@@ -1,9 +1,12 @@
 // public/js/lang-handler.js
 
+
 let currentLang = localStorage.getItem("lang") || "ar";
+let currentVoice = localStorage.getItem("voice") || "boy";
 let translations = {};
 
-export { currentLang, translate, loadLanguage, applyTranslations, setDirection };
+export { currentLang, currentVoice, translate, loadLanguage, applyTranslations, setDirection };
+
 
 // عند تحميل الصفحة: تأكد أن اللغة محفوظة أو استخدم العربية كافتراضية
 if (!localStorage.getItem("lang")) {
