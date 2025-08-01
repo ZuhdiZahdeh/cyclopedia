@@ -102,6 +102,10 @@
   min-height: 60px;
 }
 
+.clickable-image,
+.clickable-text {
+  cursor: pointer;
+}
 /* ✅ دعم التصميم المتجاوب */
 @media (max-width: 768px) {
   .page-grid {

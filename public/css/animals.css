@@ -35,5 +35,6 @@
     color: var(--color-text-primary); /* استخدام متغير لون النص الأساسي */
 }
 
+
 /* لا داعي لتكرار .game-box, .item-main-name, .info-box, .navigation-buttons هنا */
 /* هذه الأنماط ستكون في common-components-subjects.css */
