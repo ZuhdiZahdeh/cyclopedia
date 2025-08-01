@@ -367,7 +367,7 @@
   } from '/src/js/tools-match-game.js';
 
   import {
-    setDirection, currentLang, loadLanguage, applyTranslations
+    setDirection, getCurrentLang, loadLanguage, applyTranslations
   } from '/src/js/lang-handler.js';
 
   const mainContentArea = document.querySelector("main.main-content");
@@ -678,7 +678,7 @@
 							option.textContent = { 'ar': 'العربية', 'en': 'English', 'he': 'עברית' }[langCode];
 							langSelect.appendChild(option);
 						});
-						langSelect.value = currentLang;
+						langSelect.value = getCurrentLang();
 					}
 
 					if (voiceSelect.options.length === 0) {
