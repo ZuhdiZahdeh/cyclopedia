@@ -101,3 +101,9 @@ function playCurrentProfessionAudio() {
   if (!currentProfessionData?.sound?.[currentLang]?.[currentVoice]) return;
   playAudio(currentProfessionData.sound[currentLang][currentVoice]);
 }
+export {
+  loadProfessionsGameContent,
+  showNextProfession,
+  showPreviousProfession,
+  playCurrentProfessionAudio
+};
