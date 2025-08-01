@@ -1,13 +1,20 @@
-// نسخة محدثة من professions-game.js لتشغيل الصوت عند الضغط على اسم المهنة أو صورتها
+// professions-game.js - نسخة نهائية مع تشغيل الصوت عند الضغط على الصورة أو الاسم
 
 import { db } from "./firebase-config.js";
-import { getDocs, collection, query } from "firebase/firestore";
+import {
+  getDocs,
+  collection,
+  query
+} from "firebase/firestore";
+
 import {
   currentLang,
+  currentVoice,
   loadLanguage,
   applyTranslations,
   setDirection
 } from "./lang-handler.js";
+
 import { playAudio, stopCurrentAudio } from "./audio-handler.js";
 import { recordActivity } from "./activity-handler.js";
 
@@ -17,155 +24,80 @@ let currentProfessionData = null;
 
 export async function loadProfessionsGameContent() {
   stopCurrentAudio();
-
   const mainContentArea = document.querySelector("main.main-content");
-  const professionSidebar = document.getElementById("profession-sidebar-controls");
+  const response = await fetch("/html/professions.html");
+  const html = await response.text();
+  mainContentArea.innerHTML = html;
 
-  if (!mainContentArea || !professionSidebar) {
-    console.error("Main content area or profession sidebar not found.");
-    return;
-  }
-
-  // Inject HTML structure
-  mainContentArea.innerHTML = `
-    <div class="game-box">
-      <h2 id="profession-name" class="item-main-name"></h2>
-      <img id="profession-image" src="" alt="profession" />
-
-      <div class="profession-description-box info-box" id="profession-description-box" style="display:none;">
-        <h4>الوصف:</h4>
-        <p id="profession-description">---</p>
-      </div>
-    </div>
-  `;
-
-  // Controls
-  const langSelect = document.getElementById("game-lang-select-profession");
-  const voiceSelect = document.getElementById("voice-select-profession");
-  const playSoundBtn = document.getElementById("play-sound-btn-profession");
-  const prevBtn = document.getElementById("prev-profession-btn");
-  const nextBtn = document.getElementById("next-profession-btn");
-  const toggleDescBtn = document.getElementById("toggle-description-btn-profession");
-
-  // Fetch data
-  await fetchProfessions(langSelect.value);
-
-  if (professions.length === 0) {
-    console.warn("No professions found for this language.");
-    document.getElementById("profession-name").textContent = "لا توجد بيانات";
-    document.getElementById("profession-description").textContent = "غير متوفر.";
-    document.getElementById("profession-image").src = "/images/default.png";
-    disableProfessionButtons(true);
-    return;
-  }
-
-  currentIndex = 0;
-  updateProfessionContent();
-  disableProfessionButtons(false);
-
-  langSelect.onchange = async () => {
-    const newLang = langSelect.value;
-    await loadLanguage(newLang);
-    applyTranslations();
-    setDirection(newLang);
-    await loadProfessionsGameContent();
-  };
-
-  if (playSoundBtn) playSoundBtn.onclick = () => playCurrentProfessionAudio();
-  if (prevBtn) prevBtn.onclick = () => showPreviousProfession();
-  if (nextBtn) nextBtn.onclick = () => showNextProfession();
-  if (toggleDescBtn) toggleDescBtn.onclick = () => {
-    const descBox = document.getElementById("profession-description-box");
-    descBox.style.display = descBox.style.display === "none" ? "block" : "none";
-  };
-
+  await loadLanguage();
   applyTranslations();
-  setDirection(langSelect.value);
+  setDirection();
+
+  await loadProfessions();
+  setupEventListeners();
+  showProfession(currentIndex);
 }
 
-function updateProfessionContent() {
-  if (professions.length === 0) return;
-
-  currentProfessionData = professions[currentIndex];
-
-  const img = document.getElementById("profession-image");
-  const nameEl = document.getElementById("profession-name");
-  const descEl = document.getElementById("profession-description");
-
-  img.src = `/${currentProfessionData.image_path}`;
-  img.alt = currentProfessionData.name[currentLang];
-  img.onclick = playCurrentProfessionAudio; // ✅ تشغيل الصوت عند الضغط على الصورة
-
-  nameEl.textContent = currentProfessionData.name[currentLang] || "";
-  nameEl.onclick = playCurrentProfessionAudio; // ✅ تشغيل الصوت عند الضغط على الاسم
-
-  descEl.textContent = currentProfessionData.description?.[currentLang] || "لا يوجد وصف.";
-
-  document.getElementById("prev-profession-btn").disabled = currentIndex === 0;
-  document.getElementById("next-profession-btn").disabled = currentIndex === professions.length - 1;
-
-  stopCurrentAudio();
+async function loadProfessions() {
+  const querySnapshot = await getDocs(query(collection(db, "professions")));
+  professions = querySnapshot.docs.map(doc => doc.data());
 }
 
-async function fetchProfessions() {
-  try {
-    const colRef = collection(db, "professions");
-    const q = query(colRef);
-    const snap = await getDocs(q);
-    professions = snap.docs.map(doc => doc.data());
-  } catch (err) {
-    console.error("Error fetching professions from Firestore:", err);
-    professions = [];
-  }
-}
-
-export function showNextProfession() {
-  stopCurrentAudio();
-  if (currentIndex < professions.length - 1) {
-    currentIndex++;
-    updateProfessionContent();
-    recordActivity(JSON.parse(localStorage.getItem("user")), "professions");
-  }
-}
-
-export function showPreviousProfession() {
-  stopCurrentAudio();
-  if (currentIndex > 0) {
-    currentIndex--;
-    updateProfessionContent();
-    recordActivity(JSON.parse(localStorage.getItem("user")), "professions");
-  }
-}
-
-export function playCurrentProfessionAudio() {
-  if (currentProfessionData) {
-    const selectedVoice = document.getElementById("voice-select-profession").value;
-    const lang = document.getElementById("game-lang-select-profession").value;
-    const fileName = currentProfessionData.sound?.[lang]?.[selectedVoice];
-
-    if (!fileName) {
-      console.error("❌ Audio not available for this profession/voice/lang");
-      return;
-    }
-
-    const path = `/${fileName}`;
-    playAudio(path);
-    recordActivity(JSON.parse(localStorage.getItem("user")), "professions_audio");
-  } else {
-    console.warn("⚠️ No profession selected for audio playback.");
-  }
-}
-
-function disableProfessionButtons(isDisabled) {
-  [
-    "play-sound-btn-profession",
-    "prev-profession-btn",
-    "next-profession-btn",
-    "toggle-description-btn-profession",
-    "game-lang-select-profession",
-    "voice-select-profession"
-  ].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.disabled = isDisabled;
+function setupEventListeners() {
+  document.getElementById("next-btn")?.addEventListener("click", () => {
+    stopCurrentAudio();
+    currentIndex = (currentIndex + 1) % professions.length;
+    showProfession(currentIndex);
   });
+
+  document.getElementById("prev-btn")?.addEventListener("click", () => {
+    stopCurrentAudio();
+    currentIndex = (currentIndex - 1 + professions.length) % professions.length;
+    showProfession(currentIndex);
+  });
+
+  document.getElementById("play-sound-btn")?.addEventListener("click", () => {
+    playCurrentProfessionAudio();
+  });
+
+  document.getElementById("show-description-btn")?.addEventListener("click", () => {
+    const descDiv = document.getElementById("profession-description");
+    descDiv.classList.toggle("hidden");
+  });
+}
+
+function showProfession(index) {
+  const profession = professions[index];
+  if (!profession) return;
+  displayProfession(profession);
+  recordActivity("view_profession", profession.name?.[currentLang] || "");
+}
+
+function displayProfession(professionData) {
+  currentProfessionData = professionData;
+
+  const nameEl = document.getElementById("profession-name");
+  const imageEl = document.getElementById("profession-image");
+
+  nameEl.textContent = professionData.name?.[currentLang] || "---";
+  imageEl.src = `/${professionData.image_path}`;
+  imageEl.alt = professionData.name?.en || "profession";
+
+  nameEl.style.cursor = "pointer";
+  imageEl.style.cursor = "pointer";
+  nameEl.onclick = playCurrentProfessionAudio;
+  imageEl.onclick = playCurrentProfessionAudio;
+
+  const descEl = document.getElementById("profession-description");
+  descEl.innerHTML = `
+    <strong class="section-title">الوصف:</strong>
+    <p>${professionData.description?.[currentLang] || ""}</p>
+    <p><strong>المهن المرتبطة:</strong> ${(professionData.related_professions || [])
+      .map(name => name)
+      .join(", ")}</p>`;
+}
+
+function playCurrentProfessionAudio() {
+  if (!currentProfessionData?.sound?.[currentLang]?.[currentVoice]) return;
+  playAudio(currentProfessionData.sound[currentLang][currentVoice]);
 }
