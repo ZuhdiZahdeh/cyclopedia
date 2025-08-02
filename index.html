@@ -401,25 +401,38 @@
   const welcomeMessage = document.getElementById("welcome-message");
   const homeTopicCards = document.getElementById("home-topic-cards");
 	// دالة تحميل لعبة من صاحب الأداة 
-	window.loadToolsMatchPage = async () => {
-	  hideAllControls();
-	  if (welcomeMessage) welcomeMessage.style.display = 'none';
-	  if (homeTopicCards) homeTopicCards.style.display = 'none';
-	  try {
-		const response = await fetch('/html/tools-match-controls.html');
-		const html = await response.text();
-		mainContentArea.innerHTML = html;
+window.loadToolsMatchPage = async () => {
+  hideAllControls();
+  if (welcomeMessage) welcomeMessage.style.display = 'none';
+  if (homeTopicCards) homeTopicCards.style.display = 'none';
 
-		// ✅ أظهر الشريط الجانبي لأزرار اللعبة
-		const toolsMatchSidebarControls = document.getElementById("tools-match-sidebar-controls");
-		if (toolsMatchSidebarControls) toolsMatchSidebarControls.style.display = "block";
+  try {
+    // 1. تحميل القسم الجانبي من الأدوات
+    const responseSidebar = await fetch('/html/tools-match-controls.html');
+    const htmlSidebar = await responseSidebar.text();
 
-		await loadToolsMatchGameContent();
-	  } catch (error) {
-		mainContentArea.innerHTML = '<p>تعذر تحميل اللعبة</p>';
-		console.error(error);
-	  }
-	};
+    // 2. إضافته إلى <aside> بدل <main>
+    const sidebarContainer = document.querySelector("aside.sidebar");
+
+    // أزل نسخة قديمة إن وجدت
+    const existing = document.getElementById("tools-match-sidebar-controls");
+    if (existing) existing.remove();
+
+    // أضف عناصر التحكم الجانبية إلى <aside>
+    sidebarContainer.insertAdjacentHTML("beforeend", htmlSidebar);
+
+    // ✅ عرض القسم
+    const toolsMatchSidebarControls = document.getElementById("tools-match-sidebar-controls");
+    if (toolsMatchSidebarControls) toolsMatchSidebarControls.style.display = "block";
+
+    // 3. شغّل اللعبة (تقوم بإدخال محتواها داخل <main>)
+    await loadToolsMatchGameContent();
+  } catch (error) {
+    mainContentArea.innerHTML = '<p>تعذر تحميل اللعبة</p>';
+    console.error(error);
+  }
+};
+
 
 
   // تابع باقي الدوال هنا بدون تعديل...
