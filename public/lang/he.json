@@ -100,5 +100,12 @@
   "tools_match_game": "של מי הכלי?",
   "lang_arabic": "ערבית",
   "lang_english": "אנגלית",
-  "lang_hebrew": "עברית"
+  "lang_hebrew": "עברית",
+  "tools_match_display":"🎲 שיטת תצוגה",
+  	"tool_image_job_text":"תמונת כלי + שם מקצוע",
+	"tool_text_job_images":"שם כלי + תמונת מקצוע",
+	"tool_audio_job_images" :"צליל כלי + תמונת מקצוע",
+	"tool_audio_job_images":"תמונה מקצוע צליל כלי",
+	"tool_text_job_text":"שם כלי + שם מקצוע",
+  "tools_match_game_settings":"🧰 הגדרות המשחק מבעל הכלי?"
 }

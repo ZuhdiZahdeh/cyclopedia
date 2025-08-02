@@ -111,5 +111,12 @@
   "tools_match_game": "Who Owns the Tool?",
   "lang_arabic": "Arabic",
   "lang_english": "English",
-  "lang_hebrew": "Hebrew"
+  "lang_hebrew": "Hebrew",
+  "tools_match_display":"🎲 Display method",
+  	"tool_image_job_text":"Tool image + profession names",
+	"tool_text_job_images":"Tool name + Profession image",
+	"tool_audio_job_images" :"Tool sound + Profession image",
+	"tool_audio_job_images":"Tool sound + Profession image",
+	"tool_text_job_text":"Tool name + Profession name",
+  "tools_match_game_settings":"🧰 Game settings from the owner of the tool?"
 }

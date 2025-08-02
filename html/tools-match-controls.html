@@ -1,32 +1,33 @@
 <!-- واجهة التحكم بلعبة من صاحب الأداة؟ -->
 <div class="sidebar-section" id="tools-match-sidebar-controls" style="display: block;">
-  <h3 style="text-align: center;">🧰 إعدادات اللعبة</h3>
+  <h3 style="text-align: center;" data-i18n="tools_match_game_settings">🧰 إعدادات لعبة من صاحب الأداة ؟</h3>
   <div class="sidebar-game-controls">
     <div class="control-group">
       <label for="tools-match-lang-select">🌐 اللغة:</label>
       <select id="tools-match-lang-select">
-        <option value="ar">العربية</option>
-        <option value="en">English</option>
-        <option value="he">עברית</option>
+<option value="ar" data-i18n="lang_arabic">العربية</option>
+<option value="en" data-i18n="lang_english">English</option>
+<option value="he" data-i18n="lang_hebrew">עברית</option>
       </select>
     </div>
     <div class="control-group">
-      <label for="tools-match-voice-select">🔊 الصوت:</label>
+      <label for="tools-match-voice-select" data-i18n="Voice">🔊 الصوت:</label>
       <select id="tools-match-voice-select">
-        <option value="boy">ولد</option>
-        <option value="girl">بنت</option>
-        <option value="teacher">المعلم</option>
+<option data-i18n="teacher_voice" value="teacher">المعلم</option>
+<option data-i18n="boy_voice" value="boy">صوت ولد</option>
+<option data-i18n="girl_voice" value="girl">صوت بنت</option>
+<option data-i18n="child_voice" value="child">صوت طفل</option>
       </select>
     </div>
     <div class="control-group">
-      <label for="tools-match-display-mode">🎲 طريقة العرض:</label>
+      <label for="tools-match-display-mode" data-i18n="tools_match_display">🎲 طريقة العرض:</label>
       <select id="tools-match-display-mode">
-        <option value="image-image">صورة الأداة + صور المهن</option>
-        <option value="image-text">صورة الأداة + أسماء المهن</option>
-        <option value="text-image">اسم الأداة + صور المهن</option>
-        <option value="sound-image">صوت الأداة + صور المهن</option>
-        <option value="sound-text">صوت الأداة + أسماء المهن</option>
-        <option value="text-text">اسم الأداة + أسماء المهن</option>
+        <option data-i18n="tool_image_job_images" value="image-image">صورة الأداة + صور المهن</option>
+        <option data-i18n="tool_image_job_text" value="image-text">صورة الأداة + أسماء المهن</option>
+        <option data-i18n="tool_text_job_images" value="text-image">اسم الأداة + صور المهن</option>
+        <option data-i18n="tool_audio_job_images" value="sound-image">صوت الأداة + صور المهن</option>
+        <option data-i18n="tool_audio_job_images" value="sound-text">صوت الأداة + أسماء المهن</option>
+        <option data-i18n="tool_text_job_text" value="text-text">اسم الأداة + أسماء المهن</option>
       </select>
     </div>
     <div class="control-group">
