@@ -1,6 +1,14 @@
-import ar from '/lang/ar.json';
-import en from '/lang/en.json';
-import he from '/lang/he.json';
+// ✅ جلب ملفات الترجمة من مجلد public/lang حسب اللغة
+export async function loadLanguage(lang) {
+  try {
+    const response = await fetch(`/lang/${lang}.json`);
+    if (!response.ok) throw new Error(`Failed to load ${lang}.json`);
+    return await response.json();
+  } catch (error) {
+    console.error('Translation load error:', error);
+    return {};
+  }
+}
 
 // ✅ تحديد اللغة الحالية من localStorage أو المتصفح
 export function getCurrentLang() {
@@ -8,16 +16,6 @@ export function getCurrentLang() {
   if (storedLang) return storedLang;
   const browserLang = navigator.language?.split('-')[0];
   return ['ar', 'en', 'he'].includes(browserLang) ? browserLang : 'ar';
-}
-
-// ✅ تحميل الترجمة حسب اللغة
-export function loadLanguage(lang) {
-  switch (lang) {
-    case 'ar': return ar;
-    case 'en': return en;
-    case 'he': return he;
-    default: return ar;
-  }
 }
 
 // ✅ ضبط اتجاه الصفحة بناءً على اللغة
