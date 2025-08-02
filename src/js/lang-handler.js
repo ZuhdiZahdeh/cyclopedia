@@ -1,45 +1,39 @@
-console.log("✅ lang-handler.js loaded - النسخة الآمنة");
+import ar from '/lang/ar.json';
+import en from '/lang/en.json';
+import he from '/lang/he.json';
 
-let currentLang = 'ar';
-let translations = {};
+// ✅ تحديد اللغة الحالية من localStorage أو المتصفح
+export function getCurrentLang() {
+  const storedLang = localStorage.getItem('lang');
+  if (storedLang) return storedLang;
+  const browserLang = navigator.language?.split('-')[0];
+  return ['ar', 'en', 'he'].includes(browserLang) ? browserLang : 'ar';
+}
 
-export async function loadLanguage(lang) {
-  currentLang = lang;
-
-  try {
-    const response = await fetch(`/lang/${lang}.json`);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    translations = await response.json();
-    updateTranslations();
-  } catch (error) {
-    console.error(`❌ Failed to load language file: /lang/${lang}.json`, error);
+// ✅ تحميل الترجمة حسب اللغة
+export function loadLanguage(lang) {
+  switch (lang) {
+    case 'ar': return ar;
+    case 'en': return en;
+    case 'he': return he;
+    default: return ar;
   }
 }
 
-function updateTranslations() {
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    const text = getTranslation(key);
-    if (text) el.innerText = text;
-  });
-
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-    const key = el.getAttribute('data-i18n-placeholder');
-    const text = getTranslation(key);
-    if (text) el.setAttribute('placeholder', text);
-  });
-
-  document.querySelectorAll('[data-i18n-title]').forEach(el => {
-    const key = el.getAttribute('data-i18n-title');
-    const text = getTranslation(key);
-    if (text) el.setAttribute('title', text);
-  });
+// ✅ ضبط اتجاه الصفحة بناءً على اللغة
+export function setDirection(lang) {
+  const html = document.documentElement;
+  const isRTL = lang === 'ar' || lang === 'he';
+  html.setAttribute('lang', lang);
+  html.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
 }
 
-export function getTranslation(key) {
-  return translations[key] || key;
-}
-
-export function getCurrentLanguage() {
-  return currentLang;
+// ✅ تطبيق الترجمة على العناصر التي تملك data-i18n
+export function applyTranslations(translations) {
+  document.querySelectorAll('[data-i18n]').forEach(element => {
+    const key = element.getAttribute('data-i18n');
+    if (translations[key]) {
+      element.innerHTML = translations[key];
+    }
+  });
 }
