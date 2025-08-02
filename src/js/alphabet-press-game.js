@@ -18,11 +18,13 @@ const alphabetLetters = {
   'he': ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','כ','ל','מ','נ','ס','ע','פ','צ','ק','ר','ש','ת']
 };
 
-const availableCategories = [
+ const availableCategories = [
   { id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
   { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
   { id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables', name_he: 'ירקות' },
   { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף האדם' },
+  { id: 'professions', name_ar: 'مهن', name_en: 'Professions', name_he: 'מקצועות' },
+  { id: 'profession_tools', name_ar: 'أدوات المهن', name_en: 'Profession Tools', name_he: 'כלי עבודה' },
 ];
 
 export function getCurrentDisplayedItem() {
