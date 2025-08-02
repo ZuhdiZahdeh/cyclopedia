@@ -8,7 +8,7 @@ import { recordActivity } from "./activity-handler.js";
 let allTools = [];
 let allProfessions = [];
 let currentTool = null;
-
+console.log("✅ tools-match-game.js loaded - النسخة الأخيرة");
 export async function loadToolsMatchGameContent() {
   stopCurrentAudio();
 
@@ -181,7 +181,7 @@ function checkAnswer(selected, correct) {
     result.style.color = "red";
     playAudio("audio/fail/fail_toolMatch_a.mp3");
   }
-
+ console.log("🧪 checkAnswer invoked in tools-match-game.js");
   recordActivity("tools-match", {
     tool: currentTool.name?.[getLang()],
     selected,
