@@ -25,10 +25,9 @@ export async function loadToolsGameContent() {
       <img id="tool-image" src="" alt="tool" />
 
       <div class="tool-description-box info-box" id="tool-description-box" style="display:none;">
-        <h4 data-i18n="description_title">"الوصف:"</h4>
+        <h4 data-i18n="description_title">${window.translations?.Description || "الوصف:"}</h4>
         <p id="tool-description">---</p>
-        <p><strong data-i18n="tool_related_professions">"المهن المرتبطة بالأداة:"</strong> 
-		<span id="tool-professions"></span></p>
+        <p data-i18n="tool_related_professions"><strong>${window.translations?.["Category"] || "المهن المرتبطة بالأداة:"}</strong> <span id="tool-professions"></span></p>
       </div>
     </div>
   `;
