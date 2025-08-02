@@ -1,55 +1,42 @@
-let currentLang = localStorage.getItem("lang") || "ar";
 
-// ✅ دالة استرجاع اللغة الحالية
+import ar from '/lang/ar.json';
+import en from '/lang/en.json';
+import he from '/lang/he.json';
+
+const translations = {
+  ar,
+  en,
+  he
+};
+
 export function getCurrentLang() {
-  return currentLang;
+  return localStorage.getItem("lang") || "ar";
 }
 
-// ✅ دالة ضبط اللغة
-export function setLanguage(lang) {
-  currentLang = lang;
-  localStorage.setItem("lang", lang);
-  setDirection(lang);
-  loadLanguage(lang);
-  document.dispatchEvent(new CustomEvent('languageChanged', { detail: lang }));
-}
-
-// ✅ تحميل ملف الترجمة وتطبيقه
-export async function loadLanguage(lang) {
-  try {
-    const response = await fetch(`/lang/${lang}.json`);
-    const translations = await response.json();
-    applyTranslations(translations);
-  } catch (error) {
-    console.error("خطأ في تحميل ملف الترجمة:", error);
+export function setCurrentLang(lang) {
+  if (['ar', 'en', 'he'].includes(lang)) {
+    localStorage.setItem("lang", lang);
+  } else {
+    console.warn("Unsupported language:", lang);
   }
 }
 
-// ✅ ضبط اتجاه الصفحة حسب اللغة
-export function setDirection(lang) {
-  const dir = lang === 'ar' ? 'rtl' : 'ltr';
-  document.documentElement.setAttribute("dir", dir);
-  document.documentElement.setAttribute("lang", lang);
-}
+export function applyTranslations(lang = getCurrentLang()) {
+  const langData = translations[lang];
 
-// ✅ تطبيق الترجمة على العناصر التي تملك data-i18n
-export function applyTranslations(translations) {
-  document.querySelectorAll('[data-i18n]').forEach(element => {
-    const key = element.getAttribute('data-i18n');
-    if (translations[key]) {
-      element.innerHTML = translations[key];
+  if (!langData) {
+    console.warn(`❌ لا توجد بيانات ترجمة للغة: ${lang}`);
+    return;
+  }
+
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    const translation = langData[key];
+
+    if (translation) {
+      el.innerText = translation;
+    } else {
+      console.warn(`⚠️ مفتاح الترجمة غير موجود: '${key}' في اللغة: '${lang}'`);
     }
   });
-}
-
-// ✅ دالة ترجمة يدوية لمفتاح معين (اختيارية)
-export async function translate(key) {
-  try {
-    const response = await fetch(`/lang/${currentLang}.json`);
-    const translations = await response.json();
-    return translations[key] || key;
-  } catch (error) {
-    console.error("فشل في الترجمة:", error);
-    return key;
-  }
 }
