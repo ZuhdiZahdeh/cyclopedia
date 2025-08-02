@@ -1,3 +1,6 @@
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
+
 export default defineConfig({
   base: './',
   build: {
@@ -11,7 +14,7 @@ export default defineConfig({
         toolsMatchScript: resolve(__dirname, 'src/js/tools-match-game.js'),
         toolsMatchLoader: resolve(__dirname, 'html/tools-match-loader.html'),
         includeAllScripts: resolve(__dirname, 'src/js/include-all-scripts.js'),
-        alphabetPressGame: resolve(__dirname, 'src/js/alphabet-press-game.js'), // ✅ هذا هو السطر الصحيح
+        alphabetPressGame: resolve(__dirname, 'src/js/alphabet-press-game.js'),
         debug: resolve(__dirname, 'html/debug.html')
       }
     }
