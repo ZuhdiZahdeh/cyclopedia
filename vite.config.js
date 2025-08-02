@@ -13,7 +13,9 @@ export default defineConfig({
         "tools-match": resolve(__dirname, 'html/tools-match.html'),
         professions: resolve(__dirname, 'html/professions.html'),
         toolsMatchScript: resolve(__dirname, 'src/js/tools-match-game.js'), // ✅ أضف هذا
-		toolsMatchLoader: resolve(__dirname, 'html/tools-match-loader.html')
+		toolsMatchLoader: resolve(__dirname, 'html/tools-match-loader.html'),
+		debug: resolve(__dirname, 'html/debug.html')
+
 
       }
     }
