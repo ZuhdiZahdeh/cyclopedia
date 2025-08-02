@@ -1,6 +1,6 @@
 // ✅ النسخة المعدلة من alphabet-press-game.js
 
-console.log("✅ تم تحميل alphabet-press-game.js");
+
 import { db } from './firebase-config.js';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from './lang-handler.js';
@@ -11,7 +11,7 @@ let allItems = [];
 let currentDisplayedItem = null;
 export let currentAlphabetPressCategory = 'animals';
 export let currentAlphabetPressVoice = 'teacher';
-
+console.log("✅ تم تحميل alphabet-press-game.js");
 const alphabetLetters = {
   'ar': ['أ','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ي'],
   'en': [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],
