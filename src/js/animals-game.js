@@ -116,7 +116,7 @@ function updateAnimalContent() {
 
   currentAnimalData = animals[currentIndex];
 
-  
+  const animalImage = document.getElementById("animal-image");
   const animalWord = document.getElementById("animal-word");
   const animalDescription = document.getElementById("animal-description");
   const animalBaby = document.getElementById("animal-baby");
