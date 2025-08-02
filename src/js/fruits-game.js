@@ -24,13 +24,13 @@ export async function loadFruitsGameContent() {
         <div class="game-box">
             <h2 id="fruit-name-ar" class="item-main-name">---</h2>
             <img id="fruit-image" src="" alt="Fruit" />
-            <div class="info-box"> <h4>الوصف:</h4>
+            <div class="info-box"> <h4 data-i18n="description_title">الوصف:</h4>
                 <p id="fruit-description-ar" class="fruit-description-ar"></p>
                 <p id="fruit-description-en" class="fruit-description-en"></p>
             </div>
             <div class="navigation-buttons">
-                <button id="prev-fruit-btn" class="nav-button">السابق</button>
-                <button id="next-fruit-btn" class="nav-button">التالي</button>
+                <button id="prev-fruit-btn" class="nav-button" data-i18n="previous">السابق</button>
+                <button id="next-fruit-btn" class="nav-button" data-i18n="next">التالي</button>
             </div>
         </div>
     `;

@@ -27,13 +27,13 @@ export async function loadVegetablesGameContent() {
       <div class="vegetable-details-section info-box">
         <h3>حقائق عن الخضروات:</h3>
         <ul id="vegetable-details-list">
-          <li><strong>الصنف:</strong> <span id="vegetable-type">---</span></li>
+          <li><strong data-i18n="vegetable_category">الصنف:</strong> <span id="vegetable-type">---</span></li>
           <li><strong>الفوائد:</strong> <span id="vegetable-benefits">---</span></li>
         </ul>
       </div>
       <div class="navigation-buttons">
-        <button id="prev-vegetable-btn" class="nav-button">السابق</button>
-        <button id="next-vegetable-btn" class="nav-button">التالي</button>
+        <button id="prev-vegetable-btn" class="nav-button" data-i18n="previous">السابق</button>
+        <button id="next-vegetable-btn" class="nav-button" data-i18n="next">التالي</button>
       </div>
     </div>
   `;
