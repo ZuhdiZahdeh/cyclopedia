@@ -400,32 +400,36 @@
 
   const welcomeMessage = document.getElementById("welcome-message");
   const homeTopicCards = document.getElementById("home-topic-cards");
-	// دالة تحميل لعبة من صاحب الأداة 
+  
+	// دالة تحميل لعبة من صاحب الأداة؟ 
 window.loadToolsMatchPage = async () => {
   hideAllControls();
   if (welcomeMessage) welcomeMessage.style.display = 'none';
   if (homeTopicCards) homeTopicCards.style.display = 'none';
 
   try {
-    // 1. تحميل القسم الجانبي من الأدوات
+    // حمّل القسم الرئيسي
+    const responseMain = await fetch('/html/tools-match.html');
+    const htmlMain = await responseMain.text();
+    mainContentArea.innerHTML = htmlMain;
+
+    // حمّل القسم الجانبي
     const responseSidebar = await fetch('/html/tools-match-controls.html');
     const htmlSidebar = await responseSidebar.text();
-
-    // 2. إضافته إلى <aside> بدل <main>
     const sidebarContainer = document.querySelector("aside.sidebar");
 
-    // أزل نسخة قديمة إن وجدت
-    const existing = document.getElementById("tools-match-sidebar-controls");
-    if (existing) existing.remove();
+    // أولًا، احذف أي عنصر سابق بنفس id
+    const old = document.getElementById("tools-match-sidebar-controls");
+    if (old) old.remove();
 
-    // أضف عناصر التحكم الجانبية إلى <aside>
+    // ثم أضف العنصر الجديد
     sidebarContainer.insertAdjacentHTML("beforeend", htmlSidebar);
 
-    // ✅ عرض القسم
+    // أظهر الشريط الجانبي الجديد
     const toolsMatchSidebarControls = document.getElementById("tools-match-sidebar-controls");
     if (toolsMatchSidebarControls) toolsMatchSidebarControls.style.display = "block";
 
-    // 3. شغّل اللعبة (تقوم بإدخال محتواها داخل <main>)
+    // شغّل اللعبة
     await loadToolsMatchGameContent();
   } catch (error) {
     mainContentArea.innerHTML = '<p>تعذر تحميل اللعبة</p>';
