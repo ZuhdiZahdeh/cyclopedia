@@ -105,6 +105,8 @@ mainContentArea.innerHTML = `
         babyAnimalSection.style.display = (babyAnimalSection.style.display === "none") ? "block" : "none";
     };
   }
+  
+  applyTranslations();
 }
 
 function updateAnimalContent() {

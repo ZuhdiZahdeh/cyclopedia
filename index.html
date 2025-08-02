@@ -563,6 +563,7 @@
 				  hideAllControls();
 				  const defaultLang = localStorage.getItem("lang") || "ar";
 				  setDirection(defaultLang);
+				  applyTranslations(); // ضروري هنا بعد إدخال الـ HTML
 		};
 
 
