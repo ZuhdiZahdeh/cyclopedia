@@ -210,19 +210,11 @@ function getAudioPath(itemData, voiceType, categoryId) {
   const folder = `/audio/${lang}/${categoryId}/`;
 
   let fileName = null;
-
-  if (categoryId === 'professions' && itemData.sound?.[lang]?.[voiceType]) {
-    // ✅ المهن - الصوت محفوظ بشكل مباشر
-    return `/${itemData.sound[lang][voiceType]}`;
-  } else if (itemData.voices?.[voiceKey]) {
-    // ✅ الأدوات والحيوانات وأجزاء الجسم والفواكه والخضروات - الصوت موجود داخل voices
+  if (itemData.voices && itemData.voices[voiceKey]) {
     fileName = itemData.voices[voiceKey];
   } else if (itemData.sound_base) {
-    // ✅ توليد اسم الملف إذا كان sound_base موجودًا
     fileName = `${itemData.sound_base}_${voiceType}_${lang}.mp3`;
-  }
-
-  if (!fileName) {
+  } else {
     console.warn(`🔇 لا يوجد ملف صوت للعنصر: ${itemData.name?.[lang]}`);
     return null;
   }
