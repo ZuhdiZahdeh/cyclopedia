@@ -1,4 +1,6 @@
 // ✅ النسخة المعدلة من alphabet-press-game.js
+
+console.log("✅ تم تحميل alphabet-press-game.js");
 import { db } from './firebase-config.js';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from './lang-handler.js';

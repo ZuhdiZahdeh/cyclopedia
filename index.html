@@ -519,6 +519,17 @@ window.loadToolsMatchPage = async () => {
 	
 		// دالة تحميل صفحة لعبة اضغط على الحرف
 		window.loadAlphabetPressPage = async () => {
+  const mainContentArea = document.querySelector("main.main-content");
+  const response = await fetch('/html/alphabet-press.html');
+  const html = await response.text();
+  mainContentArea.innerHTML = html;
+
+  const module = await import("/src/js/alphabet-press-game.js");
+  module.startAlphabetGame(); // ← الدالة التي تبدأ اللعبة
+};
+
+
+		window.loadAlphabetPressPage = async () => {
 		  hideAllControls();
 		  if (welcomeMessage) welcomeMessage.style.display = 'none';
 		  if (homeTopicCards) homeTopicCards.style.display = 'none';
