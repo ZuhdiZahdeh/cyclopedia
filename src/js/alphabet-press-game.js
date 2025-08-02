@@ -1,6 +1,6 @@
 // ✅ النسخة المعدلة من alphabet-press-game.js
 
-
+console.log("🎯 النسخة التي تم تحميلها تحتوي على المهن والأدوات");
 import { db } from './firebase-config.js';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from './lang-handler.js';
