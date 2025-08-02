@@ -360,7 +360,7 @@
     loadAlphabetPressGameContent, playCurrentAlphabetItemAudioFromSidebar,
     getCurrentDisplayedItem, handleAlphabetPressLanguageChange,
     handleAlphabetPressCategoryChange, updateAlphabetPressVoice, populateAlphabetPressSidebarOptions
-  } from '/src/js/alphabet-press-game.js';
+  } from './src/js/alphabet-press-game.js';
 
   import {
     loadMemoryGameContent, initializeMemoryGameSidebarControls
@@ -524,7 +524,7 @@ window.loadToolsMatchPage = async () => {
   const html = await response.text();
   mainContentArea.innerHTML = html;
 
-  const module = await import("/src/js/alphabet-press-game.js");
+  const module = await import("./src/js/alphabet-press-game.js");
   module.startAlphabetGame(); // ← الدالة التي تبدأ اللعبة
 };
 
