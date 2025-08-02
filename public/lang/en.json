@@ -121,5 +121,6 @@
 	"tool_audio_job_images" :"Tool sound + Profession image",
 	"tool_audio_job_images":"Tool sound + Profession image",
 	"tool_text_job_text":"Tool name + Profession name",
-  "tools_match_game_settings":"🧰 Game settings from the owner of the tool?"
+  "tools_match_game_settings":"🧰 Game settings from the owner of the tool?",
+  "listen_again":"🔁 Listen again"
 }

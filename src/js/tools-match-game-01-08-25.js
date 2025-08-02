@@ -1,4 +1,4 @@
-// tools-match-game.js (نسخة نهائية)
+// tools-match-game-fixed.js content
 import { db } from "./firebase-config.js";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { getCurrentLang, applyTranslations } from "./lang-handler.js";
@@ -29,29 +29,24 @@ export async function loadToolsMatchGameContent() {
   `;
 
   applyTranslations();
-  initializeSidebarControls();
 
   await loadAllData();
   showNewTool();
 
   document.getElementById("next-button").onclick = showNewTool;
-}
 
-// ✅ ربط عناصر التحكم الجانبية مع اللعبة
-function initializeSidebarControls() {
   const replayBtn = document.getElementById("tools-match-replay-sound-btn");
+  if (replayBtn) replayBtn.onclick = () => {
+    const voice = getVoice();
+    const lang = getLang();
+    const sound = currentTool?.sound?.[lang]?.[voice];
+    if (sound) playAudio(sound);
+  };
+
+  // ✅ التفاعل مع تغييرات الإعدادات
   const langSelect = document.getElementById("tools-match-lang-select");
   const modeSelect = document.getElementById("tools-match-display-mode");
   const voiceSelect = document.getElementById("tools-match-voice-select");
-
-  if (replayBtn) {
-    replayBtn.onclick = () => {
-      const voice = getVoice();
-      const lang = getLang();
-      const sound = currentTool?.sound?.[lang]?.[voice];
-      if (sound) playAudio(sound);
-    };
-  }
 
   if (langSelect) {
     langSelect.value = getLang();
@@ -62,17 +57,15 @@ function initializeSidebarControls() {
   }
 
   if (modeSelect) {
-    modeSelect.value = getMode();
     modeSelect.onchange = () => loadToolsMatchGameContent();
   }
 
   if (voiceSelect) {
-    voiceSelect.value = getVoice();
     voiceSelect.onchange = () => loadToolsMatchGameContent();
   }
 }
 
-// 🧠 تحميل جميع الأدوات والمهن من Firestore
+// جلب البيانات من Firestore
 async function loadAllData() {
   const toolsSnap = await getDocs(collection(db, "profession_tools"));
   allTools = toolsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -82,7 +75,7 @@ async function loadAllData() {
   allProfessions = Array.from(professionSet);
 }
 
-// 🔁 عرض أداة جديدة
+// عرض أداة جديدة
 function showNewTool() {
   document.getElementById("result-message").textContent = "";
   document.getElementById("next-button").style.display = "none";
@@ -92,7 +85,7 @@ function showNewTool() {
   showProfessionOptions(currentTool);
 }
 
-// 🎨 عرض الأداة بصريًا أو صوتيًا أو نصيًا
+// عرض الأداة
 function showTool(tool) {
   const container = document.querySelector(".tool-display");
   const mode = getMode();
@@ -130,7 +123,7 @@ function showTool(tool) {
   }
 }
 
-// 🧩 عرض خيارات المهن (واحدة صحيحة + 3 عشوائية)
+// عرض خيارات المهن
 async function showProfessionOptions(tool) {
   const correct = getRandomItem(tool.professions);
   const wrongOptions = getRandomItems(
@@ -167,7 +160,7 @@ async function showProfessionOptions(tool) {
   }
 }
 
-// ✅ التحقق من الإجابة
+// التحقق من الإجابة
 function checkAnswer(selected, correct) {
   const result = document.getElementById("result-message");
   const nextBtn = document.getElementById("next-button");
@@ -203,6 +196,7 @@ function getVoice() {
 function getMode() {
   return document.getElementById("tools-match-display-mode")?.value || "image-text";
 }
+
 function getRandomItem(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -214,5 +208,4 @@ function shuffleArray(arr) {
   return arr.sort(() => Math.random() - 0.5);
 }
 
-// ربط عالمي
 window.loadToolsMatchGameContent = loadToolsMatchGameContent;
