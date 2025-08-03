@@ -307,9 +307,17 @@
 <h3>جسم الإنسان</h3>
 </a>
 <!-- 286: بطاقة المهن -->
-<a class="topic-card professions" href="#" onclick="loadProfessionsPage(); return false;">
+<a href="#" class="topic-card profession" onclick="loadProfessionsPage(); return false;">
 <span class="icon">👷‍♂️</span>
 <h3>المهن</h3>
+</a>
+<a href="#" class="topic-card tools" onclick="loadToolsPage(); return false;">
+<span class="icon">🧰</span>
+<h3>الأدوات</h3>
+</a>
+<a href="#" class="topic-card games" onclick="loadGamesPage(); return false;">
+<span class="icon">🎮</span>
+<h3>الألعاب</h3>
 </a>
 <a class="topic-card games" href="#" onclick="loadAlphabetPressPage(); return false;">
 <span class="icon">🔠</span>
@@ -518,15 +526,7 @@ window.loadToolsMatchPage = async () => {
 			};
 	
 		// دالة تحميل صفحة لعبة اضغط على الحرف
-		window.loadAlphabetPressPage = async () => {
-  const mainContentArea = document.querySelector("main.main-content");
-  const response = await fetch('/html/alphabet-press.html');
-  const html = await response.text();
-  mainContentArea.innerHTML = html;
 
-  const module = await import("./src/js/alphabet-press-game.js");
-  module.startAlphabetGame(); // ← الدالة التي تبدأ اللعبة
-};
 
 
 		window.loadAlphabetPressPage = async () => {
@@ -615,12 +615,14 @@ window.loadToolsMatchPage = async () => {
 		  if (professionSidebarControls) professionSidebarControls.style.display = 'none';
 			}
 			const availableCategories = [
-				{ id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
-				{ id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
-				{ id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables', name_he: 'ירקות' },
-				{ id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף האדם' },
-				{ id: 'profession', name_ar: 'المهن', name_en: 'Profession', name_he: 'מקצועות' },
-			];
+  { id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
+  { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
+  { id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables', name_he: 'ירקות' },
+  { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף האדם' },
+  { id: 'profession', name_ar: 'المهن', name_en: 'Profession', name_he: 'מקצועות' },
+  { id: 'tools', name_ar: 'أدوات', name_en: 'Tools', name_he: 'כלים' },
+];
+
 
 
 				
@@ -637,8 +639,12 @@ window.loadToolsMatchPage = async () => {
 
 
         document.addEventListener('DOMContentLoaded', () => {
-						window.showHomePage();
-					});
+  const defaultLang = localStorage.getItem("lang") || "ar";
+  setDirection(defaultLang);
+  loadLanguage(defaultLang);
+  window.showHomePage();
+});
+
   
         function showToolsControls() { if (toolsSidebarControls) toolsSidebarControls.style.display = 'block'; }
         function hideToolsControls() { if (toolsSidebarControls) toolsSidebarControls.style.display = 'none'; }
