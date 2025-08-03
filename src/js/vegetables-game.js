@@ -85,22 +85,26 @@ export async function loadVegetablesGameContent() {
   }
 }
 
-function displayVegetable(vegetableData) { currentVegetableData = vegetableData;
+function displayVegetable(vegetableData) {
+  currentVegetableData = vegetableData;
+  const lang = getCurrentLang();
+
   const vegetableWord = document.getElementById("vegetable-word");
   const vegetableImage = document.getElementById("vegetable-image");
   const vegetableType = document.getElementById("vegetable-type");
   const vegetableBenefits = document.getElementById("vegetable-benefits");
 
-  if (vegetableWord) { vegetableWord.innerText = vegetableData.name?.[currentLang] || "---";
-    vegetableWord.onclick = playCurrentVegetableAudio; // ✅ تشغيل الصوت عند الضغط على الاسم
+  if (vegetableWord) {
+    vegetableWord.innerText = vegetableData.name?.[lang] || "---";
+    vegetableWord.onclick = playCurrentVegetableAudio;
   }
   if (vegetableImage && vegetableData.image) {
     vegetableImage.src = `/images/vegetables/${vegetableData.image}`;
     vegetableImage.alt = vegetableData.name?.en || "Vegetable image";
-    vegetableImage.onclick = playCurrentVegetableAudio; // ✅ تشغيل الصوت عند الضغط على الصورة
+    vegetableImage.onclick = playCurrentVegetableAudio;
   }
-  if (vegetableType) vegetableType.innerText = vegetableData.type?.[currentLang] || "---";
-  if (vegetableBenefits) vegetableBenefits.innerText = vegetableData.benefits?.[currentLang] || "---";
+  if (vegetableType) vegetableType.innerText = vegetableData.type?.[lang] || "---";
+  if (vegetableBenefits) vegetableBenefits.innerText = vegetableData.benefits?.[lang] || "---";
 
   const nextBtn = document.getElementById("next-vegetable-btn");
   const prevBtn = document.getElementById("prev-vegetable-btn");
@@ -109,6 +113,9 @@ function displayVegetable(vegetableData) { currentVegetableData = vegetableData;
 
   applyTranslations();
 }
+
+// الدوال الأخرى كما هي بدون تعديل
+
 
 // باقي الدوال: showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio, getVegetableAudioPath, disableVegetableButtonsInSidebar, setupGameControls كما هي بدون تعديل
 

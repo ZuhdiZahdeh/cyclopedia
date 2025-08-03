@@ -1,7 +1,7 @@
 import { db } from "../js/firebase-config.js";
 import { getDocs, collection } from "firebase/firestore";
 import { playAudio } from "../js/audio-handler.js";
-import { currentLang, translate } from "../js/lang-handler.js";
+import { getCurrentLang(), translate } from "../js/lang-handler.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   loadBirds();
@@ -11,12 +11,12 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loadBirds() {
   const container = document.querySelector(".bird-card");
   const querySnapshot = await getDocs(collection(db, "categories", "birds", "items"));
-
+	const lang = getCurrentLang();
   querySnapshot.forEach((doc) => {
     const data = doc.data();
-    const name = data.name?.[currentLang] || "؟";
+    const name = data.name?.[lang] || "؟";
     const img = `/images/birds/${data.image}`;
-    const audio = `/audio/${currentLang}/birds/${data.voices?.teacher}`;
+    const audio = `/audio/${getCurrentLang()}/birds/${data.voices?.teacher}`;
 
     container.innerHTML += `
       <div class="bird-entry">

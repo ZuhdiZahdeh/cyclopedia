@@ -1,50 +1,61 @@
 // lang-handler.js
 
-let currentLang = localStorage.getItem('lang') || 'ar';
+import ar from '/lang/ar.json';
+import en from '/lang/en.json';
+import he from '/lang/he.json';
 
-// إرجاع اللغة الحالية
+export let currentLang = localStorage.getItem("lang") || "ar";
+
+const languages = {
+  ar,
+  en,
+  he
+};
+
+// ✅ إرجاع كائن الترجمة حسب اللغة
+export function getTranslations(lang = currentLang) {
+  return languages[lang] || ar;
+}
+
+// ✅ إرجاع اللغة الحالية
 export function getCurrentLang() {
   return currentLang;
 }
 
-// ضبط اتجاه الصفحة حسب اللغة
+// ✅ ضبط اتجاه الصفحة
 export function setDirection(lang) {
-  const dir = (lang === 'ar' || lang === 'he') ? 'rtl' : 'ltr';
-  document.documentElement.setAttribute('dir', dir);
+  const dir = lang === "ar" || lang === "he" ? "rtl" : "ltr";
+  document.documentElement.setAttribute("dir", dir);
 }
 
-// تحميل ملف اللغة من مجلد public/lang/
-export async function loadLanguage(lang) {
-  try {
-    const response = await fetch(`/lang/${lang}.json`);
-    if (!response.ok) {
-      throw new Error(`لم يتم العثور على ملف الترجمة: ${lang}.json`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('خطأ في تحميل الترجمة:', error);
-    return {};
-  }
+// ✅ تحميل اللغة عند التشغيل
+export function loadLanguage(lang = currentLang) {
+  const translations = getTranslations(lang);
+  applyTranslations(translations);
 }
 
-// تطبيق الترجمة على كل العناصر التي تحتوي على data-i18n
-export function applyTranslations(translations) {
-  document.querySelectorAll('[data-i18n]').forEach(element => {
-    const key = element.getAttribute('data-i18n');
-    if (translations[key]) {
-      element.innerHTML = translations[key];
-    }
-  });
-}
-
-// تغيير اللغة وتحديث الاتجاه وتطبيق الترجمة وإطلاق حدث
+// ✅ تغيير اللغة وتخزينها
 export function setLanguage(lang) {
   currentLang = lang;
-  localStorage.setItem('lang', lang);
+  localStorage.setItem("lang", lang);
   setDirection(lang);
+  loadLanguage(lang);
+  document.dispatchEvent(new CustomEvent("languageChanged", { detail: lang }));
+}
 
-  loadLanguage(lang).then(translations => {
-    applyTranslations(translations);
-    document.dispatchEvent(new CustomEvent('languageChanged', { detail: lang }));
+// ✅ تطبيق الترجمة على جميع العناصر
+export function applyTranslations(translations) {
+  if (!translations || typeof translations !== 'object') {
+    console.warn("⚠️ لم يتم تحميل الترجمة بشكل صحيح.");
+    return;
+  }
+
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    const key = element.getAttribute("data-i18n");
+    if (translations[key]) {
+      element.innerHTML = translations[key];
+    } else {
+      console.warn(`🔍 المفتاح '${key}' غير موجود في ملف الترجمة.`);
+    }
   });
 }
