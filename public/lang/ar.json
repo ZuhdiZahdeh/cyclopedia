@@ -62,6 +62,11 @@
   "category": "الصنف:",
   "baby_image": "صورة الابن:",
   "description_title": "الوصف:",
+  "teacher_voice": "صوت المعلم",
+"boy_voice": "صوت الولد",
+"girl_voice": "صوت البنت",
+"child_voice": "صوت الطفل"
+
   "professions": {
     "Blacksmith": "حداد",
     "Baker": "خباز",
