@@ -583,11 +583,19 @@ window.loadToolsMatchPage = async () => {
                     <span class="icon">🧠</span>
                     <h3>لعبة الذاكرة</h3>
                 </a>
-				
-						<a href="#" class="topic-card professions" onclick="loadProfessionsPage(); return false;">
-						<span class="icon">👷‍♂️</span>
-						<h3>المهن</h3>
-						</a>
+		
+				<a href="#" class="topic-card professions" onclick="loadProfessionsPage(); return false;">
+				<span class="icon">👷‍♂️</span>
+				<h3>المهن</h3>
+				</a>
+				<a href="#" class="topic-card tools" onclick="loadToolsPage(); return false;">
+				  <span class="icon">🔧</span>
+				  <h3 data-i18n="tools_topic">الأدوات</h3>
+				</a>
+				<a href="#" class="topic-card tools-match" onclick="loadToolsMatchPage(); return false;">
+				  <span class="icon">🧰</span>
+				  <h3 data-i18n="tools_match_topic">من صاحب الأداة؟</h3>
+				</a>
 					</div>
 				  `;
 				  hideAllControls();
