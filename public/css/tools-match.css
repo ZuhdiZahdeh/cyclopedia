@@ -165,3 +165,32 @@
   font-size: 1.2rem;
   margin-bottom: 10px;
 }
+/* نمط توضيحي لتحديد الاختيار عند الضغط عليه في لعبة "من صاحب الأداة؟" */
+
+.option-btn {
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 10px;
+  transition: all 0.2s ease-in-out;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.option-btn:hover {
+  border-color: #999;
+  background-color: #f7f7f7;
+}
+
+.option-btn.selected {
+  border-color: #2196f3;       /* إطار أزرق للتحديد */
+  background-color: #e3f2fd;   /* خلفية زرقاء خفيفة */
+  box-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
+}
+
+/* دعم الصورة داخل الزر */
+.option-btn img {
+  max-width: 100px;
+  height: auto;
+  display: block;
+  margin: auto;
+}
