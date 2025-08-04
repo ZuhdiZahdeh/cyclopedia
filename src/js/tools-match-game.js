@@ -1,4 +1,4 @@
-// tools-match-game.js (نسخة نهائية)
+// tools-match-game.js (نسخة معدلة 2025-08-04)
 import { db } from "./firebase-config.js";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { getCurrentLang, applyTranslations } from "./lang-handler.js";
@@ -8,7 +8,8 @@ import { recordActivity } from "./activity-handler.js";
 let allTools = [];
 let allProfessions = [];
 let currentTool = null;
-console.log("✅ tools-match-game.js loaded - النسخة الأخيرة");
+console.log("✅ tools-match-game.js loaded - النسخة المعدلة");
+
 export async function loadToolsMatchGameContent() {
   stopCurrentAudio();
 
@@ -37,7 +38,6 @@ export async function loadToolsMatchGameContent() {
   document.getElementById("next-button").onclick = showNewTool;
 }
 
-// ✅ ربط عناصر التحكم الجانبية مع اللعبة
 function initializeSidebarControls() {
   const replayBtn = document.getElementById("tools-match-replay-sound-btn");
   const langSelect = document.getElementById("tools-match-lang-select");
@@ -72,7 +72,6 @@ function initializeSidebarControls() {
   }
 }
 
-// 🧠 تحميل جميع الأدوات والمهن من Firestore
 async function loadAllData() {
   const toolsSnap = await getDocs(collection(db, "profession_tools"));
   allTools = toolsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -82,7 +81,6 @@ async function loadAllData() {
   allProfessions = Array.from(professionSet);
 }
 
-// 🔁 عرض أداة جديدة
 function showNewTool() {
   document.getElementById("result-message").textContent = "";
   document.getElementById("next-button").style.display = "none";
@@ -92,7 +90,6 @@ function showNewTool() {
   showProfessionOptions(currentTool);
 }
 
-// 🎨 عرض الأداة بصريًا أو صوتيًا أو نصيًا
 function showTool(tool) {
   const container = document.querySelector(".tool-display");
   const mode = getMode();
@@ -130,13 +127,21 @@ function showTool(tool) {
   }
 }
 
-// 🧩 عرض خيارات المهن (واحدة صحيحة + 3 عشوائية)
 async function showProfessionOptions(tool) {
   const correct = getRandomItem(tool.professions);
-  const wrongOptions = getRandomItems(
-    allProfessions.filter(p => !tool.professions.includes(p)),
-    3
-  );
+  let otherOptions = allProfessions.filter(p => !tool.professions.includes(p));
+
+  // ✅ ضمان وجود 3 خيارات دائمًا
+  while (otherOptions.length < 3) {
+    const filler = getRandomItems(tool.professions.filter(p => p !== correct), 1)[0];
+    if (filler && !otherOptions.includes(filler)) {
+      otherOptions.push(filler);
+    } else {
+      break;
+    }
+  }
+
+  const wrongOptions = getRandomItems(otherOptions, 3);
   const options = shuffleArray([correct, ...wrongOptions]);
 
   const container = document.getElementById("profession-options");
@@ -167,7 +172,6 @@ async function showProfessionOptions(tool) {
   }
 }
 
-// ✅ التحقق من الإجابة
 function checkAnswer(selected, correct) {
   const result = document.getElementById("result-message");
   const nextBtn = document.getElementById("next-button");
@@ -181,7 +185,7 @@ function checkAnswer(selected, correct) {
     result.style.color = "red";
     playAudio("audio/fail/fail_toolMatch_a.mp3");
   }
- console.log("🧪 checkAnswer invoked in tools-match-game.js");
+
   recordActivity("tools-match", {
     tool: currentTool.name?.[getLang()],
     selected,
@@ -214,5 +218,4 @@ function shuffleArray(arr) {
   return arr.sort(() => Math.random() - 0.5);
 }
 
-// ربط عالمي
 window.loadToolsMatchGameContent = loadToolsMatchGameContent;
