@@ -1,4 +1,5 @@
-// tools-match-game.js (نسخة معدلة 2025-08-04)
+
+// tools-match-game.js (نمط جديد: اختيار كل المهن الصحيحة)
 import { db } from "./firebase-config.js";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { getCurrentLang, applyTranslations } from "./lang-handler.js";
@@ -8,7 +9,9 @@ import { recordActivity } from "./activity-handler.js";
 let allTools = [];
 let allProfessions = [];
 let currentTool = null;
-console.log("✅ tools-match-game.js loaded - النسخة المعدلة");
+let correctAnswers = [];
+
+console.log("✅ tools-match-game.js loaded - Multi-answer mode");
 
 export async function loadToolsMatchGameContent() {
   stopCurrentAudio();
@@ -24,6 +27,7 @@ export async function loadToolsMatchGameContent() {
       <h2 data-i18n="tools_match_title">من صاحب الأداة؟</h2>
       <div class="tool-display"></div>
       <div id="profession-options" class="options-grid"></div>
+      <button id="check-button" class="check-btn" data-i18n="check">تحقق من الإجابة</button>
       <div id="result-message" class="result-message"></div>
       <button id="next-button" class="next-btn" style="display:none" data-i18n="next">التالي</button>
     </section>
@@ -35,6 +39,7 @@ export async function loadToolsMatchGameContent() {
   await loadAllData();
   showNewTool();
 
+  document.getElementById("check-button").onclick = checkMultiAnswer;
   document.getElementById("next-button").onclick = showNewTool;
 }
 
@@ -83,11 +88,12 @@ async function loadAllData() {
 
 function showNewTool() {
   document.getElementById("result-message").textContent = "";
+  document.getElementById("check-button").style.display = "inline-block";
   document.getElementById("next-button").style.display = "none";
 
   currentTool = getRandomItem(allTools);
   showTool(currentTool);
-  showProfessionOptions(currentTool);
+  showProfessionOptionsMulti(currentTool);
 }
 
 function showTool(tool) {
@@ -127,37 +133,27 @@ function showTool(tool) {
   }
 }
 
-async function showProfessionOptions(tool) {
-  const correct = getRandomItem(tool.professions);
-  let otherOptions = allProfessions.filter(p => !tool.professions.includes(p));
-
-  // ✅ ضمان وجود 3 خيارات دائمًا
-  while (otherOptions.length < 3) {
-    const filler = getRandomItems(tool.professions.filter(p => p !== correct), 1)[0];
-    if (filler && !otherOptions.includes(filler)) {
-      otherOptions.push(filler);
-    } else {
-      break;
-    }
-  }
-
-  const wrongOptions = getRandomItems(otherOptions, 3);
-  const options = shuffleArray([correct, ...wrongOptions]);
+async function showProfessionOptionsMulti(tool) {
+  const lang = getLang();
+  correctAnswers = [...tool.professions];
+  let randomOthers = allProfessions.filter(p => !tool.professions.includes(p));
+  const additional = getRandomItems(randomOthers, Math.max(0, 6 - correctAnswers.length));
+  const options = shuffleArray([...correctAnswers, ...additional]);
 
   const container = document.getElementById("profession-options");
   container.innerHTML = "";
 
   for (const professionId of options) {
-    const btn = document.createElement("button");
-    btn.className = "option-btn";
-
     const profSnap = await getDoc(doc(db, "professions", professionId));
     if (!profSnap.exists()) continue;
     const prof = profSnap.data();
-    const lang = getLang();
-    const mode = getMode();
 
-    if (mode.endsWith("image")) {
+    const btn = document.createElement("button");
+    btn.className = "option-btn";
+    btn.dataset.profession = professionId;
+    btn.onclick = () => btn.classList.toggle("selected");
+
+    if (getMode().endsWith("image")) {
       const img = document.createElement("img");
       img.src = "/" + prof.image_path;
       img.alt = prof.name?.[lang] || professionId;
@@ -167,36 +163,42 @@ async function showProfessionOptions(tool) {
       btn.textContent = prof.name?.[lang] || professionId;
     }
 
-    btn.onclick = () => checkAnswer(professionId, correct);
     container.appendChild(btn);
   }
 }
 
-function checkAnswer(selected, correct) {
+function checkMultiAnswer() {
+  const selected = Array.from(document.querySelectorAll(".option-btn.selected")).map(
+    el => el.dataset.profession
+  );
   const result = document.getElementById("result-message");
   const nextBtn = document.getElementById("next-button");
 
-  if (selected === correct) {
-    result.textContent = "إجابة صحيحة!";
+  const isCorrect =
+    selected.length === correctAnswers.length &&
+    selected.every(item => correctAnswers.includes(item));
+
+  if (isCorrect) {
+    result.textContent = "✅ أحسنت! اخترت جميع المهن الصحيحة.";
     result.style.color = "green";
     playAudio("audio/success/success_toolMatch_a.mp3");
   } else {
-    result.textContent = "إجابة خاطئة!";
+    result.textContent = "❌ بعض اختياراتك غير صحيحة. حاول مجددًا.";
     result.style.color = "red";
     playAudio("audio/fail/fail_toolMatch_a.mp3");
   }
 
-  recordActivity("tools-match", {
+  recordActivity("tools-match-multi", {
     tool: currentTool.name?.[getLang()],
     selected,
-    correct,
-    success: selected === correct
+    correctAnswers,
+    success: isCorrect
   });
 
+  document.getElementById("check-button").style.display = "none";
   nextBtn.style.display = "inline-block";
 }
 
-// أدوات مساعدة
 function getLang() {
   const selected = document.getElementById("tools-match-lang-select")?.value;
   return selected || localStorage.getItem("lang") || getCurrentLang();
