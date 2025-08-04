@@ -84,9 +84,14 @@ async function loadAllData() {
   const professionSet = new Set();
   allTools.forEach(tool => (tool.professions || []).forEach(p => professionSet.add(p)));
   allProfessions = Array.from(professionSet);
+  console.log("📦 allTools.length:", allTools.length);
+	console.log("📚 allProfessions:", allProfessions);
+
 }
 
 function showNewTool() {
+	console.log("✅ Options:", options);
+
   document.getElementById("result-message").textContent = "";
   document.getElementById("check-button").style.display = "inline-block";
   document.getElementById("next-button").style.display = "none";
@@ -165,6 +170,8 @@ async function showProfessionOptionsMulti(tool) {
 
     container.appendChild(btn);
   }
+  console.log("🛠️ Current Tool:", tool.name?.ar, "→", tool.professions);
+
 }
 
 function checkMultiAnswer() {
