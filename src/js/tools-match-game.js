@@ -144,7 +144,7 @@ async function showProfessionOptionsMulti(tool) {
   let randomOthers = allProfessions.filter(p => !tool.professions.includes(p));
   const additional = getRandomItems(randomOthers, Math.max(0, 6 - correctAnswers.length));
   const options = shuffleArray([...correctAnswers, ...additional]);
-
+console.log("✅ Options:", options);
   const container = document.getElementById("profession-options");
   container.innerHTML = "";
 
