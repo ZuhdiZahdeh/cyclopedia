@@ -1,5 +1,5 @@
 
-// tools-match-game.js (نمط جديد: اختيار كل المهن الصحيحة)
+// tools-match-game.js (نسخة ثابتة مع اختيار عدة مهن)
 import { db } from "./firebase-config.js";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { getCurrentLang, applyTranslations } from "./lang-handler.js";
@@ -85,13 +85,10 @@ async function loadAllData() {
   allTools.forEach(tool => (tool.professions || []).forEach(p => professionSet.add(p)));
   allProfessions = Array.from(professionSet);
   console.log("📦 allTools.length:", allTools.length);
-	console.log("📚 allProfessions:", allProfessions);
-
+  console.log("📚 allProfessions:", allProfessions);
 }
 
 function showNewTool() {
-	console.log("✅ Options:", options);
-
   document.getElementById("result-message").textContent = "";
   document.getElementById("check-button").style.display = "inline-block";
   document.getElementById("next-button").style.display = "none";
@@ -144,7 +141,8 @@ async function showProfessionOptionsMulti(tool) {
   let randomOthers = allProfessions.filter(p => !tool.professions.includes(p));
   const additional = getRandomItems(randomOthers, Math.max(0, 6 - correctAnswers.length));
   const options = shuffleArray([...correctAnswers, ...additional]);
-console.log("✅ Options:", options);
+  console.log("✅ Options:", options);
+
   const container = document.getElementById("profession-options");
   container.innerHTML = "";
 
@@ -170,8 +168,8 @@ console.log("✅ Options:", options);
 
     container.appendChild(btn);
   }
-  console.log("🛠️ Current Tool:", tool.name?.ar, "→", tool.professions);
 
+  console.log("🛠️ Current Tool:", tool.name?.ar, "→", tool.professions);
 }
 
 function checkMultiAnswer() {
