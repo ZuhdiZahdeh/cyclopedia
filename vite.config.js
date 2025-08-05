@@ -12,7 +12,6 @@ export default defineConfig({
         "tools-match": resolve(__dirname, 'html/tools-match.html'),
         professions: resolve(__dirname, 'html/professions.html'),
         toolsMatchScript: resolve(__dirname, 'src/js/tools-match-game.js'),
-        toolsMatchLoader: resolve(__dirname, 'html/tools-match-loader.html'),
         includeAllScripts: resolve(__dirname, 'src/js/include-all-scripts.js'),
         alphabetPressGame: resolve(__dirname, 'src/js/alphabet-press-game.js'),
 		  alphabetPressPage: resolve(__dirname, 'html/alphabet-press.html'),
