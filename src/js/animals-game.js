@@ -232,7 +232,6 @@ function getAnimalAudioPath(data, voiceType) {
 
   if (data.voices && data.voices[voiceKey]) {
     fileName = data.voices[voiceKey];
-    console.log(`✅ Found in voices: ${voiceKey} → ${fileName}`);
   } else if (data.sound_base) {
     fileName = `${data.sound_base}_${voiceType}_${langFolder}.mp3`;
     console.warn(`⚠️ Used fallback from sound_base: ${fileName}`);
@@ -242,7 +241,6 @@ function getAnimalAudioPath(data, voiceType) {
   }
 
   const audioPath = `/audio/${langFolder}/${subjectFolder}/${fileName}`;
-  console.log(`🎧 Full audio path: ${audioPath}`);
   return audioPath;
 }
 
@@ -259,25 +257,23 @@ function getBabyAnimalAudioPath(babyData, voiceType) {
 
     if (babyData.sound && babyData.sound[langFolder] && babyData.sound[langFolder][voiceKey]) {
         fileName = babyData.sound[langFolder][voiceKey].split('/').pop(); // Extract file name from full path
-        console.log(`✅ Found in baby voices: ${langFolder} → ${voiceKey} → ${fileName}`);
     } else {
-        console.error(`❌ Baby animal sound not available for ${babyData.name?.[lang] || "unknown"} in ${langFolder} for voice type ${voiceKey}`);
         return null;
     }
 
     const audioPath = `/audio/${langFolder}/${subjectFolder}/${fileName}`;
-    console.log(`🎧 Full baby animal audio path: ${audioPath}`);
     return audioPath;
 }
 
 function disableAnimalButtonsInSidebar(isDisabled) {
-	  const playBabySoundBtn = document.getElementById("play-baby-sound-btn-animal"); // أضف هذا السطر
-	  const toggleBabyImageBtn = document.getElementById("toggle-baby-image-btn"); // أضف هذا السطر
 	  const playSoundBtn = document.getElementById("play-sound-btn-animal");
 	  const nextBtn = document.getElementById("next-animal-btn");
 	  const prevBtn = document.getElementById("prev-animal-btn");
 	  const voiceSelect = document.getElementById("voice-select-animal");
 	  const langSelect = document.getElementById("game-lang-select-animal");
+	  const playBabySoundBtn = document.getElementById("play-baby-sound-btn-animal"); // أضف هذا السطر
+	  const toggleBabyImageBtn = document.getElementById("toggle-baby-image-btn"); // أضف هذا السطر
+	  
   
 
   if (playSoundBtn) playSoundBtn.disabled = isDisabled;
