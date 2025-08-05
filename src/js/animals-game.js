@@ -110,177 +110,177 @@ mainContentArea.innerHTML = `
 }
 
 function updateAnimalContent() {
-  const lang = getCurrentLang() || 'ar';
-  const fallbackLang = 'ar';
+			  const lang = getCurrentLang() || 'ar';
+			  const fallbackLang = 'ar';
 
-  if (!currentAnimalData) return;
+			  if (!currentAnimalData) return;
 
-  // الاسم
-  const animalName = document.getElementById("animal-name");
-  animalName.textContent = currentAnimalData.name?.[lang] || currentAnimalData.name?.[fallbackLang] || "اسم غير متوفر";
+			  // الاسم
+			  const animalName = document.getElementById("animal-name");
+			  animalName.textContent = currentAnimalData.name?.[lang] || currentAnimalData.name?.[fallbackLang] || "اسم غير متوفر";
 
-  // الصورة
-  const image = document.getElementById("animal-image");
-  image.src = currentAnimalData.image_path || "";
-  image.alt = animalName.textContent;
+			  // الصورة
+			  const image = document.getElementById("animal-image");
+			  image.src = currentAnimalData.image_path || "";
+			  image.alt = animalName.textContent;
 
-  // الصوت
-  const voiceType = getCurrentVoiceType();
-  const voiceFileName = currentAnimalData.voices?.[\`\${voiceType}_\${lang}\`] || currentAnimalData.voices?.[\`\${voiceType}_\${fallbackLang}\`];
-  currentAnimalData.currentVoiceFile = voiceFileName;
+			  // الصوت
+			  const voiceType = getCurrentVoiceType();
+			  const voiceFileName = currentAnimalData.voices?.[\`\${voiceType}_\${lang}\`] || currentAnimalData.voices?.[\`\${voiceType}_\${fallbackLang}\`];
+			  currentAnimalData.currentVoiceFile = voiceFileName;
 
-  // التصنيف
-  const animalCategory = document.getElementById("animal-category");
-  if (Array.isArray(currentAnimalData.category?.[lang])) {
-    animalCategory.textContent = currentAnimalData.category[lang].join(", ");
-  } else {
-    animalCategory.textContent = currentAnimalData.category?.[lang] || currentAnimalData.category?.[fallbackLang] || "غير معروف";
-  }
+			  // التصنيف
+			  const animalCategory = document.getElementById("animal-category");
+			  if (Array.isArray(currentAnimalData.category?.[lang])) {
+				animalCategory.textContent = currentAnimalData.category[lang].join(", ");
+			  } else {
+				animalCategory.textContent = currentAnimalData.category?.[lang] || currentAnimalData.category?.[fallbackLang] || "غير معروف";
+			  }
 
-  // الوصف
-  const desc = document.getElementById("animal-description");
-  desc.textContent = currentAnimalData.description?.[lang] || currentAnimalData.description?.[fallbackLang] || "";
+			  // الوصف
+			  const desc = document.getElementById("animal-description");
+			  desc.textContent = currentAnimalData.description?.[lang] || currentAnimalData.description?.[fallbackLang] || "";
 
-  // اسم الابن
-  const babyName = document.getElementById("animal-baby-name");
-  babyName.textContent = currentAnimalData.baby?.[lang] || currentAnimalData.baby?.[fallbackLang] || "غير معروف";
+			  // اسم الابن
+			  const babyName = document.getElementById("animal-baby-name");
+			  babyName.textContent = currentAnimalData.baby?.[lang] || currentAnimalData.baby?.[fallbackLang] || "غير معروف";
 
-  // اسم الزوجة
-  const femaleName = document.getElementById("animal-female-name");
-  femaleName.textContent = currentAnimalData.female?.[lang] || currentAnimalData.female?.[fallbackLang] || "غير معروف";
+			  // اسم الزوجة
+			  const femaleName = document.getElementById("animal-female-name");
+			  femaleName.textContent = currentAnimalData.female?.[lang] || currentAnimalData.female?.[fallbackLang] || "غير معروف";
 
-  // صورة الابن
-  const babyImage = document.getElementById("animal-baby-image");
-  if (babyImage && currentAnimalData.baby?.image_path) {
-    babyImage.src = currentAnimalData.baby.image_path;
-  }
+			  // صورة الابن
+			  const babyImage = document.getElementById("animal-baby-image");
+			  if (babyImage && currentAnimalData.baby?.image_path) {
+				babyImage.src = currentAnimalData.baby.image_path;
+			  }
 
-  // صوت الابن
-  currentAnimalData.babySound = currentAnimalData.baby?.sound?.[lang]?.boy || currentAnimalData.baby?.sound?.[fallbackLang]?.boy;
+			  // صوت الابن
+			  currentAnimalData.babySound = currentAnimalData.baby?.sound?.[lang]?.boy || currentAnimalData.baby?.sound?.[fallbackLang]?.boy;
 
-}
+} 			
 
-async function fetchAnimals(lang) {
-  try {
-    const itemsCollectionRef = collection(db, "categories", "animals", "items");
-    const q = query(itemsCollectionRef);
-    const snapshot = await getDocs(q);
-    animals = snapshot.docs.map(doc => doc.data());
-    console.log("Fetched animals:", animals);
-  } catch (error) {
-    console.error("Error fetching animals from Firestore:", error);
-    animals = [];
-  }
-}
+			async function fetchAnimals(lang) {
+			  try {
+				const itemsCollectionRef = collection(db, "categories", "animals", "items");
+				const q = query(itemsCollectionRef);
+				const snapshot = await getDocs(q);
+				animals = snapshot.docs.map(doc => doc.data());
+				console.log("Fetched animals:", animals);
+			  } catch (error) {
+				console.error("Error fetching animals from Firestore:", error);
+				animals = [];
+			  }
+			}
 
-export function showNextAnimal() {
-  stopCurrentAudio();
-  if (currentIndex < animals.length - 1) {
-    currentIndex++;
-    updateAnimalContent();
-    recordActivity(JSON.parse(localStorage.getItem("user")), "animals");
-  }
-}
+			export function showNextAnimal() {
+			  stopCurrentAudio();
+			  if (currentIndex < animals.length - 1) {
+				currentIndex++;
+				updateAnimalContent();
+				recordActivity(JSON.parse(localStorage.getItem("user")), "animals");
+			  }
+			}
 
-export function showPreviousAnimal() {
-  stopCurrentAudio();
-  if (currentIndex > 0) {
-    currentIndex--;
-    updateAnimalContent();
-    recordActivity(JSON.parse(localStorage.getItem("user")), "animals");
-  }
-}
+			export function showPreviousAnimal() {
+			  stopCurrentAudio();
+			  if (currentIndex > 0) {
+				currentIndex--;
+				updateAnimalContent();
+				recordActivity(JSON.parse(localStorage.getItem("user")), "animals");
+			  }
+			}
 
-export function playCurrentAnimalAudio() {
-const lang = getCurrentLang();	
-  if (currentAnimalData) {
-    const voiceSelect = document.getElementById('voice-select-animal');
-    const selectedVoiceType = voiceSelect ? voiceSelect.value : 'boy';
-    const audioPath = getAnimalAudioPath(currentAnimalData, selectedVoiceType);
-    if (audioPath) {
-      playAudio(audioPath);
-      recordActivity(JSON.parse(localStorage.getItem("user")), "animals");
-    }
-  } else {
-    console.warn('لا يوجد حيوان معروض لتشغيل الصوت.');
-  }
-}
+			export function playCurrentAnimalAudio() {
+			const lang = getCurrentLang();	
+			  if (currentAnimalData) {
+				const voiceSelect = document.getElementById('voice-select-animal');
+				const selectedVoiceType = voiceSelect ? voiceSelect.value : 'boy';
+				const audioPath = getAnimalAudioPath(currentAnimalData, selectedVoiceType);
+				if (audioPath) {
+				  playAudio(audioPath);
+				  recordActivity(JSON.parse(localStorage.getItem("user")), "animals");
+				}
+			  } else {
+				console.warn('لا يوجد حيوان معروض لتشغيل الصوت.');
+			  }
+			}
 
-// New: Function to play baby animal audio
-export function playCurrentBabyAnimalAudio() {
-    if (currentAnimalData && currentAnimalData.baby) {
-        const voiceSelect = document.getElementById('voice-select-animal');
-        const selectedVoiceType = voiceSelect ? voiceSelect.value : 'boy';
-        const audioPath = getBabyAnimalAudioPath(currentAnimalData.baby, selectedVoiceType);
-        if (audioPath) {
-            playAudio(audioPath);
-            recordActivity(JSON.parse(localStorage.getItem("user")), "animals_baby_audio");
-        }
-    } else {
-        console.warn('لا توجد بيانات لاسم ابن الحيوان لتشغيل الصوت.');
-    }
-}
+			// New: Function to play baby animal audio
+			export function playCurrentBabyAnimalAudio() {
+				if (currentAnimalData && currentAnimalData.baby) {
+					const voiceSelect = document.getElementById('voice-select-animal');
+					const selectedVoiceType = voiceSelect ? voiceSelect.value : 'boy';
+					const audioPath = getBabyAnimalAudioPath(currentAnimalData.baby, selectedVoiceType);
+					if (audioPath) {
+						playAudio(audioPath);
+						recordActivity(JSON.parse(localStorage.getItem("user")), "animals_baby_audio");
+					}
+				} else {
+					console.warn('لا توجد بيانات لاسم ابن الحيوان لتشغيل الصوت.');
+				}
+			}
 
-function getAnimalAudioPath(data, voiceType) {
-	
-	const lang = getCurrentLang();
-  const langFolder = document.getElementById('game-lang-select-animal').value;
-  const subjectFolder = 'animals';
+			function getAnimalAudioPath(data, voiceType) {
+				
+				const lang = getCurrentLang();
+			  const langFolder = document.getElementById('game-lang-select-animal').value;
+			  const subjectFolder = 'animals';
 
-  let fileName;
-  const voiceKey = `${voiceType}_${langFolder}`;
+			  let fileName;
+			  const voiceKey = `${voiceType}_${langFolder}`;
 
-  if (data.voices && data.voices[voiceKey]) {
-    fileName = data.voices[voiceKey];
-  } else if (data.sound_base) {
-    fileName = `${data.sound_base}_${voiceType}_${langFolder}.mp3`;
-    console.warn(`⚠️ Used fallback from sound_base: ${fileName}`);
-  } else {
-    console.error(`❌ Neither voices nor sound_base available for ${data.name?.[lang] || "unknown"}`);
-    return null;
-  }
+			  if (data.voices && data.voices[voiceKey]) {
+				fileName = data.voices[voiceKey];
+			  } else if (data.sound_base) {
+				fileName = `${data.sound_base}_${voiceType}_${langFolder}.mp3`;
+				console.warn(`⚠️ Used fallback from sound_base: ${fileName}`);
+			  } else {
+				console.error(`❌ Neither voices nor sound_base available for ${data.name?.[lang] || "unknown"}`);
+				return null;
+			  }
 
-  const audioPath = `/audio/${langFolder}/${subjectFolder}/${fileName}`;
-  return audioPath;
-}
+			  const audioPath = `/audio/${langFolder}/${subjectFolder}/${fileName}`;
+			  return audioPath;
+			}
 
-// New: Function to get baby animal audio path
-function getBabyAnimalAudioPath(babyData, voiceType) {
-	
-	const lang = getCurrentLang();
-    const langFolder = document.getElementById('game-lang-select-animal').value;
-    // Assuming baby animal sounds are in 'baby_animals' subfolder
-    const subjectFolder = 'animals/baby_animals'; 
+			// New: Function to get baby animal audio path
+			function getBabyAnimalAudioPath(babyData, voiceType) {
+				
+				const lang = getCurrentLang();
+				const langFolder = document.getElementById('game-lang-select-animal').value;
+				// Assuming baby animal sounds are in 'baby_animals' subfolder
+				const subjectFolder = 'animals/baby_animals'; 
 
-    let fileName;
-    const voiceKey = voiceType; // The voice key directly corresponds to boy/girl/teacher
+				let fileName;
+				const voiceKey = voiceType; // The voice key directly corresponds to boy/girl/teacher
 
-    if (babyData.sound && babyData.sound[langFolder] && babyData.sound[langFolder][voiceKey]) {
-        fileName = babyData.sound[langFolder][voiceKey].split('/').pop(); // Extract file name from full path
-    } else {
-        return null;
-    }
+				if (babyData.sound && babyData.sound[langFolder] && babyData.sound[langFolder][voiceKey]) {
+					fileName = babyData.sound[langFolder][voiceKey].split('/').pop(); // Extract file name from full path
+				} else {
+					return null;
+				}
 
-    const audioPath = `/audio/${langFolder}/${subjectFolder}/${fileName}`;
-    return audioPath;
-}
+				const audioPath = `/audio/${langFolder}/${subjectFolder}/${fileName}`;
+				return audioPath;
+			}
 
-function disableAnimalButtonsInSidebar(isDisabled) {
-	  const playSoundBtn = document.getElementById("play-sound-btn-animal");
-	  const nextBtn = document.getElementById("next-animal-btn");
-	  const prevBtn = document.getElementById("prev-animal-btn");
-	  const voiceSelect = document.getElementById("voice-select-animal");
-	  const langSelect = document.getElementById("game-lang-select-animal");
-	  const playBabySoundBtn = document.getElementById("play-baby-sound-btn-animal"); // أضف هذا السطر
-	  const toggleBabyImageBtn = document.getElementById("toggle-baby-image-btn"); // أضف هذا السطر
-	  
-  
+			function disableAnimalButtonsInSidebar(isDisabled) {
+				  const playSoundBtn = document.getElementById("play-sound-btn-animal");
+				  const nextBtn = document.getElementById("next-animal-btn");
+				  const prevBtn = document.getElementById("prev-animal-btn");
+				  const voiceSelect = document.getElementById("voice-select-animal");
+				  const langSelect = document.getElementById("game-lang-select-animal");
+				  const playBabySoundBtn = document.getElementById("play-baby-sound-btn-animal"); 
+				  const toggleBabyImageBtn = document.getElementById("toggle-baby-image-btn");
+				  
+			  
 
-  if (playSoundBtn) playSoundBtn.disabled = isDisabled;
-  if (nextBtn) nextBtn.disabled = isDisabled;
-  if (prevBtn) prevBtn.disabled = isDisabled;
-  if (voiceSelect) voiceSelect.disabled = isDisabled;
-  if (langSelect) langSelect.disabled = isDisabled;
-  if (playBabySoundBtn) playBabySoundBtn.disabled = isDisabled;
-  if (toggleBabyImageBtn) toggleBabyImageBtn.disabled = isDisabled;
+			  if (playSoundBtn) playSoundBtn.disabled = isDisabled;
+			  if (nextBtn) nextBtn.disabled = isDisabled;
+			  if (prevBtn) prevBtn.disabled = isDisabled;
+			  if (voiceSelect) voiceSelect.disabled = isDisabled;
+			  if (langSelect) langSelect.disabled = isDisabled;
+			  if (playBabySoundBtn) playBabySoundBtn.disabled = isDisabled;
+			  if (toggleBabyImageBtn) toggleBabyImageBtn.disabled = isDisabled;
 }
