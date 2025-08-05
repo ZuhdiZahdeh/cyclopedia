@@ -277,7 +277,7 @@ function disableAnimalButtonsInSidebar(isDisabled) {
   const voiceSelect = document.getElementById("voice-select-animal");
   const langSelect = document.getElementById("game-lang-select-animal");
   const playBabySoundBtn = document.getElementById("play-baby-sound-btn-animal"); // أضف هذا السطر
-  const toggleBabyImageBtn = document.getElementById("toggle-baby-image-btn"); // New
+  const toggleBabyImageBtn = document.getElementById("toggle-baby-image-btn"); // أضف هذا السطر
 
   if (playSoundBtn) playSoundBtn.disabled = isDisabled;
   if (nextBtn) nextBtn.disabled = isDisabled;
@@ -285,5 +285,5 @@ function disableAnimalButtonsInSidebar(isDisabled) {
   if (voiceSelect) voiceSelect.disabled = isDisabled;
   if (langSelect) langSelect.disabled = isDisabled;
   if (playBabySoundBtn) playBabySoundBtn.disabled = isDisabled;
-  if (toggleBabyImageBtn) toggleBabyImageBtn.disabled = isDisabled; // New
+  if (toggleBabyImageBtn) toggleBabyImageBtn.disabled = isDisabled;
 }
