@@ -3,7 +3,22 @@ import { db } from "./firebase-config.js";
 import { collection, getDocs } from "firebase/firestore";
 import { getCurrentLang, applyTranslations } from "./lang-handler.js";
 import { stopCurrentAudio, playAudio } from "./audio-handler.js"; // <-- مواءمة الأسماء
-import { logActivity } from "./activity-handler.js";
+import * as Activity from "./activity-handler.js";
+
+
+
+// يلتقط أي اسم متاح للتسجيل ويعمل كـ no-op إذا لم توجد دالة
+const logActivity = (...args) => {
+  const fn =
+    Activity.logActivity ||
+    Activity.trackActivity ||
+    Activity.recordActivity ||
+    Activity.logEvent ||
+    Activity.addActivity;
+  if (typeof fn === "function") {
+    try { fn(...args); } catch (e) { console.warn("[activity] log failed:", e); }
+  }
+};
 
 // === حالة اللعبة ===
 let animals = [];
