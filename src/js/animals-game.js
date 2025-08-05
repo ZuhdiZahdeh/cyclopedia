@@ -276,6 +276,7 @@ function disableAnimalButtonsInSidebar(isDisabled) {
   const prevBtn = document.getElementById("prev-animal-btn");
   const voiceSelect = document.getElementById("voice-select-animal");
   const langSelect = document.getElementById("game-lang-select-animal");
+  
   const playBabySoundBtn = document.getElementById("play-baby-sound-btn-animal"); // أضف هذا السطر
   const toggleBabyImageBtn = document.getElementById("toggle-baby-image-btn"); // أضف هذا السطر
 
