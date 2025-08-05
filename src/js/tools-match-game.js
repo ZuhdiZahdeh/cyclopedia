@@ -11,7 +11,6 @@ let allProfessionIds = [];        // مصفوفة معرفات المهن
 let currentTool = null;
 let correctAnswers = [];
 
-console.log("✅ tools-match-game.js loaded - Multi-answer mode (fixed)");
 
 export async function loadToolsMatchGameContent() {
   stopCurrentAudio();
@@ -85,7 +84,6 @@ async function loadAllData() {
   professionsMap = new Map(profSnap.docs.map(d => [d.id, { id: d.id, ...d.data() }]));
   allProfessionIds = Array.from(professionsMap.keys());
 
-  console.log("📦 tools:", allTools.length, " | 👷‍♂️ professions:", allProfessionIds.length);
 }
 
 function showNewTool() {
@@ -171,7 +169,6 @@ function showProfessionOptionsMulti(tool) {
     container.appendChild(btn);
   }
 
-  console.log("🛠️ Tool:", tool.name?.[lang], "✓", correctAnswers, "| shown:", options);
 }
 
 function checkMultiAnswer() {

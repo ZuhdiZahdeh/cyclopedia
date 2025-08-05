@@ -271,14 +271,14 @@ function getBabyAnimalAudioPath(babyData, voiceType) {
 }
 
 function disableAnimalButtonsInSidebar(isDisabled) {
-  const playSoundBtn = document.getElementById("play-sound-btn-animal");
-  const nextBtn = document.getElementById("next-animal-btn");
-  const prevBtn = document.getElementById("prev-animal-btn");
-  const voiceSelect = document.getElementById("voice-select-animal");
-  const langSelect = document.getElementById("game-lang-select-animal");
+	  const playBabySoundBtn = document.getElementById("play-baby-sound-btn-animal"); // أضف هذا السطر
+	  const toggleBabyImageBtn = document.getElementById("toggle-baby-image-btn"); // أضف هذا السطر
+	  const playSoundBtn = document.getElementById("play-sound-btn-animal");
+	  const nextBtn = document.getElementById("next-animal-btn");
+	  const prevBtn = document.getElementById("prev-animal-btn");
+	  const voiceSelect = document.getElementById("voice-select-animal");
+	  const langSelect = document.getElementById("game-lang-select-animal");
   
-  const playBabySoundBtn = document.getElementById("play-baby-sound-btn-animal"); // أضف هذا السطر
-  const toggleBabyImageBtn = document.getElementById("toggle-baby-image-btn"); // أضف هذا السطر
 
   if (playSoundBtn) playSoundBtn.disabled = isDisabled;
   if (nextBtn) nextBtn.disabled = isDisabled;
