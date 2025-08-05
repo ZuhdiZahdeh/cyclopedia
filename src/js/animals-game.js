@@ -1,8 +1,8 @@
-// === Imports (عدّل المسارات حسب مشروعك إن لزم) ===
+// === Imports ===
 import { db } from "./firebase-config.js";
 import { collection, getDocs } from "firebase/firestore";
 import { getCurrentLang, applyTranslations } from "./lang-handler.js";
-import { stopAnyPlayingAudio, playAudioFile } from "./audio-handler.js";
+import { stopCurrentAudio, playAudio } from "./audio-handler.js"; // <-- مواءمة الأسماء
 import { logActivity } from "./activity-handler.js";
 
 // === حالة اللعبة ===
@@ -18,7 +18,7 @@ let prevBtn, nextBtn, playSoundBtn, playBabySoundBtn, voiceSelect, langSelect;
 // ==============================
 export async function loadAnimalsGameContent() {
   // أوقف أي صوت يعمل
-  stopAnyPlayingAudio();
+  stopCurrentAudio();
 
   // احقن واجهة اللعبة داخل القسم الرئيسي
   const main = document.querySelector("main.main-content");
@@ -27,7 +27,7 @@ export async function loadAnimalsGameContent() {
     return;
   }
 
-  // ملاحظة: التزمنا بالمعرّفات الموجودة في القالب (#animal-word, #animal-baby, #animal-female)
+  // المعرفات موحدة مع القالب
   main.innerHTML = `
     <section id="animals-game" class="topic-container">
       <div class="topic-header">
@@ -56,7 +56,7 @@ export async function loadAnimalsGameContent() {
     </section>
   `;
 
-  // بعد الحقن: التقط عناصر الشريط الجانبي وأزرار التفاعل (يجب أن تكون موجودة في Sidebar)
+  // بعد الحقن: عناصر الشريط الجانبي
   prevBtn = document.getElementById("prev-animal-btn");
   nextBtn = document.getElementById("next-animal-btn");
   playSoundBtn = document.getElementById("play-sound-btn-animal");
@@ -64,30 +64,28 @@ export async function loadAnimalsGameContent() {
   voiceSelect = document.getElementById("voice-select-animal");        // boy/girl/teacher...
   langSelect = document.getElementById("game-lang-select-animal");     // ar/en/he
 
-  // ثبّت المستمعات (بعد الحقن)
+  // المستمعات
   if (prevBtn) prevBtn.onclick = showPreviousAnimal;
   if (nextBtn) nextBtn.onclick = showNextAnimal;
   if (playSoundBtn) playSoundBtn.onclick = playCurrentAnimalAudio;
   if (playBabySoundBtn) playBabySoundBtn.onclick = playCurrentBabyAnimalAudio;
 
-  if (voiceSelect) voiceSelect.onchange = () => updateAnimalContent(); // إعادة تحميل الصوت/النص عند تغيير نوع الصوت
+  if (voiceSelect) voiceSelect.onchange = () => updateAnimalContent();
   if (langSelect) {
     langSelect.onchange = async () => {
       await reloadAnimalsForLang(langSelect.value);
     };
   }
 
-  // اجلب البيانات وابدأ اللعبة
+  // جلب البيانات وبدء العرض
   const lang = getCurrentLang();
   await fetchAnimals(lang);
 
   currentIndex = 0;
   currentAnimalData = animals.length ? animals[0] : null;
 
-  // فعّل/عطّل الأزرار بناءً على توفر البيانات
   disableAnimalButtonsInSidebar(animals.length === 0);
 
-  // حدث العرض الأولي + ترجمات الواجهة
   updateAnimalContent();
   applyTranslations();
 }
@@ -102,7 +100,6 @@ async function fetchAnimals(lang) {
     const snap = await getDocs(colRef);
     snap.forEach((doc) => {
       const data = doc.data();
-      // اختياري: ترشيح/ضبط بنية البيانات أو ضمان وجود الحقول الأساسية
       animals.push({
         id: doc.id,
         ...data,
@@ -113,9 +110,9 @@ async function fetchAnimals(lang) {
   }
 }
 
-// إعادة الجلب عند تغيير اللغة من القائمة الجانبية
+// إعادة الجلب عند تغيير اللغة
 async function reloadAnimalsForLang(lang) {
-  stopAnyPlayingAudio();
+  stopCurrentAudio();
   await fetchAnimals(lang);
   currentIndex = 0;
   currentAnimalData = animals.length ? animals[0] : null;
@@ -130,7 +127,6 @@ async function reloadAnimalsForLang(lang) {
 function updateAnimalContent() {
   const lang = getCurrentLang();
 
-  // عناصر العرض
   const wordEl = document.getElementById("animal-word");
   const imgEl = document.getElementById("animal-image");
   const detailsBox = document.getElementById("animal-details-section");
@@ -140,10 +136,8 @@ function updateAnimalContent() {
   const babyNameEl = document.getElementById("animal-baby");
   const femaleNameEl = document.getElementById("animal-female");
 
-  // حماية من عدم وجود الحاويات
   if (!wordEl || !imgEl || !detailsBox) return;
 
-  // لا توجد بيانات
   if (!currentAnimalData) {
     wordEl.textContent = "—";
     imgEl.src = "";
@@ -175,16 +169,17 @@ function updateAnimalContent() {
     imgEl.alt = "";
   }
 
-  // التصنيف والوصف (إن توفرا)
+  // التصنيف والوصف
   if (classificationEl) {
     classificationEl.textContent =
       (data.classification && (data.classification[lang] || data.classification.ar)) || "—";
   }
   if (descEl) {
-    descEl.textContent = (data.description && (data.description[lang] || data.description.ar)) || "—";
+    descEl.textContent =
+      (data.description && (data.description[lang] || data.description.ar)) || "—";
   }
 
-  // بيانات ابن الحيوان والأنثى (أسماء فقط هنا)
+  // بيانات الابن والأنثى
   const babyData = data.baby || {};
   const femaleData = data.female || {};
 
@@ -213,8 +208,8 @@ function playCurrentAnimalAudio() {
   const audioPath = getAnimalAudioPath(currentAnimalData, lang, voiceType);
   if (!audioPath) return;
 
-  stopAnyPlayingAudio();
-  playAudioFile(audioPath);
+  stopCurrentAudio();
+  playAudio(audioPath);
   logActivity("animals", "play_sound", {
     id: currentAnimalData.id,
     voiceType,
@@ -234,8 +229,8 @@ function playCurrentBabyAnimalAudio() {
   const babyAudioPath = getBabyAnimalAudioPath(currentAnimalData.baby, lang, voiceType);
   if (!babyAudioPath) return;
 
-  stopAnyPlayingAudio();
-  playAudioFile(babyAudioPath);
+  stopCurrentAudio();
+  playAudio(babyAudioPath);
   logActivity("animals", "play_baby_sound", {
     id: currentAnimalData.id,
     voiceType,
@@ -248,7 +243,7 @@ function playCurrentBabyAnimalAudio() {
 // ==============================
 function showNextAnimal() {
   if (!animals.length) return;
-  stopAnyPlayingAudio();
+  stopCurrentAudio();
 
   currentIndex = (currentIndex + 1) % animals.length;
   currentAnimalData = animals[currentIndex];
@@ -259,7 +254,7 @@ function showNextAnimal() {
 
 function showPreviousAnimal() {
   if (!animals.length) return;
-  stopAnyPlayingAudio();
+  stopCurrentAudio();
 
   currentIndex = (currentIndex - 1 + animals.length) % animals.length;
   currentAnimalData = animals[currentIndex];
@@ -269,24 +264,19 @@ function showPreviousAnimal() {
 }
 
 // ==============================
-// مسارات الصوت (نسخة واحدة فقط)
+// مسارات الصوت
 // ==============================
 function getAnimalAudioPath(data, lang, voiceType) {
-  // أولوية 1: voices["boy_ar"] / voices["girl_en"] ... (إن توفرت)
   const key = `${voiceType}_${lang}`;
   if (data.voices && data.voices[key]) {
     return data.voices[key];
   }
 
-  // أولوية 2: الصوت بالتركيب باستخدام sound_base
-  // مثال متوقّع: audio/ar/animals/${sound_base}_${voiceType}_${lang}.mp3
   const base = data.sound_base || (data.sound && data.sound.base);
   if (base) {
     return `audio/${lang}/animals/${base}_${voiceType}_${lang}.mp3`;
   }
 
-  // أولوية 3: خرائط sound[{langFolder}][voiceType]
-  // مثال: data.sound.ar.boy = "audio/ar/animals/lion_boy_ar.mp3"
   if (data.sound && data.sound[lang] && data.sound[lang][voiceType]) {
     return data.sound[lang][voiceType];
   }
@@ -295,19 +285,16 @@ function getAnimalAudioPath(data, lang, voiceType) {
 }
 
 function getBabyAnimalAudioPath(babyData, lang, voiceType) {
-  // أولوية 1: babyData.voices["boy_ar"]
   const key = `${voiceType}_${lang}`;
   if (babyData.voices && babyData.voices[key]) {
     return babyData.voices[key];
   }
 
-  // أولوية 2: babyData.sound_base
   const base = babyData.sound_base || (babyData.sound && babyData.sound.base);
   if (base) {
     return `audio/${lang}/animals/${base}_${voiceType}_${lang}.mp3`;
   }
 
-  // أولوية 3: babyData.sound[lang][voiceType]
   if (babyData.sound && babyData.sound[lang] && babyData.sound[lang][voiceType]) {
     return babyData.sound[lang][voiceType];
   }
