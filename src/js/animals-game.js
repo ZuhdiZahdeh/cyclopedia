@@ -273,14 +273,10 @@ function updateAnimalContent() {
 				  const langSelect = document.getElementById("game-lang-select-animal");
 				  const playBabySoundBtn = document.getElementById("play-baby-sound-btn-animal"); 
 				  const toggleBabyImageBtn = document.getElementById("toggle-baby-image-btn");
-				  
-			  
-
 			  if (playSoundBtn) playSoundBtn.disabled = isDisabled;
 			  if (nextBtn) nextBtn.disabled = isDisabled;
 			  if (prevBtn) prevBtn.disabled = isDisabled;
 			  if (voiceSelect) voiceSelect.disabled = isDisabled;
 			  if (langSelect) langSelect.disabled = isDisabled;
 			  if (playBabySoundBtn) playBabySoundBtn.disabled = isDisabled;
-			  if (toggleBabyImageBtn) toggleBabyImageBtn.disabled = isDisabled;
-}
+			  if (toggleBabyImageBtn) toggleBabyImageBtn.disabled = isDisabled; }
