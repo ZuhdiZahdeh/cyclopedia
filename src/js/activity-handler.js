@@ -1,4 +1,4 @@
-import { db } from "../core/firebase-config.js";
+import { db } from "./firebase-config.js";
 import { doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 
 // دالة لتسجيل نشاط المستخدم وزيادة النقاط والتحقق من الترقية
