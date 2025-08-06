@@ -1,75 +1,86 @@
-// 📁 src/subjects/fruits.js
+// src/subjects/fruits.js
 
-import { getItemsByCategory } from "../core/db-handler.js";
-import { getCurrentLang, applyTranslations } from "../core/lang-handler.js";
-import { stopCurrentAudio } from "../core/audio-handler.js";
-import { setupFruitControls } from "../controls/fruits-controls.js";
+import { db } from "../core/db-handler.js";
+import { collection, getDocs } from "firebase/firestore";
+import { getCurrentLang } from "../core/lang-handler.js";
+import { playAudio } from "../core/audio-handler.js";
 
 let fruits = [];
 let currentIndex = 0;
+let currentFruitData = null;
 
-export async function loadFruitsGameContent() {
-  stopCurrentAudio();
+export async function loadFruitsPage() {
+  const response = await fetch("/html/fruits.html");
+  const html = await response.text();
+  document.querySelector("main.main-content").innerHTML = html;
 
-  fruits = await getItemsByCategory("fruits");
-  currentIndex = 0;
-
-  const main = document.querySelector("main.main-content");
-  if (!main) return;
-
-  main.innerHTML = `
-    <div class="game-box">
-      <h2 id="fruit-name" class="item-main-name">---</h2>
-      <img id="fruit-image" src="" alt="Fruit Image" />
-      <div class="info-box">
-        <h4 data-i18n="description_title">الوصف:</h4>
-        <p id="fruit-description"></p>
-      </div>
-    </div>
-  `;
-
-  setupFruitControls();
-  displayCurrentFruit();
-
-  // عند تغيير اللغة من الخارج
-  document.addEventListener("languageChanged", () => {
-    displayCurrentFruit(); // إعادة عرض العنصر الحالي بنفس اللغة
-  });
+  await fetchFruitsData();
+  displayFruit();
+  setupListeners();
 }
 
-function displayCurrentFruit() {
-  const fruit = fruits[currentIndex];
+async function fetchFruitsData() {
+  const querySnapshot = await getDocs(collection(db, "fruits"));
+  fruits = querySnapshot.docs.map(doc => doc.data());
+}
+
+function displayFruit() {
   const lang = getCurrentLang();
+  currentFruitData = fruits[currentIndex];
+  if (!currentFruitData) return;
 
-  const nameElement = document.getElementById("fruit-name");
-  const descElement = document.getElementById("fruit-description");
-  const image = document.getElementById("fruit-image");
+  const nameEl = document.getElementById("fruit-name");
+  const imageEl = document.getElementById("fruit-image");
+  const descEl = document.getElementById("fruit-description");
 
-  nameElement.textContent = fruit?.name?.[lang] || "---";
-  descElement.textContent = fruit?.description?.[lang] || "---";
+  nameEl.textContent = currentFruitData.name[lang] || "";
+  imageEl.src = `images/fruits/${currentFruitData.image}`;
+  imageEl.alt = currentFruitData.name[lang] || "";
+  descEl.textContent = currentFruitData.description[lang] || "";
 
-  if (image && fruit.image) {
-    image.src = `/images/fruits/${fruit.image}`;
-    image.alt = fruit?.name?.[lang] || "Fruit";
-  }
+  // تشغيل الصوت تلقائيًا إن وُجد
+  const soundBase = currentFruitData.sound_base;
+  const voiceType = document.getElementById("voice-select-fruit").value;
+  const audioPath = `audio/${lang}/fruits/${soundBase}_${voiceType}_${lang}.mp3`;
+  playAudio(audioPath);
 
-  applyTranslations();
+  // دعم الضغط لتشغيل الصوت
+  nameEl.onclick = () => playAudio(audioPath);
+  imageEl.onclick = () => playAudio(audioPath);
 }
 
-export function showNextFruit() {
-  if (currentIndex < fruits.length - 1) {
-    currentIndex++;
-    displayCurrentFruit();
-  }
-}
+function setupListeners() {
+  document.getElementById("prev-fruit-btn").onclick = () => {
+    if (currentIndex > 0) {
+      currentIndex--;
+      displayFruit();
+    }
+  };
 
-export function showPreviousFruit() {
-  if (currentIndex > 0) {
-    currentIndex--;
-    displayCurrentFruit();
-  }
-}
+  document.getElementById("next-fruit-btn").onclick = () => {
+    if (currentIndex < fruits.length - 1) {
+      currentIndex++;
+      displayFruit();
+    }
+  };
 
-export function getCurrentFruit() {
-  return fruits[currentIndex];
+  document.getElementById("play-sound-btn-fruit").onclick = () => {
+    const lang = getCurrentLang();
+    const voiceType = document.getElementById("voice-select-fruit").value;
+    const audioPath = `audio/${lang}/fruits/${currentFruitData.sound_base}_${voiceType}_${lang}.mp3`;
+    playAudio(audioPath);
+  };
+
+  document.getElementById("voice-select-fruit").onchange = () => {
+    displayFruit();
+  };
+
+  const langSelect = document.getElementById("game-lang-select-fruit");
+  if (langSelect) {
+    langSelect.value = getCurrentLang();
+    langSelect.onchange = () => {
+      localStorage.setItem("lang", langSelect.value);
+      location.reload();
+    };
+  }
 }
