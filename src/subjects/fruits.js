@@ -1,9 +1,8 @@
 // 📁 src/subjects/fruits.js
-import { getItemsByCategory } from "/src/core/db-handler.js";
-import { getCurrentLang, applyTranslations } from "/src/core/lang-handler.js";
-import { stopCurrentAudio } from "/src/core/audio-handler.js";
-import { setupFruitControls } from "/src/controls/fruits-controls.js";
-
+import { getItemsByCategory } from "../core/db-handler.js";
+import { getCurrentLang, applyTranslations } from "../core/lang-handler.js";
+import { stopCurrentAudio } from "../core/audio-handler.js";
+import { setupFruitControls } from "../controls/fruits-controls.js";
 
 let fruits = [];
 let currentIndex = 0;
