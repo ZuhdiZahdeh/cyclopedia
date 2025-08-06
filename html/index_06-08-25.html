@@ -338,11 +338,6 @@
 </div>
 
 <script type="module">
-// ✅ استيراد النسخة الجديدة من صفحة الفواكه
-import { loadFruitsGameContent } from '/src/subjects/fruits.js';
-
-
-
   import { showProfileForm } from '/src/js/profile.js';
   import {
     loadAnimalsGameContent, showNextAnimal, showPreviousAnimal,
@@ -416,19 +411,6 @@ import { loadFruitsGameContent } from '/src/subjects/fruits.js';
   const welcomeMessage = document.getElementById("welcome-message");
   const homeTopicCards = document.getElementById("home-topic-cards");
   
-	
-	
-
-
-// ✅ تحديث دالة تحميل صفحة الفواكه - الكود الجديد
-window.loadFruitsPage = async () => {
-  hideAllControls();
-  if (welcomeMessage) welcomeMessage.style.display = 'none';
-  if (homeTopicCards) homeTopicCards.style.display = 'none';
-  showFruitControls();
-  await loadFruitsGameContent();
-};
-
 	// دالة تحميل لعبة من صاحب الأداة؟ 
 window.loadToolsMatchPage = async () => {
   hideAllControls();
