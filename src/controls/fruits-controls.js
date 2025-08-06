@@ -2,7 +2,7 @@
 import { playAudio } from "../core/audio-handler.js";
 import { getCurrentLang, loadLanguage, applyTranslations } from "../core/lang-handler.js";
 import { getCurrentFruit, showNextFruit, showPreviousFruit, loadFruitsGameContent } from "../subjects/fruits.js";
-import { recordActivity } from "../core/activity-handler.js";
+import { recordActivity } from "../users/activity-handler.js";
 
 export function setupFruitControls() {
   const langSelect = document.getElementById("game-lang-select-fruit");
