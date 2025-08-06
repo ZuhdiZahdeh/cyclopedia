@@ -1,74 +1,57 @@
-// lang-handler.js
+// 📁 src/core/lang-handler.js
 
-export let currentLang = localStorage.getItem("lang") || "ar";
+let translations = {};
+let currentLang = localStorage.getItem("lang") || "ar";
 
-// ✅ إرجاع اللغة الحالية
+const langDirections = { ar: "rtl", en: "ltr", he: "rtl" };
+
 export function getCurrentLang() {
   return currentLang;
 }
 
-// ✅ ضبط اتجاه الصفحة حسب اللغة
-export function setDirection(lang) {
-  const dir = (lang === 'ar' || lang === 'he') ? 'rtl' : 'ltr';
-  document.documentElement.setAttribute('dir', dir);
-  document.documentElement.setAttribute('lang', lang);
+export function getLangDirection() {
+  return langDirections[currentLang] || "rtl";
 }
 
-// ✅ تحميل ملف اللغة عبر fetch (من مجلد public/lang)
-export async function loadLanguage(lang) {
+export async function loadLanguage(langCode) {
   try {
-    const response = await fetch(`/lang/${lang}.json`);
-    if (!response.ok) {
-      throw new Error(`تعذر تحميل ملف الترجمة: ${lang}.json`);
-    }
-    const translations = await response.json();
-    applyTranslations(translations);
-  } catch (error) {
-    console.error("❌ خطأ في تحميل الترجمة:", error);
+    const res = await fetch(`/lang/${langCode}.json`);
+    if (!res.ok) throw new Error("Translation file not found");
+    translations = await res.json();
+    currentLang = langCode;
+    localStorage.setItem("lang", langCode);
+    applyTranslations();
+    setDirection();
+    updateLangSelectors();
+  } catch (err) {
+    console.error("❌ مشكلة في تحميل الترجمة:", err);
   }
 }
 
-// ✅ تطبيق الترجمة على العناصر التي تحتوي على data-i18n
-export function applyTranslations(translations) {
-  if (!translations || typeof translations !== 'object') {
-    console.warn("⚠️ ملف الترجمة غير صالح أو غير محمّل.");
-    return;
-  }
-
-  document.querySelectorAll('[data-i18n]').forEach(element => {
-    const key = element.getAttribute('data-i18n');
-    if (translations[key]) {
-      element.innerHTML = translations[key];
-    } else {
-      console.warn(`🔍 المفتاح '${key}' غير موجود في ملف الترجمة.`);
-    }
+export function applyTranslations(container = document) {
+  container.querySelectorAll("[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    if (translations[key]) el.innerHTML = translations[key];
   });
 }
 
-// ✅ تغيير اللغة وتحديث التخزين والاتجاه والواجهة
-export async function setLanguage(lang) {
-  currentLang = lang;
-  localStorage.setItem("lang", lang);
-  setDirection(lang);
-  await loadLanguage(lang);
-
-  // تحديد اللغة المختارة في جميع عناصر select
-  document.querySelectorAll(".lang-select").forEach(select => {
-    if (select.value !== lang) {
-      select.value = lang;
-    }
-  });
-
-  // إطلاق حدث مخصص لاستخدامه من ملفات أخرى
-  document.dispatchEvent(new CustomEvent("languageChanged", { detail: lang }));
+export function setDirection() {
+  const dir = getLangDirection();
+  document.documentElement.setAttribute("dir", dir);
+  document.body.setAttribute("dir", dir);
+  document.documentElement.setAttribute("lang", currentLang);
 }
 
-// ✅ تهيئة اللغة عند تشغيل الصفحة
+export async function setLanguage(langCode) {
+  await loadLanguage(langCode);
+  document.dispatchEvent(new CustomEvent("languageChanged", { detail: langCode }));
+}
+
 export async function initializeLanguage() {
-  setDirection(currentLang);
   await loadLanguage(currentLang);
+}
 
-  // ضبط select في القائمة الجانبية بعد تحميل اللغة
+function updateLangSelectors() {
   document.querySelectorAll(".lang-select").forEach(select => {
     select.value = currentLang;
   });
