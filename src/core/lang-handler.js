@@ -45,11 +45,31 @@ export function applyTranslations(translations) {
   });
 }
 
-// ✅ تغيير اللغة وتحديث التخزين والاتجاه وإطلاق حدث مخصص
-export function setLanguage(lang) {
+// ✅ تغيير اللغة وتحديث التخزين والاتجاه والواجهة
+export async function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem("lang", lang);
   setDirection(lang);
-  loadLanguage(lang);
+  await loadLanguage(lang);
+
+  // تحديد اللغة المختارة في جميع عناصر select
+  document.querySelectorAll(".lang-select").forEach(select => {
+    if (select.value !== lang) {
+      select.value = lang;
+    }
+  });
+
+  // إطلاق حدث مخصص لاستخدامه من ملفات أخرى
   document.dispatchEvent(new CustomEvent("languageChanged", { detail: lang }));
+}
+
+// ✅ تهيئة اللغة عند تشغيل الصفحة
+export async function initializeLanguage() {
+  setDirection(currentLang);
+  await loadLanguage(currentLang);
+
+  // ضبط select في القائمة الجانبية بعد تحميل اللغة
+  document.querySelectorAll(".lang-select").forEach(select => {
+    select.value = currentLang;
+  });
 }

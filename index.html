@@ -573,35 +573,35 @@ window.loadToolsMatchPage = async () => {
 
 		window.showHomePage = () => {
 			mainContentArea.innerHTML = `
-            <h2 id="welcome-message-inner" style="display: block;">مرحبًا بك في الموسوعة!</h2>
+            <h2 id="welcome-message-inner" style="display: block;" data-i18n="welcome_message">مرحباً بكم في الموسوعة التفاعلية</h2>
             <div id="home-topic-cards-inner" class="home-cards-container">
                 <a href="#" class="topic-card animals" onclick="loadAnimalsPage(); return false;">
                     <span class="icon">🐾</span>
-                    <h3>الحيوانات</h3>
+                    <h3 data-i18n="animals">الحيوانات</h3>
                 </a>
                 <a href="#" class="topic-card fruits" onclick="loadFruitsPage(); return false;">
                     <span class="icon">🍎</span>
-                    <h3>الفواكه</h3>
+                    <h3 data-i18n="fruits_title">الفواكه</h3>
                 </a>
                 <a href="#" class="topic-card vegetables" onclick="loadVegetablesPage(); return false;">
                     <span class="icon">🥦</span>
-                    <h3>الخضروات</h3>
+                    <h3 data-i18n="vegetables">الخضروات</h3>
                 </a>
                 <a href="#" class="topic-card human-body" onclick="loadHumanBodyPage(); return false;">
                     <span class="icon">🧠</span>
-                    <h3>جسم الإنسان</h3>
+                    <h3 data-i18n="human_body">جسم الإنسان</h3>
                 </a>
                 <a href="#" class="topic-card games" onclick="loadAlphabetPressPage(); return false;">
                     <span class="icon">🔠</span>
-                    <h3>لعبة الحروف</h3> </a>
+                    <h3 data-i18n="alphabet_game">لعبة الحروف</h3> </a>
                 <a href="#" class="topic-card games" onclick="loadMemoryGamePage(); return false;">
                     <span class="icon">🧠</span>
-                    <h3>لعبة الذاكرة</h3>
+                    <h3 data-i18n="memory_game_title">لعبة الذاكرة</h3>
                 </a>
 		
 				<a href="#" class="topic-card professions" onclick="loadProfessionsPage(); return false;">
 				<span class="icon">👷‍♂️</span>
-				<h3>المهن</h3>
+				<h3 data-i18n="professions">المهن</h3>
 				</a>
 				<a href="#" class="topic-card tools" onclick="loadToolsPage(); return false;">
 				  <span class="icon">🔧</span>
@@ -664,7 +664,7 @@ window.loadToolsMatchPage = async () => {
         document.addEventListener('DOMContentLoaded', () => {
   const defaultLang = localStorage.getItem("lang") || "ar";
   setDirection(defaultLang);
-  loadLanguage(defaultLang);
+  initializeLanguage();
   window.showHomePage();
 });
 
