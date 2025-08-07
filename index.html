@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>الموسوعة التفاعلية للأطفال</title>
+<title data-i18n="cyclopedia">الموسوعة التفاعلية للأطفال</title>
 <link href="/css/colors.css" rel="stylesheet"/>
 <link href="/css/fonts.css" rel="stylesheet"/>
 <link href="/css/shared-utilities.css" rel="stylesheet"/>
@@ -82,7 +82,7 @@
 <h3 style="text-align: center;" data-i18n="fruits_title_name">🍎 تعرف على الفواكه</h3>
 <div class="sidebar-game-controls">
 <div class="control-group">
-<label for="game-lang-select-fruit">اللغة:</label>
+<label for="game-lang-select-fruit" data-i18n="Language">اللغة:</label>
 <select id="game-lang-select-fruit">
 <option value="ar" data-i18n="lang_arabic">العربية</option>
 <option value="en" data-i18n="lang_english">English</option>
@@ -110,7 +110,7 @@
 <h3 style="text-align: center;" data-i18n="vegetable_title_name">🥦 تعرف على الخضروات</h3>
 <div class="sidebar-game-controls">
 <div class="control-group">
-<label for="game-lang-select-vegetable">اللغة:</label>
+<label for="game-lang-select-vegetable" data-i18n="Language">>اللغة:</label>
 <select id="game-lang-select-vegetable">
 <option value="ar" data-i18n="lang_arabic">العربية</option>
 <option value="en" data-i18n="lang_english">English</option>
@@ -352,7 +352,7 @@ import { loadFruitsGameContent } from '/src/subjects/fruits.js';
 
   import {
     loadVegetablesGameContent, showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio
-  } from '/src/js/vegetables-game.js';
+  } from '/src/subjects/vegetables.js';
 
   import {
     loadHumanBodyGameContent, showNextHumanBodyPart, showPreviousHumanBodyPart, playCurrentHumanBodyPartAudio
@@ -579,14 +579,15 @@ window.loadToolsMatchPage = async () => {
                     <span class="icon">🐾</span>
                     <h3 data-i18n="animals">الحيوانات</h3>
                 </a>
-                <a href="#" class="topic-card fruits" onclick="loadFruitsPage(); return false;">
+				<a href="#" class="topic-card fruits" onclick="import('/src/main.js').then(m => import('/src/subjects/fruits.js').then(f => m.loadPage('fruits', '/html/fruits.html', f.loadFruitsGameContent))); return false;">
                     <span class="icon">🍎</span>
                     <h3 data-i18n="fruits_title">الفواكه</h3>
                 </a>
-                <a href="#" class="topic-card vegetables" onclick="loadVegetablesPage(); return false;">
+				<a href="#" onclick="import('/src/main.js').then(m => import('/src/subjects/vegetables.js').then(v => m.loadPage('vegetables', '/html/vegetables.html', v.loadVegetablesGameContent))); return false;">
                     <span class="icon">🥦</span>
                     <h3 data-i18n="vegetables">الخضروات</h3>
                 </a>
+
                 <a href="#" class="topic-card human-body" onclick="loadHumanBodyPage(); return false;">
                     <span class="icon">🧠</span>
                     <h3 data-i18n="human_body">جسم الإنسان</h3>
