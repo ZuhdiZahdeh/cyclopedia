@@ -573,15 +573,27 @@ window.loadToolsMatchPage = async () => {
                     <span class="icon">🐾</span>
                     <h3 data-i18n="animals">الحيوانات</h3>
                 </a>
-				<a href="#" onclick="import('/src/main.js').then(m => import('/src/subjects/fruits.js').then(f => m.loadPage('fruits', '/html/fruits.html', f.loadFruitsGameContent))); return false;">
+				
+				<a href="#" class="topic-card fruits" onclick="import('/src/main.js').then(m => {
+					console.log('📦 loading fruits page via loadPage()');
+					import('/src/subjects/fruits.js').then(f => m.loadPage('fruit', '/html/fruits.html', f.loadFruitsGameContent));
+					return false;
+				});">
 					<span class="icon">🍎</span>
 					<h3 data-i18n="fruits_title">الفواكه</h3>
 				</a>
 
-				<a href="#" onclick="import('/src/main.js').then(m => import('/src/subjects/vegetables.js').then(v => m.loadPage('vegetables', '/html/vegetables.html', v.loadVegetablesGameContent))); return false;">
+
+
+				<a href="#" class="topic-card vegetables" onclick="import('/src/main.js').then(m => {
+					console.log('🥦 loading vegetables page via loadPage()');
+					import('/src/subjects/vegetables.js').then(v => m.loadPage('vegetable', '/html/vegetables.html', v.loadVegetablesGameContent));
+					return false;
+				});">
 					<span class="icon">🥦</span>
 					<h3 data-i18n="vegetables">الخضروات</h3>
 				</a>
+
 
                 <a href="#" class="topic-card human-body" onclick="loadHumanBodyPage(); return false;">
                     <span class="icon">🧠</span>

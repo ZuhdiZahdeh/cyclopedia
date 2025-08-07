@@ -17,7 +17,7 @@ export default defineConfig({
         "professions": resolve(__dirname, 'html/professions.html'),
         "alphabet-press": resolve(__dirname, 'html/alphabet-press.html'),
         "vegetables": resolve(__dirname, 'html/vegetables.html'),
-        
+        "fruits": resolve(__dirname, 'html/fruits.html'),
 
         // ملفات JavaScript المستقلة التي لا يتم تحميلها ديناميكيًا
         "tools-match-game": resolve(__dirname, 'src/js/tools-match-game.js'),
