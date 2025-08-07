@@ -1,16 +1,6 @@
-// 📁 src/core/db-handler.js
+// db-handler.js - استيراد db مباشرة من firebase-config.js
 
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { firebaseConfig } from "./firebase-config.js";
+import { db } from "./firebase-config.js";
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-export { db }; // ✅ هذا السطر هو المهم!
-
-export async function getItemsByCategory(category) {
-  const colRef = collection(db, "categories", category, "items");
-  const snapshot = await getDocs(colRef);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-}
+// يمكن توسيع الدوال هنا لاحقًا حسب الحاجة
+export { db };
