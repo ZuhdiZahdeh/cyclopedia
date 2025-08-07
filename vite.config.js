@@ -10,7 +10,8 @@ export default defineConfig({
       input: {
         // الصفحة الرئيسية
         main: resolve(__dirname, 'index.html'),
-		mainjs: resolve(__dirname, 'src/main.js'),
+		// ✅ أضف هذا السطر أو تأكد من صحته
+        mainjs: resolve(__dirname, 'src/main.js'),
 		
         // صفحات HTML للألعاب والمواضيع
         "tools-match": resolve(__dirname, 'html/tools-match.html'),
