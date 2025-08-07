@@ -44,3 +44,15 @@ window.loadToolsMatchPage = async () => {
   const module = await import("/src/js/tools-match-game.js");
   module.loadToolsMatchGameContent(); // ✅ يبدأ اللعبة مباشرة دون زر
 };
+
+export function loadPage(subject, htmlPath, loadFunction) {
+  hideAllControls();
+  fetch(htmlPath)
+    .then(response => response.text())
+    .then(html => {
+      mainContentArea.innerHTML = html;
+      loadFunction();
+      showSubjectControls(subject);
+      initializeSubjectControls(subject);
+    });
+}
