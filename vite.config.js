@@ -10,7 +10,7 @@ export default defineConfig({
       input: {
         // الصفحة الرئيسية
         main: resolve(__dirname, 'index.html'),
-		mainjs: resolve(__dirname, "src/main.js"),  // ← ضروري لدعم import('/src/main.js')
+		mainjs: resolve(__dirname, "cyclopedia-app/src/main.js")  // ← ضروري لدعم import('/src/main.js')
 
         // صفحات HTML للألعاب والمواضيع
         "tools-match": resolve(__dirname, 'html/tools-match.html'),
