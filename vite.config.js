@@ -10,7 +10,8 @@ export default defineConfig({
       input: {
         // الصفحة الرئيسية
         main: resolve(__dirname, 'index.html'),
-
+		mainjs: resolve(__dirname, 'src/main.js'),
+		
         // صفحات HTML للألعاب والمواضيع
         "tools-match": resolve(__dirname, 'html/tools-match.html'),
         "tools-match-controls": resolve(__dirname, 'html/tools-match-controls.html'),
@@ -22,6 +23,7 @@ export default defineConfig({
         "tools-match-game": resolve(__dirname, 'src/js/tools-match-game.js'),
         "alphabet-press-game": resolve(__dirname, 'src/js/alphabet-press-game.js'),
         "include-all-scripts": resolve(__dirname, 'src/js/include-all-scripts.js'),
+		
 
         // لأغراض الاختبار أو التصحيح
         "debug": resolve(__dirname, 'html/debug.html')
