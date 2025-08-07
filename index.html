@@ -29,8 +29,22 @@
 <nav class="top-nav-links">
 <a href="#" onclick="showHomePage()" data-i18n="home">🏠 الرئيسية</a>
 <a href="#" onclick="loadAnimalsPage()" data-i18n="animals">🐾 الحيوانات</a>
-<a href="#" onclick="loadFruitsPage()" data-i18n="fruits">🍎 الفواكه</a>
-<a href="#" onclick="loadVegetablesPage()" data-i18n="vegetables">🥦 الخضروات</a>
+<a href="#"
+   onclick="import('/src/main.js').then(m =>
+     import('/src/subjects/fruits.js').then(f =>
+       m.loadPage('fruits', '/html/fruits.html', f.loadFruitsGameContent)
+     )
+   ); return false;"
+   data-i18n="fruits">🍎 الفواكه</a>
+
+<a href="#"
+   onclick="import('/src/main.js').then(m =>
+     import('/src/subjects/vegetables.js').then(v =>
+       m.loadPage('vegetables', '/html/vegetables.html', v.loadVegetablesGameContent)
+     )
+   ); return false;"
+   data-i18n="vegetables">🥦 الخضروات</a>
+
 <a href="#" onclick="loadHumanBodyPage()" data-i18n="human_body">🧠 جسم الإنسان</a>
 <a href="#" onclick="loadProfessionsPage()" data-i18n="professions">👷‍♂️ المهن</a>
 <a href="#" onclick="loadToolsPage()" data-i18n="tools">🧰 الأدوات</a>
@@ -417,15 +431,6 @@ import { loadFruitsGameContent } from '/src/subjects/fruits.js';
 	
 
 
-// ✅ تحديث دالة تحميل صفحة الفواكه - الكود الجديد
-window.loadFruitsPage = async () => {
-  hideAllControls();
-  if (welcomeMessage) welcomeMessage.style.display = 'none';
-  if (homeTopicCards) homeTopicCards.style.display = 'none';
-  showFruitControls();
-  await loadFruitsGameContent();
-};
-
 	// دالة تحميل لعبة من صاحب الأداة؟ 
 window.loadToolsMatchPage = async () => {
   hideAllControls();
@@ -502,23 +507,8 @@ window.loadToolsMatchPage = async () => {
 		  initializeSubjectControls('animal');
 		};
 
-		window.loadFruitsPage = async () => {
-		  hideAllControls();
-		  if (welcomeMessage) welcomeMessage.style.display = 'none';
-		  if (homeTopicCards) homeTopicCards.style.display = 'none';
-		  await loadFruitsGameContent();
-		  showFruitControls();
-		  initializeSubjectControls('fruit');
-		};
 
-		window.loadVegetablesPage = async () => {
-		  hideAllControls();
-		  if (welcomeMessage) welcomeMessage.style.display = 'none';
-		  if (homeTopicCards) homeTopicCards.style.display = 'none';
-		  await loadVegetablesGameContent();
-		  showVegetableControls();
-		  initializeSubjectControls('vegetable');
-		};
+
 
 		window.loadHumanBodyPage = async () => {
 		  hideAllControls();
