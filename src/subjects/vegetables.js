@@ -1,4 +1,4 @@
-import { db } from "../core/firebase-config.js";
+import { db } from "../core/db-handler.js";
 import { collection, getDocs } from "firebase/firestore";
 import { getCurrentLang } from "../core/lang-handler.js";
 import { playAudio } from "../core/audio-handler.js";
