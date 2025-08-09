@@ -26,13 +26,27 @@ html, body {
   width: 100%;
 }
 
-/* *** التعديل هنا: تطبيق Flexbox على .page-layout *** */
-.page-layout {
-  display: flex; /* يجعل العناصر الفرعية (sidebar, main-content) تترتب بجانب بعضها */
-  flex-direction: row; /* يحدد اتجاه الترتيب كصف (أفقي) */
-  flex-grow: 1; /* يسمح لـ page-layout بالتمدد لملء المساحة المتبقية داخل #app */
-  width: 100%; /* تأكد من أنه يأخذ كامل العرض المتاح */
+/* === PAGE LAYOUT (Grid) === */
+:root { --sidebar-width: 300px; } /* يمكنك تعديل العرض */
+
+.page-layout, .page-grid {
+  display: grid;
+  gap: 1rem;
+  /* نجعل أسماء المناطق ثابتة: main + side */
+  grid-template-areas: "side main";
+  grid-template-columns: var(--sidebar-width) 1fr;
+  padding: 1rem;
 }
+
+/* اقلب الأعمدة تلقائيًا حسب اتجاه الصفحة */
+html[dir="rtl"] .page-layout, html[dir="rtl"] .page-grid {
+  grid-template-areas: "main side";
+  grid-template-columns: 1fr var(--sidebar-width);
+}
+
+#sidebar-section { grid-area: side; }
+#app-main        { grid-area: main; min-width: 0; }
+
 
 /* أنماط الشريط الجانبي (sidebar) */
 .sidebar {
@@ -167,9 +181,14 @@ html, body {
 /* ... (الأنماط الحالية) ... */
 
 @media (max-width: 768px) {
-  .page-layout {
-    flex-direction: column; /* الأقسام تحت بعضها البعض في الشاشات الصغيرة */
+   .page-layout, .page-grid {
+    grid-template-areas:
+      "side"
+      "main";
+    grid-template-columns: 1fr;
   }
+  #sidebar-section { width: 100%; }
+}
 
   .sidebar {
     width: 100%; /* اجعل الشريط الجانبي يأخذ عرض الشاشة بالكامل */

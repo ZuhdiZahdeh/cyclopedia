@@ -13,43 +13,115 @@ let currentVegetableData = null;
 let wordEl, imgEl, catEl, descEl;
 let prevBtn, nextBtn, playSoundBtn, voiceSelect, langSelect;
 
-function imgPathOf(d, lang) {
-  let path =
-    d.image_path ||
-    (d.images && (d.images.main || d.images[lang])) ||
-    (d.image ? `/images/vegetables/${d.image}` : '');
-  if (path && !path.startsWith('/')) path = `/${path}`;
-  console.log('[vegetables][img] →', path || '(no image)');
-  return path || null;
+// ===================== Image helpers =====================
+const VEGETABLE_IMAGE_BASE = '/images/vegetables/';
+
+function isAbsoluteUrl(p) {
+  return /^https?:\/\//i.test(p) || /^data:/i.test(p) || /^blob:/i.test(p);
 }
 
-function audioPathOf(d, lang, voiceType) {
+function normalizeImagePath(p) {
+  if (!p) return null;
+  p = String(p).trim();
+  if (!p) return null;
+
+  // URL مطلق أو يبدأ بـ /
+  if (isAbsoluteUrl(p) || p.startsWith('/')) return p;
+
+  // أزل ./ أو / زائدة
+  p = p.replace(/^\.?\/*/, '');
+
+  // أعطيته مسارًا داخل images/
+  if (p.startsWith('images/')) return '/' + p;
+
+  // خلاف ذلك اعتبره اسم ملف داخل مجلد الخضروات
+  return VEGETABLE_IMAGE_BASE + p;
+}
+
+function pickFromImages(images, lang) {
+  if (!images) return null;
+
+  // Array: أول عنصر صالح (string أو كائن يحوي src/لغة)
+  if (Array.isArray(images)) {
+    const item = images.find(v => typeof v === 'string' || (v && typeof v.src === 'string'));
+    if (!item) return null;
+    return typeof item === 'string' ? item : (item[lang] || item.src || item.main || null);
+  }
+
+  // Object: نفضّل لغة الواجهة ثم main/default ثم أي قيمة نصية
+  if (typeof images === 'object') {
+    if (images[lang]) return images[lang];
+    if (images.main) return images.main;
+    if (images.default) return images.default;
+    const firstVal = Object.values(images).find(v => typeof v === 'string');
+    if (firstVal) return firstVal;
+  }
+
+  return null;
+}
+
+function getVegetableImagePath(d, lang) {
+  // 1) image_path مسار جاهز
+  if (typeof d?.image_path === 'string' && d.image_path.trim()) {
+    const path = normalizeImagePath(d.image_path);
+    console.log('[vegetables][img] image_path →', path);
+    return path;
+  }
+
+  // 2) images (Array/Object)
+  const fromImages = pickFromImages(d?.images, lang);
+  if (fromImages) {
+    const path = normalizeImagePath(fromImages);
+    console.log('[vegetables][img] images →', path);
+    return path;
+  }
+
+  // 3) image اسم ملف داخل مجلد الخضروات
+  if (typeof d?.image === 'string' && d.image.trim()) {
+    const path = normalizeImagePath(d.image);
+    console.log('[vegetables][img] image →', path);
+    return path;
+  }
+
+  console.warn('[vegetables][img] لا يوجد حقل صورة صالح:', d?.id);
+  return null;
+}
+
+// ===================== Audio helpers =====================
+function getVegetableAudioPath(d, lang, voiceType) {
   const key = `${voiceType}_${lang}`;
   let file;
 
-  if (d.voices && d.voices[key]) {
+  if (d?.voices && d.voices[key]) {
     file = d.voices[key];
     console.log(`[vegetables][audio] voices[${key}] → ${file}`);
-  } else if (d.sound_base) {
+  } else if (d?.sound_base) {
     file = `${d.sound_base}_${voiceType}_${lang}.mp3`;
     console.warn(`[vegetables][audio] via sound_base → ${file}`);
-  } else if (d.sound && d.sound[lang] && d.sound[lang][voiceType]) {
+  } else if (d?.sound && d.sound[lang] && d.sound[lang][voiceType]) {
     file = d.sound[lang][voiceType];
     console.log(`[vegetables][audio] legacy map → ${file}`);
+  } else if (typeof d?.audio === 'string') {
+    file = d.audio;
+    console.log('[vegetables][audio] audio (flat) →', file);
   } else {
-    console.error('[vegetables][audio] no audio fields for:', d?.name?.[lang] || d?.id);
+    console.error('[vegetables][audio] لا يوجد صوت لهذا العنصر:', d?.name?.[lang] || d?.id);
     return null;
   }
 
-  const full = file.startsWith('/') ? file : `/audio/${lang}/vegetables/${file}`;
+  const full = (isAbsoluteUrl(file) || file.startsWith('/'))
+    ? file
+    : `/audio/${lang}/vegetables/${file}`;
   console.log('[vegetables][audio] path →', full);
   return full;
 }
 
+// ===================== UI helpers =====================
 function disableAll(dis) {
   [prevBtn, nextBtn, playSoundBtn, voiceSelect, langSelect].forEach(el => el && (el.disabled = !!dis));
 }
 
+// ===================== Render =====================
 function updateVegetableContent() {
   const lang = getCurrentLang();
 
@@ -73,7 +145,7 @@ function updateVegetableContent() {
     wordEl.onclick = playCurrentVegetableAudio;
   }
 
-  const imgPath = imgPathOf(d, lang);
+  const imgPath = getVegetableImagePath(d, lang);
   if (imgEl) {
     if (imgPath) { imgEl.src = imgPath; imgEl.alt = displayName; }
     else { imgEl.removeAttribute('src'); imgEl.alt = ''; }
@@ -92,14 +164,14 @@ function updateVegetableContent() {
   if (prevBtn) prevBtn.disabled = (vegetables.length <= 1);
 }
 
-function showNext() {
+function showNextVegetable() {
   if (!vegetables.length) return;
   stopCurrentAudio();
   currentIndex = (currentIndex + 1) % vegetables.length;
   updateVegetableContent();
 }
 
-function showPrev() {
+function showPreviousVegetable() {
   if (!vegetables.length) return;
   stopCurrentAudio();
   currentIndex = (currentIndex - 1 + vegetables.length) % vegetables.length;
@@ -110,7 +182,7 @@ function playCurrentVegetableAudio() {
   if (!vegetables.length || !currentVegetableData) return;
   const lang  = (langSelect && langSelect.value) || getCurrentLang();
   const voice = (voiceSelect && voiceSelect.value) || 'teacher';
-  const audio = audioPathOf(currentVegetableData, lang, voice);
+  const audio = getVegetableAudioPath(currentVegetableData, lang, voice);
   if (!audio) return;
   stopCurrentAudio();
   playAudio(audio);
@@ -120,23 +192,26 @@ function playCurrentVegetableAudio() {
   } catch {}
 }
 
+// ===================== Loader =====================
 export async function loadVegetablesGameContent() {
   console.log('[vegetables] loadVegetablesGameContent()');
   stopCurrentAudio();
 
+  // عناصر المحتوى داخل الصفحة (من vegetables.html)
   wordEl = document.getElementById('vegetable-word');
   imgEl  = document.getElementById('vegetable-image');
   catEl  = document.getElementById('vegetable-category');
   descEl = document.getElementById('vegetable-description');
 
+  // عناصر السايدبار
   prevBtn      = document.getElementById('prev-vegetable-btn');
   nextBtn      = document.getElementById('next-vegetable-btn');
   playSoundBtn = document.getElementById('play-sound-btn-vegetable');
   voiceSelect  = document.getElementById('voice-select-vegetable');
   langSelect   = document.getElementById('game-lang-select-vegetable');
 
-  if (prevBtn) prevBtn.onclick = showPrev;
-  if (nextBtn) nextBtn.onclick = showNext;
+  if (prevBtn) prevBtn.onclick = showPreviousVegetable;
+  if (nextBtn) nextBtn.onclick = showNextVegetable;
   if (playSoundBtn) playSoundBtn.onclick = playCurrentVegetableAudio;
 
   if (langSelect) {
@@ -149,7 +224,7 @@ export async function loadVegetablesGameContent() {
     };
   }
 
-  // =========== فحص جذري مع لوج ===========
+  // =========== جلب البيانات ===========
   vegetables = [];
   try {
     const colRef = collection(db, 'categories', 'vegetables', 'items');
@@ -189,4 +264,8 @@ export async function loadVegetablesGameContent() {
   console.log('[vegetables] initial render done');
 }
 
-export { showNext as showNextVegetable, showPrev as showPreviousVegetable, playCurrentVegetableAudio };
+export {
+  showNextVegetable,
+  showPreviousVegetable,
+  playCurrentVegetableAudio
+};

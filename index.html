@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="%BASE_URL%css/colors.css" />
   <link rel="stylesheet" href="%BASE_URL%css/fonts.css" />
   <link rel="stylesheet" href="%BASE_URL%css/shared-utilities.css" />
-  <link rel="stylesheet" href="%BASE_URL%css/home.css" />
   <link rel="stylesheet" href="%BASE_URL%css/forms.css" />
   <link rel="stylesheet" href="%BASE_URL%css/common-components-subjects.css" />
 
@@ -59,8 +58,9 @@
       <div class="sidebar-section" id="tools-match-sidebar-controls" style="display:none;"></div>
     </aside>
 
+	<!-- ملاحظة: إضافة id ثابت لتجنّب التقاط <main> خاطئ بعد أي حقن -->
     <!-- المحتوى الرئيسي -->
-    <main class="main-content">
+    <main id="app-main" class="main-content">
       <section id="welcome-message" style="display:block;">
         <h2>مرحبًا بك في الموسوعة!</h2>
         <p>اختر موضوعًا من الشريط بالأعلى أو من السايدبار.</p>

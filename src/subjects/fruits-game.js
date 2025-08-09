@@ -1,6 +1,4 @@
-// src/subjects/fruits-game.js
-
-// ===== Imports (وفق تصحيحك) =====
+// ===== Imports (كما لديك) =====
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
@@ -18,36 +16,105 @@ let wordEl, imgEl, catEl, descEl;
 // عناصر السايدبار (موجودة مسبقًا في aside)
 let prevBtn, nextBtn, playSoundBtn, voiceSelect, langSelect;
 
-// ===== Utils =====
-function getFruitImagePath(d, lang) {
-  let path =
-    d.image_path ||
-    (d.images && (d.images.main || d.images[lang])) ||
-    (d.image ? `/images/fruits/${d.image}` : '');
-  if (path && !path.startsWith('/')) path = `/${path}`;
-  console.log('[fruits][img] →', path || '(no image)');
-  return path || null;
+// ===== Image helpers =====
+const FRUIT_IMAGE_BASE = '/images/fruits/';
+
+function isAbsoluteUrl(p) {
+  return /^https?:\/\//i.test(p) || /^data:/i.test(p) || /^blob:/i.test(p);
 }
 
+function normalizeImagePath(p) {
+  if (!p) return null;
+  p = String(p).trim();
+  if (!p) return null;
+
+  // لو مسار مطلق (URL أو يبدأ بـ /) أرجعه كما هو
+  if (isAbsoluteUrl(p) || p.startsWith('/')) return p;
+
+  // أزل ./ أو / زائدة في البداية
+  p = p.replace(/^\.?\/*/, '');
+
+  // لو أعطيته مسارًا كاملاً داخل images/ فأضف /
+  if (p.startsWith('images/')) return '/' + p;
+
+  // خلاف ذلك اعتبره اسم ملف داخل /images/fruits/
+  return FRUIT_IMAGE_BASE + p;
+}
+
+function pickFromImages(images, lang) {
+  if (!images) return null;
+
+  // Array: نأخذ أول قيمة صالحة (string) أو كائن فيه src
+  if (Array.isArray(images)) {
+    const item = images.find(v => typeof v === 'string' || (v && typeof v.src === 'string'));
+    if (!item) return null;
+    return typeof item === 'string' ? item : (item[lang] || item.src || item.main || null);
+  }
+
+  // Object: نفضّل لغة الواجهة ثم main/default ثم أول قيمة
+  if (typeof images === 'object') {
+    if (images[lang]) return images[lang];
+    if (images.main) return images.main;
+    if (images.default) return images.default;
+    const firstVal = Object.values(images).find(v => typeof v === 'string');
+    if (firstVal) return firstVal;
+  }
+
+  return null;
+}
+
+function getFruitImagePath(d, lang) {
+  // 1) image_path مسار جاهز
+  if (typeof d?.image_path === 'string' && d.image_path.trim()) {
+    const path = normalizeImagePath(d.image_path);
+    console.log('[fruits][img] image_path →', path);
+    return path;
+  }
+
+  // 2) images كـ Array أو Object
+  const fromImages = pickFromImages(d?.images, lang);
+  if (fromImages) {
+    const path = normalizeImagePath(fromImages);
+    console.log('[fruits][img] images →', path);
+    return path;
+  }
+
+  // 3) image اسم ملف داخل /images/fruits/
+  if (typeof d?.image === 'string' && d.image.trim()) {
+    const path = normalizeImagePath(d.image);
+    console.log('[fruits][img] image →', path);
+    return path;
+  }
+
+  console.warn('[fruits][img] لا يوجد أي حقل صورة صالح لهذا العنصر:', d?.id);
+  return null;
+}
+
+// ===== Audio helpers (مرن لعدة أشكال كما لديك) =====
 function getFruitAudioPath(d, lang, voiceType) {
   const key = `${voiceType}_${lang}`;
   let file;
 
-  if (d.voices && d.voices[key]) {
+  if (d?.voices && d.voices[key]) {
     file = d.voices[key];
     console.log(`[fruits][audio] voices[${key}] → ${file}`);
-  } else if (d.sound_base) {
+  } else if (d?.sound_base) {
     file = `${d.sound_base}_${voiceType}_${lang}.mp3`;
     console.warn(`[fruits][audio] via sound_base → ${file}`);
-  } else if (d.sound && d.sound[lang] && d.sound[lang][voiceType]) {
+  } else if (d?.sound && d.sound[lang] && d.sound[lang][voiceType]) {
     file = d.sound[lang][voiceType];
     console.log(`[fruits][audio] legacy map → ${file}`);
+  } else if (typeof d?.audio === 'string') {
+    file = d.audio;
+    console.log('[fruits][audio] audio (flat) →', file);
   } else {
-    console.error('[fruits][audio] no audio fields for:', d?.name?.[lang] || d?.id);
+    console.error('[fruits][audio] لا يوجد صوت لهذا العنصر:', d?.name?.[lang] || d?.id);
     return null;
   }
 
-  const full = file.startsWith('/') ? file : `/audio/${lang}/fruits/${file}`;
+  const full = (isAbsoluteUrl(file) || file.startsWith('/'))
+    ? file
+    : `/audio/${lang}/fruits/${file}`;
   console.log('[fruits][audio] path →', full);
   return full;
 }
@@ -161,7 +228,7 @@ export async function loadFruitsGameContent() {
     };
   }
 
-  // =========== فحص جذري مع لوج ===========
+  // =========== جلب البيانات ===========
   fruits = [];
   try {
     const colRef = collection(db, 'categories', 'fruits', 'items');

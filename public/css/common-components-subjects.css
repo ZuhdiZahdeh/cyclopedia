@@ -143,3 +143,48 @@
 .clickable-image {
   cursor: pointer;
 }
+/* === Topic body Grid (image + details) === */
+.topic-container .topic-body{
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+html[dir="rtl"] .topic-container .topic-body{
+  grid-auto-flow: dense; /* لا حاجة لقلب الأعمدة هنا لأن الصورة أولاً دائمًا */
+}
+
+.topic-container .image-area{
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topic-container .image-area img{
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.topic-container .details-area{
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.topic-container .details-area .line{
+  margin: .35rem 0;
+}
+
+/* Responsive */
+@media (max-width: 900px){
+  .topic-container .topic-body{
+    grid-template-columns: 1fr;
+  }
+}
