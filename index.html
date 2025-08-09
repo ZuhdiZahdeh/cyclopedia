@@ -1,685 +1,86 @@
-<!DOCTYPE html>
-
-<html dir="rtl" lang="ar">
+<!doctype html>
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title data-i18n="cyclopedia">الموسوعة التفاعلية للأطفال</title>
-<link href="/css/colors.css" rel="stylesheet"/>
-<link href="/css/fonts.css" rel="stylesheet"/>
-<link href="/css/shared-utilities.css" rel="stylesheet"/>
-<link href="/css/home.css" rel="stylesheet"/>
-<link href="/css/forms.css" rel="stylesheet"/>
-<link href="/css/common-components-subjects.css" rel="stylesheet"/>
-<link href="/css/animals.css" rel="stylesheet"/>
-<link href="/css/fruits.css" rel="stylesheet"/>
-<link href="/css/vegetables.css" rel="stylesheet"/>
-<link href="/css/human-body.css" rel="stylesheet"/>
-<link href="/css/professions.css" rel="stylesheet"/>
-<link href="/css/tools.css" rel="stylesheet"/>
-<link href="/css/tools-match.css" rel="stylesheet"/>
-<link href="/css/style.css" rel="stylesheet"/>
-<link href="/css/alphabet-press.css" rel="stylesheet"/>
-<link href="/css/memory-game.css" rel="stylesheet"/>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>الموسوعة التفاعلية للأطفال</title>
+
+  <!-- روابط CSS عبر %BASE_URL% حتى تعمل على كل بيئة بناء -->
+  <link rel="stylesheet" href="%BASE_URL%css/colors.css" />
+  <link rel="stylesheet" href="%BASE_URL%css/fonts.css" />
+  <link rel="stylesheet" href="%BASE_URL%css/shared-utilities.css" />
+  <link rel="stylesheet" href="%BASE_URL%css/home.css" />
+  <link rel="stylesheet" href="%BASE_URL%css/forms.css" />
+  <link rel="stylesheet" href="%BASE_URL%css/common-components-subjects.css" />
+
+  <!-- تحميل تطبيقك (Vite سيحوّله إلى /assets/*.js في dist) -->
+  <script type="module" src="%BASE_URL%src/js/main.js"></script>
 </head>
 <body>
-<div id="app">
-<header class="top-navbar shadow">
-<nav class="top-nav-links">
-<a href="#" onclick="showHomePage()" data-i18n="home">🏠 الرئيسية</a>
-<a href="#" onclick="loadAnimalsPage()" data-i18n="animals">🐾 الحيوانات</a>
-<a href="#"
-   onclick="import('/src/js/main.js').then(m =>
-     import('/src/subjects/fruits.js').then(f =>
-       m.loadPage('fruits', '/html/fruits.html', f.loadFruitsGameContent)
-     )
-   ); return false;"
-   data-i18n="fruits">🍎 الفواكه</a>
+  <!-- الهيدر -->
+  <header class="top-navbar shadow">
+    <nav class="top-nav-links">
+      <a href="#" onclick="showHomePage();return false;">🏠 الرئيسية</a>
+      <a href="#" onclick="loadAnimalsPage();return false;">🐾 الحيوانات</a>
+      <a href="#" onclick="loadFruitsPage();return false;">🍎 الفواكه</a>
+      <a href="#" onclick="loadVegetablesPage();return false;">🥦 الخضروات</a>
+      <a href="#" onclick="loadHumanBodyPage();return false;">🧠 جسم الإنسان</a>
+      <a href="#" onclick="loadProfessionsPage();return false;">👷‍♂️ المهن</a>
+      <a href="#" onclick="loadToolsPage();return false;">🧰 الأدوات</a>
+      <a href="#" onclick="loadAlphabetPressPage();return false;">🔤 لعبة الحروف</a>
+      <a href="#" onclick="loadMemoryGamePage();return false;">🃏 لعبة الذاكرة</a>
+      <a href="#" onclick="loadToolsMatchPage();return false;">❓ من صاحب الأداة؟</a>
+    </nav>
+  </header>
 
-<a href="#"
-   onclick="import('/src/js/main.js').then(m =>
-     import('/src/subjects/vegetables.js').then(v =>
-       m.loadPage('vegetables', '/html/vegetables.html', v.loadVegetablesGameContent)
-     )
-   ); return false;"
-   data-i18n="vegetables">🥦 الخضروات</a>
+  <div class="page-layout">
+    <!-- السايدبار -->
+    <aside id="sidebar-section" class="sidebar shadow">
+      <div class="sidebar-section static-section">
+        <h3 class="sidebar-title">👤 حسابك</h3>
+        <div class="account-actions">
+          <a href="#" id="loginBtn" onclick="loadLogin();return false;" class="nav-btn">تسجيل الدخول</a>
+          <a href="#" id="registerBtn" onclick="loadRegister();return false;" class="nav-btn">إنشاء حساب</a>
+          <a href="#" id="my-profile-btn" onclick="loadProfile();return false;" class="nav-btn">الملف الشخصي</a>
+          <a href="#" id="my-report-btn" onclick="loadMyReport();return false;" class="nav-btn">سجل النقاط</a>
+          <a href="#" id="logoutBtn" class="nav-btn" style="display:none;">تسجيل خروج</a>
+        </div>
+      </div>
 
-<a href="#" onclick="loadHumanBodyPage()" data-i18n="human_body">🧠 جسم الإنسان</a>
-<a href="#" onclick="loadProfessionsPage()" data-i18n="professions">👷‍♂️ المهن</a>
-<a href="#" onclick="loadToolsPage()" data-i18n="tools">🧰 الأدوات</a>
-<a href="#" onclick="loadAlphabetPressPage()" data-i18n="alphabet_game">🎮 لعبة الحروف</a>
-<a href="#" onclick="loadMemoryGamePage()" data-i18n="memory_game">🃏 الذاكرة</a>
-<a href="#" onclick="loadToolsMatchPage()" data-i18n="tools_match_game">🧰 من صاحب الأداة؟</a>
-</nav>
-</header>
-<div class="page-layout">
-<aside class="sidebar shadow">
-<!-- قسم التحكم بصفحة الحيوانات -->
-<div class="sidebar-section" id="animal-sidebar-controls" style="display: none;">
-<h3 style="text-align: center;" data-i18n="learn_about_animals">🐾 تعرف على الحيوانات</h3>
-<div class="sidebar-game-controls">
-<div class="control-group">
-<label for="game-lang-select-animal" data-i18n="Language">اللغة:</label>
-<select id="game-lang-select-animal">
-<option value="ar" data-i18n="lang_arabic">العربية</option>
-<option value="en" data-i18n="lang_english">English</option>
-<option value="he" data-i18n="lang_hebrew">עברית</option>
-</select>
-</div>
-<div class="control-group">
-<label for="voice-select-animal" data-i18n="Voice">الصوت:</label>
-<select id="voice-select-animal">
-<option data-i18n="teacher_voice" value="teacher">المعلم</option>
-<option data-i18n="boy_voice" value="boy">صوت ولد</option>
-<option data-i18n="girl_voice" value="girl">صوت بنت</option>
-<option data-i18n="child_voice" value="child">صوت طفل</option>
-</select>
-</div>
-<button class="control-button" id="play-sound-btn-animal" data-i18n="listen">🔊 استمع</button>
-<div class="sidebar-navigation-buttons">
-<button class="control-button" id="prev-animal-btn" data-i18n="previous">⬅️ السابق</button>
-<button class="control-button" id="next-animal-btn" data-i18n="next">التالي ➡️</button>
-</div>
-<div class="control-group">
-<button class="control-button" id="toggle-description-btn" data-i18n="show_description">📖 عرض الوصف</button>
-<button class="control-button" id="toggle-details-btn" data-i18n="show_details">🧾 عرض التفاصيل</button>
-</div>
-<div class="control-group">
-<button class="control-button" id="toggle-baby-image-btn" data-i18n="show_baby_image">👶 عرض صورة الابن</button>
-<button class="control-button" id="play-baby-sound-btn-animal" data-i18n="listen_baby_animal">🔊 استمع لابن الحيوان</button>
-</div>
-</div>
-</div>
-<!-- قسم التحكم بصفحة الفواكه-->
-<div class="sidebar-section" id="fruit-sidebar-controls" style="display: none;">
-<h3 style="text-align: center;" data-i18n="fruits_title_name">🍎 تعرف على الفواكه</h3>
-<div class="sidebar-game-controls">
-<div class="control-group">
-<label for="game-lang-select-fruit" data-i18n="Language">اللغة:</label>
-<select id="game-lang-select-fruit">
-<option value="ar" data-i18n="lang_arabic">العربية</option>
-<option value="en" data-i18n="lang_english">English</option>
-<option value="he" data-i18n="lang_hebrew">עברית</option>
-</select>
-</div>
-<div class="control-group">
-<label for="voice-select-fruit" data-i18n="Voice">الصوت:</label>
-<select id="voice-select-fruit">
-<option data-i18n="teacher_voice" value="teacher">المعلم</option>
-<option data-i18n="boy_voice" value="boy">صوت ولد</option>
-<option data-i18n="girl_voice" value="girl">صوت بنت</option>
-<option data-i18n="child_voice" value="child">صوت طفل</option>
-</select>
-</div>
-<button class="control-button" id="play-sound-btn-fruit" data-i18n="listen">🔊 استمع</button>
-<div class="sidebar-navigation-buttons">
-<button class="control-button" id="prev-fruit-btn" data-i18n="previous">⬅️ السابق</button>
-<button class="control-button" id="next-fruit-btn" data-i18n="next">التالي ➡️</button>
-</div>
-</div>
-</div>
-<!-- قسم التحكم بصفحة الخضروات-->
-<div class="sidebar-section" id="vegetable-sidebar-controls" style="display: none;">
-<h3 style="text-align: center;" data-i18n="vegetable_title_name">🥦 تعرف على الخضروات</h3>
-<div class="sidebar-game-controls">
-<div class="control-group">
-<label for="game-lang-select-vegetable" data-i18n="Language">>اللغة:</label>
-<select id="game-lang-select-vegetable">
-<option value="ar" data-i18n="lang_arabic">العربية</option>
-<option value="en" data-i18n="lang_english">English</option>
-<option value="he" data-i18n="lang_hebrew">עברית</option>
-</select>
-</div>
-<div class="control-group">
-<label for="voice-select-vegetable" data-i18n="Voice">الصوت:</label>
-<select id="voice-select-vegetable">
-<option data-i18n="teacher_voice" value="teacher">المعلم</option>
-<option data-i18n="boy_voice" value="boy">صوت ولد</option>
-<option data-i18n="girl_voice" value="girl">صوت بنت</option>
-<option data-i18n="child_voice" value="child">صوت طفل</option>
-</select>
-</div>
-<button class="control-button" id="play-sound-btn-vegetable" data-i18n="listen">🔊 استمع</button>
-<div class="sidebar-navigation-buttons">
-<button class="control-button" id="prev-vegetable-btn" data-i18n="previous">⬅️ السابق</button>
-<button class="control-button" id="next-vegetable-btn" data-i18n="next">التالي ➡️</button>
-</div>
-</div>
-</div>
-<!-- قسم التحكم بصفحة أجزاء جسم الانسان -->
-<div class="sidebar-section" id="human-body-sidebar-controls" style="display: none;">
-<h3 style="text-align: center;">🧠 تعرف على جسم الإنسان</h3>
-<div class="sidebar-game-controls">
-<div class="control-group">
-<label for="game-lang-select-human-body">اللغة:</label>
-<select id="game-lang-select-human-body">
-<option value="ar" data-i18n="lang_arabic">العربية</option>
-<option value="en" data-i18n="lang_english">English</option>
-<option value="he" data-i18n="lang_hebrew">עברית</option>
-</select>
-</div>
-<div class="control-group">
-<label for="voice-select-human-body" data-i18n="Voice">الصوت:</label>
-<select id="voice-select-human-body">
-<option data-i18n="teacher_voice" value="teacher">المعلم</option>
-<option data-i18n="boy_voice" value="boy">صوت ولد</option>
-<option data-i18n="girl_voice" value="girl">صوت بنت</option>
-<option data-i18n="child_voice" value="child">صوت طفل</option>
-</select>
-</div>
-<button class="control-button" id="play-sound-btn-human-body" data-i18n="listen">🔊 استمع</button>
-<div class="sidebar-navigation-buttons">
-<button class="control-button" id="prev-human-body-btn" data-i18n="previous">⬅️ السابق</button>
-<button class="control-button" id="next-human-body-btn" data-i18n="next">التالي ➡️</button>
-</div>
-</div>
-</div>
-<!-- 144: قسم تحكم المهن -->
-<div class="sidebar-section" id="profession-sidebar-controls" style="display: none;">
-<h3 style="text-align: center;">👷‍♂️ تعرف على المهن</h3>
-<div class="sidebar-game-controls">
-<div class="control-group">
-<label for="game-lang-select-profession">اللغة:</label>
-<select id="game-lang-select-profession">
-<option value="ar" data-i18n="lang_arabic">العربية</option>
-<option value="en" data-i18n="lang_english">English</option>
-<option value="he" data-i18n="lang_hebrew">עברית</option>
-</select>
-</div>
-<div class="control-group">
-<label for="voice-select-profession" data-i18n="Voice">الصوت:</label>
-<select id="voice-select-profession">
-<option data-i18n="teacher_voice" value="teacher">المعلم</option>
-<option data-i18n="boy_voice" value="boy">صوت ولد</option>
-<option data-i18n="girl_voice" value="girl">صوت بنت</option>
-<option data-i18n="child_voice" value="child">صوت طفل</option>
-</select>
-</div>
-<button class="control-button" id="play-sound-btn-profession" data-i18n="listen">🔊 استمع</button>
-<div class="sidebar-navigation-buttons">
-<button class="control-button" id="prev-profession-btn" data-i18n="previous">⬅️ السابق</button>
-<button class="control-button" id="next-profession-btn" data-i18n="next">التالي ➡️</button>
-</div>
-<div class="control-group">
-<button class="control-button" id="toggle-description-btn-profession" data-i18n="show_description">📖 عرض الوصف</button>
-</div>
-</div>
-</div>
-<!-- نهاية قسم التحكم بالمهـن -->
-<!-- قسم تحكم الأدوات -->
-<div class="sidebar-section" id="tools-sidebar-controls" style="display: none;">
-<h3 style="text-align: center;">🧰 تعرف على الأدوات</h3>
-<div class="sidebar-game-controls">
-<div class="control-group">
-<label for="game-lang-select-tools">اللغة:</label>
-<select id="game-lang-select-tools">
-<option value="ar" data-i18n="lang_arabic">العربية</option>
-<option value="en" data-i18n="lang_english">English</option>
-<option value="he" data-i18n="lang_hebrew">עברית</option>
-</select>
-</div>
-<div class="control-group">
-<label for="voice-select-tools" data-i18n="Voice">الصوت:</label>
-<select id="voice-select-tools">
-<option data-i18n="teacher_voice" value="teacher">المعلم</option>
-<option data-i18n="boy_voice" value="boy">صوت ولد</option>
-<option data-i18n="girl_voice" value="girl">صوت بنت</option>
-<option data-i18n="child_voice" value="child">صوت طفل</option>
-</select>
-</div>
-<button class="control-button" id="play-sound-btn-tools" data-i18n="listen">🔊 استمع</button>
-<div class="sidebar-navigation-buttons">
-<button class="control-button" id="prev-tools-btn" data-i18n="previous">⬅️ السابق</button>
-<button class="control-button" id="next-tools-btn" data-i18n="next">التالي ➡️</button>
-</div>
-<div class="control-group">
-<button class="control-button" id="toggle-description-btn-tools"  data-i18n="show_description">📖 عرض الوصف</button>
-</div>
-</div>
-</div>
-<!-- نهاية قسم التحكم بالأدوات-->
-<div class="sidebar-section" id="alphabet-press-sidebar-controls" style="display: none;">
-<h3 id="alphabet-press-title" style="text-align: center;">🎮 لعبة الحروف</h3>
-<div class="sidebar-game-controls">
-<div class="control-group">
-<label for="alphabet-press-language-select">اختر اللغة:</label>
-<select id="alphabet-press-language-select"></select>
-</div>
-<div class="control-group">
-<label for="alphabet-press-category-select">اختر الفئة:</label>
-<select id="alphabet-press-category-select"></select>
-</div>
-<div class="control-group">
-<label for="alphabet-press-voice-select" data-i18n="Voice">الصوت:</label>
-<select id="alphabet-press-voice-select">
-<option data-i18n="teacher_voice" value="teacher">المعلم</option>
-<option data-i18n="boy_voice" value="boy">صوت ولد</option>
-<option data-i18n="girl_voice" value="girl">صوت بنت</option>
-<option data-i18n="child_voice" value="child">صوت طفل</option>
-</select>
-</div>
-<button class="control-button" id="alphabet-press-play-audio-sidebar" data-i18n="listen">🔊 استمع</button>
-</div>
-</div>
-<div class="sidebar-section" id="memory-game-sidebar-controls" style="display: none;">
-<h3 style="text-align: center;" data-i18n="memory_game_settings">🃏 إعدادات لعبة الذاكرة</h3>
-<div class="sidebar-game-controls memory-game-controls">
-<div class="control-group">
-<label for="memory-game-lang-select" data-i18n="select_language">اختر اللغة:</label>
-<select id="memory-game-lang-select">
-<option value="ar" data-i18n="lang_arabic">العربية</option>
-<option value="en" data-i18n="lang_english">English</option>
-<option value="he" data-i18n="lang_hebrew">עברית</option>
-</select>
-</div>
-<div class="control-group">
-<label for="memory-game-topic-select" data-i18n="select_topic">اختر الموضوع:</label>
-<select id="memory-game-topic-select">
-</select>
-</div>
+      <!-- أقسام التحكم لكل موضوع (تملؤها initializeSubjectControls) -->
+      <div class="sidebar-section" id="animal-sidebar-controls" style="display:none;"></div>
+      <div class="sidebar-section" id="fruit-sidebar-controls" style="display:none;"></div>
+      <div class="sidebar-section" id="vegetable-sidebar-controls" style="display:none;"></div>
+      <div class="sidebar-section" id="human-body-sidebar-controls" style="display:none;"></div>
+      <div class="sidebar-section" id="profession-sidebar-controls" style="display:none;"></div>
+      <div class="sidebar-section" id="tools-sidebar-controls" style="display:none;"></div>
+      <div class="sidebar-section" id="alphabet-press-sidebar-controls" style="display:none;"></div>
+      <div class="sidebar-section" id="memory-game-sidebar-controls" style="display:none;"></div>
+      <div class="sidebar-section" id="tools-match-sidebar-controls" style="display:none;"></div>
+    </aside>
 
-	<div class="control-group">
-		<label for="memory-game-mode-select" data-i18n="play_mode">نمط اللعب:</label>
-		<select id="memory-game-mode-select">
-			<option value="image-image" data-i18n="image_image">صورة - صورة</option>
-			<option value="image-word" data-i18n="image_word">صورة - كلمة</option>
-			<option value="image-char" data-i18n="image_char">صورة - حرف</option>
-			<option value="image-audio" data-i18n="image_audio">صورة - صوت</option>
-		</select>
-	</div>
-	<button class="memory-game-start-button" id="memory-game-start-button" data-i18n="start_game">ابدأ اللعب</button>
-	</div>
-	</div>
-<div class="sidebar-section static-section">
-<h3 class="sidebar-title" data-i18n="your_account">👤 حسابك</h3>
-    <div class="account-actions">
-        <a href="#" id="login-btn" onclick="loadLogin()" class="nav-btn" data-i18n="login">تسجيل الدخول</a>
-        <a href="#" id="register-btn" onclick="loadRegister()" class="nav-btn" data-i18n="register">إنشاء حساب</a>
-        <a href="#" id="my-profile-btn" onclick="loadProfile()" class="nav-btn" data-i18n="my_profile">الملف الشخصي</a>
-		<a href="/users/my-report.html" id="my-report-btn"  class="nav-btn" data-i18n="my_profile">سجل النقاط</a>
-		<a href="#" id="logout-btn" class="nav-btn" data-i18n="logout">تسجيل خروج</a>
-    </div>
-</div>
-</aside>
-<main class="main-content">
-<h2 id="welcome-message" style="display: block;" data-i18n="welcome_message_short">مرحبًا بك في الموسوعة!</h2>
-<div class="home-cards-container" id="home-topic-cards">
-<a class="topic-card animals" href="#" onclick="loadAnimalsPage(); return false;">
-<span class="icon">🐾</span>
-<h3>الحيوانات</h3>
-</a>
+    <!-- المحتوى الرئيسي -->
+    <main class="main-content">
+      <section id="welcome-message" style="display:block;">
+        <h2>مرحبًا بك في الموسوعة!</h2>
+        <p>اختر موضوعًا من الشريط بالأعلى أو من السايدبار.</p>
 
-<a class="topic-card fruits" href="#" onclick="import('/src/js/main.js').then(m => import('/src/subjects/fruits.js').then(f => m.loadPage('fruits', '/html/fruits.html', f.loadFruitsGameContent))); return false;">
-  <span class="icon">🍎</span>
-  <h3 data-i18n="fruits_title">الفواكه</h3>
-</a>
+        <!-- كروت البداية -->
+        <div id="home-topic-cards-inner" class="home-cards-container">
+          <a href="#" class="topic-card animals" onclick="loadAnimalsPage();return false;"><span class="icon">🐾</span><h3>الحيوانات</h3></a>
+          <a href="#" class="topic-card fruits" onclick="loadFruitsPage();return false;"><span class="icon">🍎</span><h3>الفواكه</h3></a>
+          <a href="#" class="topic-card vegetables" onclick="loadVegetablesPage();return false;"><span class="icon">🥦</span><h3>الخضروات</h3></a>
+          <a href="#" class="topic-card human-body" onclick="loadHumanBodyPage();return false;"><span class="icon">🧠</span><h3>جسم الإنسان</h3></a>
+          <a href="#" class="topic-card tools" onclick="loadToolsPage();return false;"><span class="icon">🧰</span><h3>الأدوات</h3></a>
+          <a href="#" class="topic-card professions" onclick="loadProfessionsPage();return false;"><span class="icon">👷‍♂️</span><h3>المهن</h3></a>
+          <a href="#" class="topic-card games" onclick="loadAlphabetPressPage();return false;"><span class="icon">🔤</span><h3>لعبة الحروف</h3></a>
+          <a href="#" class="topic-card games" onclick="loadMemoryGamePage();return false;"><span class="icon">🃏</span><h3>لعبة الذاكرة</h3></a>
+          <a href="#" class="topic-card tools-match" onclick="loadToolsMatchPage();return false;"><span class="icon">❓</span><h3>من صاحب الأداة؟</h3></a>
+        </div>
+      </section>
+    </main>
+  </div>
 
-<a class="topic-card vegetables" href="#" onclick="import('/src/js/main.js').then(m => import('/src/subjects/vegetables.js').then(v => m.loadPage('vegetables', '/html/vegetables.html', v.loadVegetablesGameContent))); return false;">
-  <span class="icon">🥦</span>
-  <h3 data-i18n="vegetables">الخضروات</h3>
-</a>
-
-<a class="topic-card human-body" href="#" onclick="loadHumanBodyPage(); return false;"> <span class="icon">🧠</span>
-<h3>جسم الإنسان</h3>
-</a>
-
-<!--: بطاقة المهن -->
-<a href="#" class="topic-card profession" onclick="loadProfessionsPage(); return false;">
-<span class="icon">👷‍♂️</span>
-<h3>المهن</h3>
-</a>
-<a href="#" class="topic-card tools" onclick="loadToolsPage(); return false;">
-<span class="icon">🧰</span>
-<h3>الأدوات</h3>
-</a>
-<a href="#" class="topic-card games" onclick="loadGamesPage(); return false;">
-<span class="icon">🎮</span>
-<h3>الألعاب</h3>
-</a>
-<a class="topic-card games" href="#" onclick="loadAlphabetPressPage(); return false;">
-<span class="icon">🔠</span>
-<h3>لعبة الحروف</h3> </a>
-<a class="topic-card games" href="#" onclick="loadMemoryGamePage(); return false;">
-<span class="icon">🧠</span>
-<h3>لعبة الذاكرة</h3>
-</a>
-<a class="game-icon-link" href="#" onclick="loadToolsMatchPage(); return false;">
-<span class="game-icon">
-<img alt="Tools Match Game" src="/images/icons/tools-match.png"/>
-<h3 data-i18n="tools_game_title">من صاحب الأداة؟</h3>
-</span>
-</a>
-</div>
-</main>
-</div>
-</div>
-
-<script type="module">
-// ✅ استيراد النسخة الجديدة من صفحة الفواكه
-import { loadFruitsGameContent } from '/src/subjects/fruits.js';
-
-
-
-  import { showProfileForm } from '/src/js/profile.js';
-  import {
-    loadAnimalsGameContent, showNextAnimal, showPreviousAnimal,
-    playCurrentAnimalAudio, playCurrentBabyAnimalAudio
-  } from '/src/js/animals-game.js';
-
-
-  import {
-    loadVegetablesGameContent, showNextVegetable, showPreviousVegetable, playCurrentVegetableAudio
-  } from '/src/subjects/vegetables.js';
-
-  import {
-    loadHumanBodyGameContent, showNextHumanBodyPart, showPreviousHumanBodyPart, playCurrentHumanBodyPartAudio
-  } from '/src/js/human-body-game.js';
-
-  import {
-    loadToolsGameContent, showNextTool, showPreviousTool, playCurrentToolAudio
-  } from '/src/js/tools-game.js';
-
-  import {
-    loadProfessionsGameContent, showNextProfession, showPreviousProfession, playCurrentProfessionAudio
-  } from '/src/js/professions-game.js';
-
-  import {
-    loadAlphabetPressGameContent, playCurrentAlphabetItemAudioFromSidebar,
-    getCurrentDisplayedItem, handleAlphabetPressLanguageChange,
-    handleAlphabetPressCategoryChange, updateAlphabetPressVoice, populateAlphabetPressSidebarOptions
-  } from './src/js/alphabet-press-game.js';
-
-  import {
-    loadMemoryGameContent, initializeMemoryGameSidebarControls
-  } from '/src/js/memory-game.js';
-
-  import {
-    loadToolsMatchGameContent
-  } from '/src/js/tools-match-game.js';
-  
-	window.loadToolsMatchGameContent = loadToolsMatchGameContent; // ✅ أضفه هنا
-
-  import {
-    setDirection, getCurrentLang, loadLanguage, applyTranslations
-  } from '/src/js/lang-handler.js';
-
- import { initializeSubjectControls } from '/src/js/initializeSubjectControls.js';
-
-  // مثال لتشغيل الدالة عند تحميل الصفحة
-  const supportedSubjects = [
-    'animal', 'fruit', 'vegetable', 'human-body', 'profession', 'tools', 'alphabet-press', 'memory-game'
-  ];
-
-  const mainContent = document.querySelector('main.main-content');
-  if (mainContent) {
-    const subjectType = mainContent.getAttribute('data-subject-type');
-    if (subjectType && supportedSubjects.includes(subjectType)) {
-      initializeSubjectControls(subjectType);
-    }
-  }
-  const mainContentArea = document.querySelector("main.main-content");
-  const animalSidebarControls = document.getElementById("animal-sidebar-controls");
-  const fruitSidebarControls = document.getElementById("fruit-sidebar-controls");
-  const vegetableSidebarControls = document.getElementById("vegetable-sidebar-controls");
-  const humanBodySidebarControls = document.getElementById("human-body-sidebar-controls");
-  const alphabetPressSidebarControls = document.getElementById("alphabet-press-sidebar-controls");
-  const memoryGameSidebarControls = document.getElementById("memory-game-sidebar-controls");
-  const toolsSidebarControls = document.getElementById("tools-sidebar-controls");
-  const professionSidebarControls = document.getElementById("profession-sidebar-controls");
-
-  const welcomeMessage = document.getElementById("welcome-message");
-  const homeTopicCards = document.getElementById("home-topic-cards");
-  
-	
-	
-
-
-	// دالة تحميل لعبة من صاحب الأداة؟ 
-window.loadToolsMatchPage = async () => {
-  hideAllControls();
-  if (welcomeMessage) welcomeMessage.style.display = 'none';
-  if (homeTopicCards) homeTopicCards.style.display = 'none';
-
-  try {
-    // حمّل القسم الرئيسي
-    const responseMain = await fetch('/html/tools-match.html');
-    const htmlMain = await responseMain.text();
-    mainContentArea.innerHTML = htmlMain;
-
-    // حمّل القسم الجانبي
-    const responseSidebar = await fetch('/html/tools-match-controls.html');
-    const htmlSidebar = await responseSidebar.text();
-    const sidebarContainer = document.querySelector("aside.sidebar");
-
-    // أولًا، احذف أي عنصر سابق بنفس id
-    const old = document.getElementById("tools-match-sidebar-controls");
-    if (old) old.remove();
-
-    // ثم أضف العنصر الجديد
-    sidebarContainer.insertAdjacentHTML("beforeend", htmlSidebar);
-
-    // أظهر الشريط الجانبي الجديد
-    const toolsMatchSidebarControls = document.getElementById("tools-match-sidebar-controls");
-    if (toolsMatchSidebarControls) toolsMatchSidebarControls.style.display = "block";
-
-    // شغّل اللعبة
-    await loadToolsMatchGameContent();
-  } catch (error) {
-    mainContentArea.innerHTML = '<p>تعذر تحميل اللعبة</p>';
-    console.error(error);
-  }
-};
-
-
-
-  // تابع باقي الدوال هنا بدون تعديل...
-  window.loadLogin = async () => {
-			hideAllControls();
-			try {
-				const response = await fetch('/users/login-form.html');
-				if (!response.ok) throw new Error('Failed to load login form');
-				const loginFormHtml = await response.text();
-				mainContentArea.innerHTML = loginFormHtml;
-			} catch (error) {
-				console.error('Error loading login form:', error);
-				mainContentArea.innerHTML = '<p style="color: red;">تعذر تحميل نموذج تسجيل الدخول. يرجى المحاولة لاحقاً.</p>';
-			}
-		};
-
-		window.loadRegister = async () => {
-			hideAllControls();
-			try {
-				const response = await fetch('/users/register-form.html');
-				if (!response.ok) throw new Error('Failed to load register form');
-				const registerFormHtml = await response.text();
-				mainContentArea.innerHTML = registerFormHtml;
-			} catch (error) {
-				console.error('Error loading register form:', error);
-				mainContentArea.innerHTML = '<p style="color: red;">تعذر تحميل نموذج التسجيل. يرجى المحاولة لاحقاً.</p>';
-			}
-		};
-
-		window.loadProfile = () => { showProfileForm(); hideAllControls(); };
-
-		window.loadAnimalsPage = async () => {
-		  hideAllControls();
-		  if (welcomeMessage) welcomeMessage.style.display = 'none';
-		  if (homeTopicCards) homeTopicCards.style.display = 'none';
-		  await loadAnimalsGameContent();
-		  showAnimalControls();
-		  initializeSubjectControls('animal');
-		};
-
-
-
-
-		window.loadHumanBodyPage = async () => {
-		  hideAllControls();
-		  if (welcomeMessage) welcomeMessage.style.display = 'none';
-		  if (homeTopicCards) homeTopicCards.style.display = 'none';
-		  await loadHumanBodyGameContent();
-		  showHumanBodyControls();
-		  initializeSubjectControls('human-body');
-		};
-
-		// دالة تحميل صفحة المهن 
-			window.loadProfessionsPage = async () => {
-			  hideAllControls();
-			  if (welcomeMessage) welcomeMessage.style.display = 'none';
-			  if (homeTopicCards) homeTopicCards.style.display = 'none';
-			  await loadProfessionsGameContent();
-			  // 361: إظهار شريط التحكم للمهن
-			  if (professionSidebarControls) professionSidebarControls.style.display = 'block';
-			  initializeSubjectControls('profession');
-			};
-	
-		// دالة تحميل صفحة لعبة اضغط على الحرف
-
-
-
-		window.loadAlphabetPressPage = async () => {
-		  hideAllControls();
-		  if (welcomeMessage) welcomeMessage.style.display = 'none';
-		  if (homeTopicCards) homeTopicCards.style.display = 'none';
-		  
-		  showAlphabetPressControls(); // اجعل عناصر الشريط الجانبي مرئية أولاً
-		  await populateAlphabetPressSidebarOptions(); // استدعاء دالة تهيئة الخيارات من alphabet-press-game.js
-		  await loadAlphabetPressGameContent(); // ثم قم بتحميل محتوى اللعبة في المنطقة الرئيسية
-		};
-
-		// دالة تحميل صفحة لعبة الذاكرة
-		window.loadMemoryGamePage = async () => {
-			hideAllControls();
-			if (welcomeMessage) welcomeMessage.style.display = 'none';
-			if (homeTopicCards) homeTopicCards.style.display = 'none';
-			
-			// قم بتهيئة عناصر التحكم في الشريط الجانبي أولاً
-			if (memoryGameSidebarControls) {
-				await initializeMemoryGameSidebarControls();
-				showMemoryGameControls();
-			} else {
-				console.error("Memory game sidebar controls not found. Cannot initialize.");
-			}
-
-			await loadMemoryGameContent(); 
-		};
-
-		window.showHomePage = () => {
-			mainContentArea.innerHTML = `
-            <h2 id="welcome-message-inner" style="display: block;" data-i18n="welcome_message">مرحباً بكم في الموسوعة التفاعلية</h2>
-            <div id="home-topic-cards-inner" class="home-cards-container">
-                <a href="#" class="topic-card animals" onclick="loadAnimalsPage(); return false;">
-                    <span class="icon">🐾</span>
-                    <h3 data-i18n="animals">الحيوانات</h3>
-                </a>
-				
-				<a href="#" class="topic-card fruits" onclick="import('/src/js/main.js').then(m => {
-					console.log('📦 loading fruits page via loadPage()');
-					import('/src/subjects/fruits.js').then(f => m.loadPage('fruit', '/html/fruits.html', f.loadFruitsGameContent));
-					return false;
-				});">
-					<span class="icon">🍎</span>
-					<h3 data-i18n="fruits_title">الفواكه</h3>
-				</a>
-
-
-
-				<a href="#" class="topic-card vegetables" onclick="import('/src/js/main.js').then(m => {
-					console.log('🥦 loading vegetables page via loadPage()');
-					import('/src/subjects/vegetables.js').then(v => m.loadPage('vegetable', '/html/vegetables.html', v.loadVegetablesGameContent));
-					return false;
-				});">
-					<span class="icon">🥦</span>
-					<h3 data-i18n="vegetables">الخضروات</h3>
-				</a>
-
-
-                <a href="#" class="topic-card human-body" onclick="loadHumanBodyPage(); return false;">
-                    <span class="icon">🧠</span>
-                    <h3 data-i18n="human_body">جسم الإنسان</h3>
-                </a>
-                <a href="#" class="topic-card games" onclick="loadAlphabetPressPage(); return false;">
-                    <span class="icon">🔠</span>
-                    <h3 data-i18n="alphabet_game">لعبة الحروف</h3> </a>
-                <a href="#" class="topic-card games" onclick="loadMemoryGamePage(); return false;">
-                    <span class="icon">🧠</span>
-                    <h3 data-i18n="memory_game_title">لعبة الذاكرة</h3>
-                </a>
-		
-				<a href="#" class="topic-card professions" onclick="loadProfessionsPage(); return false;">
-				<span class="icon">👷‍♂️</span>
-				<h3 data-i18n="professions">المهن</h3>
-				</a>
-				<a href="#" class="topic-card tools" onclick="loadToolsPage(); return false;">
-				  <span class="icon">🔧</span>
-				  <h3 data-i18n="tools_topic">الأدوات</h3>
-				</a>
-				<a href="#" class="topic-card tools-match" onclick="loadToolsMatchPage(); return false;">
-				  <span class="icon">🧰</span>
-				  <h3 data-i18n="tools_match_topic">من صاحب الأداة؟</h3>
-				</a>
-					</div>
-				  `;
-				  hideAllControls();
-				  const defaultLang = localStorage.getItem("lang") || "ar";
-				  setDirection(defaultLang);
-				  applyTranslations(); // ضروري هنا بعد إدخال الـ HTML
-		};
-
-
-		function showAnimalControls() { if (animalSidebarControls) { animalSidebarControls.style.display = 'block'; } }
-		function hideAnimalControls() { if (animalSidebarControls) { animalSidebarControls.style.display = 'none'; } }
-		function showFruitControls() { if (fruitSidebarControls) { fruitSidebarControls.style.display = 'block'; } }
-		function hideFruitControls() { if (fruitSidebarControls) { fruitSidebarControls.style.display = 'none'; } }
-		function showVegetableControls() { if (vegetableSidebarControls) { vegetableSidebarControls.style.display = 'block'; } }
-		function hideVegetableControls() { if (vegetableSidebarControls) { vegetableSidebarControls.style.display = 'none'; } }
-		function showHumanBodyControls() { if (humanBodySidebarControls) { humanBodySidebarControls.style.display = 'block'; } }
-		function hideHumanBodyControls() { if (humanBodySidebarControls) { humanBodySidebarControls.style.display = 'none'; } }
-		function showAlphabetPressControls() { if (alphabetPressSidebarControls) { alphabetPressSidebarControls.style.display = 'block'; } }
-		function hideAlphabetPressControls() { if (alphabetPressSidebarControls) { alphabetPressSidebarControls.style.display = 'none'; } }
-		function showMemoryGameControls() { if (memoryGameSidebarControls) { memoryGameSidebarControls.style.display = 'block'; } }
-		function hideMemoryGameControls() { if (memoryGameSidebarControls) { memoryGameSidebarControls.style.display = 'none'; } }
-		function hideAllControls() { hideAnimalControls(); hideFruitControls(); hideVegetableControls(); hideHumanBodyControls(); hideAlphabetPressControls(); hideMemoryGameControls();
-				 hideToolsControls(); 
-				 // 367: إخفاء التحكم بالمهن
-		  if (professionSidebarControls) professionSidebarControls.style.display = 'none';
-			}
-			const availableCategories = [
-  { id: 'animals', name_ar: 'حيوانات', name_en: 'Animals', name_he: 'חיות' },
-  { id: 'fruits', name_ar: 'فواكه', name_en: 'Fruits', name_he: 'פירות' },
-  { id: 'vegetables', name_ar: 'خضروات', name_en: 'Vegetables', name_he: 'ירקות' },
-  { id: 'human-body', name_ar: 'جسم الإنسان', name_en: 'Human Body', name_he: 'גוף האדם' },
-  { id: 'profession', name_ar: 'المهن', name_en: 'Profession', name_he: 'מקצועות' },
-  { id: 'tools', name_ar: 'أدوات', name_en: 'Tools', name_he: 'כלים' },
-];
-
-
-
-				
-		// صفحة الأدوات				
-        window.loadToolsPage = async () => {
-          hideAllControls();
-          if (welcomeMessage) welcomeMessage.style.display = 'none';
-          if (homeTopicCards) homeTopicCards.style.display = 'none';
-          await loadToolsGameContent();
-          if (toolsSidebarControls) toolsSidebarControls.style.display = 'block';
-          initializeSubjectControls('tools');
-        };
-
-
-
-        document.addEventListener('DOMContentLoaded', () => {
-  const defaultLang = localStorage.getItem("lang") || "ar";
-  setDirection(defaultLang);
-  initializeLanguage();
-  window.showHomePage();
-});
-
-  
-        function showToolsControls() { if (toolsSidebarControls) toolsSidebarControls.style.display = 'block'; }
-        function hideToolsControls() { if (toolsSidebarControls) toolsSidebarControls.style.display = 'none'; }
-		  window.loadToolsMatchGameContent = loadToolsMatchGameContent; // ✅ ضروري جدًا
-</script>
+  <!-- ⚠️ أزلنا السكربت الثاني الثابت الذي كان في آخر الـ body لتجنب الازدواج -->
 </body>
 </html>

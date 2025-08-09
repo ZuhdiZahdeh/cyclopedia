@@ -1,78 +1,51 @@
-// src/core/lang-handler.js
+// /core/lang-handler.js
 
-const langOptions = {
-  ar: { dir: "rtl", label: "العربية" },
-  en: { dir: "ltr", label: "English" },
-  he: { dir: "rtl", label: "עברית" },
-};
-
-let currentLang = localStorage.getItem("lang") || "ar";
+export let currentLang = localStorage.getItem("lang") || "ar";
+let currentTranslations = {}; // ← نخزّن آخر ترجمة محمّلة
 
 export function getCurrentLang() {
   return currentLang;
 }
 
-export function setCurrentLang(newLang) {
-  if (langOptions[newLang]) {
-    currentLang = newLang;
-    localStorage.setItem("lang", newLang);
-    applyTranslations();
-    updateDocumentDirection();
+export function setDirection(lang) {
+  const dir = (lang === 'ar' || lang === 'he') ? 'rtl' : 'ltr';
+  document.documentElement.setAttribute('dir', dir);
+  document.documentElement.setAttribute('lang', lang);
+}
+
+
+export async function loadLanguage(lang) {
+  try {
+    const response = await fetch(`/lang/${lang}.json`);
+    if (!response.ok) throw new Error(`تعذر تحميل ملف الترجمة: ${lang}.json`);
+    currentTranslations = await response.json();
+    applyTranslations(); // ← بدون باراميتر: يستخدم الكاش
+  } catch (error) {
+    console.error("❌ خطأ في تحميل الترجمة:", error);
   }
 }
 
-export function loadLanguage() {
-  const savedLang = localStorage.getItem("lang");
-  if (savedLang && langOptions[savedLang]) {
-    currentLang = savedLang;
-  }
-  applyTranslations();
-  updateDocumentDirection();
-}
+export function applyTranslations(translations) {
+  // لو وصلنا ترجمات، حدّث الكاش؛ وإلا استخدم آخر كاش معروف
+  const dict = (translations && typeof translations === 'object')
+    ? (currentTranslations = translations)
+    : currentTranslations;
 
-export function applyTranslations() {
-  fetch(`/lang/${currentLang}.json`)
-    .then((res) => res.json())
-    .then((translations) => {
-      document.querySelectorAll("[data-i18n]").forEach((el) => {
-        const key = el.getAttribute("data-i18n");
-        if (translations[key]) {
-          el.innerHTML = translations[key];
-        }
-      });
+  if (!dict || typeof dict !== 'object') return;
 
-      document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
-        const key = el.getAttribute("data-i18n-placeholder");
-        if (translations[key]) {
-          el.setAttribute("placeholder", translations[key]);
-        }
-      });
-    })
-    .catch((err) => {
-      console.warn("ملف الترجمة غير صالح أو غير محمل.", err);
-    });
-}
-
-export function updateDocumentDirection() {
-  const html = document.documentElement;
-  html.setAttribute("lang", currentLang);
-  html.setAttribute("dir", langOptions[currentLang].dir);
-}
-
-export function initializeLanguageSelector(selectElement) {
-  if (!selectElement) return;
-
-  selectElement.innerHTML = "";
-
-  Object.entries(langOptions).forEach(([langCode, { label }]) => {
-    const option = document.createElement("option");
-    option.value = langCode;
-    option.textContent = label;
-    if (langCode === currentLang) option.selected = true;
-    selectElement.appendChild(option);
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.getAttribute('data-i18n');
+    if (key in dict && typeof dict[key] === 'string') {
+      el.innerHTML = dict[key];
+    }
+    // لا نرمي تحذيرات مزعجة عند غياب المفتاح
   });
+}
 
-  selectElement.addEventListener("change", (e) => {
-    setCurrentLang(e.target.value);
-  });
+export function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem("lang", lang);
+  setDirection(lang);
+  loadLanguage(lang); // async
+  document.dispatchEvent(new CustomEvent("languageChanged", { detail: lang }));
 }
