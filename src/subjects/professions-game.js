@@ -1,305 +1,105 @@
 // src/subjects/professions-game.js
-// صفحة المهن – نسخة موحّدة، تدعم معرّفات الشريط باللاحقة -profession مع fallback للأسماء العامة.
+import { db } from '../js/firebase-config.js';
+import { collection, getDocs } from 'firebase/firestore';
+import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
+import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
+import { recordActivity } from '../core/activity-handler.js';
 
-import { db } from "../core/db-handler.js";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from "../core/lang-handler.js";
-import { playAudio, stopCurrentAudio } from "../core/audio-handler.js";
-import { recordActivity } from "../core/activity-handler.js";
+let professions=[], currentIndex=0, currentItem=null;
 
-let professions = [];
-let currentIndex = 0;
-let currentProfession = null;
-const toolsCache = new Map(); // professionId -> tools[]
+const pick=(...ids)=>{for(const id of ids){const el=document.getElementById(id); if(el) return el;} return null;};
+const grab=(ids)=>{const a=Array.isArray(ids)?ids:[ids]; for(const id of a){const el=document.getElementById(id); if(el) return el;} return null;};
+const isAbs=(p)=>/^https?:\/\//i.test(p)||/^data:/i.test(p)||/^blob:/i.test(p);
+const norm=(s)=>String(s||'').trim().replace(/^\.?[\\/]+/,'').replace(/\\/g,'/');
 
-export async function loadProfessionsGameContent() {
+function setHighlightedName(el,name){ if(!el) return; if(!name){el.textContent='';return;} const c=[...name]; const first=c[0]||''; el.innerHTML=`<span class="highlight-first-letter">${first}</span>${c.slice(1).join('')}`; }
+
+function getProfessionDisplayName(d, lang){
+  if (d?.name?.[lang]) return d.name[lang];
+  const key=d?.slug||d?.id||d?.name?.en||d?.name?.ar||d?.word||'';
+  const k=String(key).toLowerCase().replace(/\s+/g,'_');
+  const dict=window.translations||{}; const t=(dict.professions_words?.[k])||(dict.professions?.[k]);
+  if (t && t[lang]) return t[lang];
+  return d?.name?.ar || d?.name?.en || d?.name?.he || d?.title || d?.word || '';
+}
+
+function buildAudioCandidates(d, lang, voice){
+  const key=`${voice}_${lang}`; let file=null;
+  if(d?.voices&&d.voices[key]) file=d.voices[key];
+  else if(d?.sound_base) file=`${d.sound_base}_${voice}_${lang}.mp3`;
+  else if(d?.sound?.[lang]?.[voice]) file=d.sound[lang][voice];
+  else if(typeof d?.audio==='string') file=d.audio;
+  if(!file) return []; const f=norm(file); if(isAbs(f)||f.startsWith('/')) return [f];
+  return [`/audio/${lang}/professions/${f}`, `/audio/${lang}/profession/${f}`, `/audio/${lang}/jobs/${f}`];
+}
+
+function updateProfessionContent(){
+  const lang=getCurrentLang();
+  if(!professions.length){
+    pick('profession-word','item-word','item-name')?.textContent='—';
+    const img=pick('profession-image','item-image'); if(img){ img.removeAttribute('src'); img.alt=''; }
+    return;
+  }
+  currentItem=professions[currentIndex]; const d=currentItem;
+  const name=getProfessionDisplayName(d,lang);
+
+  const wordEl=pick('profession-word','item-word','item-name'); const imgEl=pick('profession-image','item-image');
+  if (wordEl){ setHighlightedName(wordEl,name); wordEl.classList.add('clickable-text'); wordEl.onclick=playCurrentProfessionAudio; }
+  if (imgEl){ const src=(d.image_path||d.image||''); imgEl.src=(isAbs(src)||src.startsWith('/'))?src:`/images/professions/${norm(src)}`; imgEl.alt=name||''; imgEl.onclick=playCurrentProfessionAudio; }
+
+  const nextBtn=grab(['next-professions-btn','next-btn']); const prevBtn=grab(['prev-professions-btn','prev-btn']);
+  if (nextBtn) nextBtn.disabled=(professions.length<=1||currentIndex===professions.length-1);
+  if (prevBtn) prevBtn.disabled=(professions.length<=1||currentIndex===0);
   stopCurrentAudio();
+}
 
-  const main = document.querySelector("main.main-content");
-  if (!main) {
-    console.error("[professions] main.main-content غير موجود");
-    return;
-  }
+export function showNextProfession(){ if(!professions.length) return; if(currentIndex<professions.length-1) currentIndex++; updateProfessionContent();
+  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) recordActivity(u,'professions'); }catch{} }
+export function showPreviousProfession(){ if(!professions.length) return; if(currentIndex>0) currentIndex--; updateProfessionContent();
+  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) recordActivity(u,'professions'); }catch{} }
+export async function playCurrentProfessionAudio(){
+  if(!professions.length||!currentItem) return;
+  const lang =(grab(['game-lang-select-professions','game-lang-select'])?.value)||getCurrentLang();
+  const voice=(grab(['voice-select-professions','voice-select'])?.value)||'teacher';
+  const candidates=buildAudioCandidates(currentItem, lang, voice);
+  for(const src of candidates){ try{ stopCurrentAudio(); const m=playAudio(src); if(m?.then) await m; return; }catch{} }
+}
 
-  // تحميل قالب الصفحة
-  try {
-    const resp = await fetch("/html/professions.html", { cache: "no-store" });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    main.innerHTML = await resp.text();
-  } catch (e) {
-    console.error("[professions] فشل تحميل /html/professions.html:", e);
-    return;
-  }
+async function fetchProfessions(){
+  try{ const snap=await getDocs(collection(db,'professions'));
+    if(!snap.empty){ professions=snap.docs.map(doc=>({id:doc.id,...doc.data()})); console.log('[professions] fetched =',professions.length); return; }
+  }catch(e){ console.warn('[professions] fetch failed:',e); }
+  professions=[];
+}
 
-  // تهيئة اللغة والاتجاه والترجمة
-  try { setDirection(getCurrentLang()); } catch {}
-  applyTranslations();
+export async function loadProfessionsGameContent(){
+  const prevBtn      = grab(['prev-professions-btn','prev-btn']);
+  const nextBtn      = grab(['next-professions-btn','next-btn']);
+  const playSoundBtn = grab(['play-sound-btn-professions','listen-btn','listen']);
+  const voiceSelect  = grab(['voice-select-professions','voice-select']);
+  const langSelect   = grab(['game-lang-select-professions','game-lang-select']);
 
-  // عناصر الشريط الجانبي (أولوية للملحّق …-profession ثم الأسماء العامة كـ fallback)
-  const langSelect   = document.getElementById("game-lang-select-profession") || document.getElementById("game-lang-select");
-  const voiceSelect  = document.getElementById("voice-select-profession")    || document.getElementById("voice-select");
-  const playBtn      = document.getElementById("play-sound-btn-profession")  || document.getElementById("play-sound-btn");
-  const prevBtn      = document.getElementById("prev-profession-btn")        || document.getElementById("prev-btn");
-  const nextBtn      = document.getElementById("next-profession-btn")        || document.getElementById("next-btn");
-  const toggleDesc   = document.getElementById("toggle-description-btn-profession") || document.getElementById("toggle-description-btn");
-  const toggleDetails= document.getElementById("toggle-details-btn-profession")    || document.getElementById("toggle-details-btn");
-  const toggleTools  = document.getElementById("toggle-tools-btn-profession")      || document.getElementById("toggle-tools-btn");
+  if (prevBtn) prevBtn.onclick=showPreviousProfession;
+  if (nextBtn) nextBtn.onclick=showNextProfession;
+  if (playSoundBtn) playSoundBtn.onclick=playCurrentProfessionAudio;
 
-  disableSidebar(true);
+  if (langSelect){ try{ langSelect.value=getCurrentLang(); }catch{}; langSelect.onchange=async()=>{
+    const lng=langSelect.value; await loadLanguage(lng); setDirection(lng); applyTranslations(); updateProfessionContent(); }; }
+  if (voiceSelect && !voiceSelect.value) voiceSelect.value='teacher';
+
+  professions=[]; if(prevBtn) prevBtn.disabled=true; if(nextBtn) nextBtn.disabled=true; if(playSoundBtn) playSoundBtn.disabled=true;
 
   await fetchProfessions();
-  if (professions.length === 0) {
-    console.warn("[professions] لا توجد بيانات");
-    const wordEl = document.getElementById("profession-word");
-    if (wordEl) wordEl.textContent = "لا توجد بيانات";
+  if (!professions.length){
+    pick('profession-word','item-word','item-name')?.textContent='لا توجد بيانات';
+    const img=pick('profession-image','item-image'); if(img) img.src='/images/default.png';
     return;
   }
 
-  currentIndex = 0;
-  updateProfessionContent();
-  disableSidebar(false);
+  const lang=getCurrentLang(); professions.sort((a,b)=>(a?.name?.[lang]||'').localeCompare(b?.name?.[lang]||'')); currentIndex=0; updateProfessionContent();
+  if(prevBtn) prevBtn.disabled=(currentIndex===0); if(nextBtn) nextBtn.disabled=(professions.length<=1); if(playSoundBtn) playSoundBtn.disabled=false;
 
-  // أحداث الشريط الجانبي
-  if (langSelect) {
-    try { langSelect.value = getCurrentLang(); } catch {}
-    langSelect.onchange = async () => {
-      const lang = langSelect.value;
-      await loadLanguage(lang);
-      setDirection(lang);
-      applyTranslations();
-      updateProfessionContent(); // تحديث النصوص والصوت
-    };
-  }
-
-  if (voiceSelect) voiceSelect.onchange = () => stopCurrentAudio();
-  if (playBtn)     playBtn.onclick      = () => playCurrentProfessionAudio();
-  if (prevBtn)     prevBtn.onclick      = () => showPrevProfession();
-  if (nextBtn)     nextBtn.onclick      = () => showNextProfession();
-
-  if (toggleDesc) {
-    const box = document.getElementById("profession-description-box");
-    toggleDesc.onclick = () => { if (box) box.style.display = (box.style.display === "none" ? "block" : "none"); };
-  }
-  if (toggleDetails) {
-    const box = document.getElementById("profession-details-section");
-    toggleDetails.onclick = () => { if (box) box.style.display = (box.style.display === "none" ? "block" : "none"); };
-  }
-  if (toggleTools) {
-    const box = document.getElementById("profession-tools-section");
-    toggleTools.onclick = () => { if (box) box.style.display = (box.style.display === "none" ? "block" : "none"); };
-  }
-
-  applyTranslations();
-  safeRecord("view_professions");
-}
-
-function updateProfessionContent() {
-  if (professions.length === 0) return;
-
-  const lang = getCurrentLang();
-  currentProfession = professions[currentIndex];
-
-  const wordEl    = document.getElementById("profession-word");
-  const imgEl     = document.getElementById("profession-image");
-  const descEl    = document.getElementById("profession-description");
-  const letterEl  = document.getElementById("profession-letter");
-  const categoryEl= document.getElementById("profession-category");
-  const prevBtn   = document.getElementById("prev-profession-btn") || document.getElementById("prev-btn");
-  const nextBtn   = document.getElementById("next-profession-btn") || document.getElementById("next-btn");
-
-  const name = currentProfession?.name?.[lang] || currentProfession?.name?.en || currentProfession?.name?.ar || "";
-  const first = name?.[0] ?? "";
-
-  if (wordEl) {
-    wordEl.innerHTML = name
-      ? `<span class="highlight-first-letter">${first}</span>${name.slice(1)}`
-      : "";
-    wordEl.classList.add("clickable-text");
-    wordEl.onclick = playCurrentProfessionAudio;
-  }
-
-  if (imgEl) {
-    imgEl.src = resolveImagePath(currentProfession);
-    imgEl.alt = name || "profession";
-    imgEl.classList.add("clickable-image");
-    imgEl.onclick = playCurrentProfessionAudio;
-  }
-
-  if (descEl)     descEl.textContent = currentProfession?.description?.[lang] || "—";
-  if (letterEl)   letterEl.textContent = currentProfession?.letter?.[lang] || currentProfession?.letter || "—";
-  if (categoryEl) categoryEl.textContent = currentProfession?.category?.[lang] || currentProfession?.category || "—";
-
-  if (prevBtn) prevBtn.disabled = (currentIndex === 0);
-  if (nextBtn) nextBtn.disabled = (currentIndex === professions.length - 1);
-
-  stopCurrentAudio();
-
-  // تحميل أدوات المهنة (اختياري إذا كانت مفعّلة في القالب)
-  loadToolsForCurrentProfession().catch(err => console.error("[professions] tools error:", err));
-}
-
-async function fetchProfessions() {
-  try {
-    const ref = collection(db, "professions");
-    const snap = await getDocs(ref);
-    professions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    // ترتيب بسيط حسب اللغة الحالية
-    const lang = getCurrentLang();
-    professions.sort((a, b) => {
-      const na = (a?.name?.[lang] || a?.name?.en || a?.name?.ar || "").toLowerCase();
-      const nb = (b?.name?.[lang] || b?.name?.en || b?.name?.ar || "").toLowerCase();
-      return na.localeCompare(nb);
-    });
-
-    console.log(`[professions] fetched = ${professions.length}`);
-  } catch (err) {
-    console.error("[professions] خطأ أثناء الجلب:", err);
-    professions = [];
-  }
-}
-
-export function showNextProfession() {
-  stopCurrentAudio();
-  if (currentIndex < professions.length - 1) {
-    currentIndex++;
-    updateProfessionContent();
-    safeRecord("professions_next");
-  }
-}
-
-export function showPrevProfession() {
-  stopCurrentAudio();
-  if (currentIndex > 0) {
-    currentIndex--;
-    updateProfessionContent();
-    safeRecord("professions_prev");
-  }
-}
-
-export function playCurrentProfessionAudio() {
-  if (!currentProfession) return;
-  const voiceType = (document.getElementById("voice-select-profession")?.value
-                  || document.getElementById("voice-select")?.value) || "boy";
-  const audioPath = getProfessionAudioPath(currentProfession, voiceType);
-  if (audioPath) {
-    playAudio(audioPath);
-    safeRecord("profession_audio");
-  }
-}
-
-function getProfessionAudioPath(data, voiceType) {
-  const lang = getCurrentLang();
-
-  // 1) الشكل الكامل: sound[lang][voiceType]
-  if (data?.sound?.[lang]?.[voiceType]) {
-    const raw = data.sound[lang][voiceType];
-    return raw.includes("/") ? `/${raw.replace(/^\/+/, "")}` : `/audio/${lang}/professions/${raw}`;
-  }
-
-  // 2) fallback: sound_base => audio/{lang}/professions/{base}_{voiceType}_{lang}.mp3
-  if (data?.sound_base) {
-    return `/audio/${lang}/professions/${data.sound_base}_${voiceType}_${lang}.mp3`;
-  }
-
-  console.warn("[professions] لا يوجد تعريف صوتي للمهنة:", data?.name?.[lang] || data?.name?.ar);
-  return null;
-}
-
-function resolveImagePath(item) {
-  // يدعم image_path أو image_file
-  if (item?.image_path) return item.image_path.startsWith("/") ? item.image_path : `/${item.image_path}`;
-  if (item?.image_file) return `/images/professions/${item.image_file}`;
-  return "/images/default.png";
-}
-
-/** أدوات المهنة **/
-async function loadToolsForCurrentProfession() {
-  const section = document.getElementById("profession-tools-section");
-  const grid    = document.getElementById("profession-tools-grid");
-  const empty   = document.getElementById("profession-tools-empty");
-  if (!section || !grid || !currentProfession?.id) return;
-
-  const profId = currentProfession.id;
-  let tools = toolsCache.get(profId);
-
-  if (!tools) {
-    try {
-      const toolsRef = collection(db, "profession_tools");
-      const q = query(toolsRef, where("professions", "array-contains", profId));
-      const snap = await getDocs(q);
-      tools = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      toolsCache.set(profId, tools);
-    } catch (e) {
-      console.error("[professions] فشل جلب الأدوات:", e);
-      tools = [];
-    }
-  }
-
-  renderTools(grid, tools);
-  section.style.display = "block";
-  if (empty) empty.style.display = tools.length ? "none" : "block";
-}
-
-function renderTools(container, tools) {
-  const lang = getCurrentLang();
-  container.innerHTML = "";
-
-  tools.forEach(t => {
-    const card = document.createElement("div");
-    card.className = "tool-card";
-
-    const img = document.createElement("img");
-    img.src = t?.image_path ? (t.image_path.startsWith("/") ? t.image_path : `/${t.image_path}`) : "/images/default.png";
-    img.alt = t?.name?.[lang] || t?.name?.ar || "tool";
-
-    const nm = document.createElement("div");
-    nm.className = "tool-name";
-    const toolName = t?.name?.[lang] || t?.name?.ar || "";
-    const first = toolName?.[0] ?? "";
-    nm.innerHTML = toolName ? `<span class="highlight-first-letter">${first}</span>${toolName.slice(1)}` : "";
-
-    card.appendChild(img);
-    card.appendChild(nm);
-
-    // تشغيل صوت الأداة عند الضغط إن توفر
-    card.onclick = () => {
-      const voiceType = (document.getElementById("voice-select-profession")?.value
-                      || document.getElementById("voice-select")?.value) || "boy";
-      const audio = getToolAudioPath(t, voiceType);
-      if (audio) playAudio(audio);
-    };
-
-    container.appendChild(card);
-  });
-}
-
-function getToolAudioPath(tool, voiceType) {
-  const lang = getCurrentLang();
-  // يدعم sound[lang][voiceType] أو اسم ملف فقط
-  const raw = tool?.sound?.[lang]?.[voiceType];
-  if (!raw) return null;
-  return raw.includes("/") ? `/${raw.replace(/^\/+/, "")}` : `/audio/${lang}/tools/${raw}`;
-}
-
-function disableSidebar(disabled) {
-  const ids = [
-    // المعرّفات المُلحقة (المفضّلة)
-    "play-sound-btn-profession","prev-profession-btn","next-profession-btn",
-    "voice-select-profession","game-lang-select-profession",
-    "toggle-description-btn-profession","toggle-details-btn-profession","toggle-tools-btn-profession",
-    // بدائل عامة (fallback) إن وُجدت في الشريط الموحّد
-    "play-sound-btn","prev-btn","next-btn",
-    "voice-select","game-lang-select",
-    "toggle-description-btn","toggle-details-btn","toggle-tools-btn",
-  ];
-  ids.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = !!disabled; });
-}
-
-function safeRecord(eventKey) {
-  try { recordActivity(eventKey); }
-  catch {
-    try { recordActivity(JSON.parse(localStorage.getItem("user") || "null"), eventKey); }
-    catch {}
+  if (typeof window!=='undefined'){
+    window.loadProfessionsGameContent=loadProfessionsGameContent; window.showNextProfession=showNextProfession; window.showPreviousProfession=showPreviousProfession; window.playCurrentProfessionAudio=playCurrentProfessionAudio;
   }
 }

@@ -1,237 +1,154 @@
 // src/subjects/vegetables-game.js
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
-import { getCurrentLang, setLanguage } from '../core/lang-handler.js';
+import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 
-let vegetables = [];
-let currentIndex = 0;
-let currentVegetableData = null;
+let vegetables=[], currentIndex=0, currentVegData=null;
 
-let wordEl, imgEl, catEl, descEl;
-let prevBtn, nextBtn, playSoundBtn, voiceSelect, langSelect, toggleDescBtn;
+const pick=(...ids)=>{for(const id of ids){const el=document.getElementById(id); if(el) return el;} return null;};
+const grab=(ids)=>{const a=Array.isArray(ids)?ids:[ids]; for(const id of a){const el=document.getElementById(id); if(el) return el;} return null;};
+const isAbs=(p)=>/^https?:\/\//i.test(p)||/^data:/i.test(p)||/^blob:/i.test(p);
+const norm=(s)=>String(s||'').trim().replace(/^\.?[\\/]+/,'').replace(/\\/g,'/');
 
-// ===================== Image helpers =====================
-const VEGETABLE_IMAGE_BASE = '/images/vegetables/';
+function ensureCss(href,id){ if(document.getElementById(id)) return; const l=document.createElement('link'); l.rel='stylesheet'; l.href=href; l.id=id; document.head.appendChild(l); }
 
-function isAbsoluteUrl(p) {
-  return /^https?:\/\//i.test(p) || /^data:/i.test(p) || /^blob:/i.test(p);
+const VEG_IMAGE_DIRS=['/images/vegetables/','/images/vegetable/'];
+const AUDIO_VEG_DIRS=['vegetables','vegetable'];
+
+function buildImageCandidates(d, lang){
+  const names=[]; if(d?.image_path) names.push(d.image_path);
+  if(Array.isArray(d?.images)){ for(const it of d.images){ if(typeof it==='string') names.push(it); else if(it&&typeof it==='object') names.push(it[lang]||it.main||it.src||it.default); } }
+  else if(d?.images&&typeof d.images==='object'){ names.push(d.images[lang]||d.images.main||d.images.default); }
+  if(d?.image) names.push(d.image);
+
+  const out=[]; for(let s of Array.from(new Set(names.filter(Boolean)))){
+    s=norm(s); if(isAbs(s)||s.startsWith('/')){ out.push(s); continue; }
+    if(s.startsWith('images/')){ out.push('/'+s); continue; }
+    for(const b of VEG_IMAGE_DIRS) out.push(b+s);
+  } return Array.from(new Set(out));
 }
-function normalizeImagePath(p) {
-  if (!p) return null;
-  p = String(p).trim();
-  if (!p) return null;
-  if (isAbsoluteUrl(p) || p.startsWith('/')) return p;
-  p = p.replace(/^\.?\/*/, '');
-  if (p.startsWith('images/')) return '/' + p;
-  return VEGETABLE_IMAGE_BASE + p;
+function setImageWithFallback(imgEl,candidates){
+  let i=0; const tryNext=()=>{ if(!imgEl) return; if(i>=candidates.length){ imgEl.src='/images/default.png'; return; }
+    imgEl.onerror=()=>{ i++; tryNext(); }; imgEl.src=candidates[i]; }; tryNext();
 }
-function pickFromImages(images, lang) {
-  if (!images) return null;
-  if (Array.isArray(images)) {
-    const item = images.find(v => typeof v === 'string' || (v && typeof v.src === 'string'));
-    if (!item) return null;
-    return typeof item === 'string' ? item : (item[lang] || item.src || item.main || null);
-  }
-  if (typeof images === 'object') {
-    if (images[lang]) return images[lang];
-    if (images.main) return images.main;
-    if (images.default) return images.default;
-    const firstVal = Object.values(images).find(v => typeof v === 'string');
-    if (firstVal) return firstVal;
-  }
-  return null;
-}
-function getVegetableImagePath(d, lang) {
-  if (typeof d?.image_path === 'string' && d.image_path.trim()) {
-    return normalizeImagePath(d.image_path);
-  }
-  const fromImages = pickFromImages(d?.images, lang);
-  if (fromImages) return normalizeImagePath(fromImages);
-  if (typeof d?.image === 'string' && d.image.trim()) {
-    return normalizeImagePath(d.image);
-  }
-  return null;
+function buildAudioCandidates(d, lang, voice){
+  const key=`${voice}_${lang}`; let file=null;
+  if(d?.voices&&d.voices[key]) file=d.voices[key];
+  else if(d?.sound_base) file=`${d.sound_base}_${voice}_${lang}.mp3`;
+  else if(d?.sound?.[lang]?.[voice]) file=d.sound[lang][voice];
+  else if(typeof d?.audio==='string') file=d.audio;
+  if(!file) return []; const f=norm(file); if(isAbs(f)||f.startsWith('/')) return [f];
+  return Array.from(new Set(AUDIO_VEG_DIRS.map(dir=>`/audio/${lang}/${dir}/${f}`)));
 }
 
-// ===================== Audio helpers =====================
-function getVegetableAudioPath(d, lang, voiceType) {
-  const key = `${voiceType}_${lang}`;
-  let file;
-
-  if (d?.voices && d.voices[key]) {
-    file = d.voices[key];
-  } else if (d?.sound_base) {
-    file = `${d.sound_base}_${voiceType}_${lang}.mp3`;
-  } else if (d?.sound && d.sound[lang] && d.sound[lang][voiceType]) {
-    file = d.sound[lang][voiceType];
-  } else if (typeof d?.audio === 'string') {
-    file = d.audio;
-  } else {
-    return null;
-  }
-
-  return (isAbsoluteUrl(file) || file.startsWith('/'))
-    ? file
-    : `/audio/${lang}/vegetables/${file}`;
+function setHighlightedName(el,name){ if(!el) return; if(!name){el.textContent='';return;} const c=[...name]; const first=c[0]||''; el.innerHTML=`<span class="highlight-first-letter">${first}</span>${c.slice(1).join('')}`; }
+function getVegName(d,lang){
+  if (d?.name?.[lang]) return d.name[lang];
+  const key=d?.slug||d?.id||d?.name?.en||d?.name?.ar||d?.word||'';
+  const k=String(key).toLowerCase().replace(/\s+/g,'_');
+  const dict=window.translations||{}; const t=(dict.vegetables_words?.[k])||(dict.vegetables?.[k]);
+  if (t && t[lang]) return t[lang];
+  return d?.name?.ar || d?.name?.en || d?.name?.he || d?.title || d?.word || '';
 }
 
-// ===================== UI helpers =====================
-function disableAll(dis) {
-  [prevBtn, nextBtn, playSoundBtn, voiceSelect, langSelect, toggleDescBtn]
-    .forEach(el => el && (el.disabled = !!dis));
+function ensureVegDescBtn(){
+  if (grab(['toggle-description-btn-vegetables','toggle-description','desc-btn'])) return;
+  const sec=document.getElementById('vegetables-sidebar-controls')||document.querySelector('.subject-controls')||document.querySelector('#sidebar');
+  const grid=sec?.querySelector('.controls-grid')||sec; if(!grid) return;
+  const btn=document.createElement('button'); btn.id='toggle-description-btn-vegetables'; btn.className='control-btn';
+  btn.textContent=(window.translations?.common?.toggle_description)||'الوصف';
+  btn.onclick=()=>{ const box=document.getElementById('vegetable-description-box')||document.querySelector('#vegetables-game .info-box');
+    if(box) box.style.display=(box.style.display==='none'?'block':'none'); };
+  grid.appendChild(btn);
 }
 
-// ===== عنوان مع حرف أول ملوّن =====
-function renderTitle(el, text) {
-  if (!el) return;
-  const t = (text || '').trim();
-  if (!t) { el.textContent = '—'; return; }
-  const first = t[0];
-  const rest  = t.slice(1);
-  el.classList.add('item-main-name');
-  el.innerHTML = `<span class="first-letter">${first}</span>${rest}`;
-  el.setAttribute('dir', document.documentElement.getAttribute('dir') || 'rtl');
-}
-
-// ===================== Render =====================
-function updateVegetableContent() {
-  const lang = getCurrentLang();
-
-  if (!vegetables.length) {
-    if (wordEl) wordEl.textContent = '—';
-    if (imgEl) { imgEl.removeAttribute('src'); imgEl.alt = ''; }
-    if (catEl) catEl.textContent = '—';
-    if (descEl) descEl.textContent = '—';
-    return;
+/* العرض */
+function updateVegetableContent(){
+  const lang=getCurrentLang();
+  if(!vegetables.length){
+    pick('vegetable-word','item-word','item-name')?.textContent='—';
+    const img=pick('vegetable-image','item-image'); if(img){ img.removeAttribute('src'); img.alt=''; }
+    pick('vegetable-description','item-description')?.textContent='—'; return;
   }
+  currentVegData=vegetables[currentIndex]; const d=currentVegData; const name=getVegName(d,lang);
 
-  currentVegetableData = vegetables[currentIndex];
-  const d = currentVegetableData;
+  const wordEl=pick('vegetable-word','item-word','item-name'); const imgEl=pick('vegetable-image','item-image'); const descEl=pick('vegetable-description','item-description');
+  if (wordEl){ setHighlightedName(wordEl,name); wordEl.classList.add('clickable-text'); wordEl.onclick=playCurrentVegetableAudio; }
+  const candidates=buildImageCandidates(d,lang);
+  if (imgEl){ setImageWithFallback(imgEl, candidates.length?candidates:['/images/default.png']); imgEl.alt=name||''; imgEl.classList.add('clickable-image'); imgEl.onclick=playCurrentVegetableAudio; }
+  if (descEl) descEl.textContent=(d.description&&(d.description[lang]||d.description.ar||d.description.en))||'—';
 
-  const displayName =
-    (d.name && (d.name[lang] || d.name.ar || d.name.en || d.name.he)) ||
-    d.title || d.word || '—';
-
-  if (wordEl) {
-    renderTitle(wordEl, displayName);
-    wordEl.onclick = playCurrentVegetableAudio;
-  }
-
-  const imgPath = getVegetableImagePath(d, lang);
-  if (imgEl) {
-    if (imgPath) { imgEl.src = imgPath; imgEl.alt = displayName; }
-    else { imgEl.removeAttribute('src'); imgEl.alt = ''; }
-    imgEl.onclick = playCurrentVegetableAudio;
-  }
-
-  if (catEl) {
-    const list = (d.category && (d.category[lang] || d.category.ar || [])) || [];
-    catEl.textContent = Array.isArray(list) && list.length ? list[0] : '—';
-  }
-  if (descEl) {
-    descEl.textContent = (d.description && (d.description[lang] || d.description.ar)) || '—';
-  }
-
-  if (nextBtn) nextBtn.disabled = (vegetables.length <= 1);
-  if (prevBtn) prevBtn.disabled = (vegetables.length <= 1);
-}
-
-function showNextVegetable() {
-  if (!vegetables.length) return;
+  const nextBtn=grab(['next-vegetables-btn','next-btn']); const prevBtn=grab(['prev-vegetables-btn','prev-btn']);
+  if (nextBtn) nextBtn.disabled=(vegetables.length<=1||currentIndex===vegetables.length-1);
+  if (prevBtn) prevBtn.disabled=(vegetables.length<=1||currentIndex===0);
   stopCurrentAudio();
-  currentIndex = (currentIndex + 1) % vegetables.length;
-  updateVegetableContent();
 }
 
-function showPreviousVegetable() {
-  if (!vegetables.length) return;
-  stopCurrentAudio();
-  currentIndex = (currentIndex - 1 + vegetables.length) % vegetables.length;
-  updateVegetableContent();
+/* تنقّل وصوت */
+export function showNextVegetable(){ if(!vegetables.length) return; if(currentIndex<vegetables.length-1) currentIndex++; updateVegetableContent();
+  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) recordActivity(u,'vegetables'); }catch{} }
+export function showPreviousVegetable(){ if(!vegetables.length) return; if(currentIndex>0) currentIndex--; updateVegetableContent();
+  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) recordActivity(u,'vegetables'); }catch{} }
+export async function playCurrentVegetableAudio(){
+  if(!vegetables.length||!currentVegData) return;
+  const lang =(grab(['game-lang-select-vegetables','game-lang-select'])?.value)||getCurrentLang();
+  const voice=(grab(['voice-select-vegetables','voice-select'])?.value)||'teacher';
+  const candidates=buildAudioCandidates(currentVegData, lang, voice);
+  for(const src of candidates){ try{ stopCurrentAudio(); const m=playAudio(src); if(m?.then) await m; return; }catch{} }
 }
 
-function playCurrentVegetableAudio() {
-  if (!vegetables.length || !currentVegetableData) return;
-  const lang  = (langSelect && langSelect.value) || getCurrentLang();
-  const voice = (voiceSelect && voiceSelect.value) || 'teacher';
-  const audio = getVegetableAudioPath(currentVegetableData, lang, voice);
-  if (!audio) return;
-  stopCurrentAudio();
-  playAudio(audio);
-  try {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user) recordActivity(user, 'vegetables');
-  } catch {}
+/* جلب البيانات */
+async function fetchVegetables(){
+  try{ const snap=await getDocs(collection(db,'vegetables'));
+    if(!snap.empty){ vegetables=snap.docs.map(doc=>({id:doc.id,...doc.data()})); console.log('[vegetables] ✅ from vegetables | count =',vegetables.length); return; }
+  }catch(e){ console.warn('[vegetables] fetch vegetables failed:',e); }
+  try{ const snap=await getDocs(collection(db,'categories','vegetables','items'));
+    if(!snap.empty){ vegetables=snap.docs.map(doc=>({id:doc.id,...doc.data()})); console.log('[vegetables] ✅ from categories/vegetables/items | count =',vegetables.length); return; }
+  }catch(e){ console.warn('[vegetables] fetch categories/vegetables/items failed:',e); }
+  vegetables=[];
 }
 
-// ===================== Loader =====================
-export async function loadVegetablesGameContent() {
-  stopCurrentAudio();
+/* التحميل */
+export async function loadVegetablesGameContent(){
+  ensureCss('/css/vegetables.css','vegetables-css');
 
-  // عناصر المحتوى داخل الصفحة (من vegetables.html)
-  wordEl = document.getElementById('vegetable-word');
-  imgEl  = document.getElementById('vegetable-image');
-  catEl  = document.getElementById('vegetable-category');
-  descEl = document.getElementById('vegetable-description');
+  const prevBtn      = grab(['prev-vegetables-btn','prev-btn']);
+  const nextBtn      = grab(['next-vegetables-btn','next-btn']);
+  const playSoundBtn = grab(['play-sound-btn-vegetables','listen-btn','listen']);
+  const voiceSelect  = grab(['voice-select-vegetables','voice-select']);
+  const langSelect   = grab(['game-lang-select-vegetables','game-lang-select']);
 
-  // عناصر السايدبار
-  prevBtn       = document.getElementById('prev-vegetable-btn');
-  nextBtn       = document.getElementById('next-vegetable-btn');
-  playSoundBtn  = document.getElementById('play-sound-btn-vegetable');
-  voiceSelect   = document.getElementById('voice-select-vegetable');
-  langSelect    = document.getElementById('game-lang-select-vegetable');
-  toggleDescBtn = document.getElementById('toggle-description-btn-vegetable');
+  ensureVegDescBtn();
 
-  if (prevBtn) prevBtn.onclick = showPreviousVegetable;
-  if (nextBtn) nextBtn.onclick = showNextVegetable;
-  if (playSoundBtn) playSoundBtn.onclick = playCurrentVegetableAudio;
+  if (prevBtn) prevBtn.onclick=showPreviousVegetable;
+  if (nextBtn) nextBtn.onclick=showNextVegetable;
+  if (playSoundBtn) playSoundBtn.onclick=playCurrentVegetableAudio;
 
-  // اللغة: توحيد عبر setLanguage
-  if (langSelect) {
-    langSelect.value = getCurrentLang();
-    langSelect.onchange = () => setLanguage(langSelect.value);
-    document.addEventListener('languageChanged', updateVegetableContent, { once: false });
+  const toggleDescBtn=grab(['toggle-description-btn-vegetables','toggle-description','desc-btn']);
+  if (toggleDescBtn){
+    toggleDescBtn.onclick=()=>{ const box=document.getElementById('vegetable-description-box')||document.querySelector('#vegetables-game .info-box');
+      if(box) box.style.display=(box.style.display==='none'?'block':'none'); };
   }
 
-  // زر الوصف
-  if (toggleDescBtn) {
-    const detailsBox =
-      document.getElementById('vegetable-description-box') ||
-      document.querySelector('#vegetables-game .details-area') ||
-      (descEl ? descEl.closest('.info-box') : null);
-    toggleDescBtn.onclick = () => {
-      if (!detailsBox) return;
-      detailsBox.style.display = (detailsBox.style.display === 'none') ? '' : 'none';
-      toggleDescBtn.setAttribute('aria-pressed', detailsBox.style.display !== 'none');
-    };
+  if (langSelect){ try{ langSelect.value=getCurrentLang(); }catch{}; langSelect.onchange=async()=>{
+    const lng=langSelect.value; await loadLanguage(lng); setDirection(lng); applyTranslations(); updateVegetableContent(); }; }
+  if (voiceSelect && !voiceSelect.value) voiceSelect.value='teacher';
+
+  vegetables=[]; if(prevBtn) prevBtn.disabled=true; if(nextBtn) nextBtn.disabled=true; if(playSoundBtn) playSoundBtn.disabled=true;
+
+  await fetchVegetables();
+  if (!vegetables.length){
+    pick('vegetable-word','item-word','item-name')?.textContent='لا توجد بيانات';
+    const img=pick('vegetable-image','item-image'); if(img) img.src='/images/default.png';
+    pick('vegetable-description','item-description')?.textContent='—'; return;
   }
 
-  // =========== جلب البيانات ===========
-  vegetables = [];
-  try {
-    const colRef = collection(db, 'categories', 'vegetables', 'items');
-    const snap = await getDocs(colRef);
-    vegetables = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    const lang = getCurrentLang();
-    vegetables.sort((a, b) => (a?.name?.[lang] || '').localeCompare(b?.name?.[lang] || ''));
-  } catch (e) {
-    console.error('[vegetables] fetch error:', e);
-  }
+  const lang=getCurrentLang(); vegetables.sort((a,b)=>(a?.name?.[lang]||'').localeCompare(b?.name?.[lang]||'')); currentIndex=0; updateVegetableContent();
+  if(prevBtn) prevBtn.disabled=(currentIndex===0); if(nextBtn) nextBtn.disabled=(vegetables.length<=1); if(playSoundBtn) playSoundBtn.disabled=false;
 
-  if (!vegetables.length) {
-    disableAll(true);
-    return;
+  if (typeof window!=='undefined'){
+    window.loadVegetablesGameContent=loadVegetablesGameContent; window.showNextVegetable=showNextVegetable; window.showPreviousVegetable=showPreviousVegetable; window.playCurrentVegetableAudio=playCurrentVegetableAudio;
   }
-
-  currentIndex = 0;
-  disableAll(false);
-  updateVegetableContent();
 }
-
-export {
-  showNextVegetable,
-  showPreviousVegetable,
-  playCurrentVegetableAudio
-};
