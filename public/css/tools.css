@@ -1,34 +1,93 @@
 /* public/css/tools.css */
 
+/* صورة الأداة */
 #tool-image {
-    width: 80%;
-    max-width: 300px;
-    height: 300px;
-    object-fit: contain;
-    border-radius: 8px;
-    border: 2px solid var(--color-secondary); /* استخدام متغير اللون للحدود (برتقالي) */
-    background-color: var(--color-surface);
-    box-shadow: 0 4px 8px var(--color-shadow);
-}
-.tool-description-box {
-    margin-top: 15px;
-    padding: 15px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    background-color: var(--color-surface);
-    text-align: justify;
-    width: 100%;
-    box-sizing: border-box;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+  width: 80%;
+  max-width: 400px;
+  height: 300px;
+  object-fit: contain;
+  border-radius: 15px;
+  border: 3px solid var(--color-purple);
+  box-shadow: 0 5px 10px var(--color-shadow);
+  background-color: var(--color-surface);
 }
 
-.tool-description-box h4 {
-    font-family: var(--font-ar-heading);
-    font-weight: bold;
-    font-size: 1.3em;
-    color: var(--color-accent);
-    margin-top: 0;
-    margin-bottom: 10px;
-    text-align: right;
+/* صندوق الوصف */
+.tool-description-box {
+  margin-top: 15px;
+  padding: 15px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  text-align: justify;
+  width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
+.tool-description-box h4 {
+  font-family: var(--font-ar-heading);
+  font-weight: bold;
+  font-size: 1.3em;
+  color: var(--color-accent);
+  margin-top: 0;
+  margin-bottom: 10px;
+  text-align: right;
+}
+
+/* تفاعل */
+.clickable-image { cursor: pointer; }
+.clickable-text  { cursor: pointer; }
+
+/* ====== Carousel ====== */
+#tools-game .image-area {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto;
+  justify-items: center;
+  gap: 10px;
+}
+
+/* أزرار تنقل الكاروسيل */
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  padding: 6px 12px;
+  background: var(--color-surface);
+  box-shadow: 0 2px 8px var(--color-shadow);
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.carousel-nav.prev { left: 4px; }
+.carousel-nav.next { right: 4px; }
+
+/* المصغّرات */
+.carousel-thumbs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 4px 2px 0;
+  width: 100%;
+  justify-content: center;
+}
+.carousel-thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  background: var(--color-surface);
+}
+.carousel-thumb.active {
+  border-color: var(--color-accent);
+}
+
+/* ملاحظة: احرص أن تكون .highlight-first-letter معرفة في ملفك المشترك:
+   .highlight-first-letter { color: var(--color-danger, #e53935); font-weight: 700; } */
