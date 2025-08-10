@@ -206,16 +206,39 @@
   border-color:var(--color-accent);
 }
 
-.account-actions #my-profile-btn,
-.account-actions #my-report-btn{
-  /* افتراضي راقٍ */
-}
+
 
 .account-actions #logoutBtn{
   --danger: var(--color-danger, #e53935);
   background:var(--danger);
   border-color:var(--danger);
   color:#fff;
+}
+/* توحيد تخطيط صندوق اللعبة: عمودي ومتمركز */
+.game-box{
+  display:flex; 
+  flex-direction:column; 
+  align-items:center; 
+  gap:12px;
+}
+
+/* العنوان في المنتصف */
+.item-main-name{ 
+  text-align:center; 
+  margin:8px 0 12px; 
+}
+
+/* جعل أي صورة رئيسية في الوسط */
+.game-box img{
+  display:block;
+  margin:0 auto;
+}
+
+/* صندوق الوصف تحت الصورة وبعرض مناسب */
+.info-box{
+  width:min(760px, 100%);
+  margin-inline:auto;
+  text-align:start; /* يتبدّل تلقائياً مع اتجاه الصفحة */
 }
 
 /* Responsive */

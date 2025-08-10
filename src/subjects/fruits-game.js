@@ -16,7 +16,7 @@ let wordEl, imgEl, catEl, descEl;
 // عناصر السايدبار
 let prevBtn, nextBtn, playSoundBtn, voiceSelect, langSelect, toggleDescBtn;
 
-// ===== مساعِدات الصور (مرنة للحالات image / image_path / images[0]) =====
+// ===== مساعِدات الصور =====
 const FRUIT_IMAGE_BASE = '/images/fruits/';
 
 function isAbsoluteUrl(p) {
@@ -56,7 +56,7 @@ function getFruitImagePath(d, lang) {
   return null;
 }
 
-// ===== الصوت (مرن لعدة أشكال) =====
+// ===== الصوت =====
 function getFruitAudioPath(d, lang, voiceType) {
   const key = `${voiceType}_${lang}`;
   let file;
@@ -76,14 +76,14 @@ function disableSidebar(dis) {
     .forEach(el => el && (el.disabled = !!dis));
 }
 
-// ===== تنسيق عنوان الكلمة في الوسط مع حرف أول أحمر =====
+// ===== عنوان مع حرف أول ملوّن =====
 function renderTitle(el, text) {
   if (!el) return;
   const t = (text || '').trim();
   if (!t) { el.textContent = '—'; return; }
   const first = t[0];
   const rest  = t.slice(1);
-  el.classList.add('item-main-name');           // لتنسيق CSS
+  el.classList.add('item-main-name');
   el.innerHTML = `<span class="first-letter">${first}</span>${rest}`;
   el.setAttribute('dir', document.documentElement.getAttribute('dir') || 'rtl');
 }
@@ -168,33 +168,34 @@ export async function loadFruitsGameContent() {
   descEl = document.getElementById('fruit-description');
 
   // عناصر السايدبار
-  prevBtn      = document.getElementById('prev-fruit-btn');
-  nextBtn      = document.getElementById('next-fruit-btn');
-  playSoundBtn = document.getElementById('play-sound-btn-fruit');
-  voiceSelect  = document.getElementById('voice-select-fruit');
-  langSelect   = document.getElementById('game-lang-select-fruit');
-  toggleDescBtn= document.getElementById('toggle-description-btn-fruit');
+  prevBtn       = document.getElementById('prev-fruit-btn');
+  nextBtn       = document.getElementById('next-fruit-btn');
+  playSoundBtn  = document.getElementById('play-sound-btn-fruit');
+  voiceSelect   = document.getElementById('voice-select-fruit');
+  langSelect    = document.getElementById('game-lang-select-fruit');
+  toggleDescBtn = document.getElementById('toggle-description-btn-fruit');
 
   if (prevBtn) prevBtn.onclick = showPreviousFruit;
   if (nextBtn) nextBtn.onclick = showNextFruit;
   if (playSoundBtn) playSoundBtn.onclick = playCurrentFruitAudio;
 
-  // تبديل اللغة — استخدم الدالة المركزية
+  // اللغة: توحيد عبر setLanguage
   if (langSelect) {
     langSelect.value = getCurrentLang();
-    langSelect.onchange = () => {
-      setLanguage(langSelect.value);   // يحدّث dir + يحمّل الترجمة + يخزّنها
-    };
-    // أعِد الرسم عند اكتمال تغيير اللغة
-    document.addEventListener('languageChanged', updateFruitContent, { once:false });
+    langSelect.onchange = () => setLanguage(langSelect.value);
+    document.addEventListener('languageChanged', updateFruitContent, { once: false });
   }
 
-  // زر الوصف (اختياري إن وجد في القالب)
+  // زر الوصف
   if (toggleDescBtn) {
-    const detailsBox = document.querySelector('#fruits-game .details-area');
+    const detailsBox =
+      document.getElementById('fruit-description-box') ||
+      document.querySelector('#fruits-game .details-area') ||
+      (descEl ? descEl.closest('.info-box') : null);
     toggleDescBtn.onclick = () => {
       if (!detailsBox) return;
       detailsBox.style.display = (detailsBox.style.display === 'none') ? '' : 'none';
+      toggleDescBtn.setAttribute('aria-pressed', detailsBox.style.display !== 'none');
     };
   }
 

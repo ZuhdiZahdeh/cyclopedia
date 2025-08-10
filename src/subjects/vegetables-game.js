@@ -1,8 +1,7 @@
 // src/subjects/vegetables-game.js
-
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
-import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
+import { getCurrentLang, setLanguage } from '../core/lang-handler.js';
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 
@@ -11,7 +10,7 @@ let currentIndex = 0;
 let currentVegetableData = null;
 
 let wordEl, imgEl, catEl, descEl;
-let prevBtn, nextBtn, playSoundBtn, voiceSelect, langSelect;
+let prevBtn, nextBtn, playSoundBtn, voiceSelect, langSelect, toggleDescBtn;
 
 // ===================== Image helpers =====================
 const VEGETABLE_IMAGE_BASE = '/images/vegetables/';
@@ -19,36 +18,22 @@ const VEGETABLE_IMAGE_BASE = '/images/vegetables/';
 function isAbsoluteUrl(p) {
   return /^https?:\/\//i.test(p) || /^data:/i.test(p) || /^blob:/i.test(p);
 }
-
 function normalizeImagePath(p) {
   if (!p) return null;
   p = String(p).trim();
   if (!p) return null;
-
-  // URL مطلق أو يبدأ بـ /
   if (isAbsoluteUrl(p) || p.startsWith('/')) return p;
-
-  // أزل ./ أو / زائدة
   p = p.replace(/^\.?\/*/, '');
-
-  // أعطيته مسارًا داخل images/
   if (p.startsWith('images/')) return '/' + p;
-
-  // خلاف ذلك اعتبره اسم ملف داخل مجلد الخضروات
   return VEGETABLE_IMAGE_BASE + p;
 }
-
 function pickFromImages(images, lang) {
   if (!images) return null;
-
-  // Array: أول عنصر صالح (string أو كائن يحوي src/لغة)
   if (Array.isArray(images)) {
     const item = images.find(v => typeof v === 'string' || (v && typeof v.src === 'string'));
     if (!item) return null;
     return typeof item === 'string' ? item : (item[lang] || item.src || item.main || null);
   }
-
-  // Object: نفضّل لغة الواجهة ثم main/default ثم أي قيمة نصية
   if (typeof images === 'object') {
     if (images[lang]) return images[lang];
     if (images.main) return images.main;
@@ -56,34 +41,17 @@ function pickFromImages(images, lang) {
     const firstVal = Object.values(images).find(v => typeof v === 'string');
     if (firstVal) return firstVal;
   }
-
   return null;
 }
-
 function getVegetableImagePath(d, lang) {
-  // 1) image_path مسار جاهز
   if (typeof d?.image_path === 'string' && d.image_path.trim()) {
-    const path = normalizeImagePath(d.image_path);
-    console.log('[vegetables][img] image_path →', path);
-    return path;
+    return normalizeImagePath(d.image_path);
   }
-
-  // 2) images (Array/Object)
   const fromImages = pickFromImages(d?.images, lang);
-  if (fromImages) {
-    const path = normalizeImagePath(fromImages);
-    console.log('[vegetables][img] images →', path);
-    return path;
-  }
-
-  // 3) image اسم ملف داخل مجلد الخضروات
+  if (fromImages) return normalizeImagePath(fromImages);
   if (typeof d?.image === 'string' && d.image.trim()) {
-    const path = normalizeImagePath(d.image);
-    console.log('[vegetables][img] image →', path);
-    return path;
+    return normalizeImagePath(d.image);
   }
-
-  console.warn('[vegetables][img] لا يوجد حقل صورة صالح:', d?.id);
   return null;
 }
 
@@ -94,31 +62,37 @@ function getVegetableAudioPath(d, lang, voiceType) {
 
   if (d?.voices && d.voices[key]) {
     file = d.voices[key];
-    console.log(`[vegetables][audio] voices[${key}] → ${file}`);
   } else if (d?.sound_base) {
     file = `${d.sound_base}_${voiceType}_${lang}.mp3`;
-    console.warn(`[vegetables][audio] via sound_base → ${file}`);
   } else if (d?.sound && d.sound[lang] && d.sound[lang][voiceType]) {
     file = d.sound[lang][voiceType];
-    console.log(`[vegetables][audio] legacy map → ${file}`);
   } else if (typeof d?.audio === 'string') {
     file = d.audio;
-    console.log('[vegetables][audio] audio (flat) →', file);
   } else {
-    console.error('[vegetables][audio] لا يوجد صوت لهذا العنصر:', d?.name?.[lang] || d?.id);
     return null;
   }
 
-  const full = (isAbsoluteUrl(file) || file.startsWith('/'))
+  return (isAbsoluteUrl(file) || file.startsWith('/'))
     ? file
     : `/audio/${lang}/vegetables/${file}`;
-  console.log('[vegetables][audio] path →', full);
-  return full;
 }
 
 // ===================== UI helpers =====================
 function disableAll(dis) {
-  [prevBtn, nextBtn, playSoundBtn, voiceSelect, langSelect].forEach(el => el && (el.disabled = !!dis));
+  [prevBtn, nextBtn, playSoundBtn, voiceSelect, langSelect, toggleDescBtn]
+    .forEach(el => el && (el.disabled = !!dis));
+}
+
+// ===== عنوان مع حرف أول ملوّن =====
+function renderTitle(el, text) {
+  if (!el) return;
+  const t = (text || '').trim();
+  if (!t) { el.textContent = '—'; return; }
+  const first = t[0];
+  const rest  = t.slice(1);
+  el.classList.add('item-main-name');
+  el.innerHTML = `<span class="first-letter">${first}</span>${rest}`;
+  el.setAttribute('dir', document.documentElement.getAttribute('dir') || 'rtl');
 }
 
 // ===================== Render =====================
@@ -141,7 +115,7 @@ function updateVegetableContent() {
     d.title || d.word || '—';
 
   if (wordEl) {
-    wordEl.textContent = displayName;
+    renderTitle(wordEl, displayName);
     wordEl.onclick = playCurrentVegetableAudio;
   }
 
@@ -194,7 +168,6 @@ function playCurrentVegetableAudio() {
 
 // ===================== Loader =====================
 export async function loadVegetablesGameContent() {
-  console.log('[vegetables] loadVegetablesGameContent()');
   stopCurrentAudio();
 
   // عناصر المحتوى داخل الصفحة (من vegetables.html)
@@ -204,23 +177,34 @@ export async function loadVegetablesGameContent() {
   descEl = document.getElementById('vegetable-description');
 
   // عناصر السايدبار
-  prevBtn      = document.getElementById('prev-vegetable-btn');
-  nextBtn      = document.getElementById('next-vegetable-btn');
-  playSoundBtn = document.getElementById('play-sound-btn-vegetable');
-  voiceSelect  = document.getElementById('voice-select-vegetable');
-  langSelect   = document.getElementById('game-lang-select-vegetable');
+  prevBtn       = document.getElementById('prev-vegetable-btn');
+  nextBtn       = document.getElementById('next-vegetable-btn');
+  playSoundBtn  = document.getElementById('play-sound-btn-vegetable');
+  voiceSelect   = document.getElementById('voice-select-vegetable');
+  langSelect    = document.getElementById('game-lang-select-vegetable');
+  toggleDescBtn = document.getElementById('toggle-description-btn-vegetable');
 
   if (prevBtn) prevBtn.onclick = showPreviousVegetable;
   if (nextBtn) nextBtn.onclick = showNextVegetable;
   if (playSoundBtn) playSoundBtn.onclick = playCurrentVegetableAudio;
 
+  // اللغة: توحيد عبر setLanguage
   if (langSelect) {
-    langSelect.onchange = async () => {
-      const lng = langSelect.value;
-      await loadLanguage(lng);
-      setDirection(lng);
-      applyTranslations();
-      updateVegetableContent();
+    langSelect.value = getCurrentLang();
+    langSelect.onchange = () => setLanguage(langSelect.value);
+    document.addEventListener('languageChanged', updateVegetableContent, { once: false });
+  }
+
+  // زر الوصف
+  if (toggleDescBtn) {
+    const detailsBox =
+      document.getElementById('vegetable-description-box') ||
+      document.querySelector('#vegetables-game .details-area') ||
+      (descEl ? descEl.closest('.info-box') : null);
+    toggleDescBtn.onclick = () => {
+      if (!detailsBox) return;
+      detailsBox.style.display = (detailsBox.style.display === 'none') ? '' : 'none';
+      toggleDescBtn.setAttribute('aria-pressed', detailsBox.style.display !== 'none');
     };
   }
 
@@ -229,23 +213,6 @@ export async function loadVegetablesGameContent() {
   try {
     const colRef = collection(db, 'categories', 'vegetables', 'items');
     const snap = await getDocs(colRef);
-
-    console.log(`[vegetables] fetched count = ${snap.size}`);
-    snap.forEach(doc => {
-      const data = doc.data();
-      console.log(`  • ${doc.id}`, {
-        name: data?.name,
-        image_path: data?.image_path,
-        images: data?.images,
-        image: data?.image,
-        category: data?.category,
-        description: data?.description,
-        sound_base: data?.sound_base,
-        voices: data?.voices ? Object.keys(data.voices) : undefined,
-        sound: data?.sound
-      });
-    });
-
     vegetables = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     const lang = getCurrentLang();
     vegetables.sort((a, b) => (a?.name?.[lang] || '').localeCompare(b?.name?.[lang] || ''));
@@ -261,7 +228,6 @@ export async function loadVegetablesGameContent() {
   currentIndex = 0;
   disableAll(false);
   updateVegetableContent();
-  console.log('[vegetables] initial render done');
 }
 
 export {
