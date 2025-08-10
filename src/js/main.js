@@ -15,9 +15,11 @@ import { loadAlphabetPressGameContent } from "../subjects/alphabet-press-game.js
 import { loadMemoryGameContent }     from "../subjects/memory-game.js";
 import { loadToolsMatchGameContent } from "../subjects/tools-match-game.js";
 
+// 🔐 Firebase Auth (مع تحصين لو لم تكن مهيّأة)
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+
 /* ------------------------------------------------------------------
    تأكيد تحميل ملفات CSS الأساسية (خصوصًا /css/style.css)
-   هذه الدالة تُستدعى عند بدء الموديول، وأيضًا داخل loadPage.
 -------------------------------------------------------------------*/
 function ensureBaseCss() {
   const MUST = [
@@ -25,20 +27,17 @@ function ensureBaseCss() {
     '/css/fonts.css',
     '/css/shared-utilities.css',
     '/css/forms.css',
-	'/css/professions.css',
-	'/css/alphabet-press.css',
-	'/css/human-body.css',
-	'/css/memory-game.css',
-	'/css/tools-match.css',
-	'/css/animals.css',
+    '/css/professions.css',
+    '/css/alphabet-press.css',
+    '/css/human-body.css',
+    '/css/memory-game.css',
+    '/css/tools-match.css',
+    '/css/animals.css',
     '/css/common-components-subjects.css',
-    '/css/style.css', // ← الأهم لتفعيل Grid
-	
+    '/css/style.css'
   ];
 
   const head = document.head || document.getElementsByTagName('head')[0];
-
-  // حوّل كل href إلى Pathname موحّد ثم تأكد من وجوده
   const existing = new Set(
     Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
       .map(l => {
@@ -57,31 +56,63 @@ function ensureBaseCss() {
       appended = true;
     }
   }
-
-  // إن ضُيف style.css الآن، أعطه لحظة ليُحمَّل قبل حساب التخطيط
-  if (appended) {
-    // ممكن ننتظر "idle" لكن هذا كافٍ لمعظم الحالات
-    requestAnimationFrame(() => {});
-  }
+  if (appended) requestAnimationFrame(() => {});
 }
-// استدعاء فوري عند تحميل هذا الملف
 ensureBaseCss();
 
 /* ------------------------- أدوات واجهة بسيطة للسايدبار ------------------------- */
-// لا تُفرّغ القسم الثابت (حسابك)
+// لا تُفرّغ القسم الثابت (مثل «حسابك»)
 function hideAllControls() {
-  // أخفِ وافرغ الأقسام الديناميكية فقط
   document
     .querySelectorAll("#sidebar-section .sidebar-section:not(.static-section)")
     .forEach((sec) => {
       sec.style.display = "none";
       sec.innerHTML = "";
     });
-
-  // تأكد أن السايدبار نفسه ظاهر
   const aside = document.getElementById("sidebar-section");
   if (aside) aside.style.display = "";
 }
+
+/* ------------------------- حساب المستخدم: واجهة الأزرار ------------------------- */
+function attachAccountActionsToSidebar() {
+  // الهدف: التأكد أن كتلة "حسابك" تأتي أسفل أقسام التحكم الديناميكية
+  const aside = document.getElementById('sidebar-section');
+  if (!aside) return;
+
+  const actions = document.getElementById('account-actions');
+  if (!actions) return;
+
+  // إن وُجد غلاف .sidebar-section لكتلة الحساب، انقله ليكون آخر عنصر في الـ aside
+  const wrapper = actions.closest('.sidebar-section') || actions;
+  if (aside.lastElementChild !== wrapper) {
+    aside.appendChild(wrapper);
+  }
+}
+
+function updateAccountActionsUI(user) {
+  const loggedIn = !!user;
+  const setHidden = (id, hidden) => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = hidden;
+  };
+
+  // عند تسجيل الدخول: أخفِ «تسجيل/إنشاء»، وأظهر «ملفي/تقاريري/خروج»
+  setHidden('loginBtn',      loggedIn);
+  setHidden('registerBtn',   loggedIn);
+  setHidden('my-profile-btn',!loggedIn);
+  setHidden('my-report-btn', !loggedIn);
+  setHidden('logoutBtn',     !loggedIn);
+}
+
+async function handleLogout() {
+  try {
+    const auth = getAuth();
+    await signOut(auth);
+  } catch (e) {
+    console.error('Signout error:', e);
+  }
+}
+window.handleLogout = handleLogout; // لاستخدامها من الـ HTML
 
 /* ------------------------- محمل صفحات عام (مُحصَّن) ------------------------- */
 const FRAGMENT_SELECTORS = [
@@ -96,7 +127,6 @@ const FRAGMENT_SELECTORS = [
 async function loadPage(htmlPath, moduleLoader, subjectType) {
   const mainContent = document.getElementById('app-main') || document.querySelector('main.main-content');
   try {
-    // تأكيد روابط CSS في كل تنقل
     ensureBaseCss();
     hideAllControls();
 
@@ -104,7 +134,6 @@ async function loadPage(htmlPath, moduleLoader, subjectType) {
     if (!res.ok) throw new Error(`فشل تحميل الصفحة: ${htmlPath} (status ${res.status})`);
     const html = await res.text();
 
-    // تحصين ضد رجوع index.html بالخطأ
     if (/<\!doctype html>|<html|<header[^>]+top-navbar/i.test(html)) {
       console.warn(`[loader] "${htmlPath}" أعاد وثيقة كاملة (غالبًا index.html). سأحاول استخراج جزء المحتوى فقط.`);
       const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -118,6 +147,9 @@ async function loadPage(htmlPath, moduleLoader, subjectType) {
     if (subjectType) {
       initializeSubjectControls(subjectType);
     }
+
+    // ضَمَن أن «حسابك» في أسفل السايدبار بعد حقن أي تحكّم
+    attachAccountActionsToSidebar();
 
     // تشغيل منطق الصفحة/اللعبة
     if (typeof moduleLoader === 'function') {
@@ -134,7 +166,7 @@ async function loadPage(htmlPath, moduleLoader, subjectType) {
 }
 
 /* ------------------------- ربط الدوال بنافذة المتصفح ------------------------- */
-window.showHomePage        = () => {
+window.showHomePage = () => {
   const main = document.getElementById('app-main') || document.querySelector('main.main-content');
   main.innerHTML = `
     <section id="welcome-message">
@@ -143,6 +175,7 @@ window.showHomePage        = () => {
     </section>
   `;
   hideAllControls();
+  attachAccountActionsToSidebar();
 };
 
 // صفحات المواضيع
@@ -156,7 +189,7 @@ window.loadAlphabetPressPage = () => loadPage("/html/alphabet-press.html", loadA
 window.loadMemoryGamePage    = () => loadPage("/html/memory-game.html",    loadMemoryGameContent,        "memory-game");
 window.loadToolsMatchPage    = () => loadPage("/html/tools-match.html",    loadToolsMatchGameContent,    "tools-match");
 
-// حساب المستخدم
+// حساب المستخدم: تنقلات الصفحات
 window.loadLogin    = () => loadPage("/users/login.html");
 window.loadRegister = () => loadPage("/users/register.html");
 window.loadProfile  = () => loadPage("/users/profile.html");
@@ -167,3 +200,20 @@ window.loadMyReport = () => loadPage("/users/my-report.html");
   const lang = getCurrentLang();
   loadLanguage(lang).then(() => applyTranslations());
 })();
+
+/* ------------------------- تفعيل مراقبة حالة الدخول ------------------------- */
+(function initAuthWatch() {
+  try {
+    const auth = getAuth();
+    onAuthStateChanged(auth, (user) => {
+      updateAccountActionsUI(user);
+    });
+  } catch (e) {
+    console.warn('[auth] Firebase Auth غير مهيّأة بعد. سيتم استخدام الحالة الافتراضية.', e);
+    updateAccountActionsUI(null);
+  }
+})();
+
+// إتاحة الدوال للاستخدام العام (لو احتجتَها في أماكن أخرى)
+window.updateAccountActionsUI = updateAccountActionsUI;
+window.attachAccountActionsToSidebar = attachAccountActionsToSidebar;

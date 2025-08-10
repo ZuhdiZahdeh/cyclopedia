@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>الموسوعة التفاعلية للأطفال</title>
 
-  <!-- روابط CSS عبر %BASE_URL% حتى تعمل على كل بيئة بناء -->
+  <!-- روابط CSS -->
   <link rel="stylesheet" href="%BASE_URL%css/colors.css" />
   <link rel="stylesheet" href="%BASE_URL%css/fonts.css" />
   <link rel="stylesheet" href="%BASE_URL%css/shared-utilities.css" />
@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="%BASE_URL%css/common-components-subjects.css" />
   <link rel="stylesheet" href="%BASE_URL%css/style.css" />
 
-  <!-- تحميل تطبيقك (Vite سيحوّله إلى /assets/*.js في dist) -->
+  <!-- تطبيق Vite -->
   <script type="module" src="%BASE_URL%src/js/main.js"></script>
 </head>
 <body>
@@ -36,17 +36,6 @@
   <div class="page-layout">
     <!-- السايدبار -->
     <aside id="sidebar-section" class="sidebar shadow">
-      <div class="sidebar-section static-section">
-        <h3 class="sidebar-title">👤 حسابك</h3>
-        <div class="account-actions">
-          <a href="#" id="loginBtn" onclick="loadLogin();return false;" class="nav-btn">تسجيل الدخول</a>
-          <a href="#" id="registerBtn" onclick="loadRegister();return false;" class="nav-btn">إنشاء حساب</a>
-          <a href="#" id="my-profile-btn" onclick="loadProfile();return false;" class="nav-btn">الملف الشخصي</a>
-          <a href="#" id="my-report-btn" onclick="loadMyReport();return false;" class="nav-btn">سجل النقاط</a>
-          <a href="#" id="logoutBtn" class="nav-btn" style="display:none;">تسجيل خروج</a>
-        </div>
-      </div>
-
       <!-- أقسام التحكم لكل موضوع (تملؤها initializeSubjectControls) -->
       <div class="sidebar-section" id="animal-sidebar-controls" style="display:none;"></div>
       <div class="sidebar-section" id="fruit-sidebar-controls" style="display:none;"></div>
@@ -57,16 +46,46 @@
       <div class="sidebar-section" id="alphabet-press-sidebar-controls" style="display:none;"></div>
       <div class="sidebar-section" id="memory-game-sidebar-controls" style="display:none;"></div>
       <div class="sidebar-section" id="tools-match-sidebar-controls" style="display:none;"></div>
+
+      <!-- 👤 حسابك — في الأسفل وثابت (لن يتم إخفاؤه بـ hideAllControls) -->
+      <div class="sidebar-section static-section">
+        <h3 class="sidebar-title">👤 حسابك</h3>
+
+        <div class="account-actions" id="account-actions">
+          <button id="loginBtn" type="button" class="nav-btn" onclick="loadLogin()">
+            <span class="icon">🔐</span>
+            <span data-i18n="login">تسجيل الدخول</span>
+          </button>
+
+          <button id="registerBtn" type="button" class="nav-btn" onclick="loadRegister()">
+            <span class="icon">📝</span>
+            <span data-i18n="register">إنشاء حساب</span>
+          </button>
+
+          <button id="my-profile-btn" type="button" class="nav-btn" onclick="loadProfile()" hidden>
+            <span class="icon">👤</span>
+            <span data-i18n="profile">الملف الشخصي</span>
+          </button>
+
+          <button id="my-report-btn" type="button" class="nav-btn" onclick="loadMyReport()" hidden>
+            <span class="icon">🏆</span>
+            <span data-i18n="my_report">سجل النقاط</span>
+          </button>
+
+          <button id="logoutBtn" type="button" class="nav-btn" onclick="handleLogout()" hidden>
+            <span class="icon">🚪</span>
+            <span data-i18n="logout">تسجيل خروج</span>
+          </button>
+        </div>
+      </div>
     </aside>
 
-	<!-- ملاحظة: إضافة id ثابت لتجنّب التقاط <main> خاطئ بعد أي حقن -->
     <!-- المحتوى الرئيسي -->
     <main id="app-main" class="main-content">
       <section id="welcome-message" style="display:block;">
         <h2>مرحبًا بك في الموسوعة!</h2>
         <p>اختر موضوعًا من الشريط بالأعلى أو من السايدبار.</p>
 
-        <!-- كروت البداية -->
         <div id="home-topic-cards-inner" class="home-cards-container">
           <a href="#" class="topic-card animals" onclick="loadAnimalsPage();return false;"><span class="icon">🐾</span><h3>الحيوانات</h3></a>
           <a href="#" class="topic-card fruits" onclick="loadFruitsPage();return false;"><span class="icon">🍎</span><h3>الفواكه</h3></a>
@@ -81,7 +100,5 @@
       </section>
     </main>
   </div>
-
-  <!-- ⚠️ أزلنا السكربت الثاني الثابت الذي كان في آخر الـ body لتجنب الازدواج -->
 </body>
 </html>

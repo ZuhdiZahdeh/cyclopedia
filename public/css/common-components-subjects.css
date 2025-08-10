@@ -126,6 +126,97 @@
 .topic-container .details-area .line{ margin:.35rem 0; }
 
 .clickable-text, .clickable-image{ cursor:pointer; }
+/* =========================
+   Account Actions (Sidebar)
+   ========================= */
+
+/* حاوية أزرار الحساب — ضَعها أسفل أقسام التحكم */
+.account-actions{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid var(--color-border);
+  background:transparent;
+  direction:inherit; /* يحترم RTL/LTR الحالي */
+}
+
+/* اجعلها ملازمة لأسفل السايدبار (اختياري) */
+.account-actions.sticky{
+  position:sticky;
+  bottom:0;
+  background:linear-gradient(to top, var(--color-surface) 70%, transparent);
+  padding-bottom:10px;
+  z-index:1;
+}
+
+/* تنسيق الأزرار داخل منطقة الحساب فقط
+   (لا يؤثر على أزرار/روابط أخرى تحمل .nav-btn في الهيدر) */
+.account-actions .nav-btn,
+.account-actions .account-btn{
+  display:flex; align-items:center; justify-content:center; gap:.55rem;
+  width:100%;
+  padding:12px 14px;
+  border-radius:16px;
+  border:2px solid var(--color-border);
+  background:var(--color-surface);
+  color:var(--color-text-primary);
+  font-weight:700;
+  box-shadow:0 2px 6px var(--color-shadow);
+  cursor:pointer;
+  text-decoration:none; /* لو كانت <a> */
+  transition:transform .06s ease, box-shadow .2s ease,
+             background-color .2s ease, border-color .2s ease, color .2s ease;
+  line-height:1.2;
+}
+
+.account-actions .nav-btn:hover,
+.account-actions .account-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 4px 12px var(--color-shadow);
+}
+
+.account-actions .nav-btn:active,
+.account-actions .account-btn:active{
+  transform:translateY(0);
+}
+
+.account-actions .nav-btn:focus-visible,
+.account-actions .account-btn:focus-visible{
+  outline:3px solid var(--color-focus, #3b82f6);
+  outline-offset:2px;
+}
+
+.account-actions .nav-btn .icon,
+.account-actions .account-btn .icon{
+  font-size:1.1em; line-height:1;
+}
+
+/* ألوان افتراضية للأزرار حسب الزر (يمكنك تعديلها لاحقاً بسهولة) */
+.account-actions #loginBtn{
+  background:var(--color-accent);
+  border-color:var(--color-accent);
+  color:#fff;
+}
+
+.account-actions #registerBtn{
+  background:transparent;
+  color:var(--color-accent);
+  border-color:var(--color-accent);
+}
+
+.account-actions #my-profile-btn,
+.account-actions #my-report-btn{
+  /* افتراضي راقٍ */
+}
+
+.account-actions #logoutBtn{
+  --danger: var(--color-danger, #e53935);
+  background:var(--danger);
+  border-color:var(--danger);
+  color:#fff;
+}
 
 /* Responsive */
 @media (max-width:700px){
