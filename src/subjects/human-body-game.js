@@ -1,5 +1,5 @@
 // src/subjects/human-body-game.js
-// صفحة أجزاء الجسم — متوافقة مع بنية المواضيع الموحدة
+// صفحة أجزاء الجسم — Carousel + مسارات human-body/human_body + سايدبار جاهز
 
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
@@ -97,7 +97,7 @@ function buildAudioCandidates(d, lang, voice){
   return Array.from(new Set(AUDIO_BODY_DIRS.map(dir => `/audio/${lang}/${dir}/${f}`)));
 }
 
-/* ===================== التسمية (تساقط لطيف + i18n) ===================== */
+/* ===================== التسمية (i18n + تساقط لطيف) ===================== */
 function setHighlightedName(el, name){
   if (!el) return;
   if (!name) { el.textContent = ''; return; }
@@ -107,17 +107,14 @@ function setHighlightedName(el, name){
 }
 
 function getDisplayName(d, lang){
-  // 1) من الحقول مباشرة
   if (d?.name?.[lang]) return d.name[lang];
 
-  // 2) من مفاتيح الترجمة (لو متوفرة في ملفات i18n)
   const key = (d?.slug) || (d?.id) || (d?.name?.en) || (d?.name?.ar) || (d?.word) || '';
   const k = String(key).toLowerCase().replace(/\s+/g, '_');
   const dict = window.translations || {};
   const t = (dict.body_words?.[k]) || (dict.body?.[k]);
   if (t && t[lang]) return t[lang];
 
-  // 3) سقوط أنيق
   return d?.name?.ar || d?.name?.en || d?.name?.he || d?.title || d?.word || '';
 }
 
@@ -142,7 +139,6 @@ function buildCarousel(displayName){
 
   if (!currentPartImages || currentPartImages.length <= 1) return;
 
-  // أزرار تنقل
   const prevBtn = document.createElement('button');
   prevBtn.id = 'body-carousel-prev';
   prevBtn.className = 'carousel-nav prev';
@@ -166,7 +162,6 @@ function buildCarousel(displayName){
     syncThumbsActive();
   };
 
-  // مصغّرات
   const thumbs = document.createElement('div');
   thumbs.id = 'body-carousel-thumbs';
   thumbs.className = 'carousel-thumbs';
@@ -228,7 +223,6 @@ function updateBodyContent(){
     wordEl.onclick = playCurrentBodyAudio;
   }
 
-  // صور + كاروسيل
   currentPartImages = buildImageCandidates(d, lang);
   currentImageIndex = 0;
 
@@ -277,32 +271,38 @@ export async function playCurrentBodyAudio(){
       stopCurrentAudio();
       const maybe = playAudio(src);
       if (maybe && typeof maybe.then === 'function') await maybe;
-      return; // أول مسار ينجح
+      return;
     } catch { /* جرّب التالي */ }
   }
   console.warn('[body][audio] لا يوجد مصدر صوت صالح لهذا العنصر:', currentPartData?.id);
 }
 
-/* ===================== جلب البيانات (مع تقليل أخطاء الصلاحيات) ===================== */
+/* ===================== جلب البيانات (يطبع المسار الناجح) ===================== */
 async function fetchBodyParts(){
-  const candidates = [
+  const paths = [
     ['human-body'],
     ['human_body'],
     ['body'],
-    // أزلنا مسارات categories لتقليل أخطاء الصلاحيات — أعدها إن كانت لديك فعلاً
+    ['categories','human-body','items'],
+    ['categories','human_body','items'],
+    ['categories','body','items'],
   ];
-  for (const segs of candidates){
+  parts = [];
+  for (const segs of paths){
     try {
       const snap = await getDocs(collection(db, ...segs));
       if (!snap.empty) {
         parts = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log('[body] ✅ fetched from:', segs.join('/'), 'count =', parts.length);
         return;
+      } else {
+        console.log('[body] empty:', segs.join('/'));
       }
     } catch (e) {
-      console.warn('[body] فشل جلب', segs.join('/'), e);
+      console.warn('[body] fetch failed:', segs.join('/'), e?.code || e?.message || e);
     }
   }
-  parts = [];
+  console.error('[body] ❌ no collection returned data. Check your path & rules.');
 }
 
 /* ===================== تحميل السايدبار ===================== */
@@ -311,7 +311,7 @@ async function ensureBodySidebar(){
   if (!sidebar) return;
 
   let container = document.getElementById('human-body-sidebar-controls');
-  if (container) return;
+  if (container) { container.style.display = 'block'; return; }
 
   try {
     const resp = await fetch('/html/human-body-controls.html', { cache: 'no-store' });
@@ -319,6 +319,10 @@ async function ensureBodySidebar(){
     const tmp = document.createElement('div');
     tmp.innerHTML = html.trim();
     container = tmp.firstElementChild;
+
+    container.id = 'human-body-sidebar-controls';
+    container.classList.add('subject-controls');
+    container.style.display = 'block';
 
     const accountSection = sidebar.querySelector('.static-section'); // 👤 حسابك
     if (accountSection) {
@@ -348,7 +352,6 @@ export async function loadHumanBodyGameContent(){
     const html = await resp.text();
     main.innerHTML = html;
   } catch {
-    // احتياط بسيط
     main.innerHTML = `
       <section id="human-body-game" class="topic-container subject-page">
         <div class="game-box">
@@ -365,10 +368,20 @@ export async function loadHumanBodyGameContent(){
     `;
   }
 
-  // حمّل السايدبار ورتّبه قبل قسم الحساب
   await ensureBodySidebar();
 
-  // عناصر السايدبار
+  // أظهر قسم الجسم وأخفِ بقية الأقسام الخاصة بالمواضيع
+  try {
+    if (window.hideAllControls && window.showSubjectControls) {
+      window.hideAllControls();
+      window.showSubjectControls('human-body');
+    } else {
+      document.querySelectorAll('.sidebar-section[id$="-sidebar-controls"]').forEach(sec => {
+        sec.style.display = (sec.id === 'human-body-sidebar-controls') ? 'block' : 'none';
+      });
+    }
+  } catch {}
+
   const prevBtn       = pick('prev-body-btn');
   const nextBtn       = pick('next-body-btn');
   const playSoundBtn  = pick('play-sound-btn-body');
@@ -379,14 +392,12 @@ export async function loadHumanBodyGameContent(){
   if (prevBtn)      prevBtn.onclick = showPreviousBodyPart;
   if (nextBtn)      nextBtn.onclick = showNextBodyPart;
   if (playSoundBtn) playSoundBtn.onclick = playCurrentBodyAudio;
-
   if (toggleDescBtn){
     toggleDescBtn.onclick = () => {
       const box = document.getElementById('body-description-box') || document.querySelector('#human-body-game .details-area');
       if (box) box.style.display = (box.style.display === 'none' ? 'block' : 'none');
     };
   }
-
   if (langSelect){
     try { langSelect.value = getCurrentLang(); } catch {}
     langSelect.onchange = async () => {
@@ -394,7 +405,7 @@ export async function loadHumanBodyGameContent(){
       await loadLanguage(lng);
       setDirection(lng);
       applyTranslations();
-      updateBodyContent(); // مهم لتحديث الاسم/الصورة حسب اللغة
+      updateBodyContent(); // تحديث الاسم/الصورة حسب اللغة
     };
   }
   if (voiceSelect && !voiceSelect.value) voiceSelect.value = 'teacher';
@@ -431,7 +442,6 @@ export async function loadHumanBodyGameContent(){
   applyTranslations();
   setDirection(lang);
 
-  // إتاحة دوال على window (اختياري)
   if (typeof window !== 'undefined') {
     window.loadHumanBodyGameContent = loadHumanBodyGameContent;
     window.showNextBodyPart = showNextBodyPart;

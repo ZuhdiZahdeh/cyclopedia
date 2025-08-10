@@ -1,4 +1,5 @@
 // src/subjects/tools-game.js
+// صفحة الأدوات — متوافقة مع بنية المواضيع الموحدة + سايدبار جاهز + Carousel + مسارات احتياطية
 
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
@@ -6,15 +7,16 @@ import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '.
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 
+/* ===================== حالة الصفحة ===================== */
 let tools = [];
 let currentIndex = 0;
 let currentToolData = null;
 
-// لحالة الكاروسيل
+// للكاروسيل
 let currentToolImages = [];
 let currentImageIndex = 0;
 
-/* ===================== أدوات مساعدة عامة ===================== */
+/* ===================== أدوات عامة ومسارات ===================== */
 const pick = (...ids) => {
   for (const id of ids) {
     const el = document.getElementById(id);
@@ -23,100 +25,79 @@ const pick = (...ids) => {
   return null;
 };
 const isAbs = (p) => /^https?:\/\//i.test(p) || /^data:/i.test(p) || /^blob:/i.test(p);
-const TOOL_IMAGE_BASE = '/images/profession_tools/';
+const norm = (s) => String(s || '').trim().replace(/^\.?[\\/]+/, '').replace(/\\/g, '/');
 
-function normalizeImagePath(p) {
-  if (!p) return null;
-  p = String(p).trim();
-  if (!p) return null;
-  if (isAbs(p) || p.startsWith('/')) return p;
-  p = p.replace(/^\.?[\\/]+/, '').replace(/\\/g, '/');
-  if (p.startsWith('images/')) return '/' + p;
-  if (p.startsWith('profession_tools/')) return '/images/' + p;
-  return TOOL_IMAGE_BASE + p;
-}
-function pickFromImages(images, lang){
-  if (!images) return null;
-  if (Array.isArray(images)) {
-    // ابحث عن أول قيمة صالحة
-    for (const it of images) {
-      if (typeof it === 'string') return it;
-      if (it && typeof it === 'object') {
-        if (it[lang]) return it[lang];
-        if (it.main) return it.main;
-        if (it.src)  return it.src;
-        const first = Object.values(it).find(v => typeof v === 'string');
-        if (first) return first;
-      }
-    }
-    return null;
-  }
-  if (typeof images === 'object') {
-    if (images[lang]) return images[lang];
-    if (images.main) return images.main;
-    if (images.default) return images.default;
-    const first = Object.values(images).find(v => typeof v === 'string');
-    return first || null;
-  }
-  return null;
-}
-function getToolImagePath(d, lang){
-  if (typeof d?.image_path === 'string' && d.image_path.trim()){
-    return normalizeImagePath(d.image_path);
-  }
-  const alt = pickFromImages(d?.images, lang) || d?.image;
-  return alt ? normalizeImagePath(alt) : '/images/default.png';
-}
-function getToolImageList(d, lang){
-  const list = [];
+// مجلدات الصور المحتملة (مرونة للأسماء)
+const TOOL_IMAGE_DIRS = [
+  '/images/profession_tools/',
+  '/images/tools/',
+  '/images/profession-tools/',
+  '/images/professions_tools/',
+];
 
-  // أولوية 1: مصفوفة images
+// مجلدات الصوت المحتملة
+const AUDIO_TOOLS_DIRS = [
+  'tools',
+  'profession_tools',
+  'profession-tools',
+  'tool',
+];
+
+/* ===================== تجهيز الصور (مع بدائل) ===================== */
+function buildImageCandidates(d, lang){
+  const names = [];
+
+  if (d?.image_path) names.push(d.image_path);
+
   if (Array.isArray(d?.images)) {
     for (const it of d.images) {
-      let src = null;
-      if (typeof it === 'string') src = it;
-      else if (it && typeof it === 'object') src = it[lang] || it.main || it.src || it.default || null;
-      if (src) list.push(normalizeImagePath(src));
+      if (typeof it === 'string') names.push(it);
+      else if (it && typeof it === 'object') names.push(it[lang] || it.main || it.src || it.default);
     }
+  } else if (d?.images && typeof d.images === 'object') {
+    names.push(d.images[lang] || d.images.main || d.images.default);
   }
 
-  // أولوية 2: كائن images متعدد اللغات
-  if (!list.length && d?.images && typeof d.images === 'object') {
-    const src = pickFromImages(d.images, lang);
-    if (src) list.push(normalizeImagePath(src));
-  }
+  if (d?.image) names.push(d.image);
 
-  // أولوية 3: image_path / image منفردة
-  if (!list.length) {
-    const one = getToolImagePath(d, lang);
-    if (one) list.push(one);
+  const candidates = [];
+  for (let s of Array.from(new Set(names.filter(Boolean)))) {
+    s = norm(s);
+    if (isAbs(s) || s.startsWith('/')) { candidates.push(s); continue; }
+    if (s.startsWith('images/'))       { candidates.push('/' + s); continue; }
+    for (const base of TOOL_IMAGE_DIRS) candidates.push(base + s);
   }
-
-  // إزالة التكرار والقيم الفارغة
-  return Array.from(new Set(list.filter(Boolean)));
+  return Array.from(new Set(candidates));
 }
 
-/* ===================== أدوات الصوت ===================== */
-function getToolAudioPath(d, lang, voiceType){
-  const key = `${voiceType}_${lang}`;
-  let file;
+function setImageWithFallback(imgEl, candidates){
+  let i = 0;
+  const tryNext = () => {
+    if (!imgEl) return;
+    if (i >= candidates.length) { imgEl.src = '/images/default.png'; return; }
+    imgEl.onerror = () => { i++; tryNext(); };
+    imgEl.src = candidates[i];
+  };
+  tryNext();
+}
 
-  if (d?.voices && d.voices[key]) {
-    file = d.voices[key];
-  } else if (d?.sound_base) {
-    file = `${d.sound_base}_${voiceType}_${lang}.mp3`;
-  } else if (d?.sound && d.sound[lang] && d.sound[lang][voiceType]) {
-    file = d.sound[lang][voiceType];
-  } else if (typeof d?.audio === 'string') {
-    file = d.audio;
-  } else {
-    return null;
-  }
-  return (isAbs(file) || file.startsWith('/')) ? file : `/audio/${lang}/tools/${file}`;
+/* ===================== تجهيز الصوت (مع بدائل) ===================== */
+function buildAudioCandidates(d, lang, voice){
+  const key = `${voice}_${lang}`;
+  let file = null;
+
+  if (d?.voices && d.voices[key]) file = d.voices[key];
+  else if (d?.sound_base)         file = `${d.sound_base}_${voice}_${lang}.mp3`;
+  else if (d?.sound?.[lang]?.[voice]) file = d.sound[lang][voice];
+  else if (typeof d?.audio === 'string') file = d.audio;
+
+  if (!file) return [];
+  const f = norm(file);
+  if (isAbs(f) || f.startsWith('/')) return [f];
+  return Array.from(new Set(AUDIO_TOOLS_DIRS.map(dir => `/audio/${lang}/${dir}/${f}`)));
 }
-function translateProfessionKey(key){
-  return (window.translations?.professions?.[key]) || key;
-}
+
+/* ===================== التسمية وتسليط أول حرف ===================== */
 function setHighlightedName(el, name){
   if (!el) return;
   if (!name) { el.textContent = ''; return; }
@@ -125,7 +106,12 @@ function setHighlightedName(el, name){
   el.innerHTML = `<span class="highlight-first-letter">${first}</span>${chars.slice(1).join('')}`;
 }
 
-/* ===================== كاروسيل الصور ===================== */
+/* ===================== ترجمة أسماء المهن المرتبطة ===================== */
+function translateProfessionKey(key){
+  return (window.translations?.professions?.[key]) || key;
+}
+
+/* ===================== Carousel ===================== */
 function clearCarousel(){
   const area = document.querySelector('#tools-game .image-area');
   if (!area) return;
@@ -146,7 +132,6 @@ function buildCarousel(displayName){
 
   if (!currentToolImages || currentToolImages.length <= 1) return;
 
-  // أزرار تنقل
   const prevBtn = document.createElement('button');
   prevBtn.id = 'tool-carousel-prev';
   prevBtn.className = 'carousel-nav prev';
@@ -170,7 +155,6 @@ function buildCarousel(displayName){
     syncThumbsActive();
   };
 
-  // مصغّرات
   const thumbs = document.createElement('div');
   thumbs.id = 'tool-carousel-thumbs';
   thumbs.className = 'carousel-thumbs';
@@ -202,7 +186,7 @@ function syncThumbsActive(){
   });
 }
 
-/* ===================== عرض الأداة الحالية ===================== */
+/* ===================== العرض ===================== */
 function updateToolContent(){
   const lang = getCurrentLang();
 
@@ -237,18 +221,16 @@ function updateToolContent(){
     wordEl.onclick = playCurrentToolAudio;
   }
 
-  // صور: المفضّل قائمة كاملة + كاروسيل
-  currentToolImages = getToolImageList(d, lang);
+  currentToolImages = buildImageCandidates(d, lang);
   currentImageIndex = 0;
 
   if (imgEl){
-    imgEl.src = currentToolImages[0] || '/images/default.png';
+    setImageWithFallback(imgEl, currentToolImages.length ? currentToolImages : ['/images/default.png']);
     imgEl.alt = displayName || '';
     imgEl.classList.add('clickable-image');
     imgEl.onclick = playCurrentToolAudio;
   }
 
-  // بناء الكاروسيل (لو أكثر من صورة)
   buildCarousel(displayName);
 
   if (descEl){
@@ -280,15 +262,21 @@ export function showPreviousTool(){
   updateToolContent();
   try { const user = JSON.parse(localStorage.getItem('user')); if (user) recordActivity(user, 'tools'); } catch {}
 }
-export function playCurrentToolAudio(){
+export async function playCurrentToolAudio(){
   if (!tools.length || !currentToolData) return;
   const lang  = (pick('game-lang-select-tools')?.value) || getCurrentLang();
   const voice = (pick('voice-select-tools')?.value) || 'teacher';
-  const audio = getToolAudioPath(currentToolData, lang, voice);
-  if (!audio) return;
-  stopCurrentAudio();
-  playAudio(audio);
-  try { const user = JSON.parse(localStorage.getItem('user')); if (user) recordActivity(user, 'tools_audio'); } catch {}
+
+  const candidates = buildAudioCandidates(currentToolData, lang, voice);
+  for (const src of candidates){
+    try {
+      stopCurrentAudio();
+      const maybe = playAudio(src);
+      if (maybe && typeof maybe.then === 'function') await maybe;
+      return;
+    } catch { /* جرّب التالي */ }
+  }
+  console.warn('[tools][audio] لا يوجد مصدر صوت صالح لهذا العنصر:', currentToolData?.id);
 }
 
 /* ===================== جلب البيانات ===================== */
@@ -297,17 +285,22 @@ async function fetchTools(){
     const snap = await getDocs(collection(db, 'profession_tools'));
     if (!snap.empty) {
       tools = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log('[tools] ✅ fetched from: profession_tools | count =', tools.length);
       return;
+    } else {
+      console.log('[tools] empty: profession_tools');
     }
   } catch (e) {
     console.warn('[tools] فشل جلب profession_tools:', e);
   }
-  // مسار قديم كاحتياط
   try {
     const snap = await getDocs(collection(db, 'categories', 'tools', 'items'));
     if (!snap.empty) {
       tools = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log('[tools] ✅ fetched from: categories/tools/items | count =', tools.length);
       return;
+    } else {
+      console.log('[tools] empty: categories/tools/items');
     }
   } catch (e) {
     console.warn('[tools] فشل جلب categories/tools/items:', e);
@@ -315,34 +308,61 @@ async function fetchTools(){
   tools = [];
 }
 
-/* ===================== تحميل السايدبار (controls) ===================== */
+/* ===================== تحميل السايدبار (robust) ===================== */
 async function ensureToolsSidebar(){
   const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
-  if (!sidebar) return;
+  if (!sidebar) { console.warn('[tools] sidebar not found'); return null; }
 
   let container = document.getElementById('tools-sidebar-controls');
-  if (container) return; // موجود مسبقاً
+  if (container) { container.style.display = 'block'; return container; }
 
+  const FALLBACK_HTML = `
+  <div class="sidebar-section subject-controls" id="tools-sidebar-controls" style="display:block;">
+    <h3 class="sidebar-title" data-i18n="tools.controls_title">🧰 أدوات — التحكم</h3>
+    <div class="controls-grid">
+      <button id="prev-tools-btn" class="control-btn" data-i18n="common.prev">السابق</button>
+      <button id="next-tools-btn" class="control-btn" data-i18n="common.next">التالي</button>
+      <button id="play-sound-btn-tools" class="control-btn" data-i18n="common.listen">استمع</button>
+      <button id="toggle-description-btn-tools" class="control-btn" data-i18n="common.toggle_description">الوصف</button>
+
+      <label for="voice-select-tools" class="control-label" data-i18n="common.voice">نوع الصوت</label>
+      <select id="voice-select-tools" class="select-control">
+        <option value="teacher" data-i18n="voices.teacher">المعلم</option>
+        <option value="boy"     data-i18n="voices.boy">ولد</option>
+        <option value="girl"    data-i18n="voices.girl">بنت</option>
+      </select>
+
+      <label for="game-lang-select-tools" class="control-label" data-i18n="common.language">اللغة</label>
+      <select id="game-lang-select-tools" class="select-control">
+        <option value="ar">العربية</option>
+        <option value="en">English</option>
+        <option value="he">עברית</option>
+      </select>
+    </div>
+  </div>`;
+
+  let html = '';
   try {
     const resp = await fetch('/html/tools-controls.html', { cache: 'no-store' });
-    const html = await resp.text();
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html.trim();
-    container = tmp.firstElementChild;
-
-    const accountSection = sidebar.querySelector('.static-section'); // 👤 حسابك
-    if (accountSection) {
-      sidebar.insertBefore(container, accountSection);
-    } else {
-      sidebar.appendChild(container);
-    }
-
-    // عرّب النصوص فور الإدراج
-    applyTranslations();
-
+    if (resp.ok) html = await resp.text();
   } catch (e) {
-    console.warn('[tools] تعذّر تحميل tools-controls.html:', e);
+    console.warn('[tools] controls fetch error:', e);
   }
+
+  const tmp = document.createElement('div');
+  tmp.innerHTML = (html || FALLBACK_HTML).trim();
+  container = tmp.firstElementChild;
+
+  container.id = 'tools-sidebar-controls';
+  container.classList.add('subject-controls');
+  container.style.display = 'block';
+
+  const accountSection = sidebar.querySelector('.static-section');
+  accountSection ? sidebar.insertBefore(container, accountSection) : sidebar.appendChild(container);
+
+  applyTranslations();
+  console.log('[tools][controls] mounted', html ? 'from file' : 'from fallback');
+  return container;
 }
 
 /* ===================== تحميل الصفحة ===================== */
@@ -350,7 +370,6 @@ export async function loadToolsGameContent(){
   console.log('[tools] loadToolsGameContent()');
   stopCurrentAudio();
 
-  // حقن هيكل HTML إن لم يكن موجودًا
   const main = document.querySelector('main.main-content');
   if (!main){
     console.error('لم يتم العثور على main.main-content');
@@ -361,7 +380,6 @@ export async function loadToolsGameContent(){
     const html = await resp.text();
     main.innerHTML = html;
   } catch {
-    //Fallback بسيط لو فشل الجلب
     main.innerHTML = `
       <section id="tools-game" class="topic-container subject-page">
         <div class="game-box">
@@ -381,9 +399,22 @@ export async function loadToolsGameContent(){
   }
 
   // حمّل السايدبار ورتّبه قبل قسم الحساب
-  await ensureToolsSidebar();
+  const controls = await ensureToolsSidebar();
+  if (!controls) { console.warn('[tools] controls not mounted'); return; }
 
-  // عناصر السايدبار
+  // أظهر قسم الأدوات وأخفِ بقية أقسام المواضيع
+  try {
+    if (window.hideAllControls && window.showSubjectControls) {
+      window.hideAllControls();
+      window.showSubjectControls('tools');
+    } else {
+      document.querySelectorAll('.sidebar-section[id$="-sidebar-controls"]').forEach(sec => {
+        sec.style.display = (sec.id === 'tools-sidebar-controls') ? 'block' : 'none';
+      });
+    }
+  } catch {}
+
+  // عناصر السايدبار + توصيل
   const prevBtn       = pick('prev-tools-btn');
   const nextBtn       = pick('next-tools-btn');
   const playSoundBtn  = pick('play-sound-btn-tools');
@@ -401,7 +432,6 @@ export async function loadToolsGameContent(){
     };
   }
   if (langSelect){
-    // ضبط قيمة البداية حسب لغة الواجهة
     try { langSelect.value = getCurrentLang(); } catch {}
     langSelect.onchange = async () => {
       const lng = langSelect.value;
@@ -447,7 +477,7 @@ export async function loadToolsGameContent(){
   applyTranslations();
   setDirection(lang);
 
-  // إتاحة الدوال على window (للاستدعاء من HTML إن لزم)
+  // نصدّر دوال للاستخدام من HTML إن لزم
   if (typeof window !== 'undefined') {
     window.loadToolsGameContent = loadToolsGameContent;
     window.showNextTool = showNextTool;
