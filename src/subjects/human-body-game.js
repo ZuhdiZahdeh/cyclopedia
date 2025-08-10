@@ -1,251 +1,381 @@
 // src/subjects/human-body-game.js
+
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 
-/* --------------------- حالة الصفحة --------------------- */
-let items = [];
+let parts = [];
 let currentIndex = 0;
-let currentData = null;
+let currentPartData = null;
 
-// عناصر المحتوى (نلتقطها بمرونة مع أكثر من id محتمل)
-let wordEl, imgEl, catEl, descEl;
-// عناصر السايدبار الخاصة بالموضوع (اختيارية إن وُجدت)
-let prevBtn, nextBtn, playSoundBtn, voiceSelect, langSelect;
+// للكاروسيل
+let currentPartImages = [];
+let currentImageIndex = 0;
 
-/* --------------------- أدوات مساعدة عامة --------------------- */
-function pickEl(...ids) {
+/* ===================== أدوات مساعدة عامة ===================== */
+const pick = (...ids) => {
   for (const id of ids) {
     const el = document.getElementById(id);
     if (el) return el;
   }
   return null;
-}
+};
+const isAbs = (p) => /^https?:\/\//i.test(p) || /^data:/i.test(p) || /^blob:/i.test(p);
+const BODY_IMAGE_BASE = '/images/human_body/';
 
-function isAbsoluteUrl(p) {
-  return /^https?:\/\//i.test(p) || /^data:/i.test(p) || /^blob:/i.test(p);
-}
-
-function normalizeAssetPath(p, baseCandidates) {
+function normalizeImagePath(p) {
   if (!p) return null;
   p = String(p).trim();
   if (!p) return null;
-
-  // لو مطلق (URL) أو يبدأ بـ /
-  if (isAbsoluteUrl(p) || p.startsWith('/')) return p;
-
-  // أزل ./ أو / في البداية
-  p = p.replace(/^\.?\/*/, '');
-
-  // لو أُعطي مسارًا يبدأ بـ images/ أو audio/ فثبّته ببساطة
-  if (p.startsWith('images/') || p.startsWith('audio/')) return '/' + p;
-
-  // لو أُعطي مسارًا نسبيًا يتضمن المجلد الصحيح فعلًا
-  for (const base of baseCandidates) {
-    const baseNoSlash = base.replace(/^\//, '');
-    if (p.startsWith(baseNoSlash)) return '/' + p;
-  }
-
-  // خلاف ذلك: عامله كاسم ملف داخل أول قاعدة
-  return baseCandidates[0] + p;
+  if (isAbs(p) || p.startsWith('/')) return p;
+  p = p.replace(/^\.?[\\/]+/, '').replace(/\\/g, '/');
+  if (p.startsWith('images/')) return '/' + p;
+  if (p.startsWith('human_body/')) return '/images/' + p;
+  return BODY_IMAGE_BASE + p;
 }
-
-function pickFromImages(images, lang) {
+function pickFromImages(images, lang){
   if (!images) return null;
-
-  // Array
   if (Array.isArray(images)) {
-    const item = images.find(v => typeof v === 'string' || (v && typeof v.src === 'string'));
-    if (!item) return null;
-    return typeof item === 'string' ? item : (item[lang] || item.src || item.main || null);
+    for (const it of images) {
+      if (typeof it === 'string') return it;
+      if (it && typeof it === 'object') {
+        if (it[lang]) return it[lang];
+        if (it.main) return it.main;
+        if (it.src)  return it.src;
+        const first = Object.values(it).find(v => typeof v === 'string');
+        if (first) return first;
+      }
+    }
+    return null;
   }
-
-  // Object
   if (typeof images === 'object') {
     if (images[lang]) return images[lang];
     if (images.main) return images.main;
     if (images.default) return images.default;
-    const firstVal = Object.values(images).find(v => typeof v === 'string');
-    if (firstVal) return firstVal;
+    const first = Object.values(images).find(v => typeof v === 'string');
+    return first || null;
   }
   return null;
 }
+function getPartImagePath(d, lang){
+  if (typeof d?.image_path === 'string' && d.image_path.trim()){
+    return normalizeImagePath(d.image_path);
+  }
+  const alt = pickFromImages(d?.images, lang) || d?.image;
+  return alt ? normalizeImagePath(alt) : '/images/default.png';
+}
+function getPartImageList(d, lang){
+  const list = [];
 
-/* --------------------- الصور والصوت (مرن) --------------------- */
-const IMAGE_BASES = ['/images/human_body/', '/images/human-body/', '/images/body/'];
-
-function getBodyImagePath(d, lang) {
-  // 1) image_path
-  if (typeof d?.image_path === 'string' && d.image_path.trim()) {
-    const path = normalizeAssetPath(d.image_path, IMAGE_BASES);
-    console.log('[body][img] image_path →', path);
-    return path;
+  if (Array.isArray(d?.images)) {
+    for (const it of d.images) {
+      let src = null;
+      if (typeof it === 'string') src = it;
+      else if (it && typeof it === 'object') src = it[lang] || it.main || it.src || it.default || null;
+      if (src) list.push(normalizeImagePath(src));
+    }
   }
-  // 2) images
-  const fromImages = pickFromImages(d?.images, lang);
-  if (fromImages) {
-    const path = normalizeAssetPath(fromImages, IMAGE_BASES);
-    console.log('[body][img] images →', path);
-    return path;
+  if (!list.length && d?.images && typeof d.images === 'object') {
+    const src = pickFromImages(d.images, lang);
+    if (src) list.push(normalizeImagePath(src));
   }
-  // 3) image (اسم ملف)
-  if (typeof d?.image === 'string' && d.image.trim()) {
-    const path = normalizeAssetPath(d.image, IMAGE_BASES);
-    console.log('[body][img] image →', path);
-    return path;
+  if (!list.length) {
+    const one = getPartImagePath(d, lang);
+    if (one) list.push(one);
   }
-  console.warn('[body][img] لا يوجد حقل صورة صالح:', d?.id);
-  return null;
+  return Array.from(new Set(list.filter(Boolean)));
 }
 
-function audioBases(lang) {
-  return [`/audio/${lang}/human_body/`, `/audio/${lang}/human-body/`, `/audio/${lang}/body/`];
-}
-
-function getBodyAudioPath(d, lang, voiceType) {
+/* ===================== الصوت ===================== */
+function getPartAudioPath(d, lang, voiceType){
   const key = `${voiceType}_${lang}`;
   let file;
 
   if (d?.voices && d.voices[key]) {
     file = d.voices[key];
-    console.log(`[body][audio] voices[${key}] → ${file}`);
   } else if (d?.sound_base) {
     file = `${d.sound_base}_${voiceType}_${lang}.mp3`;
-    console.warn(`[body][audio] via sound_base → ${file}`);
   } else if (d?.sound && d.sound[lang] && d.sound[lang][voiceType]) {
     file = d.sound[lang][voiceType];
-    console.log(`[body][audio] legacy map → ${file}`);
   } else if (typeof d?.audio === 'string') {
     file = d.audio;
-    console.log('[body][audio] audio (flat) →', file);
   } else {
-    console.error('[body][audio] لا يوجد صوت لهذا العنصر:', d?.name?.[lang] || d?.id);
     return null;
   }
 
-  return normalizeAssetPath(file, audioBases(lang));
+  // إن لم يكن مسارًا مطلقًا/جذريًا، ابنِه داخل مجلد body (وسيعمل مع human_body أيضًا لو كان الاسم كاملاً)
+  return (isAbs(file) || file.startsWith('/')) ? file : `/audio/${lang}/body/${file}`;
 }
 
-/* --------------------- واجهة --------------------- */
-function setDisabled(dis) {
-  [prevBtn, nextBtn, playSoundBtn, voiceSelect, langSelect].forEach(el => el && (el.disabled = !!dis));
+function setHighlightedName(el, name){
+  if (!el) return;
+  if (!name) { el.textContent = ''; return; }
+  const chars = [...name];
+  const first = chars[0] || '';
+  el.innerHTML = `<span class="highlight-first-letter">${first}</span>${chars.slice(1).join('')}`;
 }
 
-function updateBodyContent() {
+/* ===================== كاروسيل ===================== */
+function clearCarousel(){
+  const area = document.querySelector('#human-body-game .image-area');
+  if (!area) return;
+  const oldThumbs = area.querySelector('#body-carousel-thumbs');
+  const oldPrev   = area.querySelector('#body-carousel-prev');
+  const oldNext   = area.querySelector('#body-carousel-next');
+  if (oldThumbs) oldThumbs.remove();
+  if (oldPrev) oldPrev.remove();
+  if (oldNext) oldNext.remove();
+}
+
+function buildCarousel(displayName){
+  const area = document.querySelector('#human-body-game .image-area');
+  const mainImg = pick('body-image');
+  if (!area || !mainImg) return;
+
+  clearCarousel();
+
+  if (!currentPartImages || currentPartImages.length <= 1) return;
+
+  const prevBtn = document.createElement('button');
+  prevBtn.id = 'body-carousel-prev';
+  prevBtn.className = 'carousel-nav prev';
+  prevBtn.setAttribute('aria-label', 'Previous');
+  prevBtn.textContent = '‹';
+
+  const nextBtn = document.createElement('button');
+  nextBtn.id = 'body-carousel-next';
+  nextBtn.className = 'carousel-nav next';
+  nextBtn.setAttribute('aria-label', 'Next');
+  nextBtn.textContent = '›';
+
+  prevBtn.onclick = () => {
+    currentImageIndex = (currentImageIndex - 1 + currentPartImages.length) % currentPartImages.length;
+    mainImg.src = currentPartImages[currentImageIndex];
+    syncThumbsActive();
+  };
+  nextBtn.onclick = () => {
+    currentImageIndex = (currentImageIndex + 1) % currentPartImages.length;
+    mainImg.src = currentPartImages[currentImageIndex];
+    syncThumbsActive();
+  };
+
+  const thumbs = document.createElement('div');
+  thumbs.id = 'body-carousel-thumbs';
+  thumbs.className = 'carousel-thumbs';
+
+  currentPartImages.forEach((src, idx) => {
+    const t = document.createElement('img');
+    t.src = src;
+    t.alt = displayName || '';
+    t.className = 'carousel-thumb';
+    t.onclick = () => {
+      currentImageIndex = idx;
+      mainImg.src = currentPartImages[currentImageIndex];
+      syncThumbsActive();
+    };
+    thumbs.appendChild(t);
+  });
+
+  area.appendChild(prevBtn);
+  area.appendChild(nextBtn);
+  area.appendChild(thumbs);
+
+  syncThumbsActive();
+}
+
+function syncThumbsActive(){
+  const thumbs = document.querySelectorAll('#body-carousel-thumbs .carousel-thumb');
+  thumbs.forEach((img, i) => {
+    img.classList.toggle('active', i === currentImageIndex);
+  });
+}
+
+/* ===================== عرض الجزء الحالي ===================== */
+function updateBodyContent(){
   const lang = getCurrentLang();
 
-  if (!items.length) {
+  if (!parts.length){
+    const wordEl = pick('body-word');
+    const imgEl  = pick('body-image');
+    const descEl = pick('body-description');
     if (wordEl) wordEl.textContent = '—';
-    if (imgEl) { imgEl.removeAttribute('src'); imgEl.alt = ''; }
-    if (catEl) catEl.textContent = '—';
+    if (imgEl)  { imgEl.removeAttribute('src'); imgEl.alt = ''; }
     if (descEl) descEl.textContent = '—';
+    clearCarousel();
     return;
   }
 
-  currentData = items[currentIndex];
-  const d = currentData;
+  currentPartData = parts[currentIndex];
+  const d = currentPartData;
 
   const displayName =
     (d.name && (d.name[lang] || d.name.ar || d.name.en || d.name.he)) ||
-    d.title || d.word || '—';
+    d.title || d.word || '';
 
-  if (wordEl) {
-    wordEl.textContent = displayName;
+  const wordEl = pick('body-word');
+  const imgEl  = pick('body-image');
+  const descEl = pick('body-description');
+
+  if (wordEl){
+    setHighlightedName(wordEl, displayName);
+    wordEl.classList.add('clickable-text');
     wordEl.onclick = playCurrentBodyAudio;
   }
 
-  const imgPath = getBodyImagePath(d, lang);
-  if (imgEl) {
-    if (imgPath) { imgEl.src = imgPath; imgEl.alt = displayName; }
-    else { imgEl.removeAttribute('src'); imgEl.alt = ''; }
+  currentPartImages = getPartImageList(d, lang);
+  currentImageIndex = 0;
+
+  if (imgEl){
+    imgEl.src = currentPartImages[0] || '/images/default.png';
+    imgEl.alt = displayName || '';
+    imgEl.classList.add('clickable-image');
     imgEl.onclick = playCurrentBodyAudio;
   }
 
-  if (catEl) {
-    const cat = (d.category && (d.category[lang] || d.category.ar || d.category.en)) || null;
-    catEl.textContent = Array.isArray(cat) ? (cat[0] || '—') : (cat || '—');
-  }
+  buildCarousel(displayName);
 
-  if (descEl) {
+  if (descEl){
     descEl.textContent = (d.description && (d.description[lang] || d.description.ar || d.description.en)) || '—';
   }
 
-  if (nextBtn) nextBtn.disabled = (items.length <= 1);
-  if (prevBtn) prevBtn.disabled = (items.length <= 1);
-}
+  const nextBtn = pick('next-body-btn');
+  const prevBtn = pick('prev-body-btn');
+  if (nextBtn) nextBtn.disabled = (parts.length <= 1 || currentIndex === parts.length - 1);
+  if (prevBtn) prevBtn.disabled = (parts.length <= 1 || currentIndex === 0);
 
-function showNextBody() {
-  if (!items.length) return;
   stopCurrentAudio();
-  currentIndex = (currentIndex + 1) % items.length;
-  updateBodyContent();
 }
 
-function showPreviousBody() {
-  if (!items.length) return;
-  stopCurrentAudio();
-  currentIndex = (currentIndex - 1 + items.length) % items.length;
+/* ===================== تنقّل وتشغيل صوت ===================== */
+export function showNextBodyPart(){
+  if (!parts.length) return;
+  if (currentIndex < parts.length - 1) currentIndex++;
   updateBodyContent();
+  try { const user = JSON.parse(localStorage.getItem('user')); if (user) recordActivity(user, 'body'); } catch {}
 }
-
-function playCurrentBodyAudio() {
-  if (!items.length || !currentData) return;
-  const lang  = (langSelect && langSelect.value) || getCurrentLang();
-  const voice = (voiceSelect && voiceSelect.value) || 'teacher';
-  const audio = getBodyAudioPath(currentData, lang, voice);
+export function showPreviousBodyPart(){
+  if (!parts.length) return;
+  if (currentIndex > 0) currentIndex--;
+  updateBodyContent();
+  try { const user = JSON.parse(localStorage.getItem('user')); if (user) recordActivity(user, 'body'); } catch {}
+}
+export function playCurrentBodyAudio(){
+  if (!parts.length || !currentPartData) return;
+  const lang  = (pick('game-lang-select-body')?.value) || getCurrentLang();
+  const voice = (pick('voice-select-body')?.value) || 'teacher';
+  const audio = getPartAudioPath(currentPartData, lang, voice);
   if (!audio) return;
   stopCurrentAudio();
   playAudio(audio);
-  try {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user) recordActivity(user, 'human-body');
-  } catch {}
+  try { const user = JSON.parse(localStorage.getItem('user')); if (user) recordActivity(user, 'body_audio'); } catch {}
 }
 
-/* --------------------- تحميل البيانات --------------------- */
-async function fetchFirstNonEmptyCollection() {
+/* ===================== جلب البيانات ===================== */
+async function fetchBodyParts(){
   const candidates = [
-    ['categories', 'human_body', 'items'],
-    ['categories', 'human-body', 'items'],
-    ['categories', 'body', 'items']
+    ['human_body'],
+    ['body_parts'],
+    ['human-body'],
+    ['body'],
+    ['categories','human_body','items'],
+    ['categories','body','items'],
   ];
-  for (const segs of candidates) {
+  for (const segs of candidates){
     try {
-      const col = collection(db, ...segs);
-      const snap = await getDocs(col);
-      if (!snap.empty) return { snap, path: segs.join('/') };
+      const snap = await getDocs(collection(db, ...segs));
+      if (!snap.empty) {
+        parts = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return;
+      }
     } catch (e) {
-      // تجاهل وحاول التالي
+      console.warn('[body] فشل جلب', segs.join('/'), e);
     }
   }
-  return null;
+  parts = [];
 }
 
-export async function loadHumanBodyGameContent() {
-  console.log('[body] loadHumanBodyGameContent()');
+/* ===================== تحميل السايدبار ===================== */
+async function ensureBodySidebar(){
+  const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+  if (!sidebar) return;
 
+  let container = document.getElementById('human-body-sidebar-controls');
+  if (container) return;
+
+  try {
+    const resp = await fetch('/html/human-body-controls.html', { cache: 'no-store' });
+    const html = await resp.text();
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html.trim();
+    container = tmp.firstElementChild;
+
+    const accountSection = sidebar.querySelector('.static-section'); // 👤 حسابك
+    if (accountSection) {
+      sidebar.insertBefore(container, accountSection);
+    } else {
+      sidebar.appendChild(container);
+    }
+
+    applyTranslations();
+
+  } catch (e) {
+    console.warn('[body] تعذّر تحميل human-body-controls.html:', e);
+  }
+}
+
+/* ===================== تحميل الصفحة ===================== */
+export async function loadHumanBodyGameContent(){
+  console.log('[body] loadHumanBodyGameContent()');
   stopCurrentAudio();
 
-  // عناصر المحتوى داخل human-body.html (ندعم أكثر من id لضمان التوافق)
-  wordEl = pickEl('human-body-word', 'body-word');
-  imgEl  = pickEl('human-body-image', 'body-image');
-  catEl  = pickEl('human-body-category', 'body-category');
-  descEl = pickEl('human-body-description', 'body-description');
+  const main = document.querySelector('main.main-content');
+  if (!main){
+    console.error('لم يتم العثور على main.main-content');
+    return;
+  }
+  try {
+    const resp = await fetch('/html/human-body.html', { cache: 'no-store' });
+    const html = await resp.text();
+    main.innerHTML = html;
+  } catch {
+    main.innerHTML = `
+      <section id="human-body-game" class="topic-container subject-page">
+        <div class="game-box">
+          <h2 id="body-word" class="item-main-name" data-i18n="body.title">🧍‍♂️ أجزاء الجسم</h2>
+          <div class="image-area">
+            <img id="body-image" alt="" src="" loading="lazy" />
+          </div>
+          <div class="body-description-box info-box" id="body-description-box" style="display:none;">
+            <h4 data-i18n="common.description">الوصف</h4>
+            <p id="body-description">—</p>
+          </div>
+        </div>
+      </section>
+    `;
+  }
 
-  // عناصر السايدبار (إن وُجدت)
-  prevBtn      = pickEl('prev-human-body-btn', 'prev-body-btn');
-  nextBtn      = pickEl('next-human-body-btn', 'next-body-btn');
-  playSoundBtn = pickEl('play-sound-btn-human-body', 'play-sound-btn-body');
-  voiceSelect  = pickEl('voice-select-human-body', 'voice-select-body');
-  langSelect   = pickEl('game-lang-select-human-body', 'game-lang-select-body');
+  await ensureBodySidebar();
 
-  if (prevBtn) prevBtn.onclick = showPreviousBody;
-  if (nextBtn) nextBtn.onclick = showNextBody;
+  const prevBtn       = pick('prev-body-btn');
+  const nextBtn       = pick('next-body-btn');
+  const playSoundBtn  = pick('play-sound-btn-body');
+  const voiceSelect   = pick('voice-select-body');
+  const langSelect    = pick('game-lang-select-body');
+  const toggleDescBtn = pick('toggle-description-btn-body');
+
+  if (prevBtn)      prevBtn.onclick = showPreviousBodyPart;
+  if (nextBtn)      nextBtn.onclick = showNextBodyPart;
   if (playSoundBtn) playSoundBtn.onclick = playCurrentBodyAudio;
-
-  if (langSelect) {
+  if (toggleDescBtn){
+    toggleDescBtn.onclick = () => {
+      const box = document.getElementById('body-description-box') || document.querySelector('#human-body-game .details-area');
+      if (box) box.style.display = (box.style.display === 'none' ? 'block' : 'none');
+    };
+  }
+  if (langSelect){
+    try { langSelect.value = getCurrentLang(); } catch {}
     langSelect.onchange = async () => {
       const lng = langSelect.value;
       await loadLanguage(lng);
@@ -254,54 +384,45 @@ export async function loadHumanBodyGameContent() {
       updateBodyContent();
     };
   }
+  if (voiceSelect && !voiceSelect.value) voiceSelect.value = 'teacher';
 
-  // -------- جلب البيانات من أول مسار موجود --------
-  items = [];
-  try {
-    const found = await fetchFirstNonEmptyCollection();
-    if (!found) {
-      console.error('[body] لا يوجد مسار بيانات مناسب في Firestore (جرب: categories/human_body/items)');
-      setDisabled(true);
-      return;
-    }
+  parts = [];
+  if (prevBtn) prevBtn.disabled = true;
+  if (nextBtn) nextBtn.disabled = true;
+  if (playSoundBtn) playSoundBtn.disabled = true;
 
-    const { snap, path } = found;
-    console.log(`[body] fetched count = ${snap.size} from ${path}`);
+  await fetchBodyParts();
 
-    snap.forEach(doc => {
-      const data = doc.data();
-      console.log(`  • ${doc.id}`, {
-        name: data?.name,
-        image_path: data?.image_path,
-        images: data?.images,
-        image: data?.image,
-        category: data?.category,
-        description: data?.description,
-        sound_base: data?.sound_base,
-        voices: data?.voices ? Object.keys(data.voices) : undefined,
-        sound: data?.sound
-      });
-    });
-
-    items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    const lang = getCurrentLang();
-    items.sort((a, b) => (a?.name?.[lang] || '').localeCompare(b?.name?.[lang] || ''));
-  } catch (e) {
-    console.error('[body] fetch error:', e);
-  }
-
-  if (!items.length) {
-    setDisabled(true);
+  if (!parts.length){
+    const wordEl = pick('body-word');
+    const imgEl  = pick('body-image');
+    const descEl = pick('body-description');
+    if (wordEl) wordEl.textContent = 'لا توجد بيانات';
+    if (imgEl)  imgEl.src = '/images/default.png';
+    if (descEl) descEl.textContent = '—';
+    clearCarousel();
     return;
   }
 
+  const lang = getCurrentLang();
+  parts.sort((a,b) => (a?.name?.[lang] || '').localeCompare(b?.name?.[lang] || ''));
+
   currentIndex = 0;
-  setDisabled(false);
   updateBodyContent();
+
+  if (prevBtn) prevBtn.disabled = (currentIndex === 0);
+  if (nextBtn) nextBtn.disabled = (parts.length <= 1);
+  if (playSoundBtn) playSoundBtn.disabled = false;
+
+  applyTranslations();
+  setDirection(lang);
+
+  if (typeof window !== 'undefined') {
+    window.loadHumanBodyGameContent = loadHumanBodyGameContent;
+    window.showNextBodyPart = showNextBodyPart;
+    window.showPreviousBodyPart = showPreviousBodyPart;
+    window.playCurrentBodyAudio = playCurrentBodyAudio;
+  }
+
   console.log('[body] initial render done');
 }
-
-// (Exports إضافية إذا رغبت بربطها)
-export { showNextBody, showPreviousBody, playCurrentBodyAudio };
-

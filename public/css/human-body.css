@@ -1,77 +1,91 @@
-/* public/css/human-body.css */
-
-/* أنماط خاصة بصور أجزاء جسم الإنسان */
-#human-body-image {
-    width: 80%;
-    max-width: 400px;
-    height: 300px; /* يمكن تعديل الارتفاع حسب الحاجة */
-    object-fit: contain; /* للحفاظ على نسبة العرض إلى الارتفاع */
-    border-radius: 12px; /* زوايا دائرية */
-    border: 3px solid var(--color-info); /* استخدام لون مناسب لموضوع جسم الإنسان */
-    box-shadow: 0 4px 12px var(--color-shadow);
-    background-color: var(--color-surface);
-    margin-bottom: 20px; /* مسافة تحت الصورة */
-    padding: 10px; /* إضافة بعض المسافة الداخلية للصورة */
+/* صورة الجزء */
+#body-image {
+  width: 80%;
+  max-width: 400px;
+  height: 300px;
+  object-fit: contain;
+  border-radius: 15px;
+  border: 3px solid var(--color-purple);
+  box-shadow: 0 5px 10px var(--color-shadow);
+  background-color: var(--color-surface);
 }
 
-/* نمط قسم التفاصيل الإضافية (خاص بأجزاء جسم الإنسان) */
-/* يستخدم .info-box من common-components-subjects.css */
-.human-body-details-section {
-    margin-top: 15px;
-    /* الأنماط الأخرى مثل padding, border, background-color, text-align, width, box-sizing
-       يجب أن تأتي من .info-box في common-components-subjects.css */
+/* صندوق الوصف */
+.body-description-box {
+  margin-top: 15px;
+  padding: 15px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  text-align: justify;
+  width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+.body-description-box h4 {
+  font-family: var(--font-ar-heading);
+  font-weight: bold;
+  font-size: 1.3em;
+  color: var(--color-accent);
+  margin-top: 0;
+  margin-bottom: 10px;
+  text-align: right;
 }
 
-.human-body-details-section h3 {
-    font-family: var(--font-ar-heading);
-    font-weight: bold;
-    font-size: 1.5em;
-    color: var(--color-info); /* لون عنوان القسم */
-    margin-top: 0;
-    margin-bottom: 10px;
-    text-align: right; /* الاتجاه الافتراضي للنص العربي */
+/* تفاعل */
+.clickable-image { cursor: pointer; }
+.clickable-text  { cursor: pointer; }
+
+/* ====== Carousel ====== */
+#human-body-game .image-area {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto;
+  justify-items: center;
+  gap: 10px;
 }
 
-.human-body-details-section ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+/* أزرار تنقل الكاروسيل */
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  padding: 6px 12px;
+  background: var(--color-surface);
+  box-shadow: 0 2px 8px var(--color-shadow);
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.carousel-nav.prev { left: 4px; }
+.carousel-nav.next { right: 4px; }
+
+/* المصغّرات */
+.carousel-thumbs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 4px 2px 0;
+  width: 100%;
+  justify-content: center;
+}
+.carousel-thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  background: var(--color-surface);
+}
+.carousel-thumb.active {
+  border-color: var(--color-accent);
 }
 
-.human-body-details-section li {
-    margin-bottom: 8px;
-    font-size: 1.1em;
-    color: var(--color-text-primary);
-}
-
-.human-body-details-section strong {
-    color: var(--color-primary-dark); /* لون مميز للعناوين الفرعية داخل القائمة */
-}
-
-/* نمط لحاوية الوصف داخل قسم التفاصيل */
-/* يستخدم .info-box من common-components-subjects.css */
-.human-body-description-box {
-    margin-top: 15px;
-    /* الأنماط الأخرى مثل padding, border, background-color, text-align, word-wrap, overflow-wrap
-       يجب أن تأتي من .info-box في common-components-subjects.css */
-}
-
-.human-body-description-box h4 {
-    font-family: var(--font-ar-heading);
-    font-weight: bold;
-    font-size: 1.3em;
-    color: var(--color-accent); /* لون عنوان الوصف */
-    margin-top: 0;
-    margin-bottom: 10px;
-    text-align: right;
-}
-
-.human-body-description-box p {
-    font-size: 1em;
-    line-height: 1.6;
-    color: var(--color-text-secondary);
-}
-
-/* لا تكرر الأنماط الموجودة في common-components-subjects.css مثل:
-   .game-box, .item-main-name, .navigation-buttons, .sidebar-game-controls
-   يجب استخدامها مباشرة في HTML */
+/* ملاحظة: تأكد من وجود:
+   .highlight-first-letter { color: var(--color-danger, #e53935); font-weight: 700; } */
