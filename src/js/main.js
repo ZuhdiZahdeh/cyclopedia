@@ -1,3 +1,7 @@
+// =========================
+// main.js — النسخة النظيفة
+// =========================
+
 // لغة الواجهة
 import { getCurrentLang, loadLanguage, applyTranslations } from '../core/lang-handler.js';
 
@@ -5,17 +9,17 @@ import { getCurrentLang, loadLanguage, applyTranslations } from '../core/lang-ha
 import { initializeSubjectControls } from '../core/initializeSubjectControls.js';
 
 // ألعاب/صفحات المواضيع
-import { loadAnimalsGameContent }    from "../subjects/animals-game.js";
-import { loadFruitsGameContent }     from "../subjects/fruits-game.js";
-import { loadVegetablesGameContent } from "../subjects/vegetables-game.js";
-import { loadHumanBodyGameContent }  from "../subjects/human-body-game.js";
-import { loadProfessionsGameContent }from "../subjects/professions-game.js";
-import { loadToolsGameContent }      from "../subjects/tools-game.js";
-import { loadAlphabetPressGameContent } from "../subjects/alphabet-press-game.js";
-import { loadMemoryGameContent }     from "../subjects/memory-game.js";
-import { loadToolsMatchGameContent } from "../subjects/tools-match-game.js";
+import { loadAnimalsGameContent }        from "../subjects/animals-game.js";
+import { loadFruitsGameContent }         from "../subjects/fruits-game.js";
+import { loadVegetablesGameContent }     from "../subjects/vegetables-game.js";
+import { loadHumanBodyGameContent }      from "../subjects/human-body-game.js";
+import { loadProfessionsGameContent }    from "../subjects/professions-game.js";
+import { loadToolsGameContent }          from "../subjects/tools-game.js";
+import { loadAlphabetPressGameContent }  from "../subjects/alphabet-press-game.js";
+import { loadMemoryGameContent }         from "../subjects/memory-game.js";
+import { loadToolsMatchGameContent }     from "../subjects/tools-match-game.js";
 
-// 🔐 Firebase Auth (مع تحصين لو لم تكن مهيّأة)
+// 🔐 Firebase Auth
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 
 /* ------------------------------------------------------------------
@@ -74,34 +78,18 @@ function hideAllControls() {
 }
 
 /* ------------------------- حساب المستخدم: واجهة الأزرار ------------------------- */
-function attachAccountActionsToSidebar() {
-  // الهدف: التأكد أن كتلة "حسابك" تأتي أسفل أقسام التحكم الديناميكية
-  const aside = document.getElementById('sidebar-section');
-  if (!aside) return;
-
-  const actions = document.getElementById('account-actions');
-  if (!actions) return;
-
-  // إن وُجد غلاف .sidebar-section لكتلة الحساب، انقله ليكون آخر عنصر في الـ aside
-  const wrapper = actions.closest('.sidebar-section') || actions;
-  if (aside.lastElementChild !== wrapper) {
-    aside.appendChild(wrapper);
-  }
-}
-
 function updateAccountActionsUI(user) {
   const loggedIn = !!user;
   const setHidden = (id, hidden) => {
     const el = document.getElementById(id);
     if (el) el.hidden = hidden;
   };
-
   // عند تسجيل الدخول: أخفِ «تسجيل/إنشاء»، وأظهر «ملفي/تقاريري/خروج»
-  setHidden('loginBtn',      loggedIn);
-  setHidden('registerBtn',   loggedIn);
-  setHidden('my-profile-btn',!loggedIn);
-  setHidden('my-report-btn', !loggedIn);
-  setHidden('logoutBtn',     !loggedIn);
+  setHidden('loginBtn',       loggedIn);
+  setHidden('registerBtn',    loggedIn);
+  setHidden('my-profile-btn', !loggedIn);
+  setHidden('my-report-btn',  !loggedIn);
+  setHidden('logoutBtn',      !loggedIn);
 }
 
 async function handleLogout() {
@@ -112,7 +100,59 @@ async function handleLogout() {
     console.error('Signout error:', e);
   }
 }
-window.handleLogout = handleLogout; // لاستخدامها من الـ HTML
+window.handleLogout = handleLogout;
+
+/* ------------------------- ترتيب «حسابك» تحت التحكّم الظاهر ------------------------- */
+function getActiveControlsSection() {
+  const aside = document.getElementById('sidebar-section');
+  if (!aside) return null;
+
+  // استبعد static-section، وخذ آخر قسم تحكّم ظاهر وبداخله محتوى
+  const candidates = Array
+    .from(aside.querySelectorAll('.sidebar-section:not(.static-section)'))
+    .filter(sec => getComputedStyle(sec).display !== 'none' && sec.innerHTML.trim() !== '');
+
+  return candidates.length ? candidates[candidates.length - 1] : null;
+}
+
+function placeAccountSectionBelowActiveControls() {
+  const aside   = document.getElementById('sidebar-section');
+  const account = aside ? aside.querySelector('.sidebar-section.static-section') : null;
+  if (!aside || !account) return;
+
+  const active = getActiveControlsSection();
+  if (active) {
+    active.insertAdjacentElement('afterend', account);
+  } else {
+    // احتياطي: إن لم يوجد تحكّم ظاهر، ضع «حسابك» في آخر الشريط
+    aside.appendChild(account);
+  }
+}
+window.placeAccountSectionBelowActiveControls = placeAccountSectionBelowActiveControls;
+
+// راقب تغيّرات الشريط الجانبي لإعادة ترتيب «حسابك» تلقائيًا
+let _sidebarObserver;
+function initSidebarObserver() {
+  const aside = document.getElementById('sidebar-section');
+  if (!aside || _sidebarObserver) return;
+
+  let scheduled = false;
+  _sidebarObserver = new MutationObserver(() => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      placeAccountSectionBelowActiveControls();
+      scheduled = false;
+    });
+  });
+
+  _sidebarObserver.observe(aside, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['style', 'hidden', 'class']
+  });
+}
 
 /* ------------------------- محمل صفحات عام (مُحصَّن) ------------------------- */
 const FRAGMENT_SELECTORS = [
@@ -143,15 +183,21 @@ async function loadPage(htmlPath, moduleLoader, subjectType) {
       mainContent.innerHTML = html;
     }
 
-    // تهيئة مجموعة التحكم للموضوع (إن وُجد)
+    // ترجمات فورية لمحتوى الصفحة المحقون
+    try { await applyTranslations(); } catch {}
+
+    // تهيئة مجموعة التحكم للموضوع (إن وُجد)، ثم ضع «حسابك» تحتها
     if (subjectType) {
       initializeSubjectControls(subjectType);
     }
 
-    // ضَمَن أن «حسابك» في أسفل السايدبار بعد حقن أي تحكّم
-    attachAccountActionsToSidebar();
+    // ننتظر فريم لضمان اكتمال حقن عناصر التحكم ثم نرتّب «حسابك»
+    requestAnimationFrame(() => {
+      placeAccountSectionBelowActiveControls();
+      initSidebarObserver(); // مرّة واحدة، وبعدها يراقب أي تغييرات لاحقة
+    });
 
-    // تشغيل منطق الصفحة/اللعبة
+    // تشغيل منطق الصفحة/اللعبة إن وُجد
     if (typeof moduleLoader === 'function') {
       await moduleLoader();
     }
@@ -175,7 +221,10 @@ window.showHomePage = () => {
     </section>
   `;
   hideAllControls();
-  attachAccountActionsToSidebar();
+  requestAnimationFrame(() => {
+    placeAccountSectionBelowActiveControls();
+    initSidebarObserver();
+  });
 };
 
 // صفحات المواضيع
@@ -214,6 +263,5 @@ window.loadMyReport = () => loadPage("/users/my-report.html");
   }
 })();
 
-// إتاحة الدوال للاستخدام العام (لو احتجتَها في أماكن أخرى)
+// إتاحة بعض الدوال للاستخدام العام
 window.updateAccountActionsUI = updateAccountActionsUI;
-window.attachAccountActionsToSidebar = attachAccountActionsToSidebar;

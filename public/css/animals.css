@@ -35,6 +35,21 @@
     color: var(--color-text-primary); /* استخدام متغير لون النص الأساسي */
 }
 
+/* الصورة الرئيسية للأب (موجودة لديك أصلاً بـ #animal-image) */
+/* #animal-image { ... } */
+
+/* اجعل صورة ابن الحيوان أصغر بوضوح من صورة الأب */
+.baby-animal-section img,
+#baby-animal-image {
+  width: 60%;
+  max-width: 260px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 2px solid var(--color-purple);
+  box-shadow: 0 4px 8px var(--color-shadow);
+  background-color: var(--color-surface);
+}
 
 /* لا داعي لتكرار .game-box, .item-main-name, .info-box, .navigation-buttons هنا */
 /* هذه الأنماط ستكون في common-components-subjects.css */
