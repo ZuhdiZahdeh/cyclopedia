@@ -12,13 +12,12 @@ import { initializeSubjectControls } from '../core/initializeSubjectControls.js'
 import { loadAnimalsGameContent }        from "../subjects/animals-game.js";
 import { loadFruitsGameContent }         from "../subjects/fruits-game.js";
 import { loadVegetablesGameContent }     from "../subjects/vegetables-game.js";
-import { loadHumanBodyGameContent }      from "../subjects/human-body-game.js";
 import { loadProfessionsGameContent }    from "../subjects/professions-game.js";
 import { loadToolsGameContent }          from "../subjects/tools-game.js";
 import { loadAlphabetPressGameContent }  from "../subjects/alphabet-press-game.js";
 import { loadMemoryGameContent }         from "../subjects/memory-game.js";
 import { loadToolsMatchGameContent }     from "../subjects/tools-match-game.js";
-
+import { loadHumanBodyGameContent } 	 from "../subjects/human-body-game.js";
 // 🔐 Firebase Auth
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 
