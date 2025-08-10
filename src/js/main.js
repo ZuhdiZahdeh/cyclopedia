@@ -25,8 +25,15 @@ function ensureBaseCss() {
     '/css/fonts.css',
     '/css/shared-utilities.css',
     '/css/forms.css',
+	'/css/professions.css',
+	'/css/alphabet-press.css',
+	'/css/human-body.css',
+	'/css/memory-game.css',
+	'/css/tools-match.css',
+	'/css/animals.css',
     '/css/common-components-subjects.css',
     '/css/style.css', // ← الأهم لتفعيل Grid
+	
   ];
 
   const head = document.head || document.getElementsByTagName('head')[0];

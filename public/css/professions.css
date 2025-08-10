@@ -36,3 +36,10 @@
 .clickable-text, .clickable-image {
   cursor: pointer;
 }
+.highlight-first-letter { color: red; font-weight: 700; margin-inline-end: 4px; }
+.clickable-text, .clickable-image { cursor: pointer; }
+.tools-grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(120px,1fr)); gap:12px; }
+.tool-card { display:flex; flex-direction:column; align-items:center; padding:8px; border-radius:12px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+.tool-card img { width:100%; height:100px; object-fit:cover; border-radius:10px; }
+.tool-card .tool-name { margin-top:6px; text-align:center; font-size:0.95rem; }
+

@@ -1,26 +1,28 @@
-<link rel="stylesheet" href="/css/shared-utilities.css">
-<link rel="stylesheet" href="/css/common-components-subjects.css">
-<link rel="stylesheet" href="/css/animals.css">
+<section class="subject-page animals-page" data-subject="animal">
+  <div class="game-box">
+    <h2 id="animal-word" class="item-main-name" aria-live="polite"></h2>
 
+    <img id="animal-image" src="/images/default.png" alt="" loading="lazy" />
 
-<section id="animals-game" class="topic-container">
-  <div class="topic-header">
-    <h2 data-i18n="animals.title">🐾 الحيوانات</h2>
-  </div>
+    <!-- صندوق التفاصيل -->
+    <div id="animal-details-section" class="info-box" style="display:none;">
+      <h3 data-i18n="additional_details">تفاصيل إضافية:</h3>
+      <ul id="animal-details-list">
+        <li><strong data-i18n="baby_name">اسم الابن:</strong> <span id="animal-baby">---</span></li>
+        <li><strong data-i18n="female_name">اسم الأنثى:</strong> <span id="animal-female">---</span></li>
+        <li><strong data-i18n="category">الصنف:</strong> <span id="animal-category">---</span></li>
+      </ul>
 
-  <div class="topic-body">
-    <div class="image-area">
-      <img id="animal-image" src="" alt="" loading="lazy" />
+      <div class="baby-animal-section" style="display:none;">
+        <h4 data-i18n="baby_image">صورة الابن:</h4>
+        <img id="baby-animal-image" src="/images/default.png" alt="baby animal" />
+      </div>
     </div>
 
-    <div class="details-area">
-      <div class="line"><span data-i18n="animals.category">الفئة</span>: <span id="animal-category">—</span></div>
-      <div class="line"><span data-i18n="animals.description">الوصف</span>: <span id="animal-description">—</span></div>
-      <div class="controls-row">
-        <button id="prev-animal-btn" class="btn small" type="button" data-i18n="common.prev">السابق</button>
-        <button id="play-sound-btn-animal" class="btn small" type="button" data-i18n="common.playSound">تشغيل الصوت</button>
-        <button id="next-animal-btn" class="btn small" type="button" data-i18n="common.next">التالي</button>
-      </div>
+    <!-- صندوق الوصف -->
+    <div id="animal-description-box" class="info-box" style="display:none;">
+      <h4 data-i18n="description_title">الوصف:</h4>
+      <p id="animal-description">---</p>
     </div>
   </div>
 </section>

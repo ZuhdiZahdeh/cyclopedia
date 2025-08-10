@@ -29,6 +29,8 @@
 }
 /* تلوين الحرف الأول — يُولَّد كـ <span class="first-letter">A</span> من السكربت */
 .item-main-name .first-letter{ color:#d32f2f; }
+.highlight-first-letter{color:red;font-weight:700;margin-inline-end:4px}
+
 
 /* حاوية الوصف/التفاصيل */
 .info-box{

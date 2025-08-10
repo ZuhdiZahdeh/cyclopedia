@@ -1,29 +1,29 @@
-<section id="professions-game" class="topic-container subject-page">
-  <div class="topic-header">
-    <h2 id="profession-word" data-i18n="professions.title">👷‍♀️ المهن</h2>
-  </div>
+<section class="subject-page professions-page" data-subject="profession">
+  <div class="game-box">
+    <h2 id="profession-word" class="item-main-name" aria-live="polite"></h2>
 
-  <div class="topic-body">
-    <div class="image-area">
-      <img id="profession-image" alt="" src="" loading="lazy" />
+    <img id="profession-image" src="/images/default.png" alt="" loading="lazy" />
+
+    <!-- صندوق الوصف -->
+    <div id="profession-description-box" class="info-box" style="display:none;">
+      <h4 data-i18n="description_title">الوصف:</h4>
+      <p id="profession-description">---</p>
     </div>
 
-    <div class="details-area">
-      <div class="line">
-        <span data-i18n="common.category">الفئة</span>:
-        <span id="profession-category">—</span>
-      </div>
-      <div class="line">
-        <span data-i18n="common.description">الوصف</span>:
-        <span id="profession-description">—</span>
-      </div>
+    <!-- صندوق التفاصيل -->
+    <div id="profession-details-section" class="info-box" style="display:none;">
+      <h3 data-i18n="additional_details">تفاصيل إضافية:</h3>
+      <ul id="profession-details-list">
+        <li><strong data-i18n="category">التصنيف:</strong> <span id="profession-category">---</span></li>
+        <li><strong data-i18n="letter">الحرف الأول:</strong> <span id="profession-letter">---</span></li>
+      </ul>
+    </div>
 
-      <!-- قائمة الأدوات المرتبطة بالمهنة (اختياري) -->
-      <div class="line">
-        <span data-i18n="professions.tools">أدوات المهنة</span>:
-        <div id="profession-tools" class="tools-container"></div>
-      </div>
+    <!-- أدوات المهنة -->
+    <div id="profession-tools-section" class="info-box" style="display:none;">
+      <h3 data-i18n="tools_title">أدوات المهنة</h3>
+      <div id="profession-tools-grid" class="tools-grid"></div>
+      <p id="profession-tools-empty" style="display:none;" data-i18n="no_tools">لا توجد أدوات مرتبطة بهذه المهنة.</p>
     </div>
   </div>
 </section>
-
