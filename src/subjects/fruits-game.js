@@ -1,5 +1,5 @@
 // src/subjects/fruits-game.js
-// الفواكه — يحافظ على هيكلك، يضيف زر الوصف تلقائياً ويربط IDs مختلفة ويحدّث الاسم مع اللغة
+// الفواكه — زر الوصف تلقائيًا + ربط IDs مرن + i18n للأسماء + مسارات صور/صوت احتياطية
 
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
@@ -7,14 +7,12 @@ import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '.
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 
-let fruits=[], currentIndex=0, currentFruitData=null;
+let fruits = [], currentIndex = 0, currentFruitData = null;
 
 const pick=(...ids)=>{for(const id of ids){const el=document.getElementById(id); if(el) return el;} return null;};
 const grab=(ids)=>{const a=Array.isArray(ids)?ids:[ids]; for(const id of a){const el=document.getElementById(id); if(el) return el;} return null;};
 const isAbs=(p)=>/^https?:\/\//i.test(p)||/^data:/i.test(p)||/^blob:/i.test(p);
 const norm=(s)=>String(s||'').trim().replace(/^\.?[\\/]+/,'').replace(/\\/g,'/');
-
-function ensureCss(href,id){ if(document.getElementById(id)) return; const l=document.createElement('link'); l.rel='stylesheet'; l.href=href; l.id=id; document.head.appendChild(l); }
 
 const FRUIT_IMAGE_DIRS=['/images/fruits/','/images/fruit/'];
 const AUDIO_FRUIT_DIRS=['fruits','fruit'];
@@ -70,13 +68,17 @@ function ensureFruitsDescBtn(){
 function updateFruitContent(){
   const lang=getCurrentLang();
   if(!fruits.length){
-    pick('fruit-word','item-word','item-name')?.textContent='—';
-    const img=pick('fruit-image','item-image'); if(img){ img.removeAttribute('src'); img.alt=''; }
-    pick('fruit-description','item-description')?.textContent='—'; return;
+    { const el = pick('fruit-word','item-word','item-name'); if (el) el.textContent = '—'; }
+    { const img = pick('fruit-image','item-image'); if (img){ img.removeAttribute('src'); img.alt=''; } }
+    { const el = pick('fruit-description','item-description'); if (el) el.textContent = '—'; }
+    return;
   }
   currentFruitData=fruits[currentIndex]; const d=currentFruitData; const name=getFruitName(d,lang);
 
-  const wordEl=pick('fruit-word','item-word','item-name'); const imgEl=pick('fruit-image','item-image'); const descEl=pick('fruit-description','item-description');
+  const wordEl=pick('fruit-word','item-word','item-name');
+  const imgEl =pick('fruit-image','item-image');
+  const descEl=pick('fruit-description','item-description');
+
   if (wordEl){ setHighlightedName(wordEl,name); wordEl.classList.add('clickable-text'); wordEl.onclick=playCurrentFruitAudio; }
   const candidates=buildImageCandidates(d,lang);
   if (imgEl){ setImageWithFallback(imgEl, candidates.length?candidates:['/images/default.png']); imgEl.alt=name||''; imgEl.classList.add('clickable-image'); imgEl.onclick=playCurrentFruitAudio; }
@@ -90,15 +92,15 @@ function updateFruitContent(){
 
 /* تنقّل وصوت */
 export function showNextFruit(){ if(!fruits.length) return; if(currentIndex<fruits.length-1) currentIndex++; updateFruitContent();
-  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) recordActivity(u,'fruits'); }catch{} }
+  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) Promise.resolve(recordActivity(u,'fruits')).catch(()=>{}); }catch{} }
 export function showPreviousFruit(){ if(!fruits.length) return; if(currentIndex>0) currentIndex--; updateFruitContent();
-  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) recordActivity(u,'fruits'); }catch{} }
+  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) Promise.resolve(recordActivity(u,'fruits')).catch(()=>{}); }catch{} }
 export async function playCurrentFruitAudio(){
   if(!fruits.length||!currentFruitData) return;
   const lang =(grab(['game-lang-select-fruits','game-lang-select'])?.value)||getCurrentLang();
   const voice=(grab(['voice-select-fruits','voice-select'])?.value)||'teacher';
   const candidates=buildAudioCandidates(currentFruitData, lang, voice);
-  for(const src of candidates){ try{ stopCurrentAudio(); const m=playAudio(src); if(m?.then) await m; return; }catch{} }
+  for(const src of candidates){ try{ stopCurrentAudio(); const m=playAudio(src); if(m&&m.then) await m; return; }catch{} }
 }
 
 /* جلب البيانات */
@@ -114,8 +116,6 @@ async function fetchFruits(){
 
 /* التحميل */
 export async function loadFruitsGameContent(){
-  ensureCss('/css/fruits.css','fruits-css');
-
   const prevBtn      = grab(['prev-fruits-btn','prev-btn']);
   const nextBtn      = grab(['next-fruits-btn','next-btn']);
   const playSoundBtn = grab(['play-sound-btn-fruits','listen-btn','listen']);
@@ -134,17 +134,20 @@ export async function loadFruitsGameContent(){
       if(box) box.style.display=(box.style.display==='none'?'block':'none'); };
   }
 
-  if (langSelect){ try{ langSelect.value=getCurrentLang(); }catch{}; langSelect.onchange=async()=>{
-    const lng=langSelect.value; await loadLanguage(lng); setDirection(lng); applyTranslations(); updateFruitContent(); }; }
+  if (langSelect){
+    try{ langSelect.value=getCurrentLang(); }catch{}
+    langSelect.onchange=async()=>{ const lng=langSelect.value; await loadLanguage(lng); setDirection(lng); applyTranslations(); updateFruitContent(); };
+  }
   if (voiceSelect && !voiceSelect.value) voiceSelect.value='teacher';
 
   fruits=[]; if(prevBtn) prevBtn.disabled=true; if(nextBtn) nextBtn.disabled=true; if(playSoundBtn) playSoundBtn.disabled=true;
 
   await fetchFruits();
   if (!fruits.length){
-    pick('fruit-word','item-word','item-name')?.textContent='لا توجد بيانات';
-    const img=pick('fruit-image','item-image'); if(img) img.src='/images/default.png';
-    pick('fruit-description','item-description')?.textContent='—'; return;
+    { const el = pick('fruit-word','item-word','item-name'); if (el) el.textContent = 'لا توجد بيانات'; }
+    { const img = pick('fruit-image','item-image'); if (img) img.src = '/images/default.png'; }
+    { const el = pick('fruit-description','item-description'); if (el) el.textContent = '—'; }
+    return;
   }
 
   const lang=getCurrentLang(); fruits.sort((a,b)=>(a?.name?.[lang]||'').localeCompare(b?.name?.[lang]||'')); currentIndex=0; updateFruitContent();

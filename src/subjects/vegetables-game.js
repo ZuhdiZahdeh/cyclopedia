@@ -1,18 +1,18 @@
 // src/subjects/vegetables-game.js
+// الخضروات — زر الوصف تلقائيًا + ربط IDs مرن + i18n للأسماء + مسارات صور/صوت احتياطية
+
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 
-let vegetables=[], currentIndex=0, currentVegData=null;
+let vegetables = [], currentIndex = 0, currentVegData = null;
 
 const pick=(...ids)=>{for(const id of ids){const el=document.getElementById(id); if(el) return el;} return null;};
 const grab=(ids)=>{const a=Array.isArray(ids)?ids:[ids]; for(const id of a){const el=document.getElementById(id); if(el) return el;} return null;};
 const isAbs=(p)=>/^https?:\/\//i.test(p)||/^data:/i.test(p)||/^blob:/i.test(p);
 const norm=(s)=>String(s||'').trim().replace(/^\.?[\\/]+/,'').replace(/\\/g,'/');
-
-function ensureCss(href,id){ if(document.getElementById(id)) return; const l=document.createElement('link'); l.rel='stylesheet'; l.href=href; l.id=id; document.head.appendChild(l); }
 
 const VEG_IMAGE_DIRS=['/images/vegetables/','/images/vegetable/'];
 const AUDIO_VEG_DIRS=['vegetables','vegetable'];
@@ -68,14 +68,16 @@ function ensureVegDescBtn(){
 function updateVegetableContent(){
   const lang=getCurrentLang();
   if(!vegetables.length){
-    pick('vegetable-word','item-word','item-name')?.textContent='—';
-    const img=pick('vegetable-image','item-image'); if(img){ img.removeAttribute('src'); img.alt=''; }
-    pick('vegetable-description','item-description')?.textContent='—'; return;
+    { const el = pick('vegetable-word','item-word','item-name'); if (el) el.textContent = '—'; }
+    { const img = pick('vegetable-image','item-image'); if (img){ img.removeAttribute('src'); img.alt=''; } }
+    { const el = pick('vegetable-description','item-description'); if (el) el.textContent = '—'; }
+    return;
   }
   currentVegData=vegetables[currentIndex]; const d=currentVegData; const name=getVegName(d,lang);
 
   const wordEl=pick('vegetable-word','item-word','item-name'); const imgEl=pick('vegetable-image','item-image'); const descEl=pick('vegetable-description','item-description');
   if (wordEl){ setHighlightedName(wordEl,name); wordEl.classList.add('clickable-text'); wordEl.onclick=playCurrentVegetableAudio; }
+
   const candidates=buildImageCandidates(d,lang);
   if (imgEl){ setImageWithFallback(imgEl, candidates.length?candidates:['/images/default.png']); imgEl.alt=name||''; imgEl.classList.add('clickable-image'); imgEl.onclick=playCurrentVegetableAudio; }
   if (descEl) descEl.textContent=(d.description&&(d.description[lang]||d.description.ar||d.description.en))||'—';
@@ -88,15 +90,15 @@ function updateVegetableContent(){
 
 /* تنقّل وصوت */
 export function showNextVegetable(){ if(!vegetables.length) return; if(currentIndex<vegetables.length-1) currentIndex++; updateVegetableContent();
-  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) recordActivity(u,'vegetables'); }catch{} }
+  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) Promise.resolve(recordActivity(u,'vegetables')).catch(()=>{}); }catch{} }
 export function showPreviousVegetable(){ if(!vegetables.length) return; if(currentIndex>0) currentIndex--; updateVegetableContent();
-  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) recordActivity(u,'vegetables'); }catch{} }
+  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) Promise.resolve(recordActivity(u,'vegetables')).catch(()=>{}); }catch{} }
 export async function playCurrentVegetableAudio(){
   if(!vegetables.length||!currentVegData) return;
   const lang =(grab(['game-lang-select-vegetables','game-lang-select'])?.value)||getCurrentLang();
   const voice=(grab(['voice-select-vegetables','voice-select'])?.value)||'teacher';
   const candidates=buildAudioCandidates(currentVegData, lang, voice);
-  for(const src of candidates){ try{ stopCurrentAudio(); const m=playAudio(src); if(m?.then) await m; return; }catch{} }
+  for(const src of candidates){ try{ stopCurrentAudio(); const m=playAudio(src); if(m&&m.then) await m; return; }catch{} }
 }
 
 /* جلب البيانات */
@@ -112,8 +114,6 @@ async function fetchVegetables(){
 
 /* التحميل */
 export async function loadVegetablesGameContent(){
-  ensureCss('/css/vegetables.css','vegetables-css');
-
   const prevBtn      = grab(['prev-vegetables-btn','prev-btn']);
   const nextBtn      = grab(['next-vegetables-btn','next-btn']);
   const playSoundBtn = grab(['play-sound-btn-vegetables','listen-btn','listen']);
@@ -132,17 +132,20 @@ export async function loadVegetablesGameContent(){
       if(box) box.style.display=(box.style.display==='none'?'block':'none'); };
   }
 
-  if (langSelect){ try{ langSelect.value=getCurrentLang(); }catch{}; langSelect.onchange=async()=>{
-    const lng=langSelect.value; await loadLanguage(lng); setDirection(lng); applyTranslations(); updateVegetableContent(); }; }
+  if (langSelect){
+    try{ langSelect.value=getCurrentLang(); }catch{}
+    langSelect.onchange=async()=>{ const lng=langSelect.value; await loadLanguage(lng); setDirection(lng); applyTranslations(); updateVegetableContent(); };
+  }
   if (voiceSelect && !voiceSelect.value) voiceSelect.value='teacher';
 
   vegetables=[]; if(prevBtn) prevBtn.disabled=true; if(nextBtn) nextBtn.disabled=true; if(playSoundBtn) playSoundBtn.disabled=true;
 
   await fetchVegetables();
   if (!vegetables.length){
-    pick('vegetable-word','item-word','item-name')?.textContent='لا توجد بيانات';
-    const img=pick('vegetable-image','item-image'); if(img) img.src='/images/default.png';
-    pick('vegetable-description','item-description')?.textContent='—'; return;
+    { const el = pick('vegetable-word','item-word','item-name'); if (el) el.textContent = 'لا توجد بيانات'; }
+    { const img = pick('vegetable-image','item-image'); if (img) img.src = '/images/default.png'; }
+    { const el = pick('vegetable-description','item-description'); if (el) el.textContent = '—'; }
+    return;
   }
 
   const lang=getCurrentLang(); vegetables.sort((a,b)=>(a?.name?.[lang]||'').localeCompare(b?.name?.[lang]||'')); currentIndex=0; updateVegetableContent();

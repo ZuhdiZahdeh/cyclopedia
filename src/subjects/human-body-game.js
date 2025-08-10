@@ -7,8 +7,8 @@ import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '.
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 
-let parts=[], currentIndex=0, currentPartData=null;
-let currentPartImages=[], currentImageIndex=0;
+let parts = [], currentIndex = 0, currentPartData = null;
+let currentPartImages = [], currentImageIndex = 0;
 
 const pick=(...ids)=>{for(const id of ids){const el=document.getElementById(id); if(el) return el;} return null;};
 const grab=(ids)=>{const a=Array.isArray(ids)?ids:[ids]; for(const id of a){const el=document.getElementById(id); if(el) return el;} return null;};
@@ -34,7 +34,8 @@ function buildImageCandidates(d, lang){
 }
 function setImageWithFallback(imgEl, candidates){
   let i=0; const tryNext=()=>{ if(!imgEl) return; if(i>=candidates.length){ imgEl.src='/images/default.png'; return; }
-    imgEl.onerror=()=>{ i++; tryNext(); }; imgEl.src=candidates[i]; }; tryNext();
+    imgEl.onerror=()=>{ i++; tryNext(); }; imgEl.src=candidates[i]; };
+  tryNext();
 }
 function buildAudioCandidates(d, lang, voice){
   const key=`${voice}_${lang}`; let file=null;
@@ -43,12 +44,12 @@ function buildAudioCandidates(d, lang, voice){
   else if(d?.sound?.[lang]?.[voice]) file=d.sound[lang][voice];
   else if(typeof d?.audio==='string') file=d.audio;
   if(!file) return [];
-  const f=norm(file); if(isAbs(f)||f.startsWith('/')) return [f];
+  const f=norm(file);
+  if(isAbs(f)||f.startsWith('/')) return [f];
   return Array.from(new Set(AUDIO_BODY_DIRS.map(dir=>`/audio/${lang}/${dir}/${f}`)));
 }
 
-function setHighlightedName(el,name){ if(!el) return; if(!name){el.textContent='';return;}
-  const c=[...name]; const first=c[0]||''; el.innerHTML=`<span class="highlight-first-letter">${first}</span>${c.slice(1).join('')}`; }
+function setHighlightedName(el,name){ if(!el) return; if(!name){el.textContent='';return;} const c=[...name]; const first=c[0]||''; el.innerHTML=`<span class="highlight-first-letter">${first}</span>${c.slice(1).join('')}`; }
 function getDisplayName(d, lang){
   if (d?.name?.[lang]) return d.name[lang];
   const key=d?.slug||d?.id||d?.name?.en||d?.name?.ar||d?.word||'';
@@ -60,7 +61,10 @@ function getDisplayName(d, lang){
 
 /* Carousel */
 function clearCarousel(){ const area=document.querySelector('#human-body-game .image-area'); if(!area) return;
-  area.querySelector('#body-carousel-thumbs')?.remove(); area.querySelector('#body-carousel-prev')?.remove(); area.querySelector('#body-carousel-next')?.remove(); }
+  const t=area.querySelector('#body-carousel-thumbs'); if(t) t.remove();
+  const p=area.querySelector('#body-carousel-prev');   if(p) p.remove();
+  const n=area.querySelector('#body-carousel-next');   if(n) n.remove();
+}
 function buildCarousel(displayName){
   const area=document.querySelector('#human-body-game .image-area'); const mainImg=pick('body-image'); if(!area||!mainImg) return;
   clearCarousel(); if(!currentPartImages||currentPartImages.length<=1) return;
@@ -91,8 +95,11 @@ function ensureBodyDescBtn(){
 function updateBodyContent(){
   const lang=getCurrentLang();
   if(!parts.length){
-    pick('body-word')?.textContent='—'; const img=pick('body-image'); if(img){ img.removeAttribute('src'); img.alt=''; }
-    pick('body-description')?.textContent='—'; clearCarousel(); return;
+    { const el = pick('body-word'); if (el) el.textContent = '—'; }
+    { const img = pick('body-image'); if (img){ img.removeAttribute('src'); img.alt=''; } }
+    { const el = pick('body-description'); if (el) el.textContent = '—'; }
+    clearCarousel();
+    return;
   }
   currentPartData=parts[currentIndex]; const d=currentPartData; const displayName=getDisplayName(d,lang);
 
@@ -112,16 +119,24 @@ function updateBodyContent(){
 }
 
 /* تنقّل وصوت */
-export function showNextBodyPart(){ if(!parts.length) return; if(currentIndex<parts.length-1) currentIndex++; updateBodyContent();
-  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) recordActivity(u,'body'); }catch{} }
-export function showPreviousBodyPart(){ if(!parts.length) return; if(currentIndex>0) currentIndex--; updateBodyContent();
-  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) recordActivity(u,'body'); }catch{} }
+export function showNextBodyPart(){
+  if(!parts.length) return;
+  if(currentIndex<parts.length-1) currentIndex++;
+  updateBodyContent();
+  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) Promise.resolve(recordActivity(u,'body')).catch(()=>{}); }catch{}
+}
+export function showPreviousBodyPart(){
+  if(!parts.length) return;
+  if(currentIndex>0) currentIndex--;
+  updateBodyContent();
+  try{ const u=JSON.parse(localStorage.getItem('user')); if(u) Promise.resolve(recordActivity(u,'body')).catch(()=>{}); }catch{}
+}
 export async function playCurrentBodyAudio(){
   if(!parts.length||!currentPartData) return;
   const lang =(grab(['game-lang-select-body','game-lang-select'])?.value)||getCurrentLang();
   const voice=(grab(['voice-select-body','voice-select'])?.value)||'teacher';
   const candidates=buildAudioCandidates(currentPartData, lang, voice);
-  for (const src of candidates){ try{ stopCurrentAudio(); const m=playAudio(src); if(m?.then) await m; return; }catch{} }
+  for (const src of candidates){ try{ stopCurrentAudio(); const m=playAudio(src); if(m&&m.then) await m; return; }catch{} }
   console.warn('[body][audio] no valid source for', currentPartData?.id);
 }
 
@@ -146,7 +161,7 @@ async function ensureBodySidebar(){
     const resp=await fetch('/html/human-body-controls.html',{cache:'no-store'}); const html=await resp.text();
     const tmp=document.createElement('div'); tmp.innerHTML=html.trim(); container=tmp.firstElementChild;
     container.id='human-body-sidebar-controls'; container.classList.add('subject-controls'); container.style.display='block';
-    const account=sidebar.querySelector('.static-section'); account?sidebar.insertBefore(container,account):sidebar.appendChild(container);
+    const account=sidebar.querySelector('.static-section'); if(account) sidebar.insertBefore(container,account); else sidebar.appendChild(container);
     applyTranslations();
   }catch(e){ console.warn('[body] controls load failed:',e); }
 }
@@ -164,7 +179,9 @@ export async function loadHumanBodyGameContent(){
 
   await ensureBodySidebar(); ensureBodyDescBtn();
 
-  try{ window.hideAllControls?.(); window.showSubjectControls?.('human-body'); }catch{
+  try {
+    window.hideAllControls?.(); window.showSubjectControls?.('human-body');
+  } catch {
     document.querySelectorAll('.sidebar-section[id$="-sidebar-controls"]').forEach(sec=>{
       sec.style.display=(sec.id==='human-body-sidebar-controls')?'block':'none';
     });
@@ -184,21 +201,30 @@ export async function loadHumanBodyGameContent(){
     toggleDescBtn.onclick=()=>{ const box=document.getElementById('body-description-box')||document.querySelector('#human-body-game .info-box');
       if(box) box.style.display=(box.style.display==='none'?'block':'none'); };
   }
-  if (langSelect){ try{ langSelect.value=getCurrentLang(); }catch{}; langSelect.onchange=async()=>{
-    const lng=langSelect.value; await loadLanguage(lng); setDirection(lng); applyTranslations(); updateBodyContent(); };
+  if (langSelect){
+    try{ langSelect.value=getCurrentLang(); }catch{}
+    langSelect.onchange=async()=>{
+      const lng=langSelect.value; await loadLanguage(lng); setDirection(lng); applyTranslations(); updateBodyContent();
+    };
   }
   if (voiceSelect && !voiceSelect.value) voiceSelect.value='teacher';
 
-  parts=[]; if(prevBtn) prevBtn.disabled=true; if(nextBtn) nextBtn.disabled=true; if(playSoundBtn) playSoundBtn.disabled=true;
+  parts=[]; if (prevBtn) prevBtn.disabled=true; if (nextBtn) nextBtn.disabled=true; if (playSoundBtn) playSoundBtn.disabled=true;
 
   await fetchBodyParts();
   if (!parts.length){
-    pick('body-word')?.textContent='لا توجد بيانات'; const img=pick('body-image'); if(img) img.src='/images/default.png';
-    pick('body-description')?.textContent='—'; clearCarousel(); return;
+    { const el = pick('body-word'); if (el) el.textContent = 'لا توجد بيانات'; }
+    { const img = pick('body-image'); if (img) img.src = '/images/default.png'; }
+    { const el = pick('body-description'); if (el) el.textContent = '—'; }
+    clearCarousel();
+    return;
   }
 
   const lang=getCurrentLang(); parts.sort((a,b)=>(a?.name?.[lang]||'').localeCompare(b?.name?.[lang]||'')); currentIndex=0; updateBodyContent();
-  if(prevBtn) prevBtn.disabled=(currentIndex===0); if(nextBtn) nextBtn.disabled=(parts.length<=1); if(playSoundBtn) playSoundBtn.disabled=false;
+  if (prevBtn) prevBtn.disabled=(currentIndex===0);
+  if (nextBtn) nextBtn.disabled=(parts.length<=1);
+  if (playSoundBtn) playSoundBtn.disabled=false;
+
   applyTranslations(); setDirection(lang);
 
   if (typeof window!=='undefined'){ window.loadHumanBodyGameContent=loadHumanBodyGameContent; window.showNextBodyPart=showNextBodyPart; window.showPreviousBodyPart=showPreviousBodyPart; window.playCurrentBodyAudio=playCurrentBodyAudio; }
