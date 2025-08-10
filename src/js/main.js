@@ -15,6 +15,51 @@ import { loadAlphabetPressGameContent } from "../subjects/alphabet-press-game.js
 import { loadMemoryGameContent }     from "../subjects/memory-game.js";
 import { loadToolsMatchGameContent } from "../subjects/tools-match-game.js";
 
+/* ------------------------------------------------------------------
+   تأكيد تحميل ملفات CSS الأساسية (خصوصًا /css/style.css)
+   هذه الدالة تُستدعى عند بدء الموديول، وأيضًا داخل loadPage.
+-------------------------------------------------------------------*/
+function ensureBaseCss() {
+  const MUST = [
+    '/css/colors.css',
+    '/css/fonts.css',
+    '/css/shared-utilities.css',
+    '/css/forms.css',
+    '/css/common-components-subjects.css',
+    '/css/style.css', // ← الأهم لتفعيل Grid
+  ];
+
+  const head = document.head || document.getElementsByTagName('head')[0];
+
+  // حوّل كل href إلى Pathname موحّد ثم تأكد من وجوده
+  const existing = new Set(
+    Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+      .map(l => {
+        try { return new URL(l.getAttribute('href'), location.href).pathname; }
+        catch { return l.getAttribute('href') || ''; }
+      })
+  );
+
+  let appended = false;
+  for (const href of MUST) {
+    if (!existing.has(href)) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      head.appendChild(link);
+      appended = true;
+    }
+  }
+
+  // إن ضُيف style.css الآن، أعطه لحظة ليُحمَّل قبل حساب التخطيط
+  if (appended) {
+    // ممكن ننتظر "idle" لكن هذا كافٍ لمعظم الحالات
+    requestAnimationFrame(() => {});
+  }
+}
+// استدعاء فوري عند تحميل هذا الملف
+ensureBaseCss();
+
 /* ------------------------- أدوات واجهة بسيطة للسايدبار ------------------------- */
 // لا تُفرّغ القسم الثابت (حسابك)
 function hideAllControls() {
@@ -31,7 +76,6 @@ function hideAllControls() {
   if (aside) aside.style.display = "";
 }
 
-
 /* ------------------------- محمل صفحات عام (مُحصَّن) ------------------------- */
 const FRAGMENT_SELECTORS = [
   "#page-content",
@@ -45,6 +89,8 @@ const FRAGMENT_SELECTORS = [
 async function loadPage(htmlPath, moduleLoader, subjectType) {
   const mainContent = document.getElementById('app-main') || document.querySelector('main.main-content');
   try {
+    // تأكيد روابط CSS في كل تنقل
+    ensureBaseCss();
     hideAllControls();
 
     const res = await fetch(htmlPath, { cache: 'no-cache' });
