@@ -1,31 +1,8 @@
-/* public/css/vegetables.css */
+/* ==============================
+   Vegetables Page Styles
+   ============================== */
 
-/* أنماط خاصة بصور الخضروات (إذا كانت مختلفة عن الحيوانات والفواكه) */
-#vegetable-image {
-    width: 80%;
-    max-width: 400px;
-    height: 300px; /* يمكن تعديل الارتفاع حسب الحاجة */
-    object-fit: contain; /* للحفاظ على نسبة العرض إلى الارتفاع */
-    border-radius: 8px;
-    border: 3px solid var(--color-primary); /* استخدام لون أساسي للخضروات (أخضر) */
-    box-shadow: 0 4px 8px var(--color-shadow);
-    background-color: var(--color-surface);
-    margin-bottom: 20px; /* مسافة تحت الصورة */
-}
-
-/* نمط قسم التفاصيل الإضافية (خاص بالخضروات) */
-/* استخدام الفئة info-box من common-components-subjects.css */
-/* إذا أردت أنماطًا إضافية خاصة بالخضروات يمكن وضعها هنا */
-.vegetable-details-section {
-    /* يمكنك إضافة أنماط هنا لتجاوز/تخصيص أنماط .info-box إذا لزم الأمر */
-    /* text-align: right; */ /* info-box به justify، يمكن تغييره هنا */
-}
-
-/* نمط لتضمين الوصف إذا كان بحاجة لأنماط خاصة إضافية */
-.vegetable-description-box {
-    /* يمكنك إضافة أنماط هنا لتجاوز/تخصيص أنماط .info-box إذا لزم الأمر */
-}
-/* عرض رأسي مركزي */
+/* تخطيط عمودي: الاسم بالوسط، الصورة بالوسط، الوصف تحتهم */
 #vegetables-game .topic-body {
   display: flex;
   flex-direction: column;
@@ -33,25 +10,92 @@
   gap: 12px;
 }
 
-/* اسم الخضار بالوسط وبحجم واضح */
+/* الاسم وسط + أول حرف أحمر */
 #vegetable-word {
   text-align: center;
   font-size: 2rem;
   margin: 6px 0 8px;
+  line-height: 1.3;
+  font-weight: 700;
 }
+#vegetable-word .first-letter { color: #e53935; }
 
-/* توسيط الصورة */
+/* منطقة الصورة */
 #vegetables-game .image-area {
-  width: 100%;
+  width: min(820px, 100%);
+  height: 340px;               /* مساحة واضحة للصورة */
   display: flex;
+  align-items: center;
   justify-content: center;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px #e5f3e6 inset;
+}
+#vegetables-game .image-area img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+#vegetables-game .image-area img.img-error {
+  opacity: .5;
+  filter: grayscale(0.3);
 }
 
-/* صندوق الوصف أسفل الصورة */
+/* صندوق الوصف */
 #vegetable-description-box {
-  width: min(720px, 100%);
+  width: min(820px, 100%);
   text-align: center;
 }
+#vegetable-description-box .line {
+  margin: 4px 0;
+}
 
-/* لا داعي لتكرار الأنماط المشتركة مثل .game-box, .item-main-name, .navigation-buttons, .sidebar-game-controls هنا */
-/* هذه الأنماط موجودة في public/css/common-components-subjects.css */
+/* ----------------- تنسيق جذاب لأزرار السايدبار ----------------- */
+#sidebar-section .control-grid[data-subject="vegetable"] {
+  display: grid;
+  row-gap: 10px;
+}
+#sidebar-section .control-grid .row { display: block; }
+
+#sidebar-section .control-grid .two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* العناصر */
+#sidebar-section .ctrl-label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+#sidebar-section .ctrl-select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #d8e3da;
+  background: #fff;
+}
+
+/* الأزرار */
+#sidebar-section .btn {
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: #f1f5f3;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform .05s ease, box-shadow .2s ease;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04);
+}
+#sidebar-section .btn:hover { transform: translateY(-1px); }
+#sidebar-section .btn:active { transform: translateY(0); }
+
+#sidebar-section .btn.primary   { background: #ffcc66; }
+#sidebar-section .btn.secondary { background: #ffd391; }
+#sidebar-section .btn.listen    { background: #78d6f5; }
+#sidebar-section .btn.ghost     { background: #eaeef0; }

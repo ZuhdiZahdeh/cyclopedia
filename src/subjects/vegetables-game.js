@@ -1,5 +1,6 @@
 // src/subjects/vegetables-game.js
-// نسخة مستقرة: تربط الأزرار بصيغ (vegetable/vegetables) + تصحيح زر الوصف + تنسيق اللوج
+// نسخة نهائية: تربط IDs المفردة، تنسّق الاسم (أول حرف أحمر)،
+ // توحّد الصوت/اللغة، وتسمع عند النقر على الصورة أو الاسم، وتضبط مكان الصورة.
 
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
@@ -12,6 +13,9 @@ let currentIndex = 0;
 let currentVegData = null;
 
 /* -------------------------- أدوات مساعدة -------------------------- */
+const log  = (...a)=>console.log('[vegetables]', ...a);
+const warn = (...a)=>console.warn('[vegetables]', ...a);
+
 const grab = (ids) => {
   const list = Array.isArray(ids) ? ids : [ids];
   for (const id of list) {
@@ -23,15 +27,26 @@ const grab = (ids) => {
 const pick = (...ids) => grab(ids);
 const safeText = (v) => (v == null ? '' : String(v));
 const isAbs = (p) => /^https?:\/\//i.test(p) || /^data:/i.test(p) || /^blob:/i.test(p);
-const norm = (s) => String(s || '').trim().replace(/^\.?[\\/]+/, '').replace(/\\/g, '/');
+const norm  = (s) => String(s || '').trim().replace(/^\.?[\\/]+/, '').replace(/\\/g, '/');
 
-const log = (...args) => console.log('[vegetables]', ...args);
-const warn = (...args) => console.warn('[vegetables]', ...args);
+const normalizeLang = (v)=>{
+  v = String(v||'').toLowerCase();
+  if (v.startsWith('ar')) return 'ar';
+  if (v.startsWith('en')) return 'en';
+  if (v.startsWith('he')) return 'he';
+  return getCurrentLang();
+};
+const normalizeVoice = (v)=>{
+  v = String(v||'').toLowerCase();
+  if (v.includes('boy')     || v.includes('ولد'))    return 'boy';
+  if (v.includes('girl')    || v.includes('بنت'))    return 'girl';
+  if (v.includes('teacher') || v.includes('معلم') || v.includes('معلمة')) return 'teacher';
+  return 'boy';
+};
 
 /* ------------------------------ جلب البيانات ------------------------------ */
 async function fetchVegetables() {
   const list = [];
-  // 1) المسار المهيكل: categories/vegetables/items
   try {
     const col = collection(db, 'categories', 'vegetables', 'items');
     const snap = await getDocs(col);
@@ -40,7 +55,6 @@ async function fetchVegetables() {
   } catch (e) {
     warn('categories/vegetables/items failed:', e?.message || e);
   }
-  // 2) المسار المسطح: /vegetables
   if (!list.length) {
     try {
       const col = collection(db, 'vegetables');
@@ -55,15 +69,15 @@ async function fetchVegetables() {
 }
 
 /* ----------------------------- قراءات آمنة ----------------------------- */
-function nameFor(d, lang) {
-  return d?.name?.[lang] ?? d?.name?.ar ?? d?.name?.en ?? d?.name?.he ?? d?.title ?? d?.word ?? '';
-}
-function categoryFor(d, lang) {
-  return d?.category?.[lang] ?? d?.category?.ar ?? d?.category?.en ?? d?.category?.he ?? '';
-}
-function descriptionFor(d, lang) {
-  return d?.description?.[lang] ?? d?.description?.ar ?? d?.description?.en ?? d?.description?.he ?? '';
-}
+const nameFor = (d, lang) =>
+  d?.name?.[lang] ?? d?.name?.ar ?? d?.name?.en ?? d?.name?.he ?? d?.title ?? d?.word ?? '';
+
+const categoryFor = (d, lang) =>
+  d?.category?.[lang] ?? d?.category?.ar ?? d?.category?.en ?? d?.category?.he ?? '';
+
+const descriptionFor = (d, lang) =>
+  d?.description?.[lang] ?? d?.description?.ar ?? d?.description?.en ?? d?.description?.he ?? '';
+
 function imageFor(d) {
   const p = d?.image_path || d?.imageFile || d?.image_file || d?.image || d?.img || '';
   if (!p) return '';
@@ -72,29 +86,53 @@ function imageFor(d) {
 function audioFor(d, lang, voice) {
   let p = null;
   if (d?.sound?.[lang]?.[voice]) p = d.sound[lang][voice];
-  else if (d?.sound?.[lang]) p = d.sound[lang];
-  else if (d?.sound?.[voice]) p = d.sound[voice];
-  else if (d?.sound_file) p = d.sound_file;
-  else if (d?.audio) p = d.audio;
+  else if (d?.sound?.[lang])     p = d.sound[lang];
+  else if (d?.sound?.ar?.[voice]) p = d.sound.ar[voice];
+  else if (d?.sound?.en?.[voice]) p = d.sound.en[voice];
+  else if (d?.sound?.he?.[voice]) p = d.sound.he[voice];
+  else if (d?.sound_file)         p = d.sound_file;
+  else if (d?.audio)              p = d.audio;
   if (!p) return '';
   return isAbs(p) ? p : ('/' + norm(p));
 }
 
+/* ---------------------- تنسيق الاسم (أول حرف باللون الأحمر) ---------------------- */
+function splitFirstLetter(str) {
+  const s = safeText(str).trim();
+  if (!s) return { first: '', rest: '' };
+  // أول محرف حرفي/عددي (يدعم العربية/الإنجليزية/العبرية)
+  const m = s.match(/([\p{L}\p{N}])/u);
+  if (!m) return { first: s[0] || '', rest: s.slice(1) };
+  const i = m.index ?? 0;
+  return { first: s[i], rest: s.slice(i + 1) };
+}
+function renderName(name, lang) {
+  const el = pick('vegetable-word', 'item-word', 'item-name');
+  if (!el) return;
+  const { first, rest } = splitFirstLetter(name);
+  el.innerHTML = `<span class="first-letter">${first || ''}</span>${rest || ''}`;
+  el.dir = (lang === 'ar' || lang === 'he') ? 'rtl' : 'ltr';
+}
+
 /* ----------------------------- تحديث الواجهة ----------------------------- */
+function setImage(imgEl, src, alt) {
+  if (!imgEl) return;
+  imgEl.alt = safeText(alt);
+  if (!src) { imgEl.removeAttribute('src'); return; }
+  imgEl.onload  = ()=> imgEl.classList.remove('img-error');
+  imgEl.onerror = ()=> { imgEl.classList.add('img-error'); warn('missing image', src); };
+  imgEl.src = src;
+}
+
 function updateVegetableContent() {
   const lang = getCurrentLang();
   const d = vegetables[currentIndex];
   currentVegData = d;
 
-  const wordEl = pick('vegetable-word', 'item-word', 'item-name');
-  if (wordEl) wordEl.textContent = nameFor(d, lang);
+  renderName(nameFor(d, lang), lang);
 
   const imgEl = pick('vegetable-image', 'item-image');
-  if (imgEl) {
-    const src = imageFor(d);
-    if (src) imgEl.src = src;
-    imgEl.alt = nameFor(d, lang);
-  }
+  setImage(imgEl, imageFor(d), nameFor(d, lang));
 
   const catEl = pick('vegetable-category', 'item-category');
   if (catEl) catEl.textContent = categoryFor(d, lang) || '—';
@@ -105,72 +143,56 @@ function updateVegetableContent() {
   log('update', { index: currentIndex, id: d?.id, name: nameFor(d, lang) });
 }
 
-/* ------------------------------- تشغيل الصوت ------------------------------- */
+/* ------------------------------- الصوت ------------------------------- */
 function playCurrentVegetableAudio() {
   if (!currentVegData) return;
   const langSel = grab(['game-lang-select-vegetable', 'game-lang-select-vegetables', 'game-lang-select']);
-  const vSel   = grab(['voice-select-vegetable', 'voice-select-vegetables', 'voice-select']);
-  const lang   = langSel?.value || getCurrentLang();
-  const voice  = vSel?.value || 'boy';
-  const path   = audioFor(currentVegData, lang, voice);
-  if (path) playAudio(path);
-  else warn('no audio for', currentVegData?.id);
+  const vSel    = grab(['voice-select-vegetable',     'voice-select-vegetables',     'voice-select']);
+  const lang    = normalizeLang(langSel?.value || getCurrentLang());
+  const voice   = normalizeVoice(vSel?.value || 'boy');
+  const path    = audioFor(currentVegData, lang, voice);
+  if (path) {
+    playAudio(path);
+    recordActivity('vegetables', 'listen', { index: currentIndex, lang, voice });
+  } else {
+    warn('no audio for', currentVegData?.id);
+  }
 }
 
 /* ------------------------------- ربط الأحداث ------------------------------- */
 function bindControls() {
-  const prevBtn  = grab(['prev-vegetable-btn',  'prev-vegetables-btn',  'prev-btn']);
-  const nextBtn  = grab(['next-vegetable-btn',  'next-vegetables-btn',  'next-btn']);
-  const playBtn  = grab(['play-sound-btn-vegetable','play-sound-btn-vegetables','listen-btn','listen']);
-  const langSel  = grab(['game-lang-select-vegetable', 'game-lang-select-vegetables', 'game-lang-select']);
-  const voiceSel = grab(['voice-select-vegetable', 'voice-select-vegetables', 'voice-select']);
-  const toggleDescBtn = grab(['toggle-description-btn', 'toggle-description-btn-vegetables', 'toggle-description', 'desc-btn']);
+  const prevBtn  = grab(['prev-vegetable-btn','prev-btn']);
+  const nextBtn  = grab(['next-vegetable-btn','next-btn']);
+  const playBtn  = grab(['play-sound-btn-vegetable','listen','listen-btn']);
+  const langSel  = grab(['game-lang-select-vegetable','game-lang-select']);
+  const voiceSel = grab(['voice-select-vegetable','voice-select']);
+  const toggleDescBtn = grab(['toggle-description-btn','toggle-description']);
 
   log('bind', {
-    'prev-vegetable-btn': !!document.getElementById('prev-vegetable-btn'),
-    'prev-vegetables-btn': !!document.getElementById('prev-vegetables-btn'),
-    'next-vegetable-btn': !!document.getElementById('next-vegetable-btn'),
-    'next-vegetables-btn': !!document.getElementById('next-vegetables-btn'),
-    'play-sound-btn-vegetable': !!document.getElementById('play-sound-btn-vegetable'),
-    'play-sound-btn-vegetables': !!document.getElementById('play-sound-btn-vegetables'),
-    'game-lang-select-vegetable': !!document.getElementById('game-lang-select-vegetable'),
-    'voice-select-vegetable': !!document.getElementById('voice-select-vegetable'),
-    'toggle-description-btn': !!document.getElementById('toggle-description-btn'),
-    'toggle-description-btn-vegetables': !!document.getElementById('toggle-description-btn-vegetables'),
+    'prev-vegetable-btn': !!prevBtn,
+    'next-vegetable-btn': !!nextBtn,
+    'play-sound-btn-vegetable': !!playBtn,
+    'game-lang-select-vegetable': !!langSel,
+    'voice-select-vegetable': !!voiceSel,
+    'toggle-description-btn': !!toggleDescBtn
   });
 
   if (prevBtn) prevBtn.onclick = () => {
-    if (currentIndex > 0) {
-      currentIndex--;
-      updateVegetableContent();
-      recordActivity('vegetables', 'prev', { index: currentIndex });
-    }
+    if (currentIndex > 0) { currentIndex--; updateVegetableContent(); recordActivity('vegetables', 'prev', { index: currentIndex }); }
   };
-
   if (nextBtn) nextBtn.onclick = () => {
-    if (currentIndex < vegetables.length - 1) {
-      currentIndex++;
-      updateVegetableContent();
-      recordActivity('vegetables', 'next', { index: currentIndex });
-    }
+    if (currentIndex < vegetables.length - 1) { currentIndex++; updateVegetableContent(); recordActivity('vegetables', 'next', { index: currentIndex }); }
   };
-
-  if (playBtn) playBtn.onclick = () => {
-    playCurrentVegetableAudio();
-    recordActivity('vegetables', 'listen', { index: currentIndex });
-  };
+  if (playBtn) playBtn.onclick = () => playCurrentVegetableAudio();
 
   if (langSel) langSel.onchange = async () => {
-    const lang = langSel.value;
+    const lang = normalizeLang(langSel.value);
     await loadLanguage(lang);
     setDirection(lang);
     applyTranslations();
     updateVegetableContent();
   };
-
-  if (voiceSel) voiceSel.onchange = () => {
-    stopCurrentAudio();
-  };
+  if (voiceSel) voiceSel.onchange = () => stopCurrentAudio();
 
   if (toggleDescBtn) {
     toggleDescBtn.onclick = () => {
@@ -181,36 +203,32 @@ function bindControls() {
       if (box) box.style.display = (box.style.display === 'none' ? 'block' : 'none');
     };
   }
+
+  // سماع الصوت بالنقر على الاسم أو الصورة
+  const wordEl = pick('vegetable-word','item-word','item-name');
+  const imgEl  = pick('vegetable-image','item-image');
+  [wordEl, imgEl].forEach(el => { if (el) el.style.cursor = 'pointer'; if (el) el.onclick = () => playCurrentVegetableAudio(); });
 }
 
 /* ---------------------------------- تحميل ---------------------------------- */
 export async function loadVegetablesGameContent() {
   log('loadVegetablesGameContent()');
-
   if (!document.getElementById('vegetables-game')) {
-    warn('container #vegetables-game not found');
-    return;
+    warn('container #vegetables-game not found'); return;
   }
-
-  // ربط عناصر التحكم (بعد حقن controls HTML)
   bindControls();
 
-  // جلب البيانات
   await fetchVegetables();
-  if (!vegetables.length) {
-    warn('no data');
-    const img = pick('vegetable-image', 'item-image'); if (img) img.alt = '';
-    const word = pick('vegetable-word', 'item-word'); if (word) word.textContent = '';
-    const desc = pick('vegetable-description', 'item-description'); if (desc) desc.textContent = '—';
-    return;
-  }
+  if (!vegetables.length) { warn('no data'); return; }
 
+  // ترتيب حسب اللغة الحالية
   const lang = getCurrentLang();
   vegetables.sort((a, b) => safeText(nameFor(a, lang)).localeCompare(safeText(nameFor(b, lang))));
   currentIndex = 0;
   updateVegetableContent();
 }
 
+// إتاحة دوال للتشخيص
 if (typeof window !== 'undefined') {
   window.loadVegetablesGameContent = loadVegetablesGameContent;
   window._vegetables = () => ({ vegetables, currentIndex, currentVegData });
