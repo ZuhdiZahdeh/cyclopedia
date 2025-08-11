@@ -1,5 +1,10 @@
 // src/subjects/vegetables-game.js
-// تشغيل صوت مع مسارات احتياط، تموضع الصورة، اسم بالحرف الأول أحمر، تفعيل نقر الاسم/الصورة.
+// نسخة نهائية قابلة للتعميم:
+// - إدارة لغة الصفحة محليًا (gameLang) لتغيير الاسم/الوصف فور تبديل اللغة
+// - تشغيل الصوت بمسارات احتياط، والنقر على الاسم/الصورة يشغّل الصوت
+// - ربط مرن لعناصر التحكم (IDs بالمفرد/العام) مع تمكين الأزرار
+// - تصحيح مسار الصور (إضافة images/vegetables عند الحاجة)
+// - ضمان وجود زر "الوصف" داخل شريط التحكّم + إضافة كلاسات تنسيق للأزرار
 
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
@@ -10,6 +15,7 @@ import { recordActivity } from '../core/activity-handler.js';
 let vegetables = [];
 let currentIndex = 0;
 let currentVegData = null;
+let gameLang = getCurrentLang(); // لغة صفحة الخضروات الحالية
 
 /* -------------------------- Helpers -------------------------- */
 const log  = (...a)=>console.log('[vegetables]', ...a);
@@ -75,25 +81,25 @@ function imageFor(d) {
   p = norm(p);
   if (isAbs(p)) return p;
 
-  // لو اسم ملف فقط، نفترض مجلد الخضروات
+  // اسم ملف فقط؟ اعتبره داخل images/vegetables/
   if (!/[\/\\]/.test(p)) p = `images/vegetables/${p}`;
-  // لو فيها public/ احذفها
+  // أزل public/ إن وجدت
   p = p.replace(/^public\//, '');
   return `/${p}`;
 }
 
 function audioFor(d, lang, voice) {
-  // 1) الحقول المباشرة داخل كائن sound
+  // 1) حقول مباشرة داخل كائن sound
   let p = null;
   if (d?.sound?.[lang]?.[voice]) p = d.sound[lang][voice];
   else if (d?.sound?.[lang])     p = d.sound[lang];
   else if (d?.sound?.ar?.[voice]) p = d.sound.ar[voice];
   else if (d?.sound?.en?.[voice]) p = d.sound.en[voice];
   else if (d?.sound?.he?.[voice]) p = d.sound.he[voice];
-  else if (d?.sound_file)         p = d.sound_file;        // مسار واحد فقط
+  else if (d?.sound_file)         p = d.sound_file;
   else if (d?.audio)              p = d.audio;
 
-  // 2) قالب احتياطي بالاسم الأساس
+  // 2) مسار احتياطي باسم أساسي
   if (!p) {
     const base = d?.sound_base || d?.audio_base || d?.base || d?.id || slug(nameFor(d, lang));
     if (base) p = `audio/${lang}/vegetables/${slug(base)}_${voice}_${lang}.mp3`;
@@ -136,7 +142,7 @@ function setImage(imgEl, src, alt) {
 }
 
 function updateVegetableContent() {
-  const lang = getCurrentLang();
+  const lang = gameLang; // استخدم اللغة المختارة محليًا
   const d = vegetables[currentIndex];
   currentVegData = d;
 
@@ -154,12 +160,58 @@ function updateVegetableContent() {
   log('update', { index: currentIndex, id: d?.id, name: nameFor(d, lang) });
 }
 
+/* -------------------------- Controls helpers -------------------------- */
+// إضافة كلاسات تنسيق للأزرار لتظهر واضحة حتى لو HTML قديم
+function ensureControlsStyling({prevBtn, nextBtn, playBtn, toggleDescBtn}) {
+  const add = (el, classes)=>{ if (!el) return; classes.split(/\s+/).forEach(c=>el.classList.add(c)); };
+  add(prevBtn,       'btn secondary');
+  add(nextBtn,       'btn primary');
+  add(playBtn,       'btn listen');
+  add(toggleDescBtn, 'btn ghost');
+}
+
+// ضمان وجود زر الوصف داخل السايدبار إن لم يكن موجودًا
+function ensureToggleDescriptionButton() {
+  let btn = grab(['toggle-description-btn','toggle-description']);
+  if (btn) return btn;
+
+  // ابحث عن شبكة التحكّم
+  const grid =
+    document.querySelector('#vegetable-sidebar-controls .control-grid') ||
+    document.querySelector('#sidebar-section .control-grid[data-subject="vegetable"]') ||
+    document.getElementById('vegetable-sidebar-controls') ||
+    document.getElementById('sidebar-section');
+
+  if (!grid) return null;
+
+  const row = document.createElement('div');
+  row.className = 'row';
+  btn = document.createElement('button');
+  btn.id = 'toggle-description-btn';
+  btn.type = 'button';
+  btn.className = 'btn ghost';
+  btn.setAttribute('data-i18n', 'description');
+  btn.textContent = 'الوصف';
+  row.appendChild(btn);
+
+  // الأفضل: أسفل صف "استمع"
+  const afterListen = grid.querySelector('#play-sound-btn-vegetable')?.closest('.row');
+  if (afterListen && afterListen.parentElement === grid) {
+    afterListen.insertAdjacentElement('afterend', row);
+  } else {
+    grid.appendChild(row);
+  }
+  // ترجمة النص لو نظام i18n نشط
+  try { applyTranslations(); } catch {}
+  return btn;
+}
+
 /* ------------------------------- Audio ------------------------------- */
 function playCurrentVegetableAudio() {
   if (!currentVegData) return;
   const langSel = grab(['game-lang-select-vegetable','game-lang-select']);
   const vSel    = grab(['voice-select-vegetable','voice-select']);
-  const lang    = normalizeLang(langSel?.value || getCurrentLang());
+  const lang    = normalizeLang(langSel?.value || gameLang);
   const voice   = normalizeVoice(vSel?.value || 'boy');
   const path    = audioFor(currentVegData, lang, voice);
   if (path) {
@@ -176,12 +228,18 @@ function bindControls() {
   const prevBtn  = grab(['prev-vegetable-btn','prev-btn']);
   const nextBtn  = grab(['next-vegetable-btn','next-btn']);
   const playBtn  = grab(['play-sound-btn-vegetable','listen','listen-btn']);
+  let toggleDescBtn = grab(['toggle-description-btn','toggle-description']);
   const langSel  = grab(['game-lang-select-vegetable','game-lang-select']);
   const voiceSel = grab(['voice-select-vegetable','voice-select']);
-  const toggleDescBtn = grab(['toggle-description-btn','toggle-description']);
 
-  // تأكد أنها ليست معطّلة بصيغ HTML قديمة
+  // إن لم يوجد زر الوصف في HTML، أنشئه الآن
+  if (!toggleDescBtn) toggleDescBtn = ensureToggleDescriptionButton();
+
+  // تأكد أنها ليست معطّلة
   [prevBtn, nextBtn, playBtn].forEach(b => { if (b) b.disabled = false; });
+
+  // طبق كلاسات التنسيق الواضحة
+  ensureControlsStyling({prevBtn, nextBtn, playBtn, toggleDescBtn});
 
   log('bind', {
     'prev-vegetable-btn': !!prevBtn,
@@ -201,10 +259,12 @@ function bindControls() {
   if (playBtn) playBtn.onclick = () => playCurrentVegetableAudio();
 
   if (langSel) langSel.onchange = async () => {
-    const lang = normalizeLang(langSel.value);
-    await loadLanguage(lang);
-    setDirection(lang);
+    gameLang = normalizeLang(langSel.value);     // خزّن اللغة المختارة
+    await loadLanguage(gameLang);
+    setDirection(gameLang);
     applyTranslations();
+    // إعادة الفرز بحسب اللغة الجديدة (اختياري لكنه أدق)
+    vegetables.sort((a,b)=> safeText(nameFor(a, gameLang)).localeCompare(safeText(nameFor(b, gameLang))));
     updateVegetableContent();
   };
   if (voiceSel) voiceSel.onchange = () => stopCurrentAudio();
@@ -230,18 +290,22 @@ export async function loadVegetablesGameContent() {
   log('loadVegetablesGameContent()');
   if (!document.getElementById('vegetables-game')) { warn('container #vegetables-game not found'); return; }
 
+  // اللغة المبدئية من السلكت إن وجد
+  const sel = grab(['game-lang-select-vegetable','game-lang-select']);
+  gameLang = normalizeLang(sel?.value || getCurrentLang());
+
   bindControls();
   await fetchVegetables();
   if (!vegetables.length) { warn('no data'); return; }
 
-  const lang = getCurrentLang();
-  vegetables.sort((a,b)=> safeText(nameFor(a, lang)).localeCompare(safeText(nameFor(b, lang))));
+  vegetables.sort((a,b)=> safeText(nameFor(a, gameLang)).localeCompare(safeText(nameFor(b, gameLang))));
   currentIndex = 0;
   updateVegetableContent();
 }
 
+// صادرات للتشخيص
 if (typeof window !== 'undefined') {
   window.loadVegetablesGameContent = loadVegetablesGameContent;
-  window._vegetables = () => ({ vegetables, currentIndex, currentVegData });
+  window._vegetables = () => ({ vegetables, currentIndex, currentVegData, gameLang });
   window.playCurrentVegetableAudio = playCurrentVegetableAudio;
 }
