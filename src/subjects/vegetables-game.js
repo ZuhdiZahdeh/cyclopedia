@@ -79,10 +79,23 @@ const descriptionFor = (d, lang) =>
   d?.description?.[lang] ?? d?.description?.ar ?? d?.description?.en ?? d?.description?.he ?? '';
 
 function imageFor(d) {
-  const p = d?.image_path || d?.imageFile || d?.image_file || d?.image || d?.img || '';
+  let p = d?.image_path || d?.imageFile || d?.image_file || d?.image || d?.img || '';
   if (!p) return '';
-  return isAbs(p) ? p : ('/' + norm(p));
+
+  p = norm(p);               // تنظيف المسار
+  if (isAbs(p)) return p;    // رابط مطلق أو data:/blob:
+
+  // لو كان مجرد اسم ملف بدون مجلد -> نفترض مجلد الخضروات
+  if (!/[\/\\]/.test(p)) {
+    p = `images/vegetables/${p}`;
+  }
+
+  // لو مخزّن عندك بـ public/... نحذف public/
+  p = p.replace(/^public\//, '');
+
+  return `/${p}`;
 }
+
 function audioFor(d, lang, voice) {
   let p = null;
   if (d?.sound?.[lang]?.[voice]) p = d.sound[lang][voice];
@@ -117,12 +130,15 @@ function renderName(name, lang) {
 /* ----------------------------- تحديث الواجهة ----------------------------- */
 function setImage(imgEl, src, alt) {
   if (!imgEl) return;
+  imgEl.classList.remove('img-error');   // امسح علامة الخطأ قبل المحاولة
   imgEl.alt = safeText(alt);
   if (!src) { imgEl.removeAttribute('src'); return; }
-  imgEl.onload  = ()=> imgEl.classList.remove('img-error');
-  imgEl.onerror = ()=> { imgEl.classList.add('img-error'); warn('missing image', src); };
+  imgEl.onload  = () => imgEl.classList.remove('img-error');
+  imgEl.onerror = () => { imgEl.classList.add('img-error'); warn('missing image', src); };
   imgEl.src = src;
+  log('img src =', src);                 // ← لوج مفيد في الـConsole
 }
+
 
 function updateVegetableContent() {
   const lang = getCurrentLang();
