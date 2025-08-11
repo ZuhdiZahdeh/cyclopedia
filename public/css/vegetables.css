@@ -25,6 +25,33 @@
 .vegetable-description-box {
     /* يمكنك إضافة أنماط هنا لتجاوز/تخصيص أنماط .info-box إذا لزم الأمر */
 }
+/* عرض رأسي مركزي */
+#vegetables-game .topic-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* اسم الخضار بالوسط وبحجم واضح */
+#vegetable-word {
+  text-align: center;
+  font-size: 2rem;
+  margin: 6px 0 8px;
+}
+
+/* توسيط الصورة */
+#vegetables-game .image-area {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* صندوق الوصف أسفل الصورة */
+#vegetable-description-box {
+  width: min(720px, 100%);
+  text-align: center;
+}
 
 /* لا داعي لتكرار الأنماط المشتركة مثل .game-box, .item-main-name, .navigation-buttons, .sidebar-game-controls هنا */
 /* هذه الأنماط موجودة في public/css/common-components-subjects.css */
