@@ -5,16 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>الموسوعة التفاعلية للأطفال</title>
 
-  <!-- روابط CSS -->
-  <link rel="stylesheet" href="%BASE_URL%css/colors.css" />
-  <link rel="stylesheet" href="%BASE_URL%css/fonts.css" />
-  <link rel="stylesheet" href="%BASE_URL%css/shared-utilities.css" />
-  <link rel="stylesheet" href="%BASE_URL%css/forms.css" />
-  <link rel="stylesheet" href="%BASE_URL%css/common-components-subjects.css" />
-  <link rel="stylesheet" href="%BASE_URL%css/style.css" />
-
-  <!-- تطبيق Vite -->
-  <script type="module" src="%BASE_URL%src/js/main.js"></script>
+  <!-- CSS العامة -->
+  <link rel="stylesheet" href="/css/colors.css" />
+  <link rel="stylesheet" href="/css/fonts.css" />
+  <link rel="stylesheet" href="/css/shared-utilities.css" />
+  <link rel="stylesheet" href="/css/forms.css" />
+  <link rel="stylesheet" href="/css/common-components-subjects.css" />
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
   <!-- الهيدر -->
@@ -36,7 +33,7 @@
   <div class="page-layout">
     <!-- السايدبار -->
     <aside id="sidebar-section" class="sidebar shadow">
-      <!-- أقسام التحكم لكل موضوع (تملؤها initializeSubjectControls) -->
+      <!-- يُحقن بداخلها تحكّم كل موضوع -->
       <div class="sidebar-section" id="animal-sidebar-controls" style="display:none;"></div>
       <div class="sidebar-section" id="fruit-sidebar-controls" style="display:none;"></div>
       <div class="sidebar-section" id="vegetable-sidebar-controls" style="display:none;"></div>
@@ -47,34 +44,24 @@
       <div class="sidebar-section" id="memory-game-sidebar-controls" style="display:none;"></div>
       <div class="sidebar-section" id="tools-match-sidebar-controls" style="display:none;"></div>
 
-      <!-- 👤 حسابك — في الأسفل وثابت (لن يتم إخفاؤه بـ hideAllControls) -->
+      <!-- 👤 حسابك (ثابت) -->
       <div class="sidebar-section static-section">
         <h3 class="sidebar-title">👤 حسابك</h3>
-
         <div class="account-actions" id="account-actions">
           <button id="loginBtn" type="button" class="nav-btn" onclick="loadLogin()">
-            <span class="icon">🔐</span>
-            <span data-i18n="login">تسجيل الدخول</span>
+            <span class="icon">🔐</span><span data-i18n="login">تسجيل الدخول</span>
           </button>
-
           <button id="registerBtn" type="button" class="nav-btn" onclick="loadRegister()">
-            <span class="icon">📝</span>
-            <span data-i18n="register">إنشاء حساب</span>
+            <span class="icon">📝</span><span data-i18n="register">إنشاء حساب</span>
           </button>
-
           <button id="my-profile-btn" type="button" class="nav-btn" onclick="loadProfile()" hidden>
-            <span class="icon">👤</span>
-            <span data-i18n="profile">الملف الشخصي</span>
+            <span class="icon">👤</span><span data-i18n="profile">الملف الشخصي</span>
           </button>
-
           <button id="my-report-btn" type="button" class="nav-btn" onclick="loadMyReport()" hidden>
-            <span class="icon">🏆</span>
-            <span data-i18n="my_report">سجل النقاط</span>
+            <span class="icon">🏆</span><span data-i18n="my_report">سجل النقاط</span>
           </button>
-
           <button id="logoutBtn" type="button" class="nav-btn" onclick="handleLogout()" hidden>
-            <span class="icon">🚪</span>
-            <span data-i18n="logout">تسجيل خروج</span>
+            <span class="icon">🚪</span><span data-i18n="logout">تسجيل خروج</span>
           </button>
         </div>
       </div>
@@ -100,5 +87,8 @@
       </section>
     </main>
   </div>
+
+  <!-- نقطة الدخول (Vite) -->
+  <script type="module" src="/src/js/main.js"></script>
 </body>
 </html>

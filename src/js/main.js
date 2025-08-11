@@ -5,7 +5,7 @@
 // لغة الواجهة
 import { getCurrentLang, loadLanguage, applyTranslations } from '../core/lang-handler.js';
 
-// تهيئة السايدبار الخاص بكل موضوع
+// تهيئة السايدبار الخاص بكل موضوع (تتولّى حقن ملف التحكم المناسب)
 import { initializeSubjectControls } from '../core/initializeSubjectControls.js';
 
 // ألعاب/صفحات المواضيع
@@ -17,40 +17,46 @@ import { loadToolsGameContent }          from "../subjects/tools-game.js";
 import { loadAlphabetPressGameContent }  from "../subjects/alphabet-press-game.js";
 import { loadMemoryGameContent }         from "../subjects/memory-game.js";
 import { loadToolsMatchGameContent }     from "../subjects/tools-match-game.js";
-import { loadHumanBodyGameContent } 	 from "../subjects/human-body-game.js";
+import { loadHumanBodyGameContent }      from "../subjects/human-body-game.js";
+
 // 🔐 Firebase Auth
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 
 /* ------------------------------------------------------------------
-   تأكيد تحميل ملفات CSS الأساسية (خصوصًا /css/style.css)
+   تحميل CSS الأساسي + CSS الخاص بكل موضوع تلقائيًا
 -------------------------------------------------------------------*/
-function ensureBaseCss() {
-  const MUST = [
-    '/css/colors.css',
-    '/css/fonts.css',
-    '/css/shared-utilities.css',
-    '/css/forms.css',
-    '/css/professions.css',
-    '/css/alphabet-press.css',
-    '/css/human-body.css',
-    '/css/memory-game.css',
-    '/css/tools-match.css',
-    '/css/animals.css',
-    '/css/common-components-subjects.css',
-    '/css/style.css'
-  ];
+const BASE_CSS = [
+  '/css/colors.css',
+  '/css/fonts.css',
+  '/css/shared-utilities.css',
+  '/css/forms.css',
+  '/css/common-components-subjects.css',
+  '/css/style.css'
+];
 
-  const head = document.head || document.getElementsByTagName('head')[0];
+const SUBJECT_CSS = {
+  animal:         '/css/animals.css',
+  fruit:          '/css/fruits.css',
+  vegetable:      '/css/vegetables.css',
+  profession:     '/css/professions.css',
+  tools:          '/css/tools.css',
+  'alphabet-press': '/css/alphabet-press.css',
+  'human-body':   '/css/human-body.css',
+  'memory-game':  '/css/memory-game.css',
+  'tools-match':  '/css/tools-match.css'
+};
+
+function ensureCss(paths = []) {
+  const head = document.head;
   const existing = new Set(
-    Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+    [...document.querySelectorAll('link[rel="stylesheet"]')]
       .map(l => {
         try { return new URL(l.getAttribute('href'), location.href).pathname; }
         catch { return l.getAttribute('href') || ''; }
       })
   );
-
   let appended = false;
-  for (const href of MUST) {
+  for (const href of paths) {
     if (!existing.has(href)) {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
@@ -61,7 +67,8 @@ function ensureBaseCss() {
   }
   if (appended) requestAnimationFrame(() => {});
 }
-ensureBaseCss();
+// حمل الأساسي مرة واحدة
+ensureCss(BASE_CSS);
 
 /* ------------------------- أدوات واجهة بسيطة للسايدبار ------------------------- */
 // لا تُفرّغ القسم الثابت (مثل «حسابك»)
@@ -166,13 +173,18 @@ const FRAGMENT_SELECTORS = [
 async function loadPage(htmlPath, moduleLoader, subjectType) {
   const mainContent = document.getElementById('app-main') || document.querySelector('main.main-content');
   try {
-    ensureBaseCss();
+    // CSS الموضوع (إن وُجد)
+    if (subjectType && SUBJECT_CSS[subjectType]) {
+      ensureCss(['/css/common-components-subjects.css', SUBJECT_CSS[subjectType]]);
+    }
+
     hideAllControls();
 
     const res = await fetch(htmlPath, { cache: 'no-cache' });
     if (!res.ok) throw new Error(`فشل تحميل الصفحة: ${htmlPath} (status ${res.status})`);
     const html = await res.text();
 
+    // لو رجعت وثيقة كاملة بالخطأ
     if (/<\!doctype html>|<html|<header[^>]+top-navbar/i.test(html)) {
       console.warn(`[loader] "${htmlPath}" أعاد وثيقة كاملة (غالبًا index.html). سأحاول استخراج جزء المحتوى فقط.`);
       const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -186,9 +198,7 @@ async function loadPage(htmlPath, moduleLoader, subjectType) {
     try { await applyTranslations(); } catch {}
 
     // تهيئة مجموعة التحكم للموضوع (إن وُجد)، ثم ضع «حسابك» تحتها
-    if (subjectType) {
-      initializeSubjectControls(subjectType);
-    }
+    if (subjectType) initializeSubjectControls(subjectType);
 
     // ننتظر فريم لضمان اكتمال حقن عناصر التحكم ثم نرتّب «حسابك»
     requestAnimationFrame(() => {
@@ -262,5 +272,7 @@ window.loadMyReport = () => loadPage("/users/my-report.html");
   }
 })();
 
-// إتاحة بعض الدوال للاستخدام العام
-window.updateAccountActionsUI = updateAccountActionsUI;
+// تشغيل الصفحة الرئيسية عند الجاهزية
+window.addEventListener('DOMContentLoaded', () => {
+  showHomePage();
+});
