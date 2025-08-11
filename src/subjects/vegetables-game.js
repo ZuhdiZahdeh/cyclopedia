@@ -1,6 +1,5 @@
 // src/subjects/vegetables-game.js
-// نسخة نهائية: تربط IDs المفردة، تنسّق الاسم (أول حرف أحمر)،
- // توحّد الصوت/اللغة، وتسمع عند النقر على الصورة أو الاسم، وتضبط مكان الصورة.
+// تشغيل صوت مع مسارات احتياط، تموضع الصورة، اسم بالحرف الأول أحمر، تفعيل نقر الاسم/الصورة.
 
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
@@ -12,18 +11,11 @@ let vegetables = [];
 let currentIndex = 0;
 let currentVegData = null;
 
-/* -------------------------- أدوات مساعدة -------------------------- */
+/* -------------------------- Helpers -------------------------- */
 const log  = (...a)=>console.log('[vegetables]', ...a);
 const warn = (...a)=>console.warn('[vegetables]', ...a);
 
-const grab = (ids) => {
-  const list = Array.isArray(ids) ? ids : [ids];
-  for (const id of list) {
-    const el = document.getElementById(id);
-    if (el) return el;
-  }
-  return null;
-};
+const grab = (ids) => (Array.isArray(ids)?ids:[ids]).map(id=>document.getElementById(id)).find(Boolean) || null;
 const pick = (...ids) => grab(ids);
 const safeText = (v) => (v == null ? '' : String(v));
 const isAbs = (p) => /^https?:\/\//i.test(p) || /^data:/i.test(p) || /^blob:/i.test(p);
@@ -43,32 +35,31 @@ const normalizeVoice = (v)=>{
   if (v.includes('teacher') || v.includes('معلم') || v.includes('معلمة')) return 'teacher';
   return 'boy';
 };
+const slug = (s)=> safeText(s).trim().toLowerCase().replace(/\s+/g,'_').replace(/[^\w\-]+/g,'');
 
-/* ------------------------------ جلب البيانات ------------------------------ */
+/* ------------------------------ Data ------------------------------ */
 async function fetchVegetables() {
   const list = [];
   try {
-    const col = collection(db, 'categories', 'vegetables', 'items');
-    const snap = await getDocs(col);
-    snap.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
+    const snap = await getDocs(collection(db, 'categories', 'vegetables', 'items'));
+    snap.forEach((doc)=>list.push({ id: doc.id, ...doc.data() }));
     if (list.length) log('from categories/vegetables/items | count =', list.length);
-  } catch (e) {
+  } catch(e) {
     warn('categories/vegetables/items failed:', e?.message || e);
   }
   if (!list.length) {
     try {
-      const col = collection(db, 'vegetables');
-      const snap = await getDocs(col);
-      snap.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
+      const snap = await getDocs(collection(db, 'vegetables'));
+      snap.forEach((doc)=>list.push({ id: doc.id, ...doc.data() }));
       if (list.length) log('from /vegetables | count =', list.length);
-    } catch (e) {
+    } catch(e) {
       warn('/vegetables failed:', e?.message || e);
     }
   }
   vegetables = list;
 }
 
-/* ----------------------------- قراءات آمنة ----------------------------- */
+/* ----------------------------- Accessors ----------------------------- */
 const nameFor = (d, lang) =>
   d?.name?.[lang] ?? d?.name?.ar ?? d?.name?.en ?? d?.name?.he ?? d?.title ?? d?.word ?? '';
 
@@ -81,64 +72,68 @@ const descriptionFor = (d, lang) =>
 function imageFor(d) {
   let p = d?.image_path || d?.imageFile || d?.image_file || d?.image || d?.img || '';
   if (!p) return '';
+  p = norm(p);
+  if (isAbs(p)) return p;
 
-  p = norm(p);               // تنظيف المسار
-  if (isAbs(p)) return p;    // رابط مطلق أو data:/blob:
-
-  // لو كان مجرد اسم ملف بدون مجلد -> نفترض مجلد الخضروات
-  if (!/[\/\\]/.test(p)) {
-    p = `images/vegetables/${p}`;
-  }
-
-  // لو مخزّن عندك بـ public/... نحذف public/
+  // لو اسم ملف فقط، نفترض مجلد الخضروات
+  if (!/[\/\\]/.test(p)) p = `images/vegetables/${p}`;
+  // لو فيها public/ احذفها
   p = p.replace(/^public\//, '');
-
   return `/${p}`;
 }
 
 function audioFor(d, lang, voice) {
+  // 1) الحقول المباشرة داخل كائن sound
   let p = null;
   if (d?.sound?.[lang]?.[voice]) p = d.sound[lang][voice];
   else if (d?.sound?.[lang])     p = d.sound[lang];
   else if (d?.sound?.ar?.[voice]) p = d.sound.ar[voice];
   else if (d?.sound?.en?.[voice]) p = d.sound.en[voice];
   else if (d?.sound?.he?.[voice]) p = d.sound.he[voice];
-  else if (d?.sound_file)         p = d.sound_file;
+  else if (d?.sound_file)         p = d.sound_file;        // مسار واحد فقط
   else if (d?.audio)              p = d.audio;
+
+  // 2) قالب احتياطي بالاسم الأساس
+  if (!p) {
+    const base = d?.sound_base || d?.audio_base || d?.base || d?.id || slug(nameFor(d, lang));
+    if (base) p = `audio/${lang}/vegetables/${slug(base)}_${voice}_${lang}.mp3`;
+  }
+
   if (!p) return '';
-  return isAbs(p) ? p : ('/' + norm(p));
+  p = norm(p);
+  if (isAbs(p)) return p;
+  p = p.replace(/^public\//, '');
+  return `/${p}`;
 }
 
-/* ---------------------- تنسيق الاسم (أول حرف باللون الأحمر) ---------------------- */
+/* ---------------------- UI: First-letter red ---------------------- */
 function splitFirstLetter(str) {
   const s = safeText(str).trim();
   if (!s) return { first: '', rest: '' };
-  // أول محرف حرفي/عددي (يدعم العربية/الإنجليزية/العبرية)
   const m = s.match(/([\p{L}\p{N}])/u);
   if (!m) return { first: s[0] || '', rest: s.slice(1) };
   const i = m.index ?? 0;
   return { first: s[i], rest: s.slice(i + 1) };
 }
 function renderName(name, lang) {
-  const el = pick('vegetable-word', 'item-word', 'item-name');
+  const el = pick('vegetable-word','item-word','item-name');
   if (!el) return;
   const { first, rest } = splitFirstLetter(name);
   el.innerHTML = `<span class="first-letter">${first || ''}</span>${rest || ''}`;
   el.dir = (lang === 'ar' || lang === 'he') ? 'rtl' : 'ltr';
 }
 
-/* ----------------------------- تحديث الواجهة ----------------------------- */
+/* ----------------------------- Update UI ----------------------------- */
 function setImage(imgEl, src, alt) {
   if (!imgEl) return;
-  imgEl.classList.remove('img-error');   // امسح علامة الخطأ قبل المحاولة
+  imgEl.classList.remove('img-error');
   imgEl.alt = safeText(alt);
   if (!src) { imgEl.removeAttribute('src'); return; }
-  imgEl.onload  = () => imgEl.classList.remove('img-error');
-  imgEl.onerror = () => { imgEl.classList.add('img-error'); warn('missing image', src); };
+  imgEl.onload  = ()=> imgEl.classList.remove('img-error');
+  imgEl.onerror = ()=> { imgEl.classList.add('img-error'); warn('missing image', src); };
   imgEl.src = src;
-  log('img src =', src);                 // ← لوج مفيد في الـConsole
+  log('img src =', src);
 }
-
 
 function updateVegetableContent() {
   const lang = getCurrentLang();
@@ -147,27 +142,28 @@ function updateVegetableContent() {
 
   renderName(nameFor(d, lang), lang);
 
-  const imgEl = pick('vegetable-image', 'item-image');
+  const imgEl = pick('vegetable-image','item-image');
   setImage(imgEl, imageFor(d), nameFor(d, lang));
 
-  const catEl = pick('vegetable-category', 'item-category');
+  const catEl = pick('vegetable-category','item-category');
   if (catEl) catEl.textContent = categoryFor(d, lang) || '—';
 
-  const descEl = pick('vegetable-description', 'item-description');
+  const descEl = pick('vegetable-description','item-description');
   if (descEl) descEl.textContent = descriptionFor(d, lang) || '—';
 
   log('update', { index: currentIndex, id: d?.id, name: nameFor(d, lang) });
 }
 
-/* ------------------------------- الصوت ------------------------------- */
+/* ------------------------------- Audio ------------------------------- */
 function playCurrentVegetableAudio() {
   if (!currentVegData) return;
-  const langSel = grab(['game-lang-select-vegetable', 'game-lang-select-vegetables', 'game-lang-select']);
-  const vSel    = grab(['voice-select-vegetable',     'voice-select-vegetables',     'voice-select']);
+  const langSel = grab(['game-lang-select-vegetable','game-lang-select']);
+  const vSel    = grab(['voice-select-vegetable','voice-select']);
   const lang    = normalizeLang(langSel?.value || getCurrentLang());
   const voice   = normalizeVoice(vSel?.value || 'boy');
   const path    = audioFor(currentVegData, lang, voice);
   if (path) {
+    log('play', { path, lang, voice, id: currentVegData?.id });
     playAudio(path);
     recordActivity('vegetables', 'listen', { index: currentIndex, lang, voice });
   } else {
@@ -175,7 +171,7 @@ function playCurrentVegetableAudio() {
   }
 }
 
-/* ------------------------------- ربط الأحداث ------------------------------- */
+/* ------------------------------- Bind ------------------------------- */
 function bindControls() {
   const prevBtn  = grab(['prev-vegetable-btn','prev-btn']);
   const nextBtn  = grab(['next-vegetable-btn','next-btn']);
@@ -183,6 +179,9 @@ function bindControls() {
   const langSel  = grab(['game-lang-select-vegetable','game-lang-select']);
   const voiceSel = grab(['voice-select-vegetable','voice-select']);
   const toggleDescBtn = grab(['toggle-description-btn','toggle-description']);
+
+  // تأكد أنها ليست معطّلة بصيغ HTML قديمة
+  [prevBtn, nextBtn, playBtn].forEach(b => { if (b) b.disabled = false; });
 
   log('bind', {
     'prev-vegetable-btn': !!prevBtn,
@@ -220,31 +219,27 @@ function bindControls() {
     };
   }
 
-  // سماع الصوت بالنقر على الاسم أو الصورة
+  // تشغيل الصوت عند النقر على الاسم أو الصورة
   const wordEl = pick('vegetable-word','item-word','item-name');
   const imgEl  = pick('vegetable-image','item-image');
   [wordEl, imgEl].forEach(el => { if (el) el.style.cursor = 'pointer'; if (el) el.onclick = () => playCurrentVegetableAudio(); });
 }
 
-/* ---------------------------------- تحميل ---------------------------------- */
+/* ---------------------------------- Load ---------------------------------- */
 export async function loadVegetablesGameContent() {
   log('loadVegetablesGameContent()');
-  if (!document.getElementById('vegetables-game')) {
-    warn('container #vegetables-game not found'); return;
-  }
-  bindControls();
+  if (!document.getElementById('vegetables-game')) { warn('container #vegetables-game not found'); return; }
 
+  bindControls();
   await fetchVegetables();
   if (!vegetables.length) { warn('no data'); return; }
 
-  // ترتيب حسب اللغة الحالية
   const lang = getCurrentLang();
-  vegetables.sort((a, b) => safeText(nameFor(a, lang)).localeCompare(safeText(nameFor(b, lang))));
+  vegetables.sort((a,b)=> safeText(nameFor(a, lang)).localeCompare(safeText(nameFor(b, lang))));
   currentIndex = 0;
   updateVegetableContent();
 }
 
-// إتاحة دوال للتشخيص
 if (typeof window !== 'undefined') {
   window.loadVegetablesGameContent = loadVegetablesGameContent;
   window._vegetables = () => ({ vegetables, currentIndex, currentVegData });
