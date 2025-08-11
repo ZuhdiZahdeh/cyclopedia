@@ -1,25 +1,21 @@
-/* public/css/fruits.css */
+/* fruits.css — نفس تنسيق الخضروات */
+#fruits-game .topic-body { display:flex; flex-direction:column; align-items:center; gap:12px; }
 
-/* أنماط خاصة بصور الفواكه */
-#fruit-image {
-    width: 80%;
-    max-width: 300px;
-    height: 300px;
-    object-fit: contain;
-    border-radius: 8px;
-    border: 2px solid var(--color-secondary); /* استخدام متغير اللون للحدود (برتقالي) */
-    background-color: var(--color-surface);
-    box-shadow: 0 4px 8px var(--color-shadow);
+#fruit-word { text-align:center; font-size:2rem; margin:8px 0 10px; font-weight:800; }
+#fruit-word .first-letter{ color:#e53935; }
+
+#fruits-game .image-area {
+  width:min(820px,100%); height:360px; display:flex; align-items:center; justify-content:center;
+  background:#fff; border-radius:14px; box-shadow:0 0 0 2px #e5f3e6 inset;
 }
+#fruits-game .image-area img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
+#fruits-game .image-area img.img-error{ opacity:.55; filter:grayscale(.35); }
 
-/* أنماط الاسم الإنجليزي في الفواكه (خاص بها) */
-.fruit-name-en {
-    font-size: 1.2em;
-    color: var(--color-teal); /* لون من Colors.css */
-    margin: 0;
-    font-style: italic;
-    direction: ltr;
+#fruit-description-box { width:min(820px,100%); text-align:center; }
+#fruit-description-box .line{ margin:6px 0; }
+
+/* تحسينات موبايل */
+@media (max-width:900px){
+  #fruits-game .image-area{ height:240px; }
+  #fruit-word{ font-size:1.6rem; }
 }
-
-/* لا داعي لتكرار .game-box, .item-main-name, .info-box, .navigation-buttons هنا */
-/* هذه الأنماط ستكون في common-components-subjects.css */

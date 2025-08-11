@@ -1,91 +1,21 @@
-/* صورة الجزء */
-#body-image {
-  width: 80%;
-  max-width: 400px;
-  height: 300px;
-  object-fit: contain;
-  border-radius: 15px;
-  border: 3px solid var(--color-purple);
-  box-shadow: 0 5px 10px var(--color-shadow);
-  background-color: var(--color-surface);
-}
+/* human-body.css — نفس التنسيق */
+#human-body-game .topic-body { display:flex; flex-direction:column; align-items:center; gap:12px; }
 
-/* صندوق الوصف */
-.body-description-box {
-  margin-top: 15px;
-  padding: 15px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background-color: var(--color-surface);
-  text-align: justify;
-  width: 100%;
-  box-sizing: border-box;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-.body-description-box h4 {
-  font-family: var(--font-ar-heading);
-  font-weight: bold;
-  font-size: 1.3em;
-  color: var(--color-accent);
-  margin-top: 0;
-  margin-bottom: 10px;
-  text-align: right;
-}
+#human-body-word { text-align:center; font-size:2rem; margin:8px 0 10px; font-weight:800; }
+#human-body-word .first-letter{ color:#e53935; }
 
-/* تفاعل */
-.clickable-image { cursor: pointer; }
-.clickable-text  { cursor: pointer; }
-
-/* ====== Carousel ====== */
 #human-body-game .image-area {
-  position: relative;
-  display: grid;
-  grid-template-rows: auto auto;
-  justify-items: center;
-  gap: 10px;
+  width:min(820px,100%); height:360px; display:flex; align-items:center; justify-content:center;
+  background:#fff; border-radius:14px; box-shadow:0 0 0 2px #e5f3e6 inset;
 }
+#human-body-game .image-area img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
+#human-body-game .image-area img.img-error{ opacity:.55; filter:grayscale(.35); }
 
-/* أزرار تنقل الكاروسيل */
-.carousel-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  font-size: 28px;
-  line-height: 1;
-  padding: 6px 12px;
-  background: var(--color-surface);
-  box-shadow: 0 2px 8px var(--color-shadow);
-  border-radius: 10px;
-  cursor: pointer;
-  user-select: none;
-}
-.carousel-nav.prev { left: 4px; }
-.carousel-nav.next { right: 4px; }
+#human-body-description-box { width:min(820px,100%); text-align:center; }
+#human-body-description-box .line{ margin:6px 0; }
 
-/* المصغّرات */
-.carousel-thumbs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding: 4px 2px 0;
-  width: 100%;
-  justify-content: center;
+/* موبايل */
+@media (max-width:900px){
+  #human-body-game .image-area{ height:240px; }
+  #human-body-word{ font-size:1.6rem; }
 }
-.carousel-thumb {
-  width: 64px;
-  height: 64px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 2px solid transparent;
-  cursor: pointer;
-  background: var(--color-surface);
-}
-.carousel-thumb.active {
-  border-color: var(--color-accent);
-}
-
-/* ملاحظة: تأكد من وجود:
-   .highlight-first-letter { color: var(--color-danger, #e53935); font-weight: 700; } */
