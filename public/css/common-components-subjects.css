@@ -241,7 +241,90 @@
   text-align:start; /* يتبدّل تلقائياً مع اتجاه الصفحة */
 }
 
-/* Responsive */
-@media (max-width:700px){
-  .topic-container .topic-body{ grid-template-columns:1fr; }
+/* ================================
+   Buttons — Clear, Accessible UI
+   ================================ */
+
+/* ألوان ومتغيرات عامة للثيم */
+:root{
+  --btn-radius: 14px;
+  --btn-shadow: 0 1px 0 rgba(0,0,0,.05), 0 6px 14px rgba(0,0,0,.06);
+  --btn-focus: 0 0 0 3px rgba(14,165,233,.35);
+
+  /* ألوان المتغيرات (تباين عالي) */
+  --btn-primary-bg:  #f59e0b; /* برتقالي قوي (Next) */
+  --btn-primary-bg-2:#ea580c;
+  --btn-secondary-bg:#fb923c; /* برتقالي أغمق (Prev/وصف إن لزم) */
+  --btn-secondary-bg-2:#f97316;
+  --btn-listen-bg:   #0ea5e9; /* أزرق واضح (استمع) */
+  --btn-listen-bg-2: #0284c7;
+  --btn-ghost-bg:    #e2e8f0; /* رمادي فاتح */
+
+  --btn-text-dark:   #0f172a;
+  --btn-text-light:  #ffffff;
 }
+
+/* الشكل الأساسي */
+#sidebar-section .btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+  width:100%; min-height:48px; padding:12px 14px;
+  border:0; border-radius:var(--btn-radius);
+  font:800 1rem/1.1 "Cairo",system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
+  letter-spacing:.2px;
+  color:var(--btn-text-dark);
+  background:#eef2f1;
+  box-shadow:var(--btn-shadow);
+  transition:transform .06s ease, box-shadow .2s ease, filter .2s ease, background-color .2s ease, color .2s ease;
+}
+#sidebar-section .btn:hover{ transform:translateY(-1px); }
+#sidebar-section .btn:active{ transform:translateY(0); filter:brightness(.98); }
+#sidebar-section .btn:focus-visible{ outline:none; box-shadow:var(--btn-shadow), var(--btn-focus); }
+
+/* الحالات */
+#sidebar-section .btn[disabled]{ opacity:.55; filter:grayscale(.25); cursor:not-allowed; }
+
+/* المتغيرات اللونية */
+#sidebar-section .btn.primary{
+  color:var(--btn-text-light);
+  background:linear-gradient(180deg, var(--btn-primary-bg), var(--btn-primary-bg-2));
+}
+#sidebar-section .btn.secondary{
+  color:var(--btn-text-light);
+  background:linear-gradient(180deg, var(--btn-secondary-bg), var(--btn-secondary-bg-2));
+}
+#sidebar-section .btn.listen{
+  color:var(--btn-text-light);
+  background:linear-gradient(180deg, var(--btn-listen-bg), var(--btn-listen-bg-2));
+}
+#sidebar-section .btn.ghost{
+  color:var(--btn-text-dark);
+  background:var(--btn-ghost-bg);
+}
+
+/* شبكة السايدبار وتراصّ الأسطر */
+#sidebar-section .control-grid{ display:grid; row-gap:12px; }
+#sidebar-section .control-grid .row + .row{ margin-top:4px; }
+#sidebar-section .control-grid .two-col{
+  display:grid; grid-template-columns:1fr 1fr; gap:10px;
+}
+
+/* عناوين وحقول (لغة/صوت) أوضح */
+#sidebar-section .ctrl-label{
+  display:block; margin:0 0 6px; font-weight:800; font-size:.98rem; color:#0f172a;
+}
+#sidebar-section .ctrl-select{
+  width:100%; padding:10px 12px;
+  border-radius:12px; border:1.5px solid #cbd5e1; background:#fff;
+  font-weight:700; font-size:.98rem; outline:none;
+  transition:box-shadow .2s ease, border-color .2s ease;
+}
+#sidebar-section .ctrl-select:focus{
+  border-color:#0ea5e9; box-shadow:0 0 0 3px rgba(14,165,233,.25);
+}
+
+/* تحسين الموبايل */
+@media (max-width:900px){
+  #sidebar-section .btn{ min-height:46px; font-size:1rem; }
+  #sidebar-section .ctrl-select{ padding:10px 12px; }
+}
+

@@ -123,24 +123,78 @@ html[dir="rtl"] .page-grid {
 .shadow { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
 /* ===== Responsive ===== */
-@media (max-width: 900px){
-  .page-layout, .page-grid {
-    grid-template-areas: "side" "main";
-    grid-template-columns: 1fr;
+/* ======= تحسين العرض على الشاشات الصغيرة ======= */
+@media (max-width: 900px) {
+  /* غلّب قاعدة الموبايل بنفس الانتقائية السابقة */
+  html[dir="rtl"] .page-layout,
+  html[dir="ltr"] .page-layout {
+    display: grid;
+    grid-template-columns: 1fr;          /* عمود واحد */
+    grid-template-areas:
+      "side"                              /* السايدبار أولاً */
+      "main";                             /* ثم المحتوى */
+    gap: 0.75rem;
+    padding: 0.75rem;
   }
-  #sidebar-section { width: 100%; }
-  .top-nav-links { flex-wrap: wrap; justify-content: center; gap: 15px; }
-  .topic-card {
+
+  /* السايدبار بعرض كامل وفوق المحتوى */
+  #sidebar-section {
+    grid-area: side;
     width: 100%;
-    max-width: 300px;
-    height: auto;
-    padding: 20px;
+    max-width: none;
+    position: static;
   }
-  .home-cards-container { padding: 20px 0; gap: 15px; }
-  #profession-image {
-    width: 100%;
-    max-width: 300px;
-    height: auto;
-    padding: 20px;
+
+  /* المحتوى الرئيسي أسفل السايدبار */
+  #app-main.main-content {
+    grid-area: main;
+    min-height: auto;
+    padding: 0.5rem;
+  }
+
+  /* اجعل قيمة متغير عرض السايدبار آمنة للموبايل */
+  :root { --sidebar-width: 100%; }
+
+  /* ======= شريط الهيدر ======= */
+  .top-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    padding: 6px 10px;                   /* تقليل الارتفاع */
+  }
+
+  .top-navbar .top-nav-links {
+    display: flex;
+    flex-wrap: nowrap;                   /* لا يلفّ إلى عدة أسطر */
+    overflow-x: auto;                    /* تمرير أفقي سلس */
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    scrollbar-width: thin;
+  }
+  .top-navbar .top-nav-links a {
+    flex: 0 0 auto;                      /* عناصر قابلة للتمرير */
+    white-space: nowrap;
+    padding: 6px 8px;
+    font-size: 14px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.08);
+  }
+
+  /* ======= تحسينات بصرية سريعة للمحتوى على الموبايل ======= */
+  /* مساحة الصورة أصغر قليلاً للموبايل */
+  #vegetables-game .image-area { height: 240px; }
+  #vegetable-word { font-size: 1.6rem; }
+
+  /* شبكة أزرار السايدبار تكون مريحة للمس */
+  #sidebar-section .control-grid { row-gap: 10px; }
+  #sidebar-section .two-col {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  #sidebar-section .ctrl-select,
+  #sidebar-section .btn {
+    padding: 10px 12px;                  /* حجم لمسي مناسب */
+    font-size: 1rem;
   }
 }
+
