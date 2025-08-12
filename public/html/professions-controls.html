@@ -1,30 +1,44 @@
-<section class="sidebar-section subject-controls" data-subject="profession">
-  <h3 data-i18n="controls_title">أدوات التحكم</h3>
-
-  <label for="game-lang-select-profession" data-i18n="language">اللغة</label>
-  <select id="game-lang-select-profession">
-    <option value="ar">العربية</option>
-    <option value="en">English</option>
-    <option value="he">עברית</option>
-  </select>
-
-  <label for="voice-select-profession" data-i18n="voice">الصوت</label>
-  <select id="voice-select-profession">
-    <option value="boy" data-i18n="voice_boy">ولد</option>
-    <option value="girl" data-i18n="voice_girl">بنت</option>
-    <option value="teacher" data-i18n="voice_teacher">معلّم</option>
-  </select>
-
-  <button id="play-sound-btn-profession" data-i18n="play_name_audio">استمع للاسم</button>
-
-  <hr />
-  <button id="toggle-description-btn" data-i18n="toggle_description">إظهار/إخفاء الوصف</button>
-  <button id="toggle-details-btn" data-i18n="toggle_details">إظهار/إخفاء التفاصيل</button>
-  <button id="toggle-tools-btn" data-i18n="toggle_tools">إظهار/إخفاء أدوات المهنة</button>
-
-  <hr />
-  <div class="nav-controls">
-    <button id="prev-profession-btn" data-i18n="prev">السابق</button>
-    <button id="next-profession-btn" data-i18n="next">التالي</button>
+<!-- html/professions-controls.html -->
+<div class="control-grid" data-subject="profession">
+  <!-- السطر 1: اللغة -->
+  <div class="row">
+    <label for="game-lang-select-profession" class="ctrl-label" data-i18n="language">اللغة</label>
+    <select id="game-lang-select-profession" class="ctrl-select">
+      <option value="ar">العربية</option>
+      <option value="en">English</option>
+      <option value="he">עברית</option>
+    </select>
   </div>
-</section>
+
+  <!-- السطر 2: الصوت -->
+  <div class="row">
+    <label for="voice-select-profession" class="ctrl-label" data-i18n="voice">الصوت</label>
+    <select id="voice-select-profession" class="ctrl-select">
+      <option value="boy"     data-i18n="voice_boy">صوت الولد</option>
+      <option value="girl"    data-i18n="voice_girl">صوت البنت</option>
+      <option value="teacher" data-i18n="voice_teacher">صوت المعلّم</option>
+    </select>
+  </div>
+
+  <!-- السطر 3: السابق / التالي -->
+  <div class="row two-col">
+    <button id="prev-profession-btn" class="btn secondary" type="button" data-i18n="prev">السابق</button>
+    <button id="next-profession-btn" class="btn primary"   type="button" data-i18n="next">التالي</button>
+  </div>
+
+  <!-- السطر 4: استمع -->
+  <div class="row">
+    <button id="play-sound-btn-profession" class="btn listen" type="button" data-i18n="listen">استمع</button>
+  </div>
+
+  <!-- السطر 5: وصف/تفاصيل/أدوات -->
+  <div class="row">
+    <button id="toggle-description-btn" class="btn ghost" type="button" data-i18n="description">الوصف</button>
+  </div>
+  <div class="row">
+    <button id="toggle-details-btn" class="btn ghost" type="button" data-i18n="toggle_details">التفاصيل</button>
+  </div>
+  <div class="row">
+    <button id="toggle-tools-btn" class="btn ghost" type="button" data-i18n="toggle_tools">أدوات المهنة</button>
+  </div>
+</div>
