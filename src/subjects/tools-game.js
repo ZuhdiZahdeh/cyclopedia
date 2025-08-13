@@ -211,61 +211,104 @@ async function fetchTools(){
 }
 
 /* ============== سايدبار (robust) ============== */
-async function ensureToolsSidebar(){
-  const sidebar =
-    document.getElementById('sidebar') ||
-    document.getElementById('sidebar-section') ||   // ⬅️ مهم
-    document.querySelector('.sidebar');
+/* ============== سايدبار (robust) ============== */
+async function ensureToolsSidebar() {
+  // 1) ابحث عن الشريط الجانبي بأكبر قدر من التسامح
+  let sidebar = document.querySelector(
+    '#sidebar, .sidebar, aside#sidebar, aside.sidebar, [data-role="sidebar"], #sidebar-section'
+  );
 
-  if (!sidebar){ console.warn('[tools] sidebar not found'); return null; }
+  // 2) لو لم يوجد، أنشِئ واحدًا مباشرة بعد <main>
+  if (!sidebar) {
+    console.warn('[tools] sidebar not found – creating a temporary sidebar after <main>');
+    const main = document.querySelector('main.main-content');
+    const tmpSidebar = document.createElement('aside');
+    tmpSidebar.id = 'sidebar';
+    tmpSidebar.className = 'sidebar';
+    if (main && main.parentNode) {
+      main.parentNode.insertBefore(tmpSidebar, main.nextSibling);
+    } else {
+      document.body.appendChild(tmpSidebar);
+    }
+    sidebar = tmpSidebar;
+  }
 
+  // 3) إن كانت الأزرار مركّبة أصلاً، أظهرها وأعدها
   let container = document.getElementById('tools-sidebar-controls');
-  if (container){
-    container.style.setProperty('display','block','important'); // ⬅️ تأكيد إظهار
+  if (container) {
+    container.style.setProperty('display', 'block', 'important');
     return container;
+  }
+
+  // 4) حمّل القالب (أو استخدم Fallback) ثم اركّبه داخل الشريط
+  let html = '';
+  try {
+    const resp = await fetch('/html/tools-controls.html', { cache: 'no-store' });
+    if (resp.ok) html = await resp.text();
+  } catch (e) {
+    console.warn('[tools] controls fetch error:', e);
   }
 
   const FALLBACK_HTML = `
   <div class="sidebar-section subject-controls" id="tools-sidebar-controls" style="display:block;">
     <h3 class="sidebar-title" data-i18n="tools.controls_title">🧰 أدوات — التحكم</h3>
-    <div class="controls-grid">
-      <button id="prev-tools-btn" class="control-btn" data-i18n="common.prev">السابق</button>
-      <button id="next-tools-btn" class="control-btn" data-i18n="common.next">التالي</button>
-      <button id="play-sound-btn-tools" class="control-btn" data-i18n="common.listen">استمع</button>
-      <button id="toggle-description-btn-tools" class="control-btn" data-i18n="common.toggle_description">الوصف</button>
+    <div class="control-grid">
+      <div class="row two-col">
+        <button id="prev-tools-btn" class="btn secondary" data-i18n="common.prev">السابق</button>
+        <button id="next-tools-btn" class="btn primary"   data-i18n="common.next">التالي</button>
+      </div>
 
-      <label for="voice-select-tools" class="control-label" data-i18n="common.voice">نوع الصوت</label>
-      <select id="voice-select-tools" class="select-control">
-        <option value="teacher" data-i18n="voices.teacher">المعلم</option>
-        <option value="boy"     data-i18n="voices.boy">ولد</option>
-        <option value="girl"    data-i18n="voices.girl">بنت</option>
-      </select>
+      <div class="row">
+        <button id="play-sound-btn-tools" class="btn listen" data-i18n="common.listen">استمع</button>
+      </div>
 
-      <label for="game-lang-select-tools" class="control-label" data-i18n="common.language">اللغة</label>
-      <select id="game-lang-select-tools" class="select-control">
-        <option value="ar">العربية</option>
-        <option value="en">English</option>
-        <option value="he">עברית</option>
-      </select>
+      <div class="row">
+        <button id="toggle-description-btn-tools" class="btn ghost" data-i18n="common.toggle_description">الوصف</button>
+      </div>
+
+      <div class="row">
+        <label for="voice-select-tools" class="ctrl-label" data-i18n="common.voice">الصوت</label>
+        <select id="voice-select-tools" class="ctrl-select">
+          <option value="teacher" data-i18n="voices.teacher">المعلم</option>
+          <option value="boy"     data-i18n="voices.boy">ولد</option>
+          <option value="girl"    data-i18n="voices.girl">بنت</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label for="game-lang-select-tools" class="ctrl-label" data-i18n="common.language">اللغة</label>
+        <select id="game-lang-select-tools" class="ctrl-select">
+          <option value="ar">العربية</option>
+          <option value="en">English</option>
+          <option value="he">עברית</option>
+        </select>
+      </div>
     </div>
   </div>`;
 
-  let html = '';
-  try { const resp = await fetch('/html/tools-controls.html',{cache:'no-store'}); if (resp.ok) html = await resp.text(); }
-  catch(e){ console.warn('[tools] controls fetch error:', e); }
+  const tmp = document.createElement('div');
+  tmp.innerHTML = (html || FALLBACK_HTML).trim();
 
-  const tmp = document.createElement('div'); tmp.innerHTML = (html || FALLBACK_HTML).trim();
   container = tmp.firstElementChild;
   container.id = 'tools-sidebar-controls';
   container.classList.add('subject-controls');
-  container.style.display = 'block';
+  container.style.setProperty('display', 'block', 'important');
 
+  // ضعها قبل قسم الحساب إن وُجد، وإلا ألحِقها بنهاية الشريط
   const account = sidebar.querySelector('.static-section');
-  if (account) sidebar.insertBefore(container, account); else sidebar.appendChild(container);
+  if (account) sidebar.insertBefore(container, account);
+  else sidebar.appendChild(container);
 
+  // تأكيد اللغة/الاتجاه وترجمة النصوص
+  try {
+    const langSelect = container.querySelector('#game-lang-select-tools');
+    if (langSelect) langSelect.value = getCurrentLang();
+  } catch {}
   applyTranslations();
+
   return container;
 }
+
 
 /* ============== التحميل ============== */
 export async function loadToolsGameContent(){
@@ -292,8 +335,8 @@ export async function loadToolsGameContent(){
 
   ensureCss('/css/tools.css','tools-css'); // مهم لتنسيق الصور والأزرار
 
-  const controls = await ensureToolsSidebar();
-  if (!controls){ console.warn('[tools] controls not mounted'); return; }
+ await ensureToolsSidebar(); // نكمل حتى مع أي إخفاق طفيف في التركيب
+
 
   try {
     window.hideAllControls?.(); window.showSubjectControls?.('tools');
