@@ -212,10 +212,18 @@ async function fetchTools(){
 
 /* ============== سايدبار (robust) ============== */
 async function ensureToolsSidebar(){
-  const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+  const sidebar =
+    document.getElementById('sidebar') ||
+    document.getElementById('sidebar-section') ||   // ⬅️ مهم
+    document.querySelector('.sidebar');
+
   if (!sidebar){ console.warn('[tools] sidebar not found'); return null; }
+
   let container = document.getElementById('tools-sidebar-controls');
-  if (container){ container.style.display = 'block'; return container; }
+  if (container){
+    container.style.setProperty('display','block','important'); // ⬅️ تأكيد إظهار
+    return container;
+  }
 
   const FALLBACK_HTML = `
   <div class="sidebar-section subject-controls" id="tools-sidebar-controls" style="display:block;">

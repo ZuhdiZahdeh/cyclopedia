@@ -19,12 +19,14 @@ function deepGet(obj, path) {
 
 export async function loadLanguage(lang) {
   try {
-    const res = await fetch(`/lang/${lang}.json`);
+    const res = await fetch(`/lang/${lang}.json`, { cache: "no-store" });
     if (!res.ok) throw new Error(`تعذر تحميل ملف الترجمة: ${lang}.json`);
     currentTranslations = await res.json();
     applyTranslations(); // يستخدم الكاش
+    return currentTranslations;
   } catch (err) {
     console.error("❌ خطأ في تحميل الترجمة:", err);
+    return null;
   }
 }
 
@@ -44,10 +46,11 @@ export function applyTranslations(translations) {
   });
 }
 
-export function setLanguage(lang) {
+export async function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem("lang", lang);
   setDirection(lang);
-  loadLanguage(lang); // async
+  await loadLanguage(lang); // ← انتظار التحميل قبل إطلاق الحدث
   document.dispatchEvent(new CustomEvent("languageChanged", { detail: lang }));
+  return currentLang;
 }

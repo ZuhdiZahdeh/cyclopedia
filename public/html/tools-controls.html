@@ -3,7 +3,28 @@
   <h3 class="sidebar-title" data-i18n="tools.controls_title">🧰 أدوات — التحكم</h3>
 
   <div class="control-grid">
-    <!-- اللغة -->
+    <div class="row two-col">
+      <button id="prev-tools-btn" class="btn secondary" data-i18n="common.prev">السابق</button>
+      <button id="next-tools-btn" class="btn primary"   data-i18n="common.next">التالي</button>
+    </div>
+
+    <div class="row">
+      <button id="play-sound-btn-tools" class="btn listen" data-i18n="common.listen">استمع</button>
+    </div>
+
+    <div class="row">
+      <button id="toggle-description-btn-tools" class="btn ghost" data-i18n="common.toggle_description">الوصف</button>
+    </div>
+
+    <div class="row">
+      <label for="voice-select-tools" class="ctrl-label" data-i18n="common.voice">الصوت</label>
+      <select id="voice-select-tools" class="ctrl-select">
+        <option value="teacher" data-i18n="voices.teacher">المعلم</option>
+        <option value="boy"     data-i18n="voices.boy">ولد</option>
+        <option value="girl"    data-i18n="voices.girl">بنت</option>
+      </select>
+    </div>
+
     <div class="row">
       <label for="game-lang-select-tools" class="ctrl-label" data-i18n="common.language">اللغة</label>
       <select id="game-lang-select-tools" class="ctrl-select">
@@ -11,32 +32,6 @@
         <option value="en">English</option>
         <option value="he">עברית</option>
       </select>
-    </div>
-
-    <!-- الصوت -->
-    <div class="row">
-      <label for="voice-select-tools" class="ctrl-label" data-i18n="common.voice">الصوت</label>
-      <select id="voice-select-tools" class="ctrl-select">
-        <option value="teacher" data-i18n="voices.teacher">المعلم</option>
-        <option value="boy" data-i18n="voices.boy">ولد</option>
-        <option value="girl" data-i18n="voices.girl">بنت</option>
-      </select>
-    </div>
-
-    <!-- السابق/التالي -->
-    <div class="row two-col">
-      <button id="prev-tools-btn" class="btn secondary" type="button" data-i18n="common.prev">السابق</button>
-      <button id="next-tools-btn" class="btn primary"   type="button" data-i18n="common.next">التالي</button>
-    </div>
-
-    <!-- استمع -->
-    <div class="row">
-      <button id="play-sound-btn-tools" class="btn listen" type="button" data-i18n="common.listen">استمع</button>
-    </div>
-
-    <!-- الوصف -->
-    <div class="row">
-      <button id="toggle-description-btn-tools" class="btn ghost" type="button" data-i18n="common.toggle_description">الوصف</button>
     </div>
   </div>
 </div>

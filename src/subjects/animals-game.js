@@ -2,13 +2,19 @@
 
 import { db } from "../core/db-handler.js";
 import { collection, getDocs, query } from "firebase/firestore";
-import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from "../core/lang-handler.js";
+import { getCurrentLang, setLanguage, setDirection, applyTranslations } from "../core/lang-handler.js";
 import { playAudio, stopCurrentAudio } from "../core/audio-handler.js";
 import { recordActivity } from "../core/activity-handler.js";
 
 let animals = [];
 let currentIndex = 0;
 let currentAnimalData = null;
+
+/** لغة صفحة الحيوانات من القائمة الجانبية (أولوية)، مع fallback للغة العامة */
+function getLangForAnimals() {
+  const el = document.getElementById("game-lang-select-animal") || document.getElementById("game-lang-select");
+  return (el && el.value) || getCurrentLang();
+}
 
 export async function loadAnimalsGameContent() {
   stopCurrentAudio();
@@ -40,7 +46,7 @@ export async function loadAnimalsGameContent() {
   const toggleDetails= document.getElementById("toggle-details-btn-animal")     || document.getElementById("toggle-details-btn");
   const toggleBabyImg= document.getElementById("toggle-baby-image-btn-animal")  || document.getElementById("toggle-baby-image-btn");
 
-  // جلب البيانات (ندعم مسارين: categories/animals/items ثم animals)
+  // جلب البيانات
   await fetchAnimals();
 
   if (animals.length === 0) {
@@ -59,15 +65,14 @@ export async function loadAnimalsGameContent() {
   updateAnimalContent();
   disableSidebar(false);
 
-  // تزامن اللغة مع الواجهة
+  // تزامن اللغة مع الواجهة + إعادة تعبئة المحتوى فورًا
   if (langSelect) {
     try { langSelect.value = getCurrentLang(); } catch {}
     langSelect.onchange = async () => {
       const newLang = langSelect.value;
-      await loadLanguage(newLang);
-      setDirection(newLang);
-      applyTranslations();
-      updateAnimalContent();
+      await setLanguage(newLang);      // يضبط localStorage + الاتجاه + يحمّل ملف الترجمة :contentReference[oaicite:7]{index=7}
+      stopCurrentAudio();
+      updateAnimalContent();           // يقرأ اللغة مباشرة من القائمة
     };
   }
 
@@ -77,7 +82,7 @@ export async function loadAnimalsGameContent() {
   if (prevBtn)     prevBtn.onclick      = () => showPreviousAnimal();
   if (nextBtn)     nextBtn.onclick      = () => showNextAnimal();
 
-  // أزرار إظهار/إخفاء الصناديق (تدعم وجودها أو عدمه)
+  // أزرار إظهار/إخفاء الصناديق
   if (toggleDesc) {
     const box = document.getElementById("animal-description-box");
     toggleDesc.onclick = () => { if (box) box.style.display = (box.style.display === "none" ? "block" : "none"); };
@@ -97,14 +102,14 @@ export async function loadAnimalsGameContent() {
   }
 
   applyTranslations();
-  setDirection(getCurrentLang());
+  setDirection(getLangForAnimals());
   safeRecord("view_animals");
 }
 
 function updateAnimalContent() {
   if (animals.length === 0) return;
 
-  const lang = getCurrentLang();
+  const lang = getLangForAnimals(); // ← بدلًا من getCurrentLang()
   currentAnimalData = animals[currentIndex];
 
   const imgEl        = document.getElementById("animal-image");
@@ -139,8 +144,8 @@ function updateAnimalContent() {
     wordEl.classList.add("clickable-text");
   }
 
-  if (descEl)       descEl.textContent     = currentAnimalData?.description?.[lang] || "لا يوجد وصف";
-  if (babyNameEl)   babyNameEl.textContent = currentAnimalData?.baby?.name?.[lang] || currentAnimalData?.baby?.[lang] || "غير معروف";
+  if (descEl)       descEl.textContent       = currentAnimalData?.description?.[lang] || "لا يوجد وصف";
+  if (babyNameEl)   babyNameEl.textContent   = currentAnimalData?.baby?.name?.[lang] || currentAnimalData?.baby?.[lang] || "غير معروف";
   if (femaleNameEl) femaleNameEl.textContent = currentAnimalData?.female?.[lang] || "غير معروف";
 
   if (categoryEl) {
@@ -170,7 +175,7 @@ function updateAnimalContent() {
 async function fetchAnimals() {
   animals = [];
   try {
-    // المحبوب عندك سابقًا: categories/animals/items
+    // مسار: categories/animals/items
     const ref = collection(db, "categories", "animals", "items");
     const snap = await getDocs(query(ref));
     animals = snap.docs.map(d => d.data());
@@ -190,15 +195,15 @@ async function fetchAnimals() {
     }
   }
 
-  // ترتيب أبجدي بسيط حسب لغة الواجهة
-  const lang = getCurrentLang();
+  // ترتيب أبجدي بسيط حسب اللغة النشطة في القائمة
+  const lang = getLangForAnimals();
   animals.sort((a, b) => {
     const na = (a?.name?.[lang] || a?.name?.en || a?.name?.ar || "").toLowerCase();
     const nb = (b?.name?.[lang] || b?.name?.en || b?.name?.ar || "").toLowerCase();
     return na.localeCompare(nb);
   });
 
-  console.log(`[animals] fetched = ${animals.length}`);
+  console.log(`[animals] fetched = ${animals.length} | langForSort=${lang}`);
 }
 
 export function showNextAnimal() {
@@ -249,7 +254,7 @@ export function playCurrentBabyAnimalAudio() {
 
 /** مسارات الصوت **/
 function getAnimalAudioPath(data, voiceType) {
-  const lang = getCurrentLang();
+  const lang = getLangForAnimals(); // بدلًا من getCurrentLang()
 
   // 1) الشكل الشائع: sound[lang][voiceType]
   if (data?.sound?.[lang]?.[voiceType]) {
@@ -280,7 +285,7 @@ function getAnimalAudioPath(data, voiceType) {
 }
 
 function getBabyAnimalAudioPath(baby, voiceType) {
-  const lang = getCurrentLang();
+  const lang = getLangForAnimals(); // بدلًا من getCurrentLang()
 
   if (baby?.sound?.[lang]?.[voiceType]) {
     const raw = baby.sound[lang][voiceType];
