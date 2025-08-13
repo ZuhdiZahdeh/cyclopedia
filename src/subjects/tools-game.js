@@ -1,5 +1,11 @@
 // src/subjects/tools-game.js
-// صفحة الأدوات — سايدبار جاهز + Carousel + مسارات صور/صوت احتياطية + تضمين CSS عند الحاجة
+// ==========================
+// صفحة الأدوات — نسخة منقّحة Robust
+// - Sidebar controls injection (حتى لو كان العنصر موجودًا لكنه فارغ)
+// - !important لإجبار الإظهار عند وجود إخفاء عام
+// - توحيد control-grid
+// - ربط كامل للأزرار + ترجمة/اتجاه + صوت
+// - جلب Firestore مع مسارات Collections بديلة
 
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
@@ -8,405 +14,397 @@ import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 
 /* ============== حالة الصفحة ============== */
-let tools = [];
-let currentIndex = 0;
-let currentToolData = null;
-let currentToolImages = [];
-let currentImageIndex = 0;
+let tools = [];                 // مصفوفة الأدوات
+let currentIndex = 0;           // الفهرس الحالي
+let currentToolData = null;     // بيانات الأداة الحالية
 
-/* ============== أدوات عامة ============== */
-const pick = (...ids) => { for (const id of ids){ const el = document.getElementById(id); if (el) return el; } return null; };
-const grab = (ids) => { const a = Array.isArray(ids) ? ids : [ids]; for (const id of a){ const el = document.getElementById(id); if (el) return el; } return null; };
-const isAbs = (p) => /^https?:\/\//i.test(p) || /^data:/i.test(p) || /^blob:/i.test(p);
-const norm = (s) => String(s||'').trim().replace(/^\.?[\\/]+/,'').replace(/\\/g,'/');
+/* ============== عناصر الصفحة (كسول) ============== */
+const els = {
+  main:      () => document.querySelector('main.main-content'),
+  name:      () => document.getElementById('tool-word'),
+  img:       () => document.getElementById('tool-image'),
+  descBox:   () => document.getElementById('tool-description-box'),
+  descText:  () => document.getElementById('tool-description'),
+  profList:  () => document.getElementById('tool-professions'),
 
-function ensureCss(href, id){
-  if (document.getElementById(id)) return;
-  const link = document.createElement('link');
-  link.rel = 'stylesheet'; link.href = href; link.id = id;
-  document.head.appendChild(link);
-}
+  // عناصر التحكّم
+  sidebar:   () => document.querySelector('#sidebar, #sidebar-section, .sidebar'),
+  controls:  () => document.getElementById('tools-sidebar-controls'),
+  btnPrev:   () => document.getElementById('prev-tools-btn'),
+  btnNext:   () => document.getElementById('next-tools-btn'),
+  btnListen: () => document.getElementById('play-sound-btn-tools'),
+  btnToggle: () => document.getElementById('toggle-description-btn-tools'),
+  selVoice:  () => document.getElementById('voice-select-tools'),
+  selLang:   () => document.getElementById('game-lang-select-tools'),
+};
 
-/* ============== مسارات الصور/الصوت ============== */
-const TOOL_IMAGE_DIRS = ['/images/profession_tools/','/images/tools/','/images/profession-tools/','/images/professions_tools/'];
-const AUDIO_TOOLS_DIRS = ['tools','profession_tools','profession-tools','tool'];
+/* ============== Utilities ============== */
+const TOOLS_COLLECTION_TRIES = [
+  ['profession_tools'],
+  ['profession-tools'],
+  ['tools'],
+  ['categories','tools','items'], // subcollection
+];
 
-function buildImageCandidates(d, lang){
-  const names = [];
-  if (d?.image_path) names.push(d.image_path);
-
-  if (Array.isArray(d?.images)){
-    for(const it of d.images){
-      if (typeof it === 'string') names.push(it);
-      else if (it && typeof it === 'object') names.push(it[lang]||it.main||it.src||it.default);
-    }
-  } else if (d?.images && typeof d.images === 'object'){
-    names.push(d.images[lang]||d.images.main||d.images.default);
-  }
-  if (d?.image) names.push(d.image);
-
-  const out = [];
-  for (let s of Array.from(new Set(names.filter(Boolean)))){
-    s = norm(s);
-    if (isAbs(s) || s.startsWith('/')) { out.push(s); continue; }
-    if (s.startsWith('images/')) { out.push('/'+s); continue; }
-    for (const base of TOOL_IMAGE_DIRS) out.push(base+s);
-  }
-  return Array.from(new Set(out));
-}
-function setImageWithFallback(imgEl, candidates){
-  let i = 0;
-  const tryNext = () => {
-    if (!imgEl) return;
-    if (i >= candidates.length){ imgEl.src = '/images/default.png'; return; }
-    imgEl.onerror = () => { i++; tryNext(); };
-    imgEl.src = candidates[i];
-  };
-  tryNext();
-}
-function buildAudioCandidates(d, lang, voice){
-  const key = `${voice}_${lang}`;
-  let file = null;
-  if (d?.voices && d.voices[key]) file = d.voices[key];
-  else if (d?.sound_base)         file = `${d.sound_base}_${voice}_${lang}.mp3`;
-  else if (d?.sound?.[lang]?.[voice]) file = d.sound[lang][voice];
-  else if (typeof d?.audio === 'string') file = d.audio;
-
-  if (!file) return [];
-  const f = norm(file);
-  if (isAbs(f) || f.startsWith('/')) return [f];
-  return Array.from(new Set(AUDIO_TOOLS_DIRS.map(dir => `/audio/${lang}/${dir}/${f}`)));
-}
-
-/* ============== واجهة الاسم ============== */
-function setHighlightedName(el, name){
+// إبراز الحرف الأول
+function setHighlightedName(el, name) {
   if (!el) return;
-  if (!name){ el.textContent = ''; return; }
-  const chars = [...name]; const first = chars[0] || '';
-  el.innerHTML = `<span class="highlight-first-letter">${first}</span>${chars.slice(1).join('')}`;
-}
-function translateProfessionKey(key){ return (window.translations?.professions?.[key]) || key; }
-
-/* ============== Carousel ============== */
-function clearCarousel(){
-  const area = document.querySelector('#tools-game .image-area'); if (!area) return;
-  const t = area.querySelector('#tool-carousel-thumbs'); if (t) t.remove();
-  const p = area.querySelector('#tool-carousel-prev');   if (p) p.remove();
-  const n = area.querySelector('#tool-carousel-next');   if (n) n.remove();
-}
-function buildCarousel(displayName){
-  const area = document.querySelector('#tools-game .image-area'), mainImg = pick('tool-image'); if (!area || !mainImg) return;
-  clearCarousel();
-  if (!currentToolImages || currentToolImages.length <= 1) return;
-
-  const prevBtn = document.createElement('button'); prevBtn.id='tool-carousel-prev'; prevBtn.className='carousel-nav prev'; prevBtn.textContent='‹';
-  const nextBtn = document.createElement('button'); nextBtn.id='tool-carousel-next'; nextBtn.className='carousel-nav next'; nextBtn.textContent='›';
-
-  prevBtn.onclick = () => { currentImageIndex = (currentImageIndex-1+currentToolImages.length)%currentToolImages.length; mainImg.src=currentToolImages[currentImageIndex]; syncThumbsActive(); };
-  nextBtn.onclick = () => { currentImageIndex = (currentImageIndex+1)%currentToolImages.length; mainImg.src=currentToolImages[currentImageIndex]; syncThumbsActive(); };
-
-  const thumbs = document.createElement('div'); thumbs.id='tool-carousel-thumbs'; thumbs.className='carousel-thumbs';
-  currentToolImages.forEach((src,idx)=>{ const t = document.createElement('img'); t.src=src; t.alt=displayName||''; t.className='carousel-thumb';
-    t.onclick = () => { currentImageIndex = idx; mainImg.src=currentToolImages[currentImageIndex]; syncThumbsActive(); };
-    thumbs.appendChild(t);
-  });
-
-  area.appendChild(prevBtn); area.appendChild(nextBtn); area.appendChild(thumbs);
-  syncThumbsActive();
-}
-function syncThumbsActive(){
-  document.querySelectorAll('#tool-carousel-thumbs .carousel-thumb').forEach((img,i)=>img.classList.toggle('active', i===currentImageIndex));
+  const safe = name || '';
+  const first = safe.charAt(0);
+  el.innerHTML = `<span class="highlight-first-letter">${first}</span>${safe.slice(1)}`;
 }
 
-/* ============== العرض ============== */
-function updateToolContent(){
-  const lang = getCurrentLang();
-  if (!tools.length){
-    { const el = pick('tool-word','tool-name'); if (el) el.textContent = '—'; }
-    { const img = pick('tool-image'); if (img) { img.removeAttribute('src'); img.alt = ''; } }
-    { const el = pick('tool-description'); if (el) el.textContent = '—'; }
-    { const el = pick('tool-professions'); if (el) el.textContent = '—'; }
-    clearCarousel();
-    return;
+// اسم الأداة حسب اللغة
+function toolName(tool, lang) {
+  const map = tool?.name || {};
+  return map[lang] || map.ar || map.en || map.he || '';
+}
+
+// وصف الأداة (إن وُجد)
+function toolDescription(tool, lang) {
+  const map = tool?.description || {};
+  return map[lang] || map.ar || map.en || map.he || '';
+}
+
+// صورة الأداة
+function toolImagePath(tool, lang) {
+  // أفضلية: image_path مباشرة
+  if (typeof tool?.image_path === 'string' && tool.image_path.trim()) {
+    return prefixPublic(tool.image_path);
   }
-  currentToolData = tools[currentIndex];
-  const d = currentToolData;
-
-  const displayName = (d.name && (d.name[lang] || d.name.ar || d.name.en || d.name.he)) || d.title || d.word || '';
-
-  const wordEl = pick('tool-word','tool-name');
-  const imgEl  = pick('tool-image');
-  const descEl = pick('tool-description');
-  const profEl = pick('tool-professions');
-
-  if (wordEl){ setHighlightedName(wordEl, displayName); wordEl.classList.add('clickable-text'); wordEl.onclick = playCurrentToolAudio; }
-
-  currentToolImages = buildImageCandidates(d, lang);
-  currentImageIndex = 0;
-
-  if (imgEl){
-    setImageWithFallback(imgEl, currentToolImages.length ? currentToolImages : ['/images/default.png']);
-    imgEl.alt = displayName || '';
-    imgEl.classList.add('clickable-image');
-    imgEl.onclick = playCurrentToolAudio;
-  }
-  buildCarousel(displayName);
-
-  if (descEl) descEl.textContent = (d.description && (d.description[lang] || d.description.ar || d.description.en)) || '—';
-  if (profEl){
-    const list = Array.isArray(d.professions) ? d.professions : (d.professions ? Object.values(d.professions) : []);
-    profEl.textContent = list.length ? list.map(translateProfessionKey).join('، ') : '—';
-  }
-
-  const nextBtn = grab(['next-tools-btn','next-btn']);
-  const prevBtn = grab(['prev-tools-btn','prev-btn']);
-  if (nextBtn) nextBtn.disabled = (tools.length <= 1 || currentIndex === tools.length - 1);
-  if (prevBtn) prevBtn.disabled = (tools.length <= 1 || currentIndex === 0);
-
-  stopCurrentAudio();
-}
-
-/* ============== تنقّل وصوت ============== */
-export function showNextTool(){
-  if (!tools.length) return;
-  if (currentIndex < tools.length - 1) currentIndex++;
-  updateToolContent();
-  try {
-    const u = JSON.parse(localStorage.getItem('user'));
-    if (u) Promise.resolve(recordActivity(u,'tools')).catch(()=>{});
-  } catch {}
-}
-export function showPreviousTool(){
-  if (!tools.length) return;
-  if (currentIndex > 0) currentIndex--;
-  updateToolContent();
-  try {
-    const u = JSON.parse(localStorage.getItem('user'));
-    if (u) Promise.resolve(recordActivity(u,'tools')).catch(()=>{});
-  } catch {}
-}
-export async function playCurrentToolAudio(){
-  if (!tools.length || !currentToolData) return;
-  const lang  = (grab(['game-lang-select-tools','game-lang-select'])?.value) || getCurrentLang();
-  const voice = (grab(['voice-select-tools','voice-select'])?.value) || 'teacher';
-  const candidates = buildAudioCandidates(currentToolData, lang, voice);
-  for (const src of candidates){
-    try { stopCurrentAudio(); const m = playAudio(src); if (m && typeof m.then === 'function') await m; return; }
-    catch {}
-  }
-  console.warn('[tools][audio] لا يوجد مصدر صوت صالح', currentToolData?.id);
-}
-
-/* ============== جلب البيانات ============== */
-async function fetchTools(){
-  try{
-    const snap = await getDocs(collection(db,'profession_tools'));
-    if (!snap.empty){ tools = snap.docs.map(d=>({id:d.id,...d.data()})); console.log('[tools] ✅ from profession_tools | count =', tools.length); return; }
-  }catch(e){ console.warn('[tools] fetch profession_tools failed:', e); }
-  try{
-    const snap = await getDocs(collection(db,'categories','tools','items'));
-    if (!snap.empty){ tools = snap.docs.map(d=>({id:d.id,...d.data()})); console.log('[tools] ✅ from categories/tools/items | count =', tools.length); return; }
-  }catch(e){ console.warn('[tools] fetch categories/tools/items failed:', e); }
-  tools = [];
-}
-
-/* ============== سايدبار (robust) ============== */
-/* ============== سايدبار (robust) ============== */
-async function ensureToolsSidebar() {
-  // 1) ابحث عن الشريط الجانبي بأكبر قدر من التسامح
-  let sidebar = document.querySelector(
-    '#sidebar, .sidebar, aside#sidebar, aside.sidebar, [data-role="sidebar"], #sidebar-section'
-  );
-
-  // 2) لو لم يوجد، أنشِئ واحدًا مباشرة بعد <main>
-  if (!sidebar) {
-    console.warn('[tools] sidebar not found – creating a temporary sidebar after <main>');
-    const main = document.querySelector('main.main-content');
-    const tmpSidebar = document.createElement('aside');
-    tmpSidebar.id = 'sidebar';
-    tmpSidebar.className = 'sidebar';
-    if (main && main.parentNode) {
-      main.parentNode.insertBefore(tmpSidebar, main.nextSibling);
-    } else {
-      document.body.appendChild(tmpSidebar);
+  // محاولات إضافية (لو عندك مصفوفة صور في البيانات)
+  if (Array.isArray(tool?.images) && tool.images.length) {
+    const first = tool.images.find(x => typeof x === 'string') ||
+                  tool.images.find(x => x?.[lang])?.[lang] ||
+                  tool.images.find(x => x?.ar)?.ar ||
+                  tool.images[0];
+    if (typeof first === 'string') return prefixPublic(first);
+    if (first && typeof first === 'object') {
+      const val = first[lang] || first.ar || first.en || first.src || first.main;
+      if (val) return prefixPublic(val);
     }
-    sidebar = tmpSidebar;
+  }
+  return ''; // يترك المتصفح بدون صورة لو غير متوفر
+}
+
+function prefixPublic(p) {
+  // نتأكد إن المسار يبدأ بـ "/"
+  if (!p) return p;
+  return p.startsWith('/') ? p : `/${p}`;
+}
+
+// مسار الصوت
+function toolAudioPath(tool, lang, voice) {
+  // بنية مرنة: sound[lang][voice] أو sound[lang] (string) أو sound[voice]...
+  const snd = tool?.sound || {};
+  const byLang = snd[lang];
+  if (byLang) {
+    if (typeof byLang === 'string') return prefixPublic(byLang);
+    if (typeof byLang === 'object') {
+      const v = byLang[voice] || byLang.teacher || byLang.boy || byLang.girl;
+      if (typeof v === 'string') return prefixPublic(v);
+    }
+  }
+  // fallback لغات أخرى
+  const anyLang = snd.ar || snd.en || snd.he;
+  if (typeof anyLang === 'string') return prefixPublic(anyLang);
+  if (anyLang && typeof anyLang === 'object') {
+    const v = anyLang[voice] || anyLang.teacher || anyLang.boy || anyLang.girl;
+    if (typeof v === 'string') return prefixPublic(v);
+  }
+  return '';
+}
+
+/* ============== Sidebar Controls (robust) ============== */
+async function ensureToolsSidebar() {
+  // 1) تأكد من وجود الـ sidebar، وإن لم يوجد أنشئ واحداً بسيطاً بعد <main>
+  let sidebar = els.sidebar();
+  if (!sidebar) {
+    console.warn('[tools] sidebar not found – creating a temporary one');
+    const main = els.main() || document.querySelector('main') || document.body;
+    sidebar = document.createElement('aside');
+    sidebar.id = 'sidebar';
+    sidebar.className = 'sidebar';
+    main.parentNode ? main.parentNode.insertBefore(sidebar, main) : document.body.appendChild(sidebar);
   }
 
-  // 3) إن كانت الأزرار مركّبة أصلاً، أظهرها وأعدها
-  let container = document.getElementById('tools-sidebar-controls');
-  if (container) {
-    container.style.setProperty('display', 'block', 'important');
-    return container;
+  // 2) أحضر/أنشئ كونتينر الأزرار
+  let container = els.controls();
+  const exists = !!container;
+
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'tools-sidebar-controls';
+    container.className = 'sidebar-section subject-controls';
+    // ضع قبل قسم الحساب إن وُجد، وإلا ألحِقه بنهاية الشريط
+    const account = sidebar.querySelector('.static-section');
+    account ? sidebar.insertBefore(container, account) : sidebar.appendChild(container);
   }
 
-  // 4) حمّل القالب (أو استخدم Fallback) ثم اركّبه داخل الشريط
-  let html = '';
-  try {
-    const resp = await fetch('/html/tools-controls.html', { cache: 'no-store' });
-    if (resp.ok) html = await resp.text();
-  } catch (e) {
-    console.warn('[tools] controls fetch error:', e);
+  // 3) هل موجود لكنه فارغ؟ (placeholder) → يجب ملؤه
+  const existsButEmpty =
+    !container.querySelector('button,select') &&
+    ((container.textContent || '').trim() === '' || container.innerHTML.length < 100);
+
+  if (!exists || existsButEmpty) {
+    let html = '';
+    try {
+      const resp = await fetch('/html/tools-controls.html', { cache: 'no-store' });
+      if (resp.ok) html = await resp.text();
+    } catch (e) {
+      console.warn('[tools] controls fetch error:', e);
+    }
+
+    // Fallback HTML لو فشل التحميل
+    const FALLBACK_HTML = `
+      <div class="sidebar-section subject-controls" id="tools-sidebar-controls" style="display:block;">
+        <h3 class="sidebar-title" data-i18n="tools.controls_title">🧰 أدوات — التحكم</h3>
+        <div class="control-grid">
+          <div class="row two-col">
+            <button id="prev-tools-btn" class="btn secondary" data-i18n="common.prev">السابق</button>
+            <button id="next-tools-btn" class="btn primary"   data-i18n="common.next">التالي</button>
+          </div>
+          <div class="row">
+            <button id="play-sound-btn-tools" class="btn listen" data-i18n="common.listen">استمع</button>
+          </div>
+          <div class="row">
+            <button id="toggle-description-btn-tools" class="btn ghost" data-i18n="common.toggle_description">الوصف</button>
+          </div>
+          <div class="row">
+            <label for="voice-select-tools" class="ctrl-label" data-i18n="common.voice">الصوت</label>
+            <select id="voice-select-tools" class="ctrl-select">
+              <option value="teacher" data-i18n="voices.teacher">المعلم</option>
+              <option value="boy"     data-i18n="voices.boy">ولد</option>
+              <option value="girl"    data-i18n="voices.girl">بنت</option>
+            </select>
+          </div>
+          <div class="row">
+            <label for="game-lang-select-tools" class="ctrl-label" data-i18n="common.language">اللغة</label>
+            <select id="game-lang-select-tools" class="ctrl-select">
+              <option value="ar">العربية</option>
+              <option value="en">English</option>
+              <option value="he">עברית</option>
+            </select>
+          </div>
+        </div>
+      </div>`.trim();
+
+    container.innerHTML = (html || FALLBACK_HTML);
   }
 
-  const FALLBACK_HTML = `
-  <div class="sidebar-section subject-controls" id="tools-sidebar-controls" style="display:block;">
-    <h3 class="sidebar-title" data-i18n="tools.controls_title">🧰 أدوات — التحكم</h3>
-    <div class="control-grid">
-      <div class="row two-col">
-        <button id="prev-tools-btn" class="btn secondary" data-i18n="common.prev">السابق</button>
-        <button id="next-tools-btn" class="btn primary"   data-i18n="common.next">التالي</button>
-      </div>
+  // 4) توحيد كلاس الشبكة (لو كان controls-grid)
+  const wrong = container.querySelector('.controls-grid');
+  if (wrong) { wrong.classList.remove('controls-grid'); wrong.classList.add('control-grid'); }
 
-      <div class="row">
-        <button id="play-sound-btn-tools" class="btn listen" data-i18n="common.listen">استمع</button>
-      </div>
+  // 5) إجبار الإظهار على الكونتينر والأولاد (يتغلب على أي !important للإخفاء)
+  forceShowControls(container);
 
-      <div class="row">
-        <button id="toggle-description-btn-tools" class="btn ghost" data-i18n="common.toggle_description">الوصف</button>
-      </div>
+  // 6) ضبط قيمة اللغة الحالية في القائمة
+  const langSel = els.selLang();
+  if (langSel) langSel.value = getCurrentLang();
 
-      <div class="row">
-        <label for="voice-select-tools" class="ctrl-label" data-i18n="common.voice">الصوت</label>
-        <select id="voice-select-tools" class="ctrl-select">
-          <option value="teacher" data-i18n="voices.teacher">المعلم</option>
-          <option value="boy"     data-i18n="voices.boy">ولد</option>
-          <option value="girl"    data-i18n="voices.girl">بنت</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <label for="game-lang-select-tools" class="ctrl-label" data-i18n="common.language">اللغة</label>
-        <select id="game-lang-select-tools" class="ctrl-select">
-          <option value="ar">العربية</option>
-          <option value="en">English</option>
-          <option value="he">עברית</option>
-        </select>
-      </div>
-    </div>
-  </div>`;
-
-  const tmp = document.createElement('div');
-  tmp.innerHTML = (html || FALLBACK_HTML).trim();
-
-  container = tmp.firstElementChild;
-  container.id = 'tools-sidebar-controls';
-  container.classList.add('subject-controls');
-  container.style.setProperty('display', 'block', 'important');
-
-  // ضعها قبل قسم الحساب إن وُجد، وإلا ألحِقها بنهاية الشريط
-  const account = sidebar.querySelector('.static-section');
-  if (account) sidebar.insertBefore(container, account);
-  else sidebar.appendChild(container);
-
-  // تأكيد اللغة/الاتجاه وترجمة النصوص
-  try {
-    const langSelect = container.querySelector('#game-lang-select-tools');
-    if (langSelect) langSelect.value = getCurrentLang();
-  } catch {}
+  // 7) ترجمات
   applyTranslations();
 
   return container;
 }
 
+function forceShowControls(container) {
+  if (!container) return;
+  container.hidden = false;
+  container.style.removeProperty('display');
+  container.style.setProperty('display', 'block', 'important');
 
-/* ============== التحميل ============== */
-export async function loadToolsGameContent(){
-  console.log('[tools] loadToolsGameContent()');
-  stopCurrentAudio();
+  const targets = container.querySelectorAll('.control-grid, .row, h3, label, button, select');
+  targets.forEach(el => {
+    const wantGrid = el.classList.contains('control-grid');
+    el.style.setProperty('display', wantGrid ? 'grid' : 'block', 'important');
+    el.style.removeProperty('max-height');
+    el.style.removeProperty('visibility');
+    el.style.setProperty('opacity', '1', 'important');
+  });
+}
 
-  const main = document.querySelector('main.main-content');
-  if (!main){ console.error('main.main-content not found'); return; }
-  try { const resp = await fetch('/html/tools.html',{cache:'no-store'}); main.innerHTML = await resp.text(); }
-  catch {
-    main.innerHTML = `
-      <section id="tools-game" class="topic-container subject-page">
-        <div class="game-box">
-          <h2 id="tool-word" class="item-main-name" data-i18n="tools.title">🧰 الأدوات</h2>
-          <div class="image-area"><img id="tool-image" alt="" src="" loading="lazy" /></div>
-          <div class="tool-description-box info-box" id="tool-description-box" style="display:none;">
-            <h4 data-i18n="common.description">الوصف</h4>
-            <p id="tool-description">—</p>
-            <p><strong data-i18n="tools.related_professions">المهن المرتبطة</strong>: <span id="tool-professions">—</span></p>
-          </div>
-        </div>
-      </section>`;
-  }
+/* ============== ربط الأزرار ============== */
+function bindControls() {
+  const btnPrev = els.btnPrev();
+  const btnNext = els.btnNext();
+  const btnListen = els.btnListen();
+  const btnToggle = els.btnToggle();
+  const selVoice = els.selVoice();
+  const selLang  = els.selLang();
 
-  ensureCss('/css/tools.css','tools-css'); // مهم لتنسيق الصور والأزرار
+  if (btnPrev)  btnPrev.onclick  = () => showPreviousTool();
+  if (btnNext)  btnNext.onclick  = () => showNextTool();
+  if (btnListen)btnListen.onclick= () => playCurrentToolAudio();
+  if (btnToggle)btnToggle.onclick= () => toggleDescription();
 
- await ensureToolsSidebar(); // نكمل حتى مع أي إخفاق طفيف في التركيب
+  if (selVoice) selVoice.onchange = () => { /* لا شيء إضافي الآن */ };
 
-
-  try {
-    window.hideAllControls?.(); window.showSubjectControls?.('tools');
-  } catch {
-    document.querySelectorAll('.sidebar-section[id$="-sidebar-controls"]').forEach(sec=>{
-      sec.style.display = (sec.id === 'tools-sidebar-controls') ? 'block' : 'none';
-    });
-  }
-
-  const prevBtn       = grab(['prev-tools-btn','prev-btn']);
-  const nextBtn       = grab(['next-tools-btn','next-btn']);
-  const playSoundBtn  = grab(['play-sound-btn-tools','listen-btn','listen']);
-  const voiceSelect   = grab(['voice-select-tools','voice-select']);
-  const langSelect    = grab(['game-lang-select-tools','game-lang-select']);
-  const toggleDescBtn = grab(['toggle-description-btn-tools','toggle-description','desc-btn']);
-
-  if (prevBtn) prevBtn.onclick = showPreviousTool;
-  if (nextBtn) nextBtn.onclick = showNextTool;
-  if (playSoundBtn) playSoundBtn.onclick = playCurrentToolAudio;
-  if (toggleDescBtn){
-    toggleDescBtn.onclick = () => {
-      const box = document.getElementById('tool-description-box') || document.querySelector('#tools-game .info-box');
-      if (box) box.style.display = (box.style.display === 'none' ? 'block' : 'none');
-    };
-  }
-  if (langSelect){
-    try { langSelect.value = getCurrentLang(); } catch {}
-    langSelect.onchange = async () => {
-      const lng = langSelect.value;
-      await loadLanguage(lng);
-      setDirection(lng);
+  if (selLang)  selLang.onchange  = async (e) => {
+    const newLang = e.target.value;
+    try {
+      await loadLanguage(newLang);
+      setDirection(newLang);
+      renderCurrentTool(); // تحديث النصوص والصورة (لو لها علاقة باللغة)
       applyTranslations();
-      updateToolContent();
-    };
-  }
-  if (voiceSelect && !voiceSelect.value) voiceSelect.value = 'teacher';
+    } catch (err) {
+      console.warn('[tools] change language failed', err);
+    }
+  };
+}
 
-  tools = [];
-  if (prevBtn) prevBtn.disabled = true;
-  if (nextBtn) nextBtn.disabled = true;
-  if (playSoundBtn) playSoundBtn.disabled = true;
+/* ============== عرض الأداة الحالية ============== */
+function renderCurrentTool() {
+  const lang = getCurrentLang();
+  const data = tools[currentIndex];
+  currentToolData = data || null;
 
-  await fetchTools();
+  const nameEl  = els.name();
+  const imgEl   = els.img();
+  const descEl  = els.descText();
+  const profEl  = els.profList();
 
-  if (!tools.length){
-    { const el = pick('tool-word','tool-name'); if (el) el.textContent = 'لا توجد بيانات'; }
-    { const img = pick('tool-image'); if (img) img.src = '/images/default.png'; }
-    { const el = pick('tool-description'); if (el) el.textContent = '—'; }
-    { const el = pick('tool-professions'); if (el) el.textContent = '—'; }
-    clearCarousel();
+  if (!data) {
+    if (nameEl) nameEl.textContent = '—';
+    if (imgEl)  imgEl.removeAttribute('src');
+    if (descEl) descEl.textContent = '';
+    if (profEl) profEl.textContent = '';
     return;
   }
 
+  // الاسم
+  const nm = toolName(data, lang);
+  setHighlightedName(nameEl, nm);
+
+  // الوصف (إن وُجد)
+  const ds = toolDescription(data, lang);
+  if (descEl) descEl.textContent = ds || '';
+
+  // المهن المرتبطة (إن وُجدت)
+  const profs = Array.isArray(data.professions) ? data.professions : [];
+  if (profEl) profEl.textContent = profs.join('، ');
+
+  // الصورة
+  const src = toolImagePath(data, lang);
+  if (imgEl) {
+    if (src) imgEl.src = src;
+    else imgEl.removeAttribute('src');
+  }
+
+  // تحديث حالة الأزرار
+  const btnPrev = els.btnPrev();
+  const btnNext = els.btnNext();
+  if (btnPrev) btnPrev.disabled = (tools.length <= 1);
+  if (btnNext) btnNext.disabled = (tools.length <= 1);
+}
+
+/* ============== صوت الأداة الحالية ============== */
+function playCurrentToolAudio() {
+  stopCurrentAudio?.();
+  const lang  = getCurrentLang();
+  const voice = els.selVoice()?.value || 'boy';
+  const path  = toolAudioPath(currentToolData, lang, voice);
+  if (!path) {
+    console.warn('[tools] audio path not found for', currentToolData?.id);
+    return;
+  }
+  playAudio(path);
+}
+
+/* ============== تنقّل ============== */
+function showNextTool() {
+  if (!tools.length) return;
+  currentIndex = (currentIndex + 1) % tools.length;
+  renderCurrentTool();
+  recordActivity?.('tools_next', { id: currentToolData?.id, index: currentIndex });
+}
+
+function showPreviousTool() {
+  if (!tools.length) return;
+  currentIndex = (currentIndex - 1 + tools.length) % tools.length;
+  renderCurrentTool();
+  recordActivity?.('tools_prev', { id: currentToolData?.id, index: currentIndex });
+}
+
+/* ============== وصف ============== */
+function toggleDescription() {
+  const box = els.descBox();
+  if (!box) return;
+  const cur = getComputedStyle(box).display;
+  const want = (cur === 'none') ? 'block' : 'none';
+  box.style.setProperty('display', want, 'important');
+}
+
+/* ============== تحميل البيانات ============== */
+async function fetchToolsData() {
+  // نجرب أكثر من مسار Collection حتى نضمن التوافق مع هيكليات مختلفة
+  for (const pathParts of TOOLS_COLLECTION_TRIES) {
+    try {
+      const colRef = collection(db, ...pathParts);
+      const snap = await getDocs(colRef);
+      if (!snap.empty) {
+        const arr = [];
+        snap.forEach(doc => arr.push({ id: doc.id, ...doc.data() }));
+        console.log('[tools] ✅ from', pathParts.join('/'), '| count =', arr.length);
+        return arr;
+      }
+    } catch (e) {
+      console.warn('[tools] fetch', pathParts.join('/'), 'failed:', e);
+    }
+  }
+  console.warn('[tools] no data found in any candidate collection');
+  return [];
+}
+
+/* ============== تحميل صفحة الأدوات + تهيئة ============== */
+export async function loadToolsGameContent() {
+  console.log('[tools] loadToolsGameContent()');
+  stopCurrentAudio?.();
+
+  // 1) تحميل HTML للعبة الأدوات داخل <main>
+  try {
+    const resp = await fetch('/html/tools.html', { cache: 'no-store' });
+    if (resp.ok) {
+      const html = await resp.text();
+      const main = els.main();
+      if (main) main.innerHTML = html;
+      console.log('[tools] ✔ تم تحميل الصفحة: /html/tools.html');
+    } else {
+      console.warn('[tools] failed to load /html/tools.html', resp.status);
+    }
+  } catch (err) {
+    console.warn('[tools] fetch /html/tools.html error', err);
+  }
+
+  // 2) شريط الأزرار (robust)
+  await ensureToolsSidebar();
+  bindControls();
+
+  // 3) لغة/اتجاه
   const lang = getCurrentLang();
-  tools.sort((a,b)=>(a?.name?.[lang]||'').localeCompare(b?.name?.[lang]||''));
-  currentIndex = 0;
-  updateToolContent();
-
-  if (prevBtn) prevBtn.disabled = (currentIndex === 0);
-  if (nextBtn) nextBtn.disabled = (tools.length <= 1);
-  if (playSoundBtn) playSoundBtn.disabled = false;
-
-  applyTranslations();
   setDirection(lang);
+  applyTranslations();
 
-  if (typeof window !== 'undefined'){
-    window.loadToolsGameContent = loadToolsGameContent;
+  // 4) جلب البيانات
+  tools = await fetchToolsData();
+  currentIndex = 0;
+
+  // 5) عرض أول عنصر
+  renderCurrentTool();
+
+  // 6) ربط توابع في window (للاختبار السريع)
+  if (typeof window !== 'undefined') {
     window.showNextTool         = showNextTool;
     window.showPreviousTool     = showPreviousTool;
     window.playCurrentToolAudio = playCurrentToolAudio;
+    window.toggleToolDesc       = toggleDescription;
   }
+
   console.log('[tools] initial render done');
+}
+
+// (اختياري) تسجيل الدالة في window لو تم استدعاؤها من روابط مباشرة:
+if (typeof window !== 'undefined') {
+  window.loadToolsGameContent = loadToolsGameContent;
 }
