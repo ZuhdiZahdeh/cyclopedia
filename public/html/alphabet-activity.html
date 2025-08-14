@@ -1,0 +1,31 @@
+<!-- public/html/alphabet-activity.html -->
+<section id="alphabet-activity-main" class="subject-screen">
+  <header class="subject-header">
+    <h1 id="alphabet-title" class="subject-title">نشاط الحروف</h1>
+    <div id="letter-badge" class="letter-badge">أ</div>
+  </header>
+
+  <section class="media-box">
+    <h2 id="item-name" class="item-name"></h2>
+    <img id="item-image" class="item-image" alt="">
+    <p id="item-description" class="item-description" style="display:none;"></p>
+  </section>
+
+  <div class="controls">
+    <button id="prev-btn" class="nav-btn">‹ السابق</button>
+    <button id="listen-btn" class="nav-btn">استمع</button>
+    <button id="toggle-desc-btn" class="nav-btn">الوصف</button>
+    <button id="next-btn" class="nav-btn">التالي ›</button>
+  </div>
+
+  <!-- وضع الاختبار السريع -->
+  <section id="quiz-view" class="card" style="display:none;margin-top:12px;">
+    <h2 class="quiz-title" id="quiz-title">اختر الكلمة التي تبدأ بالحرف</h2>
+    <div class="quiz-prompt" id="quiz-prompt"></div>
+    <div class="quiz-options" id="quiz-options"></div>
+    <div class="quiz-footer" style="display:flex;justify-content:space-between;margin-top:8px;">
+      <span id="quiz-feedback"></span>
+      <button id="quiz-next" class="nav-btn">سؤال آخر</button>
+    </div>
+  </section>
+</section>

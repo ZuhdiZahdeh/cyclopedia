@@ -6,18 +6,19 @@
 import { getCurrentLang, loadLanguage, applyTranslations } from '../core/lang-handler.js';
 
 // تهيئة السايدبار الخاص بكل موضوع (تتولّى حقن ملف التحكم المناسب)
-import { initializeSubjectControls } from '../core/initializeSubjectControls.js';
+import { initializeSubjectControls } 		from '../core/initializeSubjectControls.js';
 
 // ألعاب/صفحات المواضيع
-import { loadAnimalsGameContent }        from "../subjects/animals-game.js";
-import { loadFruitsGameContent }         from "../subjects/fruits-game.js";
-import { loadVegetablesGameContent }     from "../subjects/vegetables-game.js";
-import { loadProfessionsGameContent }    from "../subjects/professions-game.js";
-import { loadToolsGameContent }          from "../subjects/tools-game.js";
-import { loadAlphabetPressGameContent }  from "../subjects/alphabet-press-game.js";
-import { loadMemoryGameContent }         from "../subjects/memory-game.js";
-import { loadToolsMatchGameContent }     from "../subjects/tools-match-game.js";
-import { loadHumanBodyGameContent }      from "../subjects/human-body-game.js";
+import { loadAnimalsGameContent }        	from "../subjects/animals-game.js";
+import { loadFruitsGameContent }         	from "../subjects/fruits-game.js";
+import { loadVegetablesGameContent }     	from "../subjects/vegetables-game.js";
+import { loadProfessionsGameContent }    	from "../subjects/professions-game.js";
+import { loadToolsGameContent }          	from "../subjects/tools-game.js";
+import { loadAlphabetActivityContent } 		from "../activities/alphabet-activity.js";
+import { loadAlphabetPressGameContent }  	from "../subjects/alphabet-press-game.js";
+import { loadMemoryGameContent }         	from "../subjects/memory-game.js";
+import { loadToolsMatchGameContent }     	from "../subjects/tools-match-game.js";
+import { loadHumanBodyGameContent }      	from "../subjects/human-body-game.js";
 
 // 🔐 Firebase Auth
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -243,6 +244,16 @@ window.loadVegetablesPage    = () => loadPage("/html/vegetables.html",     loadV
 window.loadHumanBodyPage     = () => loadPage("/html/human-body.html",     loadHumanBodyGameContent,     "human-body");
 window.loadProfessionsPage   = () => loadPage("/html/professions.html",    loadProfessionsGameContent,   "profession");
 window.loadToolsPage         = () => loadPage("/html/tools.html",          loadToolsGameContent,         "tools");
+
+// نشاط الحروف (جديد بالكامل — بلا subjectType)
+window.loadAlphabetActivity = () =>  loadPage(
+  "/html/alphabet-activity.html",
+  async () => {
+    ensureCss(['/css/common-components-subjects.css', '/css/alphabet-activity.css']);
+    await loadAlphabetActivityContent();
+  }
+);
+
 window.loadAlphabetPressPage = () => loadPage("/html/alphabet-press.html", loadAlphabetPressGameContent, "alphabet-press");
 window.loadMemoryGamePage    = () => loadPage("/html/memory-game.html",    loadMemoryGameContent,        "memory-game");
 window.loadToolsMatchPage    = () => loadPage("/html/tools-match.html",    loadToolsMatchGameContent,    "tools-match");

@@ -1,0 +1,29 @@
+*{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Arial}
+.page{display:grid;grid-template-columns:290px 1fr;min-height:100vh;background:#fafafa}
+.sidebar{background:#fff;border-inline-end:1px solid #eee;padding:14px;overflow:auto}
+.sidebar-section{margin:0 0 18px}
+.sidebar-title{margin:0 0 8px;font-size:16px}
+.select,.input{width:100%;padding:8px;border:1px solid #ddd;border-radius:10px}
+.letters-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.letters-grid button{padding:10px;border:1px solid #ddd;background:#fff;border-radius:12px;cursor:pointer}
+.letters-grid button:hover{border-color:#bbb}
+.mode-row{display:flex;gap:14px}
+.switch{display:flex;align-items:center;gap:8px}
+.main{padding:18px}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.title{margin:0;font-size:22px}
+.letter-badge{min-width:44px;height:44px;border-radius:12px;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
+.card{background:#fff;border:1px solid #eee;border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.item-name{margin:0 0 10px;font-size:26px;text-align:center;font-weight:800}
+.item-image{display:block;margin:0 auto 10px;max-width:min(420px,90%);height:auto;border-radius:14px;border:1px solid #eee}
+.item-description{font-size:16px;line-height:1.6;background:#f7f7f7;padding:10px;border-radius:12px}
+.controls{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.btn{padding:10px 14px;border:1px solid #ddd;background:#fff;border-radius:12px;cursor:pointer}
+.btn:hover{border-color:#bbb}
+.quiz-title{margin:0 0 10px;text-align:center}
+.quiz-prompt{display:flex;justify-content:center;margin:10px 0}
+.quiz-prompt img{max-width:320px;border-radius:12px;border:1px solid #eee}
+.quiz-options{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.quiz-options button{padding:12px;border:1px solid #ddd;background:#fff;border-radius:12px;cursor:pointer}
+.quiz-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+#quiz-feedback{min-height:1.2em}
