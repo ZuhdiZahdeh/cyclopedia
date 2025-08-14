@@ -1,6 +1,6 @@
 // src/subjects/tools-game.js
 // ==========================
-// صفحة الأدوات — نسخة Robust مع دعم تغيير اللغة لحظيًا
+// صفحة الأدوات — نسخة Robust مع دعم تغيير اللغة لحظيًا + نقر الاسم/الصورة للتشغيل
 
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
@@ -83,8 +83,8 @@ function toolAudioPath(tool, lang, voice) {
       if (typeof v === 'string') return prefixPublic(v);
     }
   }
-  // Fallback — سنحذر إن لم تتوفر لغة مطابقة
-  const anyLang = snd.en || snd.he || snd.ar; // نعطي أولوية للـen/he عند عدم توفر المطلوب
+  // Fallback
+  const anyLang = snd[lang] || snd.en || snd.he || snd.ar;
   if (!byLang && anyLang && !snd[lang]) console.warn('[tools] missing audio for lang:', lang, '| id=', tool?.id);
   if (typeof anyLang === 'string') return prefixPublic(anyLang);
   if (anyLang && typeof anyLang === 'object') {
@@ -205,7 +205,7 @@ async function onLanguageChanged(newLang) {
     const sel = document.getElementById(els.langSelectId);
     if (sel && sel.value !== newLang) sel.value = newLang;
 
-    renderCurrentTool(); // يعيد الاسم/الوصف/الصورة وفق اللغة
+    renderCurrentTool(newLang); // ← استخدم اللغة الجديدة مباشرة
   } catch (err) {
     console.warn('[tools] change language failed', err);
   }
@@ -236,14 +236,31 @@ function bindControls() {
     if (t.id === els.langSelectId) {
       onLanguageChanged(t.value);
     } else if (t.id === els.voiceSelectId) {
-      // لا شيء إضافي الآن؛ الصوت سيُستخدم عند الضغط على "استمع"
+      // الصوت سيُستخدم عند الضغط على "استمع"
     }
   });
 }
 
+/* ============== تأمين النقر على الاسم/الصورة للتشغيل ============== */
+function ensureClickToPlayBound() {
+  const nameEl = els.name();
+  const imgEl  = els.img();
+
+  if (imgEl && !imgEl.dataset.clickBound) {
+    imgEl.classList.add('clickable-image');
+    imgEl.addEventListener('click', () => playCurrentToolAudio(), { passive: true });
+    imgEl.dataset.clickBound = '1';
+  }
+  if (nameEl && !nameEl.dataset.clickBound) {
+    nameEl.classList.add('clickable-text');
+    nameEl.addEventListener('click', () => playCurrentToolAudio(), { passive: true });
+    nameEl.dataset.clickBound = '1';
+  }
+}
+
 /* ============== عرض الأداة الحالية ============== */
-function renderCurrentTool() {
-  const lang = getCurrentLang();
+function renderCurrentTool(langArg) {
+  const lang = langArg || getCurrentLang();
   const data = tools[currentIndex];
   currentToolData = data || null;
 
@@ -270,14 +287,20 @@ function renderCurrentTool() {
   if (profEl) profEl.textContent = profs.join('، ');
 
   const src = toolImagePath(data, lang);
-  if (imgEl) { src ? (imgEl.src = src) : imgEl.removeAttribute('src'); }
+  if (imgEl) {
+    if (src) { imgEl.src = src; imgEl.alt = nm || ''; }
+    else { imgEl.removeAttribute('src'); imgEl.alt = ''; }
+  }
+
+  // تأمين النقر للتشغيل
+  ensureClickToPlayBound();
 }
 
 /* ============== صوت الأداة الحالية ============== */
-function playCurrentToolAudio() {
+function playCurrentToolAudio(langArg) {
   stopCurrentAudio?.();
-  const lang  = getCurrentLang();
-  const voice = (document.getElementById(els.voiceSelectId)?.value) || 'boy';
+  const lang  = langArg || getCurrentLang();
+  const voice = (document.getElementById(els.voiceSelectId)?.value) || 'teacher';
   const path  = toolAudioPath(currentToolData, lang, voice);
   if (!path) {
     console.warn('[tools] audio path not found for', currentToolData?.id, 'lang=', lang, 'voice=', voice);
@@ -362,9 +385,9 @@ export async function loadToolsGameContent() {
   currentIndex = 0;
 
   // 5) عرض
-  renderCurrentTool();
+  renderCurrentTool(lang);
 
-  // 6) مستمعات تغيّر اللغة من خارج الصفحة (اختياري/وقائي)
+  // 6) مستمعات تغيّر اللغة من خارج الصفحة
   if (typeof window !== 'undefined') {
     document.removeEventListener('app:language-changed', _appLangChanged, true);
     document.addEventListener('app:language-changed', _appLangChanged, true);
