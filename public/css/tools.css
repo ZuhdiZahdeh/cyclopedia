@@ -1,4 +1,23 @@
 /* public/css/tools.css */
+/* =========================================
+   أدوات — تنسيقات محسّنة للغات RTL/LTR
+   ========================================= */
+
+/* اسم الأداة (وسط + حجم مرن + إبراز الحرف الأول) */
+#tools-game .item-main-name,
+#tool-word {
+  margin: 8px 0 18px;
+  text-align: center;
+  line-height: 1.25;
+  font-weight: 800;
+  /* حجم مرن يناسب الشاشات الصغيرة والكبيرة */
+  font-size: clamp(28px, 2.2vw + 18px, 46px);
+}
+#tools-game .item-main-name .highlight-first-letter,
+#tool-word .highlight-first-letter {
+  color: var(--color-danger, #e53935);
+  font-weight: 900;
+}
 
 /* صورة الأداة */
 #tool-image {
@@ -10,6 +29,8 @@
   border: 3px solid var(--color-purple);
   box-shadow: 0 5px 10px var(--color-shadow);
   background-color: var(--color-surface);
+  display: block;
+  margin-inline: auto; /* وسط أفقيًا */
 }
 
 /* صندوق الوصف */
@@ -19,27 +40,32 @@
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background-color: var(--color-surface);
-  text-align: justify;
+  text-align: start; /* تتبع RTL/LTR تلقائيًا */
   width: 100%;
   box-sizing: border-box;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  line-height: 1.6;
 }
 .tool-description-box h4 {
   font-family: var(--font-ar-heading);
   font-weight: bold;
-  font-size: 1.3em;
+  font-size: 1.2rem;
   color: var(--color-accent);
-  margin-top: 0;
-  margin-bottom: 10px;
-  text-align: right;
+  margin: 0 0 10px 0;
+  text-align: start; /* بدل right — يدعم اللغتين */
 }
 
-/* تفاعل */
-.clickable-image { cursor: pointer; }
-.clickable-text  { cursor: pointer; }
+/* تفاعل وولوجية */
+.clickable-image,
+.clickable-text { cursor: pointer; }
+.clickable-image:focus,
+.clickable-text:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
 
-/* ====== Carousel ====== */
+/* منطقة الصورة (مرتبطة بصفحة الأدوات) */
 #tools-game .image-area {
   position: relative;
   display: grid;
@@ -48,7 +74,38 @@
   gap: 10px;
 }
 
-/* أزرار تنقل الكاروسيل */
+/* ====== تنسيق عناصر التحكم الجانبي ====== */
+#tools-sidebar-controls .control-grid,
+#tools-sidebar-controls .controls-grid { /* دعم الاسمين لضمان التوافق */
+  display: grid;
+  gap: 8px;
+}
+#tools-sidebar-controls .row.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+#tools-sidebar-controls .btn {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 0;
+  box-shadow: 0 1px 4px var(--color-shadow);
+}
+#tools-sidebar-controls .ctrl-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+#tools-sidebar-controls .ctrl-select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+/* ====== Carousel (إن وجِد) ====== */
 .carousel-nav {
   position: absolute;
   top: 50%;
@@ -66,7 +123,6 @@
 .carousel-nav.prev { left: 4px; }
 .carousel-nav.next { right: 4px; }
 
-/* المصغّرات */
 .carousel-thumbs {
   display: flex;
   gap: 8px;
@@ -85,9 +141,14 @@
   cursor: pointer;
   background: var(--color-surface);
 }
-.carousel-thumb.active {
-  border-color: var(--color-accent);
-}
+.carousel-thumb.active { border-color: var(--color-accent); }
 
-/* ملاحظة: احرص أن تكون .highlight-first-letter معرفة في ملفك المشترك:
-   .highlight-first-letter { color: var(--color-danger, #e53935); font-weight: 700; } */
+/* ملاحظة:
+   إذا لم تكن معرفة عالميًا يمكنك إبقاؤها محدودة بالصفحة:
+   #tools-game .highlight-first-letter { color: var(--color-danger, #e53935); font-weight: 700; } */
+
+/* ====== استجابة للشاشات الصغيرة ====== */
+@media (max-width: 480px) {
+  #tool-image { height: 240px; }
+  #tools-sidebar-controls .row.two-col { grid-template-columns: 1fr; }
+}
