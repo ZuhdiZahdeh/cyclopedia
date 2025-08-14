@@ -143,6 +143,14 @@
 }
 .carousel-thumb.active { border-color: var(--color-accent); }
 
+#tools-sidebar-controls {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+#tools-sidebar-controls .control-grid,
+#tools-sidebar-controls .controls-grid { display: grid !important; }
+
 /* ملاحظة:
    إذا لم تكن معرفة عالميًا يمكنك إبقاؤها محدودة بالصفحة:
    #tools-game .highlight-first-letter { color: var(--color-danger, #e53935); font-weight: 700; } */
