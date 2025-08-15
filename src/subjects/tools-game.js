@@ -1,4 +1,6 @@
-// src/subjects/tools-game.js
+// src/subjects/tools-game.js  (PATCH v1)
+// تشغيل بالصورة/الاسم فقط — بلا زر استماع
+
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
@@ -11,7 +13,7 @@ let currentIndex = 0;
 let currentToolData = null;
 let currentUILang = 'ar';
 
-// كاش للمهن لإظهار أسماء "المهن المرتبطة" بشكل جميل
+// كاش للمهن لإظهار أسماء "المهن المرتبطة"
 let professionsCache = null;
 
 /* -------------------- عناصر الصفحة -------------------- */
@@ -22,12 +24,15 @@ const els = {
   descBox:  () => document.getElementById('tool-description-box'),
   descText: () => document.getElementById('tool-description'),
   profList: () => document.getElementById('tool-professions'),
+
   sidebar:  () => document.querySelector('#sidebar, #sidebar-section, .sidebar'),
   controls: () => document.getElementById('tools-sidebar-controls'),
+
   btnPrevId:   'prev-tools-btn',
   btnNextId:   'next-tools-btn',
   btnToggleId: 'toggle-description-btn-tools',
-  btnProfId:   'toggle-professions-btn-tools',  // زر جديد: المهن المرتبطة
+  btnProfId:   'toggle-professions-btn-tools',
+
   voiceSelId:  'voice-select-tools',
   langSelId:   'game-lang-select-tools'
 };
@@ -40,9 +45,9 @@ function setHighlightedName(el, txt) {
 }
 function toolName(t, lang){ return pickLocalized(t?.name, lang); }
 function toolDescription(t, lang){ return pickLocalized(t?.description, lang); }
-function toolImagePath(t) { const p = getImagePath(t); return p || ''; }
+function toolImagePath(t){ return getImagePath(t) || ''; }
 
-// مسار الصوت: sound[lang][voice] → سلاسل مباشرة → تركيب مسار افتراضي
+// مسار الصوت: sound[lang][voice] → سلاسل مباشرة → تركيب افتراضي
 function toolAudioPath(tool, lang, voice='teacher') {
   const s = tool?.sound;
   if (s && s[lang]) {
@@ -64,6 +69,7 @@ async function ensureToolsSidebar() {
     sidebar = document.createElement('aside'); sidebar.id = 'sidebar'; sidebar.className = 'sidebar';
     (main?.parentNode ? main.parentNode : document.body).insertBefore(sidebar, main || null);
   }
+
   let container = els.controls();
   if (!container) {
     container = document.createElement('div');
@@ -72,9 +78,11 @@ async function ensureToolsSidebar() {
     const account = sidebar.querySelector('.static-section');
     account ? sidebar.insertBefore(container, account) : sidebar.appendChild(container);
   }
+
   const needsLoad = !container.querySelector(
     `#${els.btnPrevId}, #${els.btnNextId}, #${els.btnToggleId}, #${els.voiceSelId}, #${els.langSelId}, #${els.btnProfId}`
   );
+
   if (needsLoad) {
     let html = '';
     try {
@@ -107,8 +115,9 @@ async function ensureToolsSidebar() {
         </div>
       </div>`;
   }
+
   container.hidden = false;
-  container.style.setProperty('display','block','important');
+  container.style.setProperty('display', 'block', 'important');
   applyTranslations();
   return container;
 }
@@ -116,22 +125,23 @@ async function ensureToolsSidebar() {
 function bindControls() {
   const c = els.controls();
   if (!c) return;
+
   const cc = c.cloneNode(true);
   c.replaceWith(cc);
 
   cc.addEventListener('click', (e) => {
     const id = e.target?.id;
-    if (!id) return;
-    if (id === els.btnPrevId)   return showPreviousTool();
-    if (id === els.btnNextId)   return showNextTool();
-    if (id === els.btnToggleId) return toggleDescription();
-    if (id === els.btnProfId)   return toggleProfessions();
+    if      (id === els.btnPrevId)   return showPreviousTool();
+    else if (id === els.btnNextId)   return showNextTool();
+    else if (id === els.btnToggleId) return toggleDescription();
+    else if (id === els.btnProfId)   return toggleProfessions();
   });
 
   cc.addEventListener('change', (e) => {
     const t = e.target;
     if (!t?.id) return;
-    if (t.id === els.langSelId) onLanguageChanged(t.value);
+    if (t.id === els.langSelId)  onLanguageChanged(t.value);
+    if (t.id === els.voiceSelId) playCurrentToolAudio(); // تشغيل فوري عند تغيير نوع الصوت
   });
 }
 
@@ -151,7 +161,6 @@ function ensureClickToPlay() {
   }
 }
 
-
 async function renderCurrentTool(lang = currentUILang) {
   currentUILang = lang;
   const data = tools[currentIndex] || null;
@@ -167,17 +176,16 @@ async function renderCurrentTool(lang = currentUILang) {
     if (imgEl)  { imgEl.alt = ''; imgEl.removeAttribute('src'); }
     if (descEl) descEl.textContent = '';
     if (profEl) profEl.textContent = '';
-    if (playBtn) playBtn.disabled = true;
     return;
   }
 
   setHighlightedName(nameEl, toolName(data, lang));
   if (descEl) descEl.textContent = toolDescription(data, lang) || '';
 
-  // المهن المرتبطة: لو أردتها بأسماء أنيقة → نقرأ كاش المهن ونحوّل
+  // المهن المرتبطة (اختياري)
   if (profEl) {
     const arr = Array.isArray(data.professions) ? data.professions : [];
-    if (!professionsCache) professionsCache = await fetchSubjectItems('professions', { strict:false });
+    if (!professionsCache) professionsCache = await fetchSubjectItems('professions', { strict: false });
     const nameMap = new Map((professionsCache || []).map(p => [String(p?.id || '').toLowerCase(), p]));
     const pretty = arr.map(x => {
       const id = String(x).toLowerCase();
@@ -190,14 +198,7 @@ async function renderCurrentTool(lang = currentUILang) {
   const img = toolImagePath(data);
   if (imgEl) {
     if (img) { imgEl.src = img; imgEl.alt = toolName(data, lang) || ''; }
-    else { imgEl.alt = ''; imgEl.removeAttribute('src'); }
-  }
-
-  // حالة زر الاستماع
-  if (playBtn) {
-    const voice = document.getElementById(els.voiceSelId)?.value || 'teacher';
-    const src   = toolAudioPath(data, lang, voice);
-    playBtn.disabled = !src;
+    else     { imgEl.alt = ''; imgEl.removeAttribute('src'); }
   }
 
   ensureClickToPlay();
@@ -237,9 +238,9 @@ function showPreviousTool() {
   recordActivity?.('tools_prev', { id: currentToolData?.id, index: currentIndex });
 }
 
-/* -------------------- البيانات: من items فقط + strict -------------------- */
+/* -------------------- البيانات -------------------- */
 async function fetchToolsData() {
-  const arr = await fetchSubjectItems('tools', { strict:true });
+  const arr = await fetchSubjectItems('tools', { strict: true });
   console.log('[tools] ✅ source: items | count =', arr?.length || 0);
   return arr || [];
 }
