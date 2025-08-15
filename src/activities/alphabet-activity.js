@@ -1,398 +1,466 @@
 // src/activities/alphabet-activity.js
+// نشاط الحروف – نسخة مُعدّلة لتعمل مع قاعدة items الموحدة
+// تقرأ من collection: items  وتفلتر حسب الحرف والمواضيع واللغة الحالية
+
 import { db } from '@/core/db-handler.js';
 import {
-  collection, getDocs, query, where, documentId, doc, getDoc
+  collection, getDocs, query, where
 } from 'firebase/firestore';
+import { playAudio, stopCurrentAudio } from '@/core/audio-handler.js';
 
+// ======= ثوابت اللغة والحروف =======
 const LANGS = ['ar','en','he'];
 const ALPHABET = {
   ar: ["أ","ب","ت","ث","ج","ح","خ","د","ذ","ر","ز","س","ش","ص","ض","ط","ظ","ع","غ","ف","ق","ك","ل","م","ن","ه","و","ي"],
   en: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
   he: ["א","ב","ג","ד","ה","ו","ז","ח","ט","י","כ","ך","ל","מ","ם","נ","ן","ס","ע","פ","ף","צ","ץ","ק","ר","ש","ת"]
 };
-const ALL_SUBJECTS = ["animals","fruits","vegetables","tools","professions","human_body"];
 
+// ======= المواضيع بصيغة المفرد (تطابق الحقل subject في وثائق items) =======
+const SUBJECTS = ["animal","fruit","vegetable","tool","profession","human_body"];
+
+// خرائط تطبيع لاستيعاب أي تسميات قديمة بصيغة الجمع
+const SUBJECT_ALIASES = {
+  animals:'animal', fruits:'fruit', vegetables:'vegetable',
+  tools:'tool', professions:'profession',
+  body:'human_body', human_body:'human_body'
+};
+
+// ======= الحالة العامة للنشاط =======
 const state = {
   lang: 'ar',
   letter: 'أ',
-  subjects: [...ALL_SUBJECTS],
-  tags: [],
-  preferViews: true,
-  autoplay: true,
+  subjects: [...SUBJECTS],
   items: [],
-  idx: 0,
-  mode: 'explore'  // explore | quiz
+  filtered: [],
+  index: 0,
+  showDescription: false,
 };
 
-// مشغّل صوت بسيط مستقل
-const player = new Audio();
-function playAudio(src){ try { if (!src) return; player.src = src; player.play().catch(()=>{});} catch{} }
-function stopAudio(){ try { player.pause(); player.currentTime = 0; } catch{} }
+// ======= أدوات مساعدة =======
+function normalizeSubjects(list){
+  return (list||[]).map(s => SUBJECT_ALIASES[s] || s);
+}
+function ensureLang(lang){
+  const l = LANGS.includes(lang) ? lang : 'ar';
+  state.lang = l;
+  document.documentElement.lang = l;
+  document.documentElement.dir = (l === 'ar' || l === 'he') ? 'rtl' : 'ltr';
+  // اجعل الحرف الأول من أبجدية اللغة المختارة
+  state.letter = (ALPHABET[l] && ALPHABET[l][0]) || state.letter;
+}
+function computeFirstLetter(word, lang){
+  if (!word) return '';
+  let w = String(word).trim();
+  if (!w) return '';
 
-const SIDEBAR_ID = 'alphabet-activity-controls';
-
-// ============ نقطة الدخول العامة (تُستدعى بعد حقن HTML) ============
-export async function loadAlphabetActivityContent(options = {}) {
-  const {
-    mainSelector = '#alphabet-activity-main',
-    sidebarSelector = '.sidebar'
-  } = options;
-
-  ensureLang('ar'); // افتراضي
-  updateLetterBadge();
-
-  // ابنِ الشريط الجانبي بالكامل برمجيًا
-  mountSidebar(sidebarSelector);
-
-  // هيّئ شبكة الحروف حسب اللغة الحالية
-  buildLettersGrid();
-
-  // حمل البيانات واعرض
-  await reloadData();
-  render();
-
-  // أربط أحداث الاستكشاف
-  bindExploreControls();
-
-  // الاختبار
-  document.getElementById('quiz-next')?.addEventListener('click', buildQuiz);
+  if (lang === 'ar'){
+    // تجاهل "ال" في بداية الكلمة، وحاول توحيد بعض الحروف
+    w = w.replace(/^ال/, '');
+    const ch = w[0];
+    const map = {'إ':'أ','آ':'أ','ا':'أ','ة':'ت'}; // تقريب مشهور للنشاط
+    return map[ch] || ch;
+  }
+  if (lang === 'en'){
+    return (w[0] || '').toUpperCase();
+  }
+  if (lang === 'he'){
+    const ch = w[0] || '';
+    const map = {'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'};
+    return map[ch] || ch;
+  }
+  return w[0] || '';
 }
 
-// ============ الشريط الجانبي (بناء برمجي) ============
+// حاول استخراج اسم/وصف/صورة/صوت من وثيقة items بأسلوب مرن
+function pickName(data, lang){
+  return data?.name?.[lang] || data?.name?.ar || data?.title?.[lang] || data?.title?.ar || '';
+}
+function pickDescription(data, lang){
+  return data?.description?.[lang] || data?.description?.ar || '';
+}
+function pickImage(data){
+  // 1) الهيكلية الجديدة
+  const img1 = data?.media?.images?.main?.image_path || data?.media?.images?.main?.path || data?.media?.images?.main?.src;
+  if (img1) return prefixSlash(img1);
+
+  // 2) الحقول القديمة
+  if (data?.image_path) return prefixSlash(data.image_path);
+  if (data?.image) return prefixSlash(data.image);
+  if (data?.image_file){
+    const dir = subjectToDir(data?.subject);
+    if (dir) return `/images/${dir}/${data.image_file}`;
+  }
+  return '';
+}
+function pickAudio(data, lang){
+  // 1) media.sounds[lang].main.audio_path
+  const a1 = data?.media?.sounds?.[lang]?.main?.audio_path || data?.media?.sounds?.[lang]?.main?.path;
+  if (a1) return prefixSlash(a1);
+
+  // 2) sound[lang].boy | default | direct
+  const s = data?.sound?.[lang];
+  if (typeof s === 'string') return prefixSlash(s);
+  if (s?.boy) return prefixSlash(s.boy);
+  if (s?.default) return prefixSlash(s.default);
+
+  // 3) sound_base + توليف المسار
+  if (data?.sound_base){
+    // مثال: audio/{lang}/tools/anvil.mp3
+    const dir = subjectToDir(data?.subject);
+    if (dir) return `/audio/${lang}/${dir}/${data.sound_base}.mp3`;
+  }
+
+  return '';
+}
+function subjectToDir(subject){
+  const s = SUBJECT_ALIASES[subject] || subject;
+  return {
+    animal:'animals',
+    fruit:'fruits',
+    vegetable:'vegetables',
+    tool:'tools',
+    profession:'professions',
+    human_body:'body'
+  }[s];
+}
+function prefixSlash(p){
+  if (!p) return '';
+  return p.startsWith('/') ? p : `/${p}`;
+}
+function chunk(arr, size){
+  const out = [];
+  for (let i=0;i<arr.length;i+=size) out.push(arr.slice(i, i+size));
+  return out;
+}
+function qs(sel){ return document.querySelector(sel); }
+function qsa(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+// ======= جلب البيانات من Firestore =======
+async function fetchItemsBySubjects(subjects){
+  const wanted = normalizeSubjects(subjects && subjects.length ? subjects : SUBJECTS);
+
+  // Firestore in() يقبل حتى 10 عناصر – نحن 6 فقط، لكن أبقيت التقطيع تحسبًا للمستقبل
+  const chunks = chunk(wanted, 10);
+  const col = collection(db, 'items');
+  const all = [];
+  for (const part of chunks){
+    const qy = query(col, where('subject', 'in', part));
+    const snap = await getDocs(qy);
+    snap.forEach(doc => {
+      const data = doc.data();
+      const rec = {
+        id: doc.id,
+        subject: SUBJECT_ALIASES[data?.subject] || data?.subject,
+        name: {
+          ar: pickName(data, 'ar'),
+          en: pickName(data, 'en'),
+          he: pickName(data, 'he'),
+        },
+        description: {
+          ar: pickDescription(data, 'ar'),
+          en: pickDescription(data, 'en'),
+          he: pickDescription(data, 'he'),
+        },
+        image: pickImage(data),
+        audio: {
+          ar: pickAudio(data,'ar'),
+          en: pickAudio(data,'en'),
+          he: pickAudio(data,'he'),
+        },
+        tags: data?.tags || [],
+        difficulty: data?.difficulty || 'normal',
+      };
+      all.push(rec);
+    });
+  }
+  return all;
+}
+
+// ======= تصفية بحسب الحرف =======
+function filterByLetter(items, letter, lang){
+  const L = String(letter || '').trim();
+  return items.filter(it => computeFirstLetter(it.name[lang], lang) === L);
+}
+
+// ======= عرض عنصر واحد =======
+function renderCurrent(){
+  // عناصر الواجهة
+  const nameEl = qs('#aa-name');
+  const imgEl  = qs('#aa-image');
+  const descEl = qs('#aa-desc');
+  const countEl= qs('#aa-count');
+  const letterBar = qs('#aa-letter-bar');
+
+  if (letterBar) letterBar.textContent = state.letter || '';
+
+  if (!state.filtered.length){
+    if (nameEl) nameEl.innerHTML = `<span style="opacity:.8">(لا عناصر)</span>`;
+    if (imgEl)  imgEl.src = '';
+    if (descEl) descEl.style.display = 'none';
+    if (countEl) countEl.textContent = '0';
+    toggleNavButtons(false);
+    return;
+  }
+
+  const idx = Math.max(0, Math.min(state.index, state.filtered.length-1));
+  state.index = idx;
+  const it = state.filtered[idx];
+
+  // الاسم مع تلوين الحرف الأول
+  const nm = it.name[state.lang] || '';
+  const first = nm ? nm[0] : '';
+  const rest  = nm ? nm.slice(1) : '';
+  if (nameEl) nameEl.innerHTML = `<span style="font-weight:700">${first}</span>${rest}`;
+
+  // الصورة
+  if (imgEl) imgEl.src = it.image || '';
+
+  // الوصف
+  if (descEl){
+    const txt = it.description[state.lang] || '';
+    descEl.textContent = txt;
+    descEl.style.display = state.showDescription && txt ? 'block' : 'none';
+  }
+
+  if (countEl) countEl.textContent = String(state.filtered.length);
+
+  toggleNavButtons(true);
+}
+
+// ======= تفعيل/تعطيل أزرار الملاحة =======
+function toggleNavButtons(enabled){
+  const btnPrev = qs('#aa-prev');
+  const btnNext = qs('#aa-next');
+  const btnPlay = qs('#aa-play');
+  const btnDesc = qs('#aa-toggle-desc');
+
+  [btnPrev, btnNext, btnPlay, btnDesc].forEach(b => {
+    if (!b) return;
+    b.disabled = !enabled;
+  });
+}
+
+// ======= إعادة تحميل النتائج =======
+async function refetchAndRender(){
+  stopCurrentAudio?.();
+
+  state.items = await fetchItemsBySubjects(state.subjects);
+  state.filtered = filterByLetter(state.items, state.letter, state.lang);
+  state.index = 0;
+  renderCurrent();
+}
+
+// ======= إعادة تصفية فقط (بدون جلب جديد) =======
+function refilterAndRender(){
+  stopCurrentAudio?.();
+  state.filtered = filterByLetter(state.items, state.letter, state.lang);
+  state.index = 0;
+  renderCurrent();
+}
+
+// ======= بناء الواجهة (Main + Sidebar) =======
+function buildUI(){
+  // اللوحة الرئيسية
+  let host = qs('#alphabet-activity-board');
+  if (!host){
+    // إن لم تكن موجودة، أنشئها داخل .main-content
+    const main = qs('.main-content') || document.body;
+    host = document.createElement('section');
+    host.id = 'alphabet-activity-board';
+    host.innerHTML = `
+      <div id="aa-letter-bar" class="aa-letter" style="text-align:center;margin:10px auto;padding:10px 16px;background:#111;color:#fff;border-radius:12px;max-width:520px;font-size:28px;letter-spacing:3px"></div>
+
+      <div class="aa-card" style="text-align:center;margin-top:12px">
+        <div id="aa-name" style="font-size:28px;font-weight:600;margin:6px 0"></div>
+        <div class="image-area" style="display:flex;justify-content:center;margin:8px 0 12px">
+          <img id="aa-image" alt="" loading="lazy" style="max-width:min(520px,90%);max-height:360px;object-fit:contain;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)" />
+        </div>
+        <div id="aa-desc" class="content-box" style="display:none;margin:8px auto;max-width:640px;font-size:16px;line-height:1.7"></div>
+      </div>
+
+      <div class="aa-actions" style="display:flex;gap:8px;justify-content:center;margin:12px 0 6px">
+        <button id="aa-prev" class="btn nav-btn">السابق</button>
+        <button id="aa-play" class="btn nav-btn">استمع</button>
+        <button id="aa-toggle-desc" class="btn nav-btn">الوصف</button>
+        <button id="aa-next" class="btn nav-btn">التالي</button>
+      </div>
+
+      <div style="text-align:center;margin-bottom:10px;opacity:.8">عدد العناصر: <span id="aa-count">0</span></div>
+    `;
+    main.appendChild(host);
+  }
+
+  // الشريط الجانبي
+  mountSidebar('#alphabet-activity-controls');
+
+  // اربط الأحداث العامة
+  bindMainActions();
+
+  // أظهر الحرف الحالي
+  const lb = qs('#aa-letter-bar');
+  if (lb) lb.textContent = state.letter;
+}
+
+// بناء الشريط الجانبي (أزرار الحروف + فلترة المواضيع)
 function mountSidebar(sidebarSelector){
-  const sidebar = document.querySelector(sidebarSelector);
-  if (!sidebar) return console.warn('[alphabet] Sidebar not found:', sidebarSelector);
+  const sidebar = qs(sidebarSelector) || createSidebarFallback();
+  if (!sidebar) return;
 
-  // أزل نسخة قديمة إن وجدت
-  sidebar.querySelector('#'+SIDEBAR_ID)?.remove();
-
-  const wrap = document.createElement('div');
-  wrap.id = SIDEBAR_ID;                 // ← توحيد مع الثابت
-  wrap.className = 'sidebar-section';   // مهم: ليتعامل معه نظام السايدبار
-
-  wrap.innerHTML = `
+  // نفرغ المحتوى ثم نبنيه
+  sidebar.innerHTML = `
     <div class="sidebar-section">
-      <h3 class="sidebar-title">🌐 اللغة</h3>
-      <select id="lang-select" class="select">
-        <option value="ar"${state.lang==='ar'?' selected':''}>العربية</option>
-        <option value="en"${state.lang==='en'?' selected':''}>English</option>
-        <option value="he"${state.lang==='he'?' selected':''}>עברית</option>
+      <h3 class="sidebar-title">اللغة</h3>
+      <select id="aa-lang" class="select">
+        <option value="ar">العربية</option>
+        <option value="en">English</option>
+        <option value="he">עברית</option>
       </select>
     </div>
 
     <div class="sidebar-section">
-      <h3 class="sidebar-title">🅰️ الحروف</h3>
-      <div id="letters-grid" class="letters-grid"></div>
+      <h3 class="sidebar-title">الحروف</h3>
+      <div id="aa-letters" class="letters-grid" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px"></div>
     </div>
 
     <div class="sidebar-section">
-      <h3 class="sidebar-title">🧩 المواضيع</h3>
-      <div id="subjects-filter" class="subjects-filter">
-        ${ALL_SUBJECTS.map(s => `
-          <label><input type="checkbox" value="${s}" ${state.subjects.includes(s)?'checked':''}> ${labelOf(s)}</label>
-        `).join('')}
-      </div>
-    </div>
-
-    <div class="sidebar-section">
-      <h3 class="sidebar-title">🏷️ وسوم</h3>
-      <input id="tags-input" class="input" placeholder="مثال: mammal, desert" />
-    </div>
-
-    <div class="sidebar-section">
-      <h3 class="sidebar-title">🎮 الوضع</h3>
-      <div class="mode-row">
-        <label><input type="radio" name="mode" value="explore" ${state.mode==='explore'?'checked':''}> استكشاف</label>
-        <label><input type="radio" name="mode" value="quiz" ${state.mode==='quiz'?'checked':''}> اختبار سريع</label>
-      </div>
-    </div>
-
-    <div class="sidebar-section">
-      <h3 class="sidebar-title">⚙️ خيارات</h3>
-      <label class="switch">
-        <input id="autoplay-audio" type="checkbox" ${state.autoplay?'checked':''}>
-        <span>تشغيل الصوت تلقائيًا</span>
-      </label>
-      <label class="switch">
-        <input id="prefer-views" type="checkbox" ${state.preferViews?'checked':''}>
-        <span>تسريع عبر المشاهد (views)</span>
-      </label>
+      <h3 class="sidebar-title">المواضيع</h3>
+      <div id="aa-subjects" class="subjects-filter" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px"></div>
     </div>
   `;
-  sidebar.prepend(wrap); // أعلى الشريط الجانبي
 
-  // ربط أحداث الشريط الجانبي
-  document.getElementById('lang-select')?.addEventListener('change', async e=>{
-    ensureLang(e.target.value);
-    buildLettersGrid();
-    await reloadData();
-    render();
-    if (state.mode === 'quiz') buildQuiz();
-  });
-
-  document.getElementById('prefer-views')?.addEventListener('change', async e=>{
-    state.preferViews = !!e.target.checked;
-    await reloadData();
-    render();
-  });
-
-  document.getElementById('autoplay-audio')?.addEventListener('change', e=>{
-    state.autoplay = !!e.target.checked;
-  });
-
-  document.querySelectorAll('#subjects-filter input[type="checkbox"]').forEach(cb=>{
-    cb.addEventListener('change', async ()=>{
-      state.subjects = getSelectedSubjects();
-      state.idx = 0;
-      await reloadData();
-      render();
-      if (state.mode === 'quiz') buildQuiz();
+  // اضبط قيمة اللغة الحالية
+  const sel = qs('#aa-lang');
+  if (sel){
+    sel.value = state.lang;
+    sel.addEventListener('change', () => {
+      ensureLang(sel.value);
+      buildLetters();     // إعادة رسم شبكة الحروف
+      refilterAndRender();// إعادة التصفية وفق اللغة
     });
-  });
+  }
 
-  document.getElementById('tags-input')?.addEventListener('input', ()=>{
-    state.tags = parseTags();
-    filterByTagsInState();
-    state.idx = 0;
-    render();
-  });
+  // ارسم الحروف
+  buildLetters();
 
-  document.querySelectorAll('input[name="mode"]').forEach(r=>{
-    r.addEventListener('change', e=>{
-      state.mode = e.target.value;
-      updateModeView();
-      if (state.mode === 'quiz') buildQuiz();
+  // ارسم المواضيع
+  const subWrap = qs('#aa-subjects');
+  if (subWrap){
+    subWrap.innerHTML = SUBJECTS.map(s => `
+      <label style="display:flex;align-items:center;gap:6px">
+        <input type="checkbox" value="${s}" ${state.subjects.includes(s)?'checked':''}>
+        <span>${labelOf(s)}</span>
+      </label>
+    `).join('');
+    subWrap.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+      chk.addEventListener('change', ()=>{
+        const val = chk.value;
+        if (chk.checked && !state.subjects.includes(val)) state.subjects.push(val);
+        if (!chk.checked) state.subjects = state.subjects.filter(v => v!==val);
+        refetchAndRender();
+      });
     });
+  }
+}
+
+function createSidebarFallback(){
+  // في حال لم توجد منطقة جانبية مهيأة، ننشئ قسماً بسيطاً في اليسار
+  const aside = document.createElement('aside');
+  aside.id = 'alphabet-activity-controls';
+  aside.className = 'sidebar-section';
+  const left = qs('#left-sidebar') || qs('.sidebar') || qs('aside') || null;
+  if (left) left.appendChild(aside);
+  else document.body.prepend(aside);
+  return aside;
+}
+
+function buildLetters(){
+  const grid = qs('#aa-letters');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const letters = ALPHABET[state.lang] || [];
+  letters.forEach(ch => {
+    const btn = document.createElement('button');
+    btn.className = 'btn letter-btn';
+    btn.textContent = ch;
+    btn.style.padding = '8px 0';
+    btn.addEventListener('click', ()=>{
+      state.letter = ch;
+      qsa('#aa-letters .letter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      refilterAndRender();
+    });
+    if (ch === state.letter) btn.classList.add('active');
+    grid.appendChild(btn);
   });
 }
 
 function labelOf(subject){
   return {
-    animals:'الحيوانات', fruits:'الفواكه', vegetables:'الخضروات',
-    tools:'الأدوات', professions:'المهن', human_body:'جسم الإنسان'
+    animal:'الحيوانات', fruit:'الفواكه', vegetable:'الخضروات',
+    tool:'الأدوات', profession:'المهن', human_body:'جسم الإنسان'
   }[subject] || subject;
 }
 
-function buildLettersGrid(){
-  const grid = document.getElementById('letters-grid'); if (!grid) return;
-  grid.innerHTML = '';
-  (ALPHABET[state.lang]||[]).forEach(L=>{
-    const b = document.createElement('button');
-    b.className = 'nav-btn letter-btn';
-    b.textContent = L;
-    b.onclick = async ()=>{
-      state.letter = L;
-      state.idx = 0;
-      updateLetterBadge();
-      await reloadData();
-      render();
-      if (state.mode === 'quiz') buildQuiz();
-    };
-    grid.appendChild(b);
+function bindMainActions(){
+  qs('#aa-prev')?.addEventListener('click', ()=>{
+    if (!state.filtered.length) return;
+    state.index = (state.index - 1 + state.filtered.length) % state.filtered.length;
+    renderCurrent();
+  });
+  qs('#aa-next')?.addEventListener('click', ()=>{
+    if (!state.filtered.length) return;
+    state.index = (state.index + 1) % state.filtered.length;
+    renderCurrent();
+  });
+  qs('#aa-play')?.addEventListener('click', ()=>{
+    if (!state.filtered.length) return;
+    const it = state.filtered[state.index];
+    const src = it?.audio?.[state.lang];
+    if (src) playAudio(src);
+  });
+  qs('#aa-toggle-desc')?.addEventListener('click', ()=>{
+    state.showDescription = !state.showDescription;
+    renderCurrent();
   });
 }
 
-// ============ تحميل البيانات ============
-async function reloadData(){
-  stopAudio();
-  let list = [];
-  if (state.preferViews){
-    try { list = await loadViaViews(state.lang, state.letter, state.subjects); }
-    catch(e){ console.warn('[views] fallback -> items:', e?.message||e); }
-  }
-  if (!list || !list.length){
-    list = await queryItemsByLetter(state.lang, state.letter, state.subjects);
-  }
-  state.items = applyTagFilter(list, state.tags);
-  sortByName(state.items, state.lang);
-  state.idx = 0;
-}
-
-async function loadViaViews(lang, letter, subjects){
-  const s = await getDoc(doc(collection(db,'views_letters'), `${lang}_${letter}`));
-  if (!s.exists()) return [];
-  const data = s.data() || {};
-  let ids = [];
-  if (subjects?.length && data.ids_by_subject){
-    subjects.forEach(sub => ids.push(...(data.ids_by_subject[sub] || [])));
-  } else { ids = data.ids_all || []; }
-  ids = Array.from(new Set(ids));
-  if (!ids.length) return [];
-
-  const chunks = chunk(ids, 10);
-  const out = [];
-  for (const c of chunks){
-    const q = query(collection(db,'items'), where(documentId(),'in', c));
-    const snap = await getDocs(q);
-    snap.forEach(d=>out.push({id:d.id, ...d.data()}));
-  }
-  return out;
-}
-
-async function queryItemsByLetter(lang, letter, subjects){
-  const col = collection(db, 'items');
-  const results = [];
-  const subjChunks = chunk(subjects?.length?subjects:ALL_SUBJECTS, 10);
-
-  for (const subc of subjChunks){
-    let q1 = query(col, where('subject','in', subc), where(`letter.${lang}`, '==', letter));
-    let s1 = await getDocs(q1); let arr=[]; s1.forEach(d=>arr.push({id:d.id,...d.data()}));
-    if (!arr.length){
-      let q2 = query(col, where('subject','in', subc), where(`first_letters.${lang}`, '==', letter));
-      let s2 = await getDocs(q2); s2.forEach(d=>arr.push({id:d.id,...d.data()}));
+// راقب تغيّر lang على عنصر html (إذا كان الموقع يغير اللغة عالمياً)
+function observeGlobalLang(){
+  const m = new MutationObserver(() => {
+    const newLang = document.documentElement.lang || 'ar';
+    if (newLang !== state.lang){
+      ensureLang(newLang);
+      buildLetters();
+      refilterAndRender();
     }
-    results.push(...arr);
-  }
-
-  if (!results.length){
-    const qAll = query(col, where('subject','in', subjects?.length?subjects:ALL_SUBJECTS));
-    const sAll = await getDocs(qAll); const tmp=[]; sAll.forEach(d=>tmp.push({id:d.id,...d.data()}));
-    return tmp.filter(it => computeFirstLetter(it?.name?.[lang]||'', lang) === letter);
-  }
-  return results;
+  });
+  m.observe(document.documentElement, { attributes:true, attributeFilter:['lang'] });
 }
 
-// ============ العرض (استكشاف + اختبار) ============
-function bindExploreControls(){
-  document.getElementById('prev-btn')?.addEventListener('click', ()=>{
-    if (!state.items.length) return;
-    state.idx = (state.idx - 1 + state.items.length) % state.items.length;
-    render();
-  });
-  document.getElementById('next-btn')?.addEventListener('click', ()=>{
-    if (!state.items.length) return;
-    state.idx = (state.idx + 1) % state.items.length;
-    render();
-  });
-  document.getElementById('listen-btn')?.addEventListener('click', ()=>{
-    const it = state.items[state.idx]; playAudio(pickAudio(it?.sound, state.lang));
-  });
-  document.getElementById('toggle-desc-btn')?.addEventListener('click', ()=>{
-    const el = document.getElementById('item-description');
-    el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
-  });
-}
+// ======= نقطة الدخول =======
+export async function loadAlphabetActivity(){
+  try{
+    // استكشف اللغة الحالية من html أو من state
+    ensureLang(document.documentElement.lang || state.lang);
 
-function render(){
-  updateModeView();
+    // ابنِ الواجهة إن لم تكن موجودة
+    buildUI();
 
-  const nameEl = document.getElementById('item-name');
-  const imgEl  = document.getElementById('item-image');
-  const descEl = document.getElementById('item-description');
+    // راقب تغيّر اللغة عالمياً
+    observeGlobalLang();
 
-  if (!state.items.length){
-    nameEl.innerHTML = emphasizeFirst('(لا عناصر)', state.lang, state.letter);
-    imgEl.src = ''; imgEl.alt=''; descEl.textContent='';
-    return;
-  }
+    // جلب أولي ثم عرض
+    await refetchAndRender();
 
-  const it  = state.items[state.idx];
-  const nm  = it?.name?.[state.lang] || '';
-  const ds  = it?.description?.[state.lang] || '';
-  const src = it?.image_path || '';
-
-  nameEl.innerHTML = emphasizeFirst(nm, state.lang, state.letter);
-  imgEl.src = src; imgEl.alt = nm;
-  descEl.textContent = ds || '';
-
-  if (state.autoplay){
-    playAudio(pickAudio(it?.sound, state.lang));
+    console.log('✅ [alphabet-activity] ready:', {lang: state.lang, letter: state.letter, subjects: state.subjects});
+  }catch(err){
+    console.error('[alphabet-activity] failed to init', err);
+    const nameEl = qs('#aa-name');
+    if (nameEl) nameEl.textContent = 'حدث خطأ أثناء التحميل';
   }
 }
 
-function buildQuiz(){
-  const promptEl = document.getElementById('quiz-prompt');
-  const optsEl   = document.getElementById('quiz-options');
-  const fbEl     = document.getElementById('quiz-feedback');
-
-  promptEl.innerHTML=''; optsEl.innerHTML=''; fbEl.textContent='';
-
-  const pool = state.items.slice();
-  if (pool.length < 4){
-    document.getElementById('quiz-title').textContent = 'يلزم 4 عناصر على الأقل لهذا الحرف/الفلاتر.';
-    return;
-  }
-
-  shuffle(pool);
-  const correct = pool[0];
-  const distractors = pool.slice(1)
-    .filter(it => (it?.name?.[state.lang]||'') !== (correct?.name?.[state.lang]||''))
-    .slice(0,3);
-
-  const img = document.createElement('img');
-  img.src = correct?.image_path || '';
-  img.alt = correct?.name?.[state.lang] || '';
-  promptEl.appendChild(img);
-
-  shuffle([correct, ...distractors]).forEach(it=>{
-    const name = it?.name?.[state.lang] || '';
-    const b = document.createElement('button');
-    b.className = 'nav-btn';
-    b.textContent = name;
-    b.onclick = ()=>{
-      const ok = name === (correct?.name?.[state.lang]||'');
-      fbEl.textContent = ok ? 'إجابة صحيحة ✅' : 'حاول مرة أخرى ❌';
-      if (ok) playAudio(pickAudio(correct?.sound, state.lang));
-    };
-    optsEl.appendChild(b);
-  });
-}
-
-// ============ أدوات ============
-function updateLetterBadge(){ const b = document.getElementById('letter-badge'); if (b) b.textContent = state.letter || ''; }
-function updateModeView(){
-  const qv = document.getElementById('quiz-view');
-  if (state.mode === 'quiz'){ qv.style.display='block'; }
-  else { qv.style.display='none'; }
-}
-function getSelectedSubjects(){
-  return Array.from(document.querySelectorAll('#subjects-filter input[type="checkbox"]:checked')).map(e=>e.value);
-}
-function parseTags(){
-  const raw = (document.getElementById('tags-input')?.value||'').trim();
-  return raw ? raw.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean) : [];
-}
-function filterByTagsInState(){ state.items = applyTagFilter(state.items, state.tags); }
-function applyTagFilter(list, tags){
-  if (!tags?.length) return list;
-  return list.filter(it => {
-    const t = (it?.tags || []).map(x=>String(x).toLowerCase());
-    return tags.every(tag => t.includes(tag));
-  });
-}
-function sortByName(list, lang){
-  list.sort((a,b)=>{
-    const A = (a?.name?.[lang]||'').toString();
-    const B = (b?.name?.[lang]||'').toString();
-    return A.localeCompare(B, lang==='en'?'en':(lang==='he'?'he':'ar'));
-  });
-}
-function chunk(arr, n){ const out=[]; for(let i=0;i<arr.length;i+=n) out.push(arr.slice(i,i+n)); return out; }
-function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j]];} return a; }
-function pickAudio(soundMap, lang){
-  const m = soundMap?.[lang]; if (!m) return null;
-  return m.boy || m.girl || m.teacher || Object.values(m)[0] || null;
-}
-function emphasizeFirst(text, lang, expectedLetter){
-  if (!text) return '';
-  const target = expectedLetter || computeFirstLetter(text, lang);
-  const idx = text.indexOf(target);
-  if (idx>=0){
-    return text.slice(0,idx) + `<span style="color:#e53935;font-weight:800">${text[idx]}</span>` + text.slice(idx+1);
-  }
-  return `<span style="color:#e53935;font-weight:800">${text[0]||''}</span>${text.slice(1)}`;
-}
-function ensureLang(lang){
-  state.lang = LANGS.includes(lang) ? lang : 'ar';
-  document.documentElement.lang = state.lang;
-  document.documentElement.dir  = (state.lang==='ar' || state.lang==='he') ? 'rtl' : 'ltr';
-  state.letter = (ALPHABET[state.lang] && ALPHABET[state.lang][0]) || state.letter;
-}
-function computeFirstLetter(word, lang){
-  if (!word) return '';
-  let w = word.trim();
-  if (lang==='ar'){ w = w.replace(/^ال/, ''); return (w[0]||''); }
-  if (lang==='en') return (w[0]||'').toUpperCase();
-  if (lang==='he'){ const f=(w[0]||''); const map={'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}; return map[f]||f; }
-  return w[0]||'';
-}
+// توافق مع أسماء قديمة محتملة
+export const loadAlphabetActivityContent = loadAlphabetActivity;
