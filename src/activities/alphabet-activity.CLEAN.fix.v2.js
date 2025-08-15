@@ -8,7 +8,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { playAudio, stopCurrentAudio } from '@/core/audio-handler.js';
 
 /* ===================== DEBUG ===================== */
-const AA_DBG = true; // ← ضع false لإخفاء كل السجلات
+const AA_DBG = false; // ← ضع false لإخفاء كل السجلات
 const dbg  = (...a)=>{ if(AA_DBG) console.log('[AA]', ...a); };
 const dbgt = (title, rows)=>{ if(AA_DBG && console.table){ console.groupCollapsed('[AA] ' + title); console.table(rows); console.groupEnd(); } };
 /* ================================================= */
