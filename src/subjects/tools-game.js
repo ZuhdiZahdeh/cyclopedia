@@ -26,7 +26,6 @@ const els = {
   controls: () => document.getElementById('tools-sidebar-controls'),
   btnPrevId:   'prev-tools-btn',
   btnNextId:   'next-tools-btn',
-  btnListenId: 'play-sound-btn-tools',
   btnToggleId: 'toggle-description-btn-tools',
   btnProfId:   'toggle-professions-btn-tools',  // زر جديد: المهن المرتبطة
   voiceSelId:  'voice-select-tools',
@@ -74,7 +73,7 @@ async function ensureToolsSidebar() {
     account ? sidebar.insertBefore(container, account) : sidebar.appendChild(container);
   }
   const needsLoad = !container.querySelector(
-    `#${els.btnPrevId}, #${els.btnNextId}, #${els.btnListenId}, #${els.btnToggleId}, #${els.voiceSelId}, #${els.langSelId}, #${els.btnProfId}`
+    `#${els.btnPrevId}, #${els.btnNextId}, #${els.btnToggleId}, #${els.voiceSelId}, #${els.langSelId}, #${els.btnProfId}`
   );
   if (needsLoad) {
     let html = '';
@@ -88,7 +87,6 @@ async function ensureToolsSidebar() {
           <button id="${els.btnPrevId}" class="btn secondary">السابق</button>
           <button id="${els.btnNextId}" class="btn primary">التالي</button>
         </div>
-        <div class="row"><button id="${els.btnListenId}" class="btn listen">استمع</button></div>
         <div class="row"><button id="${els.btnToggleId}" class="btn ghost">الوصف</button></div>
         <div class="row"><button id="${els.btnProfId}"  class="btn ghost">المهن المرتبطة</button></div>
         <div class="row">
@@ -126,7 +124,6 @@ function bindControls() {
     if (!id) return;
     if (id === els.btnPrevId)   return showPreviousTool();
     if (id === els.btnNextId)   return showNextTool();
-    if (id === els.btnListenId) return playCurrentToolAudio();
     if (id === els.btnToggleId) return toggleDescription();
     if (id === els.btnProfId)   return toggleProfessions();
   });
@@ -154,6 +151,7 @@ function ensureClickToPlay() {
   }
 }
 
+
 async function renderCurrentTool(lang = currentUILang) {
   currentUILang = lang;
   const data = tools[currentIndex] || null;
@@ -163,7 +161,6 @@ async function renderCurrentTool(lang = currentUILang) {
   const imgEl  = els.imgEl();
   const descEl = els.descText();
   const profEl = els.profList();
-  const playBtn = document.getElementById(els.btnListenId);
 
   if (!data) {
     if (nameEl) nameEl.textContent = '—';

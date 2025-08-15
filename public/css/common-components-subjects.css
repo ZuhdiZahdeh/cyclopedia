@@ -256,9 +256,8 @@
   --btn-primary-bg-2:#ea580c;
   --btn-secondary-bg:#fb923c; /* برتقالي أغمق (Prev/وصف إن لزم) */
   --btn-secondary-bg-2:#f97316;
-  --btn-listen-bg:   #0ea5e9; /* أزرق واضح (استمع) */
-  --btn-listen-bg-2: #0284c7;
-  --btn-ghost-bg:    #e2e8f0; /* رمادي فاتح */
+  --btn-ghost-bg:   #0ea5e9; /* أزرق واضح (استمع) */
+  --btn-ghost-bg-2: #0284c7;
 
   --btn-text-dark:   #0f172a;
   --btn-text-light:  #ffffff;
@@ -292,13 +291,10 @@
   color:var(--btn-text-light);
   background:linear-gradient(180deg, var(--btn-secondary-bg), var(--btn-secondary-bg-2));
 }
-#sidebar-section .btn.listen{
-  color:var(--btn-text-light);
-  background:linear-gradient(180deg, var(--btn-listen-bg), var(--btn-listen-bg-2));
-}
+
 #sidebar-section .btn.ghost{
-  color:var(--btn-text-dark);
-  background:var(--btn-ghost-bg);
+   color:var(--btn-text-light);
+	background:linear-gradient(180deg, var(--btn-ghost-bg), var(--btn-ghost-bg-2)); 
 }
 
 /* شبكة السايدبار وتراصّ الأسطر */
