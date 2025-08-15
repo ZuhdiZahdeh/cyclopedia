@@ -1,335 +1,286 @@
 // src/subjects/animals-game.js
+import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
+import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
+import { recordActivity } from '../core/activity-handler.js';
+import { fetchSubjectItems, normalizeItemForView } from '../core/items-repo.js';
+import { pickLocalized, slugify } from '../core/media-utils.js';
 
-import { db } from "../core/db-handler.js";
-import { collection, getDocs, query } from "firebase/firestore";
-import { getCurrentLang, setLanguage, setDirection, applyTranslations } from "../core/lang-handler.js";
-import { playAudio, stopCurrentAudio } from "../core/audio-handler.js";
-import { recordActivity } from "../core/activity-handler.js";
+const SUBJECT_KEY = 'animals';
 
-let animals = [];
-let currentIndex = 0;
-let currentAnimalData = null;
+let _raw = [];
+let _i = 0;
+let _uiLang = 'ar';
 
-/** لغة صفحة الحيوانات من القائمة الجانبية (أولوية)، مع fallback للغة العامة */
-function getLangForAnimals() {
-  const el = document.getElementById("game-lang-select-animal") || document.getElementById("game-lang-select");
-  return (el && el.value) || getCurrentLang();
+// مختصرات اختيار العناصر
+const $q = (s) => document.querySelector(s);
+const pickEl = (...sels) => sels.map(s => $q(s)).find(Boolean) || null;
+
+// —————————————————— أدوات مساعدة للحقول المرنة ——————————————————
+function resolveClassification(raw, lang) {
+  const cls = raw?.classification ?? raw?.category ?? raw?.group ?? null;
+  if (!cls) return '—';
+  if (Array.isArray(cls)) {
+    return cls.map(c => typeof c === 'object' ? pickLocalized(c, lang) : String(c)).join('، ');
+  }
+  if (typeof cls === 'object') return pickLocalized(cls, lang) || '—';
+  return String(cls);
 }
 
-export async function loadAnimalsGameContent() {
-  stopCurrentAudio();
+function resolveBabyName(raw, lang) {
+  // أشكال محتملة: raw.baby.name[lang] / raw.baby[lang] / raw.offspring.name[lang]
+  const b = raw?.baby || raw?.offspring || null;
+  if (!b) return 'غير معروف';
+  return pickLocalized(b.name ?? b, lang) || 'غير معروف';
+}
 
-  const main = document.querySelector("main.main-content");
-  if (!main) {
-    console.error("[animals] لم يتم العثور على main.main-content");
-    return;
+function resolveBabyImagePath(raw) {
+  // 1) من media.images (role/id = baby/offspring)
+  const imgs = raw?.media?.images;
+  if (Array.isArray(imgs) && imgs.length) {
+    const cand =
+      imgs.find(im => im?.role === 'baby' || im?.id === 'baby') ||
+      imgs.find(im => im?.role === 'offspring' || im?.id === 'offspring') ||
+      imgs.find(im => String(im?.path || '').match(/\/(baby|offspring)[_/]/i));
+    if (cand?.path) {
+      const p = String(cand.path).replace(/^public\//, '');
+      return p.startsWith('/') ? p : `/${p}`;
+    }
+  }
+  // 2) توافق للخلف: raw.baby.image_path || raw.baby.image
+  const b = raw?.baby || raw?.offspring || null;
+  if (b?.image_path) return b.image_path.startsWith('/') ? b.image_path : `/${b.image_path}`;
+  if (b?.image)      return `/images/animals/baby_animals/${b.image}`;
+  return '/images/default.png';
+}
+
+function audioPathAnimal(raw, lang, voice) {
+  // 1) الشكل الموحّد: sound[lang][voice] أو sound[lang] كسلسلة
+  const s = raw?.sound;
+  if (s && typeof s === 'object') {
+    const node = s[lang];
+    if (typeof node === 'string' && node) return node.startsWith('/') ? node : `/${node}`;
+    const v = node?.[voice] || node?.teacher || node?.boy || node?.girl;
+    if (typeof v === 'string' && v) return v.startsWith('/') ? v : `/${v}`;
+  }
+  // 2) voices['boy_ar'] ونحوها
+  const key = `${voice}_${lang}`;
+  if (raw?.voices?.[key]) {
+    const f = raw.voices[key];
+    return f.startsWith('/') ? f : `/${f}`;
+  }
+  // 3) sound_base
+  const base = raw?.sound_base || raw?.audio_base || raw?.id || slugify(pickLocalized(raw?.name, lang));
+  if (base) return `/audio/${lang}/animals/${slugify(base)}_${voice}_${lang}.mp3`;
+  // 4) توافق قديم
+  if (raw?.animal_sound_file) {
+    const f = raw.animal_sound_file;
+    return f.startsWith('/') ? f : `/${f}`;
+  }
+  return '';
+}
+
+function audioPathBaby(raw, lang, voice) {
+  // بيانات الابن داخل raw.baby أو raw.offspring أو داخل sound.baby
+  const b = raw?.baby || raw?.offspring || null;
+  if (b?.sound?.[lang]?.[voice]) {
+    const f = b.sound[lang][voice];
+    return f.startsWith('/') ? f : `/${f}`;
+  }
+  if (raw?.sound?.baby?.[lang]?.[voice]) {
+    const f = raw.sound.baby[lang][voice];
+    return f.startsWith('/') ? f : `/${f}`;
+  }
+  const base = b?.sound_base || b?.audio_base || slugify(pickLocalized(b?.name ?? {}, lang));
+  if (base) return `/audio/${lang}/animals/baby_animals/${slugify(base)}_${voice}_${lang}.mp3`;
+  if (b?.sound_file) {
+    const f = b.sound_file;
+    return f.startsWith('/') ? f : `/${f}`;
+  }
+  return '';
+}
+
+// —————————————————— الرسم ——————————————————
+function render() {
+  if (!_raw.length) return;
+  const lang = _uiLang;
+  const raw  = _raw[_i];
+  const view = normalizeItemForView(raw, lang); // {name, description, imagePath, imageAlt}
+
+  const nameEl = pickEl('#subject-title','#animal-word','#item-name','.subject-title','.subject-name');
+  const imgEl  = pickEl('#subject-image','#animal-image','#item-image','.subject-image img','.subject-image');
+  const descEl = pickEl('#subject-description','#animal-description','#item-description','.subject-description');
+
+  const babyNameEl   = document.getElementById('animal-baby');
+  const femaleNameEl = document.getElementById('animal-female');
+  const categoryEl   = document.getElementById('animal-category');
+  const babyImgEl    = document.getElementById('baby-animal-image');
+
+  // الاسم (مع تمييز أول حرف)
+  if (nameEl) {
+    const s = String(view.name || '');
+    const first = s[0] || '';
+    nameEl.innerHTML = `<span class="first-letter highlight-first-letter">${first}</span>${s.slice(1)}`;
+    nameEl.style.cursor = 'pointer';
+    nameEl.onclick = onPlay;
   }
 
-  // تحميل القالب HTML
-  try {
-    const resp = await fetch("/html/animals.html", { cache: "no-store" });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    main.innerHTML = await resp.text();
-  } catch (e) {
-    console.error("[animals] فشل تحميل /html/animals.html:", e);
-    return;
+  // الصورة الرئيسية + تشغيل عند النقر
+  if (imgEl) {
+    imgEl.onerror = () => console.warn('[animals] missing image:', view.imagePath);
+    imgEl.src = view.imagePath || '';
+    imgEl.alt = view.imageAlt || view.name || '';
+    imgEl.style.cursor = 'pointer';
+    imgEl.onclick = onPlay;
   }
 
-  // عناصر الشريط الجانبي (أولوية للملحّق، ثم العام كـ fallback)
-  const langSelect   = document.getElementById("game-lang-select-animal")     || document.getElementById("game-lang-select");
-  const voiceSelect  = document.getElementById("voice-select-animal")         || document.getElementById("voice-select");
-  const playBtn      = document.getElementById("play-sound-btn-animal")       || document.getElementById("play-sound-btn");
-  const playBabyBtn  = document.getElementById("play-baby-sound-btn-animal")  || document.getElementById("play-baby-sound-btn");
-  const prevBtn      = document.getElementById("prev-animal-btn")             || document.getElementById("prev-btn");
-  const nextBtn      = document.getElementById("next-animal-btn")             || document.getElementById("next-btn");
-  const toggleDesc   = document.getElementById("toggle-description-btn-animal") || document.getElementById("toggle-description-btn");
-  const toggleDetails= document.getElementById("toggle-details-btn-animal")     || document.getElementById("toggle-details-btn");
-  const toggleBabyImg= document.getElementById("toggle-baby-image-btn-animal")  || document.getElementById("toggle-baby-image-btn");
+  if (descEl) descEl.textContent = view.description || '';
 
-  // جلب البيانات
-  await fetchAnimals();
+  // بيانات إضافية (إن وُجدت)
+  if (babyNameEl)   babyNameEl.textContent   = resolveBabyName(raw, lang);
+  if (femaleNameEl) femaleNameEl.textContent = pickLocalized(raw?.female, lang) || 'غير معروف';
+  if (categoryEl)   categoryEl.textContent   = resolveClassification(raw, lang);
 
-  if (animals.length === 0) {
-    console.warn("[animals] لا توجد بيانات");
-    const img  = document.getElementById("animal-image");
-    const word = document.getElementById("animal-word");
-    const desc = document.getElementById("animal-description");
-    if (img)  img.src = "/images/default.png";
-    if (word) word.textContent = "لا توجد بيانات";
-    if (desc) desc.textContent = "لا يوجد وصف متوفر.";
-    disableSidebar(true);
-    return;
+  if (babyImgEl) {
+    const p = resolveBabyImagePath(raw);
+    babyImgEl.src = p;
+    babyImgEl.alt = resolveBabyName(raw, lang);
   }
 
-  currentIndex = 0;
-  updateAnimalContent();
-  disableSidebar(false);
+  // تعطيل/تمكين أزرار التالي/السابق إن لزم
+  const prevBtn = document.getElementById('prev-animal-btn') || document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-animal-btn') || document.getElementById('next-btn');
+  if (prevBtn) prevBtn.disabled = (_i === 0 && _raw.length > 0);
+  if (nextBtn) nextBtn.disabled = (_i === _raw.length - 1 && _raw.length > 0);
 
-  // تزامن اللغة مع الواجهة + إعادة تعبئة المحتوى فورًا
-  if (langSelect) {
-    try { langSelect.value = getCurrentLang(); } catch {}
-    langSelect.onchange = async () => {
-      const newLang = langSelect.value;
-      await setLanguage(newLang);      // يضبط localStorage + الاتجاه + يحمّل ملف الترجمة :contentReference[oaicite:7]{index=7}
-      stopCurrentAudio();
-      updateAnimalContent();           // يقرأ اللغة مباشرة من القائمة
+  stopCurrentAudio?.();
+}
+
+// —————————————————— تنقّل/صوت ——————————————————
+function onNext(){ if(!_raw.length) return; _i = Math.min(_i + 1, _raw.length - 1); render(); try{recordActivity('animals','next',{index:_i});}catch{} }
+function onPrev(){ if(!_raw.length) return; _i = Math.max(_i - 1, 0);             render(); try{recordActivity('animals','prev',{index:_i});}catch{} }
+
+function onPlay(){
+  const langSel  = document.getElementById('game-lang-select-animal') || document.getElementById('game-lang-select');
+  const voiceSel = document.getElementById('voice-select-animal')     || document.getElementById('voice-select');
+  const lang  = (langSel?.value || _uiLang || getCurrentLang());
+  const voice = (voiceSel?.value || 'teacher');
+  const src   = audioPathAnimal(_raw[_i], lang, voice);
+  stopCurrentAudio?.();
+  if (src) playAudio(src);
+}
+
+function onPlayBaby(){
+  const langSel  = document.getElementById('game-lang-select-animal') || document.getElementById('game-lang-select');
+  const voiceSel = document.getElementById('voice-select-animal')     || document.getElementById('voice-select');
+  const lang  = (langSel?.value || _uiLang || getCurrentLang());
+  const voice = (voiceSel?.value || 'teacher');
+  const src   = audioPathBaby(_raw[_i], lang, voice);
+  stopCurrentAudio?.();
+  if (src) playAudio(src);
+}
+
+// —————————————————— ربط عناصر التحكم ——————————————————
+function bindControls() {
+  const prev = document.getElementById('prev-animal-btn') || document.getElementById('prev-btn');
+  const next = document.getElementById('next-animal-btn') || document.getElementById('next-btn');
+  const play = document.getElementById('play-sound-btn-animal') || document.getElementById('play-sound-btn');
+  const playBaby = document.getElementById('play-baby-sound-btn-animal') || document.getElementById('play-baby-sound-btn');
+  const langSel  = document.getElementById('game-lang-select-animal') || document.getElementById('game-lang-select');
+  const toggleDesc    = document.getElementById('toggle-description-btn-animal') || document.getElementById('toggle-description-btn');
+  const toggleDetails = document.getElementById('toggle-details-btn-animal')     || document.getElementById('toggle-details-btn');
+  const toggleBabyImg = document.getElementById('toggle-baby-image-btn-animal')  || document.getElementById('toggle-baby-image-btn');
+
+  if (prev) prev.onclick = onPrev;
+  if (next) next.onclick = onNext;
+  if (play) play.onclick = onPlay;
+  if (playBaby) playBaby.onclick = onPlayBaby;
+
+  if (toggleDesc) {
+    toggleDesc.onclick = () => {
+      const box = document.getElementById('animal-description-box') || document.getElementById('subject-description-box') || document.getElementById('item-description-box');
+      if (!box) return;
+      const show = getComputedStyle(box).display === 'none';
+      box.style.display = show ? 'block' : 'none';
     };
   }
-
-  if (voiceSelect) voiceSelect.onchange = () => stopCurrentAudio();
-  if (playBtn)     playBtn.onclick      = () => playCurrentAnimalAudio();
-  if (playBabyBtn) playBabyBtn.onclick  = () => playCurrentBabyAnimalAudio();
-  if (prevBtn)     prevBtn.onclick      = () => showPreviousAnimal();
-  if (nextBtn)     nextBtn.onclick      = () => showNextAnimal();
-
-  // أزرار إظهار/إخفاء الصناديق
-  if (toggleDesc) {
-    const box = document.getElementById("animal-description-box");
-    toggleDesc.onclick = () => { if (box) box.style.display = (box.style.display === "none" ? "block" : "none"); };
-  }
   if (toggleDetails) {
-    const box = document.getElementById("animal-details-section");
-    toggleDetails.onclick = () => { if (box) box.style.display = (box.style.display === "none" ? "block" : "none"); };
+    toggleDetails.onclick = () => {
+      const box = document.getElementById('animal-details-section');
+      if (!box) return;
+      const show = getComputedStyle(box).display === 'none';
+      box.style.display = show ? 'block' : 'none';
+    };
   }
   if (toggleBabyImg) {
     toggleBabyImg.onclick = () => {
-      const detailsBox = document.getElementById("animal-details-section");
-      if (!detailsBox) return;
-      const babySec = detailsBox.querySelector(".baby-animal-section");
-      if (!babySec) return;
-      babySec.style.display = (babySec.style.display === "none") ? "block" : "none";
+      const details = document.getElementById('animal-details-section');
+      if (!details) return;
+      const sec = details.querySelector('.baby-animal-section');
+      if (!sec) return;
+      const show = getComputedStyle(sec).display === 'none';
+      sec.style.display = show ? 'block' : 'none';
     };
   }
 
-  applyTranslations();
-  setDirection(getLangForAnimals());
-  safeRecord("view_animals");
+  if (langSel) {
+    try { langSel.value = getCurrentLang(); } catch {}
+    langSel.onchange = async () => {
+      _uiLang = langSel.value;
+      await loadLanguage(_uiLang);
+      setDirection(_uiLang);
+      applyTranslations();
+      // ترتيب حسب الاسم في اللغة المختارة
+      _raw.sort((a,b) => String(pickLocalized(a?.name,_uiLang)).localeCompare(pickLocalized(b?.name,_uiLang)));
+      render();
+    };
+  }
 }
 
-function updateAnimalContent() {
-  if (animals.length === 0) return;
+// —————————————————— نقطة الدخول ——————————————————
+export async function loadAnimalsGameContent() {
+  stopCurrentAudio?.();
 
-  const lang = getLangForAnimals(); // ← بدلًا من getCurrentLang()
-  currentAnimalData = animals[currentIndex];
-
-  const imgEl        = document.getElementById("animal-image");
-  const wordEl       = document.getElementById("animal-word");
-  const descEl       = document.getElementById("animal-description");
-  const babyNameEl   = document.getElementById("animal-baby");
-  const femaleNameEl = document.getElementById("animal-female");
-  const categoryEl   = document.getElementById("animal-category");
-  const babyImgEl    = document.getElementById("baby-animal-image");
-  const prevBtn      = document.getElementById("prev-animal-btn") || document.getElementById("prev-btn");
-  const nextBtn      = document.getElementById("next-animal-btn") || document.getElementById("next-btn");
-
-  const animalName = currentAnimalData?.name?.[lang] || currentAnimalData?.name?.ar || "";
-
-  // الصورة + تشغيل الصوت عند الضغط
-  if (imgEl) {
-    imgEl.src = resolveAnimalImagePath(currentAnimalData);
-    imgEl.alt = animalName || "animal";
-    imgEl.onclick = playCurrentAnimalAudio;
-    imgEl.classList.add("clickable-image");
-  }
-
-  // الاسم في المنتصف + تلوين الحرف الأول
-  if (wordEl) {
-    if (animalName) {
-      const first = animalName[0] ?? "";
-      wordEl.innerHTML = `<span class="highlight-first-letter">${first}</span>${animalName.slice(1)}`;
-    } else {
-      wordEl.textContent = "";
-    }
-    wordEl.onclick = playCurrentAnimalAudio;
-    wordEl.classList.add("clickable-text");
-  }
-
-  if (descEl)       descEl.textContent       = currentAnimalData?.description?.[lang] || "لا يوجد وصف";
-  if (babyNameEl)   babyNameEl.textContent   = currentAnimalData?.baby?.name?.[lang] || currentAnimalData?.baby?.[lang] || "غير معروف";
-  if (femaleNameEl) femaleNameEl.textContent = currentAnimalData?.female?.[lang] || "غير معروف";
-
-  if (categoryEl) {
-    const cls = currentAnimalData.classification;
-    categoryEl.textContent = Array.isArray(cls)
-      ? cls.map(c => (typeof c === "object" && c?.[lang]) ? c[lang] : c).join(", ")
-      : (cls?.[lang] || cls || "غير معروف");
-  }
-
-  if (babyImgEl) {
-    const p = currentAnimalData?.baby?.image_path || currentAnimalData?.baby?.image;
-    if (p) {
-      babyImgEl.src = p.startsWith("/") ? p : `/${p}`;
-      babyImgEl.alt = currentAnimalData?.baby?.name?.[lang] || "baby animal";
-    } else {
-      babyImgEl.src = "/images/default.png";
-      babyImgEl.alt = "لا توجد صورة للابن";
-    }
-  }
-
-  if (prevBtn) prevBtn.disabled = (currentIndex === 0);
-  if (nextBtn) nextBtn.disabled = (currentIndex === animals.length - 1);
-
-  stopCurrentAudio();
-}
-
-async function fetchAnimals() {
-  animals = [];
+  // تحميل قالب الصفحة HTML
   try {
-    // مسار: categories/animals/items
-    const ref = collection(db, "categories", "animals", "items");
-    const snap = await getDocs(query(ref));
-    animals = snap.docs.map(d => d.data());
+    const main = document.querySelector('main.main-content');
+    const resp = await fetch('/html/animals.html', { cache: 'no-store' });
+    if (resp.ok && main) main.innerHTML = await resp.text();
+    console.log('[animals] ✔ تم تحميل الصفحة: /html/animals.html');
   } catch (e) {
-    console.warn("[animals] فشل مسار categories/animals/items، سيتم تجربة animals:", e);
+    console.warn('[animals] فشل تحميل animals.html', e);
   }
 
-  // مسار بديل: animals مباشرة
-  if (!animals?.length) {
-    try {
-      const ref2 = collection(db, "animals");
-      const snap2 = await getDocs(query(ref2));
-      animals = snap2.docs.map(d => d.data());
-    } catch (e2) {
-      console.error("[animals] فشل جلب الحيوانات:", e2);
-      animals = [];
+  _uiLang = getCurrentLang();
+  setDirection(_uiLang);
+  applyTranslations();
+
+  bindControls();
+
+  try {
+    _raw = await fetchSubjectItems(SUBJECT_KEY);
+    console.log('[animals] fetched', _raw.length);
+    _raw.sort((a,b) => String(pickLocalized(a?.name,_uiLang)).localeCompare(pickLocalized(b?.name,_uiLang)));
+    _i = 0;
+    if (!_raw.length) {
+      const nameEl = pickEl('#subject-title','#animal-word','#item-name');
+      const imgEl  = pickEl('#subject-image','#animal-image','#item-image');
+      if (nameEl) nameEl.textContent = 'لا توجد بيانات';
+      if (imgEl) imgEl.src = '/images/default.png';
+    } else {
+      render();
     }
+    try { recordActivity('view_animals'); } catch {}
+  } catch (e) {
+    console.error('[animals] load failed:', e);
   }
 
-  // ترتيب أبجدي بسيط حسب اللغة النشطة في القائمة
-  const lang = getLangForAnimals();
-  animals.sort((a, b) => {
-    const na = (a?.name?.[lang] || a?.name?.en || a?.name?.ar || "").toLowerCase();
-    const nb = (b?.name?.[lang] || b?.name?.en || b?.name?.ar || "").toLowerCase();
-    return na.localeCompare(nb);
-  });
-
-  console.log(`[animals] fetched = ${animals.length} | langForSort=${lang}`);
-}
-
-export function showNextAnimal() {
-  stopCurrentAudio();
-  if (currentIndex < animals.length - 1) {
-    currentIndex++;
-    updateAnimalContent();
-    safeRecord("animals_next");
-  }
-}
-
-export function showPreviousAnimal() {
-  stopCurrentAudio();
-  if (currentIndex > 0) {
-    currentIndex--;
-    updateAnimalContent();
-    safeRecord("animals_prev");
-  }
-}
-
-export function playCurrentAnimalAudio() {
-  if (!currentAnimalData) {
-    console.warn("[animals] لا يوجد عنصر معروض");
-    return;
-  }
-  const voiceType = (document.getElementById("voice-select-animal")?.value
-                  || document.getElementById("voice-select")?.value) || "boy";
-  const audioPath = getAnimalAudioPath(currentAnimalData, voiceType);
-  if (audioPath) {
-    playAudio(audioPath);
-    safeRecord("animals_audio");
-  }
-}
-
-export function playCurrentBabyAnimalAudio() {
-  if (!currentAnimalData?.baby) {
-    console.warn("[animals] لا توجد بيانات ابن الحيوان");
-    return;
-  }
-  const voiceType = (document.getElementById("voice-select-animal")?.value
-                  || document.getElementById("voice-select")?.value) || "boy";
-  const audioPath = getBabyAnimalAudioPath(currentAnimalData.baby, voiceType);
-  if (audioPath) {
-    playAudio(audioPath);
-    safeRecord("animals_baby_audio");
-  }
-}
-
-/** مسارات الصوت **/
-function getAnimalAudioPath(data, voiceType) {
-  const lang = getLangForAnimals(); // بدلًا من getCurrentLang()
-
-  // 1) الشكل الشائع: sound[lang][voiceType]
-  if (data?.sound?.[lang]?.[voiceType]) {
-    const raw = data.sound[lang][voiceType];
-    return raw.includes("/") ? `/${raw.replace(/^\/+/, "")}` : `/audio/${lang}/animals/${raw}`;
-  }
-
-  // 2) voices['boy_ar'] مثلًا
-  const key = `${voiceType}_${lang}`;
-  if (data?.voices?.[key]) {
-    const raw = data.voices[key];
-    return raw.includes("/") ? `/${raw.replace(/^\/+/, "")}` : `/audio/${lang}/animals/${raw}`;
-  }
-
-  // 3) sound_base => animals/{base}_{voiceType}_{lang}.mp3
-  if (data?.sound_base) {
-    return `/audio/${lang}/animals/${data.sound_base}_${voiceType}_${lang}.mp3`;
-  }
-
-  // 4) fallback إضافي إن وُجد اسم ملف مباشر
-  if (data?.animal_sound_file) {
-    const raw = data.animal_sound_file;
-    return raw.includes("/") ? `/${raw.replace(/^\/+/, "")}` : `/audio/${lang}/animals/${raw}`;
-  }
-
-  console.warn("[animals] لا يوجد تعريف صوتي:", data?.name?.[lang] || data?.name?.ar);
-  return null;
-}
-
-function getBabyAnimalAudioPath(baby, voiceType) {
-  const lang = getLangForAnimals(); // بدلًا من getCurrentLang()
-
-  if (baby?.sound?.[lang]?.[voiceType]) {
-    const raw = baby.sound[lang][voiceType];
-    return raw.includes("/") ? `/${raw.replace(/^\/+/, "")}` : `/audio/${lang}/animals/baby_animals/${raw}`;
-  }
-  if (baby?.sound_base) {
-    return `/audio/${lang}/animals/baby_animals/${baby.sound_base}_${voiceType}_${lang}.mp3`;
-  }
-  if (baby?.sound_file) {
-    const raw = baby.sound_file;
-    return raw.includes("/") ? `/${raw.replace(/^\/+/, "")}` : `/audio/${lang}/animals/baby_animals/${raw}`;
-  }
-
-  console.warn("[animals] لا يوجد صوت للابن:", baby?.name?.[lang] || "");
-  return null;
-}
-
-/** مسارات الصور **/
-function resolveAnimalImagePath(item) {
-  if (item?.image_path) return item.image_path.startsWith("/") ? item.image_path : `/${item.image_path}`;
-  if (item?.image)      return `/images/animals/${item.image}`;
-  return "/images/default.png";
-}
-
-function disableSidebar(disabled) {
-  const ids = [
-    // النمط الملحّق (المفضّل)
-    "play-sound-btn-animal", "play-baby-sound-btn-animal",
-    "prev-animal-btn", "next-animal-btn",
-    "voice-select-animal", "game-lang-select-animal",
-    "toggle-description-btn-animal", "toggle-details-btn-animal", "toggle-baby-image-btn-animal",
-    // الأسماء العامة كـ fallback
-    "play-sound-btn", "play-baby-sound-btn",
-    "prev-btn", "next-btn",
-    "voice-select", "game-lang-select",
-    "toggle-description-btn", "toggle-details-btn", "toggle-baby-image-btn",
-  ];
-  ids.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = !!disabled; });
-}
-
-function safeRecord(eventKey) {
-  try { recordActivity(eventKey); }
-  catch {
-    try { recordActivity(JSON.parse(localStorage.getItem("user") || "null"), eventKey); }
-    catch {}
+  // جعل الدوال متاحة لـ window للتوافق مع main.js
+  if (typeof window !== 'undefined') {
+    window.loadAnimalsGameContent = loadAnimalsGameContent;
+    window.nextAnimal = onNext;
+    window.prevAnimal = onPrev;
+    window.playCurrentAnimalAudio = onPlay;
+    window.playCurrentBabyAnimalAudio = onPlayBaby;
+    window.rerenderAnimals = render;
   }
 }
