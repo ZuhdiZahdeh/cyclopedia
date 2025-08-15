@@ -4,8 +4,6 @@ import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 import { fetchSubjectItems } from '../core/items-repo.js';
 import { pickLocalized, getImagePath } from '../core/media-utils.js';
-import { db } from '../js/firebase-config.js';
-import { collection, getDocs } from 'firebase/firestore';
 
 /* -------------------- الحالة -------------------- */
 let tools = [];
@@ -40,14 +38,13 @@ function setHighlightedName(el, txt) {
 function toolName(t, lang){ return pickLocalized(t?.name, lang); }
 function toolDescription(t, lang){ return pickLocalized(t?.description, lang); }
 
-/** الصورة: نستخدم media.images إن وُجدت، وإلا نُبقي image_path كما هو (كما طلبت) */
-function toolImagePath(t, lang) {
+/** الصورة من media.images أو image_path (داخل items) */
+function toolImagePath(t) {
   const p = getImagePath(t);
-  if (p) return p; // من media.images أو image_path
-  return '';       // لا نحاول فرض مسار جديد
+  return p || '';
 }
 
-/** صوت “باللغة المختارة فقط” — بلا fallback لغات مختلفة */
+/** صوت “باللغة المختارة” فقط */
 function toolAudioPathExact(tool, lang, voice) {
   const s = tool?.sound;
   if (!s || typeof s !== 'object') return '';
@@ -109,7 +106,6 @@ async function ensureToolsSidebar() {
       </div>`;
   }
   container.hidden = false;
-  container.style.removeProperty('display');
   container.style.setProperty('display','block','important');
   applyTranslations();
   return container;
@@ -175,7 +171,7 @@ function renderCurrentTool(lang = currentUILang) {
   if (descEl) descEl.textContent = toolDescription(data, lang) || '';
   if (profEl) profEl.textContent = Array.isArray(data.professions) ? data.professions.join('، ') : '';
 
-  const img = toolImagePath(data, lang);
+  const img = toolImagePath(data);
   if (imgEl) {
     if (img) { imgEl.src = img; imgEl.alt = toolName(data, lang) || ''; }
     else { imgEl.alt = ''; imgEl.removeAttribute('src'); }
@@ -210,35 +206,11 @@ function showPreviousTool() {
   recordActivity?.('tools_prev', { id: currentToolData?.id, index: currentIndex });
 }
 
-/* -------------------- البيانات -------------------- */
-/** نجلب من items/subject=tools أولًا، ثم نحتاط بالمجموعات القديمة إن لم تتوفر بيانات */
+/* -------------------- البيانات: من items فقط -------------------- */
 async function fetchToolsData() {
-  // 1) من المصدر الموحّد
-  try {
-    const arr = await fetchSubjectItems('tools');
-    if (arr && arr.length) {
-      console.log('[tools] ✅ from items | count =', arr.length);
-      return arr;
-    }
-  } catch (e) {
-    console.warn('[tools] items fetch failed', e);
-  }
-  // 2) احتياط بالمجموعات القديمة
-  const tries = [['profession_tools'], ['profession-tools'], ['tools']];
-  for (const path of tries) {
-    try {
-      const snap = await getDocs(collection(db, ...path));
-      if (!snap.empty) {
-        const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
-        console.log('[tools] ✅ from', path.join('/'), '| count =', arr.length);
-        return arr;
-      }
-    } catch (e) {
-      console.warn('[tools] legacy fetch failed for', path.join('/'), e);
-    }
-  }
-  console.warn('[tools] لا توجد بيانات أدوات');
-  return [];
+  const arr = await fetchSubjectItems('tools'); // ← حصريًا من items
+  console.log('[tools] ✅ source: items | count =', arr?.length || 0);
+  return arr || [];
 }
 
 /* -------------------- تغيير اللغة -------------------- */
@@ -251,7 +223,6 @@ async function onLanguageChanged(newLang) {
     applyTranslations();
     const sel = document.getElementById(els.langSelId);
     if (sel && sel.value !== newLang) sel.value = newLang;
-    // ترتيب حسب الاسم
     tools.sort((a,b)=> String(pickLocalized(a?.name,newLang)).localeCompare(pickLocalized(b?.name,newLang)));
     renderCurrentTool(newLang);
   } catch (err) {
@@ -283,12 +254,11 @@ export async function loadToolsGameContent() {
   const selLang = document.getElementById(els.langSelId);
   if (selLang) selLang.value = currentUILang;
 
-  tools = await fetchToolsData();
+  tools = await fetchToolsData();     // ← من items حصريًا
   tools.sort((a,b)=> String(pickLocalized(a?.name,currentUILang)).localeCompare(pickLocalized(b?.name,currentUILang)));
   currentIndex = 0;
   renderCurrentTool(currentUILang);
 
-  // مستمعان للتبديل الخارجي للغة
   document.removeEventListener('app:language-changed', _appLang, true);
   document.addEventListener('app:language-changed', _appLang, true);
   window.removeEventListener('storage', _storageLang, true);

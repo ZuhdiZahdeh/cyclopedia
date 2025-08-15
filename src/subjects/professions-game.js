@@ -4,8 +4,6 @@ import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 import { fetchSubjectItems } from '../core/items-repo.js';
 import { pickLocalized, getImagePath } from '../core/media-utils.js';
-import { db } from '../js/firebase-config.js';
-import { collection, getDocs } from 'firebase/firestore';
 
 // حالة الصفحة
 let professions = [];
@@ -30,9 +28,8 @@ function setHighlightedName(el, name) {
 }
 
 function resolveImagePath(item) {
-  const p = getImagePath(item);
-  if (p) return p; // من media.images أو image_path
-  return '/images/default.png';
+  const p = getImagePath(item); // من media.images أو image_path (داخل items)
+  return p || '/images/default.png';
 }
 
 function audioCandidates(item, lang, voice) {
@@ -120,24 +117,11 @@ export async function playCurrentProfessionAudio() {
   console.warn('[professions] لا يوجد ملف صوت مناسب');
 }
 
-// ———————————————— جلب البيانات ————————————————
-async function fetchProfessionsUnifiedFirst() {
-  // 1) من items/subject=professions
-  try {
-    const arr = await fetchSubjectItems('professions');
-    if (arr && arr.length) return arr;
-  } catch (e) {
-    console.warn('[professions] items fetch failed', e);
-  }
-  // 2) احتياط: من المجموعة القديمة /professions
-  try {
-    const snap = await getDocs(collection(db, 'professions'));
-    const arr = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    return arr;
-  } catch (e) {
-    console.warn('[professions] legacy fetch failed:', e);
-    return [];
-  }
+// ———————————————— البيانات: من items فقط ————————————————
+async function fetchProfessionsData() {
+  const arr = await fetchSubjectItems('professions'); // ← حصريًا من items
+  console.log('[professions] ✅ source: items | count =', arr?.length || 0);
+  return arr || [];
 }
 
 // ———————————————— ربط عناصر التحكم ————————————————
@@ -188,7 +172,7 @@ export async function loadProfessionsGameContent() {
   });
 
   bindControls();
-  professions = await fetchProfessionsUnifiedFirst();
+  professions = await fetchProfessionsData();  // ← من items حصريًا
 
   if (!professions.length) {
     const nameEl = $('profession-word');
