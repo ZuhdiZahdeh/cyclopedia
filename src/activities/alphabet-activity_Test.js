@@ -1,35 +1,18 @@
 // src/activities/alphabet-activity.js
-// نشاط الحروف – نسخة مُعدّلة مع طبقة تشخيص شاملة (DEBUG)
-// تعمل مع قاعدة items الموحدة وتدعم تتبّع كل حركة مهمة
+// نشاط الحروف — نسخة DEBUG مع تشخيص شامل + تجنّب تكرار الواجهة + جلب Firestore مرن
 
 import { db } from '@/core/db-handler.js';
-import {
-  collection, getDocs, query, where
-} from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { playAudio, stopCurrentAudio } from '@/core/audio-handler.js';
 
-/* =====================[ DEBUG LAYER ]===================== */
-const AA_DBG = true; // ← ضعها false لإسكات جميع السجلات سريعًا
+/* ===================== DEBUG ===================== */
+const AA_DBG = true; // ← ضع false لإخفاء كل السجلات
 const dbg  = (...a)=>{ if(AA_DBG) console.log('[AA]', ...a); };
 const dbgt = (title, rows)=>{
-  if(AA_DBG && console.table){
-    console.groupCollapsed('[AA] ' + title);
-    console.table(rows);
-    console.groupEnd();
-  }
+  if(AA_DBG && console.table){ console.groupCollapsed('[AA] ' + title); console.table(rows); console.groupEnd(); }
 };
-function summarizeItems(items, lang='ar'){
-  const bySubject = items.reduce((acc,it)=>{ acc[it.subject]=(acc[it.subject]||0)+1; return acc; },{});
-  const sample = items.slice(0,10).map(it=>({
-    id: it.id, subject: it.subject,
-    name: it.name?.[lang] || '',
-    image: it.image, audio: it.audio?.[lang] || ''
-  }));
-  return { total: items.length, bySubject, sample };
-}
-/* ======================================================== */
+/* ================================================= */
 
-// ======= ثوابت اللغة والحروف =======
 const LANGS = ['ar','en','he'];
 const ALPHABET = {
   ar: ["أ","ب","ت","ث","ج","ح","خ","د","ذ","ر","ز","س","ش","ص","ض","ط","ظ","ع","غ","ف","ق","ك","ل","م","ن","ه","و","ي"],
@@ -37,17 +20,20 @@ const ALPHABET = {
   he: ["א","ב","ג","ד","ה","ו","ז","ח","ט","י","כ","ך","ל","מ","ם","נ","ן","ס","ע","פ","ף","צ","ץ","ק","ר","ש","ת"]
 };
 
-// ======= المواضيع بصيغة المفرد (تطابق الحقل subject في وثائق items) =======
+// أسماء المواضيع بالمفرد
 const SUBJECTS = ["animal","fruit","vegetable","tool","profession","human_body"];
 
-// خرائط تطبيع لاستيعاب أي تسميات قديمة بصيغة الجمع
+// تطبيع/مرادفات
 const SUBJECT_ALIASES = {
   animals:'animal', fruits:'fruit', vegetables:'vegetable',
   tools:'tool', professions:'profession',
   body:'human_body', human_body:'human_body'
 };
+const SUBJECT_PLURALS = { // للمساعدة في الاستعلام
+  animal:'animals', fruit:'fruits', vegetable:'vegetables',
+  tool:'tools', profession:'professions', human_body:'body'
+};
 
-// ======= الحالة العامة للنشاط =======
 const state = {
   lang: 'ar',
   letter: 'أ',
@@ -58,36 +44,51 @@ const state = {
   showDescription: false,
 };
 
-// ======= أدوات مساعدة =======
+// خرائط DOM (تدعم IDs القديمة في HTML وIDs الجديدة "aa-*")
+const ELS = {
+  name: null, img: null, desc: null, letterBar: null, count: null,
+  btnPrev: null, btnNext: null, btnPlay: null, btnToggleDesc: null,
+  sidebar: null, lettersGrid: null, subjectsWrap: null, langSelect: null,
+};
+
 function normalizeSubjects(list){
   return (list||[]).map(s => SUBJECT_ALIASES[s] || s);
 }
+function expandSubjectVariants(wanted){ // مفرد + جمع/مرادفات
+  const set = new Set();
+  for (const s of wanted){
+    set.add(s);
+    const p = SUBJECT_PLURALS[s];
+    if (p) set.add(p);
+  }
+  // إضافة body كـ human_body والعكس
+  if (set.has('human_body')) set.add('body');
+  if (set.has('body')) set.add('human_body');
+  return [...set];
+}
+
 function ensureLang(lang){
   const prev = state.lang;
   const l = LANGS.includes(lang) ? lang : 'ar';
   state.lang = l;
   document.documentElement.lang = l;
   document.documentElement.dir = (l === 'ar' || l === 'he') ? 'rtl' : 'ltr';
-  // اجعل الحرف الأول من أبجدية اللغة المختارة
   const oldLetter = state.letter;
   state.letter = (ALPHABET[l] && ALPHABET[l][0]) || state.letter;
   dbg('lang:ensure', { prev, next: l, dir: document.documentElement.dir, letterFrom: oldLetter, letterTo: state.letter });
 }
+
 function computeFirstLetter(word, lang){
   if (!word) return '';
   let w = String(word).trim();
   if (!w) return '';
-
   if (lang === 'ar'){
-    // تجاهل "ال" في بداية الكلمة، وحاول توحيد بعض الحروف
     w = w.replace(/^ال/, '');
     const ch = w[0];
-    const map = {'إ':'أ','آ':'أ','ا':'أ','ة':'ت'}; // تقريب مشهور للنشاط
+    const map = {'إ':'أ','آ':'أ','ا':'أ','ة':'ت'};
     return map[ch] || ch;
   }
-  if (lang === 'en'){
-    return (w[0] || '').toUpperCase();
-  }
+  if (lang === 'en') return (w[0] || '').toUpperCase();
   if (lang === 'he'){
     const ch = w[0] || '';
     const map = {'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'};
@@ -96,118 +97,121 @@ function computeFirstLetter(word, lang){
   return w[0] || '';
 }
 
-// حاول استخراج اسم/وصف/صورة/صوت من وثيقة items بأسلوب مرن
+// انتقاء الحقول (مرن)
 function pickName(data, lang){
   return data?.name?.[lang] || data?.name?.ar || data?.title?.[lang] || data?.title?.ar || '';
 }
 function pickDescription(data, lang){
   return data?.description?.[lang] || data?.description?.ar || '';
 }
+function subjectToDir(subject){
+  const s = SUBJECT_ALIASES[subject] || subject;
+  return { animal:'animals', fruit:'fruits', vegetable:'vegetables', tool:'tools', profession:'professions', human_body:'body' }[s];
+}
+function prefixSlash(p){ if (!p) return ''; return p.startsWith('/') ? p : `/${p}`; }
 function pickImage(data){
-  // 1) الهيكلية الجديدة
   const img1 = data?.media?.images?.main?.image_path || data?.media?.images?.main?.path || data?.media?.images?.main?.src;
   if (img1) return prefixSlash(img1);
-
-  // 2) الحقول القديمة
   if (data?.image_path) return prefixSlash(data.image_path);
   if (data?.image) return prefixSlash(data.image);
   if (data?.image_file){
-    const dir = subjectToDir(data?.subject);
+    const dir = subjectToDir(data?.subject || data?.type || data?.subjectType || data?.category);
     if (dir) return `/images/${dir}/${data.image_file}`;
   }
   return '';
 }
 function pickAudio(data, lang){
-  // 1) media.sounds[lang].main.audio_path
   const a1 = data?.media?.sounds?.[lang]?.main?.audio_path || data?.media?.sounds?.[lang]?.main?.path;
   if (a1) return prefixSlash(a1);
-
-  // 2) sound[lang].boy | default | direct
   const s = data?.sound?.[lang];
   if (typeof s === 'string') return prefixSlash(s);
   if (s?.boy) return prefixSlash(s.boy);
   if (s?.default) return prefixSlash(s.default);
-
-  // 3) sound_base + توليف المسار
   if (data?.sound_base){
-    // مثال: audio/{lang}/tools/anvil.mp3
-    const dir = subjectToDir(data?.subject);
+    const dir = subjectToDir(data?.subject || data?.type || data?.subjectType || data?.category);
     if (dir) return `/audio/${lang}/${dir}/${data.sound_base}.mp3`;
   }
-
   return '';
 }
-function subjectToDir(subject){
-  const s = SUBJECT_ALIASES[subject] || subject;
-  return {
-    animal:'animals',
-    fruit:'fruits',
-    vegetable:'vegetables',
-    tool:'tools',
-    profession:'professions',
-    human_body:'body'
-  }[s];
-}
-function prefixSlash(p){
-  if (!p) return '';
-  return p.startsWith('/') ? p : `/${p}`;
-}
-function chunk(arr, size){
-  const out = [];
-  for (let i=0;i<arr.length;i+=size) out.push(arr.slice(i, i+size));
-  return out;
-}
+function chunk(arr, size){ const out=[]; for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size)); return out; }
 function qs(sel){ return document.querySelector(sel); }
 function qsa(sel){ return Array.from(document.querySelectorAll(sel)); }
 
-// ======= جلب البيانات من Firestore =======
+/* ------------ Firestore: جلب مرن مع بدائل ------------ */
+async function fetchByFieldValues(colRef, field, values){
+  const results = [];
+  for (const part of chunk(values, 10)){
+    const qy = query(colRef, where(field, 'in', part));
+    dbg('fetch:query', { field, part });
+    const snap = await getDocs(qy);
+    snap.forEach(doc => results.push({ id: doc.id, data: doc.data() }));
+  }
+  return results;
+}
+
+function normalizeDocSubject(d){
+  const raw = d.subject ?? d.type ?? d.subjectType ?? d.category ?? '';
+  return SUBJECT_ALIASES[raw] || raw;
+}
+
 async function fetchItemsBySubjects(subjects){
   const wanted = normalizeSubjects(subjects && subjects.length ? subjects : SUBJECTS);
-  dbg('fetch:subjects', { wanted });
+  const variants = expandSubjectVariants(wanted);
+  dbg('fetch:subjects', { wanted, variants });
 
-  // Firestore in() يقبل حتى 10 عناصر – نحن 6 فقط، لكن أبقيت التقطيع تحسبًا للمستقبل
-  const chunks = chunk(wanted, 10);
-  const col = collection(db, 'items');
-  const all = [];
-  for (const part of chunks){
-    const qy = query(col, where('subject', 'in', part));
-    dbg('fetch:query', { part });
-    const snap = await getDocs(qy);
-    snap.forEach(doc => {
+  const colRef = collection(db, 'items');
+  const bag = new Map(); // id → data
+
+  // 1) المحاولة الأساسية: الحقل subject
+  for (const rec of await fetchByFieldValues(colRef, 'subject', variants)) bag.set(rec.id, rec.data);
+
+  // 2) إن كان الناتج قليلًا بشكل مريب، جرّب حقولًا بديلة
+  if (bag.size < 5){ // العتبة تقديرية
+    for (const altField of ['type','subjectType','category']){
+      const arr = await fetchByFieldValues(colRef, altField, variants);
+      for (const rec of arr) bag.set(rec.id, rec.data);
+    }
+  }
+
+  // 3) خطة أخيرة: سحب كامل المجموعة ثم فلترة محليًا (للإنقاذ فقط)
+  if (bag.size === 0){
+    dbg('fetch:fallback-full-scan');
+    const snapAll = await getDocs(colRef);
+    snapAll.forEach(doc => {
       const data = doc.data();
-      const rec = {
-        id: doc.id,
-        subject: SUBJECT_ALIASES[data?.subject] || data?.subject,
-        name: {
-          ar: pickName(data, 'ar'),
-          en: pickName(data, 'en'),
-          he: pickName(data, 'he'),
-        },
-        description: {
-          ar: pickDescription(data, 'ar'),
-          en: pickDescription(data, 'en'),
-          he: pickDescription(data, 'he'),
-        },
-        image: pickImage(data),
-        audio: {
-          ar: pickAudio(data,'ar'),
-          en: pickAudio(data,'en'),
-          he: pickAudio(data,'he'),
-        },
-        tags: data?.tags || [],
-        difficulty: data?.difficulty || 'normal',
-      };
-      all.push(rec);
+      const subj = normalizeDocSubject(data);
+      if (wanted.includes(subj)) bag.set(doc.id, data);
     });
   }
 
-  const sum = summarizeItems(all, state.lang);
-  dbg('fetched:summary', { total: sum.total, bySubject: sum.bySubject });
-  dbgt('fetched:sample(<=10)', sum.sample);
+  // بناء السجلات الموحّدة
+  const all = [];
+  bag.forEach((data, id)=>{
+    const subject = normalizeDocSubject(data);
+    const rec = {
+      id,
+      subject,
+      name: { ar: pickName(data,'ar'), en: pickName(data,'en'), he: pickName(data,'he') },
+      description: { ar: pickDescription(data,'ar'), en: pickDescription(data,'en'), he: pickDescription(data,'he') },
+      image: pickImage(data),
+      audio: { ar: pickAudio(data,'ar'), en: pickAudio(data,'en'), he: pickAudio(data,'he') },
+      tags: data?.tags || [],
+      difficulty: data?.difficulty || 'normal',
+    };
+    all.push(rec);
+  });
+
+  // تقارير
+  const bySubject = all.reduce((acc,it)=>{ acc[it.subject]=(acc[it.subject]||0)+1; return acc; },{});
+  const missingName = all.filter(it => !it.name[state.lang]).length;
+  const sample = all.slice(0,12).map(it=>({ id: it.id, subject: it.subject, name: it.name[state.lang]||'', image: it.image, audio: it.audio[state.lang]||'' }));
+  dbg('fetched:summary', { total: all.length, bySubject, missingNameForLang: { lang: state.lang, count: missingName } });
+  dbgt('fetched:sample(<=12)', sample);
+
   return all;
 }
 
-// ======= تصفية بحسب الحرف =======
+/* ------------ فلترة/عرض ------------ */
 function filterByLetter(items, letter, lang){
   const L = String(letter || '').trim();
   const filtered = items.filter(it => computeFirstLetter(it.name[lang], lang) === L);
@@ -215,152 +219,39 @@ function filterByLetter(items, letter, lang){
   return filtered;
 }
 
-// ======= عرض عنصر واحد =======
-function renderCurrent(){
-  // عناصر الواجهة
-  const nameEl = qs('#aa-name');
-  const imgEl  = qs('#aa-image');
-  const descEl = qs('#aa-desc');
-  const countEl= qs('#aa-count');
-  const letterBar = qs('#aa-letter-bar');
+// ربط عناصر DOM (أولوية لِـ IDs ملف HTML القائم)
+function bindDom(){
+  ELS.name  = qs('#aa-name')  || qs('#item-name');
+  ELS.img   = qs('#aa-image') || qs('#item-image');
+  ELS.desc  = qs('#aa-desc')  || qs('#item-description');
+  ELS.letterBar = qs('#aa-letter-bar') || qs('#letter-badge');
+  ELS.count = qs('#aa-count') || qs('#item-count');
 
-  if (letterBar) letterBar.textContent = state.letter || '';
+  ELS.btnPrev      = qs('#aa-prev')        || qs('#prev-btn');
+  ELS.btnNext      = qs('#aa-next')        || qs('#next-btn');
+  ELS.btnPlay      = qs('#aa-play')        || qs('#listen-btn');
+  ELS.btnToggleDesc= qs('#aa-toggle-desc') || qs('#toggle-desc-btn');
 
-  if (!state.filtered.length){
-    dbg('render:none', { reason: 'no-items-after-filter', letter: state.letter, lang: state.lang });
-    if (nameEl) nameEl.innerHTML = `<span style="opacity:.8">(لا عناصر)</span>`;
-    if (imgEl)  imgEl.src = '';
-    if (descEl) descEl.style.display = 'none';
-    if (countEl) countEl.textContent = '0';
-    toggleNavButtons(false);
-    return;
+  // الشريط الجانبي / الحروف / المواضيع / اللغة
+  ELS.sidebar   = qs('#alphabet-activity-controls') || null;
+  ELS.lettersGrid = qs('#aa-letters') || null;
+  ELS.subjectsWrap= qs('#aa-subjects') || null;
+  ELS.langSelect  = qs('#aa-lang') || null;
+}
+
+// إنشاء سايدبار افتراضي إن لم يوجد
+function ensureSidebar(){
+  if (!ELS.sidebar){
+    const aside = document.createElement('div');
+    aside.id = 'alphabet-activity-controls';
+    aside.className = 'sidebar-section';
+    const host = qs('#sidebar-section') || qs('.sidebar') || qs('aside') || document.body;
+    host.appendChild(aside);
+    ELS.sidebar = aside;
+    dbg('sidebar:fallback-mounted');
   }
-
-  const idx = Math.max(0, Math.min(state.index, state.filtered.length-1));
-  state.index = idx;
-  const it = state.filtered[idx];
-
-  // الاسم مع تلوين الحرف الأول
-  const nm = it.name[state.lang] || '';
-  const first = nm ? nm[0] : '';
-  const rest  = nm ? nm.slice(1) : '';
-  if (nameEl) nameEl.innerHTML = `<span style="font-weight:700">${first}</span>${rest}`;
-
-  // الصورة
-  if (imgEl){
-    if (!imgEl._aa_bound){
-      imgEl.addEventListener('error', ()=> dbg('image:error', { src: imgEl.src }));
-      imgEl.addEventListener('load',  ()=> dbg('image:ok',    { src: imgEl.src }));
-      imgEl._aa_bound = true;
-    }
-    imgEl.src = it.image || '';
-  }
-
-  // الوصف
-  if (descEl){
-    const txt = it.description[state.lang] || '';
-    descEl.textContent = txt;
-    descEl.style.display = state.showDescription && txt ? 'block' : 'none';
-  }
-
-  if (countEl) countEl.textContent = String(state.filtered.length);
-
-  dbg('render:item', {
-    index: state.index,
-    total: state.filtered.length,
-    id: it.id,
-    subject: it.subject,
-    name: it.name?.[state.lang] || '',
-    image: it.image,
-    audio: it.audio?.[state.lang] || '',
-    showDescription: state.showDescription
-  });
-
-  toggleNavButtons(true);
-}
-
-// ======= تفعيل/تعطيل أزرار الملاحة =======
-function toggleNavButtons(enabled){
-  const btnPrev = qs('#aa-prev');
-  const btnNext = qs('#aa-next');
-  const btnPlay = qs('#aa-play');
-  const btnDesc = qs('#aa-toggle-desc');
-
-  [btnPrev, btnNext, btnPlay, btnDesc].forEach(b => {
-    if (!b) return;
-    b.disabled = !enabled;
-  });
-}
-
-// ======= إعادة تحميل النتائج =======
-async function refetchAndRender(){
-  stopCurrentAudio?.();
-  dbg('refetch:start', { lang: state.lang, letter: state.letter, subjects: state.subjects });
-
-  state.items = await fetchItemsBySubjects(state.subjects);
-  state.filtered = filterByLetter(state.items, state.letter, state.lang);
-  state.index = 0;
-  renderCurrent();
-}
-
-// ======= إعادة تصفية فقط (بدون جلب جديد) =======
-function refilterAndRender(){
-  stopCurrentAudio?.();
-  state.filtered = filterByLetter(state.items, state.letter, state.lang);
-  state.index = 0;
-  renderCurrent();
-}
-
-// ======= بناء الواجهة (Main + Sidebar) =======
-function buildUI(){
-  // اللوحة الرئيسية
-  let host = qs('#alphabet-activity-board');
-  if (!host){
-    // إن لم تكن موجودة، أنشئها داخل .main-content
-    const main = qs('.main-content') || document.body;
-    host = document.createElement('section');
-    host.id = 'alphabet-activity-board';
-    host.innerHTML = `
-      <div id="aa-letter-bar" class="aa-letter" style="text-align:center;margin:10px auto;padding:10px 16px;background:#111;color:#fff;border-radius:12px;max-width:520px;font-size:28px;letter-spacing:3px"></div>
-
-      <div class="aa-card" style="text-align:center;margin-top:12px">
-        <div id="aa-name" style="font-size:28px;font-weight:600;margin:6px 0"></div>
-        <div class="image-area" style="display:flex;justify-content:center;margin:8px 0 12px">
-          <img id="aa-image" alt="" loading="lazy" style="max-width:min(520px,90%);max-height:360px;object-fit:contain;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)" />
-        </div>
-        <div id="aa-desc" class="content-box" style="display:none;margin:8px auto;max-width:640px;font-size:16px;line-height:1.7"></div>
-      </div>
-
-      <div class="aa-actions" style="display:flex;gap:8px;justify-content:center;margin:12px 0 6px">
-        <button id="aa-prev" class="btn nav-btn">السابق</button>
-        <button id="aa-play" class="btn nav-btn">استمع</button>
-        <button id="aa-toggle-desc" class="btn nav-btn">الوصف</button>
-        <button id="aa-next" class="btn nav-btn">التالي</button>
-      </div>
-
-      <div style="text-align:center;margin-bottom:10px;opacity:.8">عدد العناصر: <span id="aa-count">0</span></div>
-    `;
-    main.appendChild(host);
-  }
-
-  // الشريط الجانبي
-  mountSidebar('#alphabet-activity-controls');
-
-  // اربط الأحداث العامة
-  bindMainActions();
-
-  // أظهر الحرف الحالي
-  const lb = qs('#aa-letter-bar');
-  if (lb) lb.textContent = state.letter;
-}
-
-// بناء الشريط الجانبي (أزرار الحروف + فلترة المواضيع)
-function mountSidebar(sidebarSelector){
-  const sidebar = qs(sidebarSelector) || createSidebarFallback();
-  if (!sidebar) return;
-
-  // نفرغ المحتوى ثم نبنيه
-  sidebar.innerHTML = `
+  // بناء محتوى السايدبار القياسي
+  ELS.sidebar.innerHTML = `
     <div class="sidebar-section">
       <h3 class="sidebar-title">اللغة</h3>
       <select id="aa-lang" class="select">
@@ -380,60 +271,29 @@ function mountSidebar(sidebarSelector){
       <div id="aa-subjects" class="subjects-filter" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px"></div>
     </div>
   `;
+  // أعِد الربط بعد الحقن
+  bindDom();
 
-  // اضبط قيمة اللغة الحالية
-  const sel = qs('#aa-lang');
-  if (sel){
-    sel.value = state.lang;
-    sel.addEventListener('change', () => {
-      ensureLang(sel.value);
+  // لغة
+  if (ELS.langSelect){
+    ELS.langSelect.value = state.lang;
+    ELS.langSelect.addEventListener('change', ()=>{
+      ensureLang(ELS.langSelect.value);
       dbg('lang:changed', { lang: state.lang });
-      buildLetters();     // إعادة رسم شبكة الحروف
-      refilterAndRender();// إعادة التصفية وفق اللغة
+      buildLetters();
+      refilterAndRender();
     });
   }
 
-  // ارسم الحروف
+  // الحروف + المواضيع
   buildLetters();
-
-  // ارسم المواضيع
-  const subWrap = qs('#aa-subjects');
-  if (subWrap){
-    subWrap.innerHTML = SUBJECTS.map(s => `
-      <label style="display:flex;align-items:center;gap:6px">
-        <input type="checkbox" value="${s}" ${state.subjects.includes(s)?'checked':''}>
-        <span>${labelOf(s)}</span>
-      </label>
-    `).join('');
-    subWrap.querySelectorAll('input[type="checkbox"]').forEach(chk => {
-      chk.addEventListener('change', ()=>{
-        const val = chk.value;
-        if (chk.checked && !state.subjects.includes(val)) state.subjects.push(val);
-        if (!chk.checked) state.subjects = state.subjects.filter(v => v!==val);
-        dbg('subjects:changed', { subjects: state.subjects.slice() });
-        refetchAndRender();
-      });
-    });
-  }
-}
-
-function createSidebarFallback(){
-  // في حال لم توجد منطقة جانبية مهيأة، ننشئ قسماً بسيطاً في اليسار
-  const aside = document.createElement('aside');
-  aside.id = 'alphabet-activity-controls';
-  aside.className = 'sidebar-section';
-  const left = qs('#left-sidebar') || qs('.sidebar') || qs('aside') || null;
-  if (left) left.appendChild(aside);
-  else document.body.prepend(aside);
-  dbg('sidebar:fallback-mounted');
-  return aside;
+  buildSubjectsFilter();
 }
 
 function buildLetters(){
-  const grid = qs('#aa-letters');
-  if (!grid) return;
-  grid.innerHTML = '';
-
+  if (!ELS.lettersGrid) ELS.lettersGrid = qs('#aa-letters');
+  if (!ELS.lettersGrid) return;
+  ELS.lettersGrid.innerHTML = '';
   const letters = ALPHABET[state.lang] || [];
   letters.forEach(ch => {
     const btn = document.createElement('button');
@@ -445,12 +305,33 @@ function buildLetters(){
       dbg('letter:selected', { letter: ch, lang: state.lang });
       qsa('#aa-letters .letter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      if (ELS.letterBar) ELS.letterBar.textContent = state.letter;
       refilterAndRender();
     });
     if (ch === state.letter) btn.classList.add('active');
-    grid.appendChild(btn);
+    ELS.lettersGrid.appendChild(btn);
   });
   dbg('letters:built', { lang: state.lang, count: letters.length });
+}
+
+function buildSubjectsFilter(){
+  if (!ELS.subjectsWrap) ELS.subjectsWrap = qs('#aa-subjects');
+  if (!ELS.subjectsWrap) return;
+  ELS.subjectsWrap.innerHTML = SUBJECTS.map(s => `
+    <label style="display:flex;align-items:center;gap:6px">
+      <input type="checkbox" value="${s}" ${state.subjects.includes(s)?'checked':''}>
+      <span>${labelOf(s)}</span>
+    </label>
+  `).join('');
+  ELS.subjectsWrap.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+    chk.addEventListener('change', ()=>{
+      const val = chk.value;
+      if (chk.checked && !state.subjects.includes(val)) state.subjects.push(val);
+      if (!chk.checked) state.subjects = state.subjects.filter(v => v!==val);
+      dbg('subjects:changed', { subjects: state.subjects.slice() });
+      refetchAndRender();
+    });
+  });
 }
 
 function labelOf(subject){
@@ -460,38 +341,119 @@ function labelOf(subject){
   }[subject] || subject;
 }
 
-function bindMainActions(){
-  qs('#aa-prev')?.addEventListener('click', ()=>{
-    if (!state.filtered.length) return;
-    state.index = (state.index - 1 + state.filtered.length) % state.filtered.length;
-    dbg('nav:prev', { index: state.index, total: state.filtered.length });
-    renderCurrent();
-  });
-  qs('#aa-next')?.addEventListener('click', ()=>{
-    if (!state.filtered.length) return;
-    state.index = (state.index + 1) % state.filtered.length;
-    dbg('nav:next', { index: state.index, total: state.filtered.length });
-    renderCurrent();
-  });
-  qs('#aa-play')?.addEventListener('click', ()=>{
-    if (!state.filtered.length) return;
-    const it = state.filtered[state.index];
-    const src = it?.audio?.[state.lang] || '';
-    if (src){
-      dbg('audio:play', { id: it?.id, name: it?.name?.[state.lang], src });
-      playAudio(src);
-    }else{
-      dbg('audio:missing', { id: it?.id, name: it?.name?.[state.lang] });
+function renderCurrent(){
+  if (ELS.letterBar) ELS.letterBar.textContent = state.letter || '';
+
+  if (!state.filtered.length){
+    if (ELS.name) ELS.name.innerHTML = `<span style="opacity:.8">(لا عناصر)</span>`;
+    if (ELS.img)  ELS.img.src = '';
+    if (ELS.desc) ELS.desc.style.display = 'none';
+    if (ELS.count) ELS.count.textContent = '0';
+    toggleNavButtons(false);
+    dbg('render:none', { reason: 'no-items-after-filter', letter: state.letter, lang: state.lang });
+    return;
+  }
+
+  const idx = Math.max(0, Math.min(state.index, state.filtered.length-1));
+  state.index = idx;
+  const it = state.filtered[idx];
+
+  // الاسم مع إبراز الحرف الأول
+  const nm = it.name[state.lang] || '';
+  const first = nm ? nm[0] : '';
+  const rest  = nm ? nm.slice(1) : '';
+  if (ELS.name) ELS.name.innerHTML = `<span style="font-weight:700">${first}</span>${rest}`;
+
+  // الصورة
+  if (ELS.img){
+    if (!ELS.img._aa_bound){
+      ELS.img.addEventListener('error', ()=> dbg('image:error', { src: ELS.img.src }));
+      ELS.img.addEventListener('load',  ()=> dbg('image:ok',    { src: ELS.img.src }));
+      ELS.img._aa_bound = true;
     }
+    ELS.img.src = it.image || '';
+  }
+
+  // الوصف
+  if (ELS.desc){
+    const txt = it.description[state.lang] || '';
+    ELS.desc.textContent = txt;
+    ELS.desc.style.display = state.showDescription && txt ? 'block' : 'none';
+  }
+
+  if (ELS.count) ELS.count.textContent = String(state.filtered.length);
+
+  dbg('render:item', {
+    index: state.index, total: state.filtered.length,
+    id: it.id, subject: it.subject,
+    name: it.name?.[state.lang] || '',
+    image: it.image, audio: it.audio?.[state.lang] || '',
+    showDescription: state.showDescription
   });
-  qs('#aa-toggle-desc')?.addEventListener('click', ()=>{
-    state.showDescription = !state.showDescription;
-    dbg('ui:toggle-desc', { showDescription: state.showDescription });
-    renderCurrent();
-  });
+
+  toggleNavButtons(true);
 }
 
-// راقب تغيّر lang على عنصر html (إذا كان الموقع يغير اللغة عالمياً)
+function toggleNavButtons(enabled){
+  [ELS.btnPrev, ELS.btnNext, ELS.btnPlay, ELS.btnToggleDesc].forEach(b => { if (b) b.disabled = !enabled; });
+}
+
+async function refetchAndRender(){
+  stopCurrentAudio?.();
+  dbg('refetch:start', { lang: state.lang, letter: state.letter, subjects: state.subjects });
+  state.items = await fetchItemsBySubjects(state.subjects);
+  state.filtered = filterByLetter(state.items, state.letter, state.lang);
+  state.index = 0;
+  renderCurrent();
+}
+
+function refilterAndRender(){
+  stopCurrentAudio?.();
+  state.filtered = filterByLetter(state.items, state.letter, state.lang);
+  state.index = 0;
+  renderCurrent();
+}
+
+/* ------------ ربط الأزرار (يدعم IDs القديمة والجديدة) ------------ */
+function bindMainActions(){
+  if (ELS.btnPrev && !ELS.btnPrev._aa_bound){
+    ELS.btnPrev._aa_bound = true;
+    ELS.btnPrev.addEventListener('click', ()=>{
+      if (!state.filtered.length) return;
+      state.index = (state.index - 1 + state.filtered.length) % state.filtered.length;
+      dbg('nav:prev', { index: state.index, total: state.filtered.length });
+      renderCurrent();
+    });
+  }
+  if (ELS.btnNext && !ELS.btnNext._aa_bound){
+    ELS.btnNext._aa_bound = true;
+    ELS.btnNext.addEventListener('click', ()=>{
+      if (!state.filtered.length) return;
+      state.index = (state.index + 1) % state.filtered.length;
+      dbg('nav:next', { index: state.index, total: state.filtered.length });
+      renderCurrent();
+    });
+  }
+  if (ELS.btnPlay && !ELS.btnPlay._aa_bound){
+    ELS.btnPlay._aa_bound = true;
+    ELS.btnPlay.addEventListener('click', ()=>{
+      if (!state.filtered.length) return;
+      const it = state.filtered[state.index];
+      const src = it?.audio?.[state.lang] || '';
+      if (src){ dbg('audio:play', { id: it?.id, name: it?.name?.[state.lang], src }); playAudio(src); }
+      else { dbg('audio:missing', { id: it?.id, name: it?.name?.[state.lang] }); }
+    });
+  }
+  if (ELS.btnToggleDesc && !ELS.btnToggleDesc._aa_bound){
+    ELS.btnToggleDesc._aa_bound = true;
+    ELS.btnToggleDesc.addEventListener('click', ()=>{
+      state.showDescription = !state.showDescription;
+      dbg('ui:toggle-desc', { showDescription: state.showDescription });
+      renderCurrent();
+    });
+  }
+}
+
 function observeGlobalLang(){
   const m = new MutationObserver(() => {
     const newLang = document.documentElement.lang || 'ar';
@@ -506,16 +468,18 @@ function observeGlobalLang(){
   dbg('lang:observer-ready');
 }
 
-// ======= نقطة الدخول =======
+/* ------------ نقطة الدخول ------------ */
 export async function loadAlphabetActivity(){
   try{
-    // استكشف اللغة الحالية من html أو من state
     ensureLang(document.documentElement.lang || state.lang);
 
-    // ابنِ الواجهة إن لم تكن موجودة
-    buildUI();
-
-    // راقب تغيّر اللغة عالمياً
+    // اربط على DOM القائم (لا تُنشئ واجهة جديدة إن وُجدت)
+    bindDom();
+    // أنشئ سايدبار قياسي/أزرار الحروف إن لم تكن موجودة
+    ensureSidebar();
+    // أربط الأزرار (مرة واحدة)
+    bindMainActions();
+    // راقب تغييرات لغة الموقع
     observeGlobalLang();
 
     // جلب أولي ثم عرض
@@ -524,10 +488,9 @@ export async function loadAlphabetActivity(){
     console.log('✅ [alphabet-activity] ready:', {lang: state.lang, letter: state.letter, subjects: state.subjects});
   }catch(err){
     console.error('[alphabet-activity] failed to init', err);
-    const nameEl = qs('#aa-name');
-    if (nameEl) nameEl.textContent = 'حدث خطأ أثناء التحميل';
+    if (ELS.name) ELS.name.textContent = 'حدث خطأ أثناء التحميل';
   }
 }
 
-// توافق مع أسماء قديمة محتملة
+// توافق اسم قديم محتمل
 export const loadAlphabetActivityContent = loadAlphabetActivity;
