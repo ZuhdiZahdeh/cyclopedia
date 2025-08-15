@@ -1,8 +1,10 @@
 // src/activities/alphabet-activity.js
-// نشاط الحروف — DEBUG v3 (إصلاح خطأ النشر: إزالة التكرارات)
-// - دعم media.images/sounds كمصفوفات أو كائنات
+// نشاط الحروف — DEBUG v4
+// - إصلاح مسار الصوت حسب بنية Firestore: sound.base + sound.paths[lang][voice]
+// - إضافة اختيار نوع الصوت (ولد/بنت/معلّم) وحفظه محليًا
+// - دعم media.images/media.sounds كمصفوفات أو كائنات
 // - Placeholder للصورة + كاش للمسارات
-// - بدون أي دوال مُعادة التصريح (No duplicate identifiers)
+// - سجلات DEBUG واضحة
 
 import { db } from '@/core/db-handler.js';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -36,8 +38,24 @@ const HINTS = (typeof window!=='undefined' && window.ASSET_HINTS) ? { ...DEFAULT
 
 const assetCache = new Map(); // key -> url or ''
 
-const state = { lang:'ar', letter:'أ', subjects:[...SUBJECTS], items:[], filtered:[], index:0, showDescription:false };
-const ELS = { name:null,img:null,desc:null,letterBar:null,count:null, btnPrev:null,btnNext:null,btnPlay:null,btnToggleDesc:null, sidebar:null,lettersGrid:null,subjectsWrap:null,langSelect:null };
+const VOICES = ['boy','girl','teacher'];
+const VOICE_KEY = 'aa.voice';
+
+const state = {
+  lang:'ar',
+  letter:'أ',
+  subjects:[...SUBJECTS],
+  items:[],
+  filtered:[],
+  index:0,
+  showDescription:false,
+  voice: (typeof localStorage!=='undefined' && localStorage.getItem(VOICE_KEY)) || 'teacher',
+};
+const ELS = {
+  name:null,img:null,desc:null,letterBar:null,count:null,
+  btnPrev:null,btnNext:null,btnPlay:null,btnToggleDesc:null,
+  sidebar:null,lettersGrid:null,subjectsWrap:null,langSelect:null,voiceWrap:null,
+};
 
 function normalizeSubjects(list){ return (list||[]).map(s => SUBJECT_ALIASES[s] || s); }
 function expandSubjectVariants(wanted){ const set=new Set(); for(const s of wanted){ set.add(s); const p=SUBJECT_PLURALS[s]; if(p) set.add(p); } if(set.has('human_body')) set.add('body'); if(set.has('body')) set.add('human_body'); return [...set]; }
@@ -72,7 +90,6 @@ function pickFromMediaNode(node){
   if (!node) return '';
   return prefixSlash(node.image_path || node.path || node.src || node.url || '');
 }
-// images: قد تكون مصفوفة [{id:'main',path:'...'}] أو كائنًا {main:{path:'...'}} أو مباشرة path
 function extractImagePath(mediaImages){
   if (!mediaImages) return '';
   if (typeof mediaImages === 'string') return prefixSlash(mediaImages);
@@ -92,12 +109,12 @@ function extractSoundPath(soundsLang){
   if (!soundsLang) return '';
   if (typeof soundsLang === 'string') return prefixSlash(soundsLang);
   if (Array.isArray(soundsLang)){
-    const main = soundsLang.find(x => x && (x.id==='main' || x.id==='default' || x.id==='boy' || x.id==='male')) || soundsLang[0];
+    const main = soundsLang.find(x => x && (x.id==='main' || x.id==='default' || x.id==='boy' || x.id==='male' || x.id==='girl' || x.id==='teacher')) || soundsLang[0];
     return pickFromMediaNode(main);
   }
   if (typeof soundsLang === 'object'){
-    if (soundsLang.main || soundsLang.default || soundsLang.boy || soundsLang.male){
-      return pickFromMediaNode(soundsLang.main || soundsLang.default || soundsLang.boy || soundsLang.male);
+    if (soundsLang.main || soundsLang.default || soundsLang.boy || soundsLang.male || soundsLang.girl || soundsLang.teacher){
+      return pickFromMediaNode(soundsLang.main || soundsLang.default || soundsLang.boy || soundsLang.male || soundsLang.girl || soundsLang.teacher);
     }
     const firstKey = Object.keys(soundsLang)[0];
     return pickFromMediaNode(soundsLang[firstKey]);
@@ -107,7 +124,9 @@ function extractSoundPath(soundsLang){
 
 function pickName(data, lang){ return data?.name?.[lang] || data?.name?.ar || data?.title?.[lang] || data?.title?.ar || ''; }
 function pickDescription(data, lang){ return data?.description?.[lang] || data?.description?.ar || ''; }
+function labelOf(subject){ return { animal:'الحيوانات', fruit:'الفواكه', vegetable:'الخضروات', tool:'الأدوات', profession:'المهن', human_body:'جسم الإنسان' }[subject] || subject; }
 
+/* ---------- الصور ---------- */
 function pickImageDirect(data){
   // 1) media.images (array/object/string)
   const m = extractImagePath(data?.media?.images);
@@ -121,49 +140,59 @@ function pickImageDirect(data){
   }
   return '';
 }
-function pickAudioDirect(data, lang){
-  // 1) media.sounds[lang] (array/object/string)
-  const m = extractSoundPath(data?.media?.sounds?.[lang]);
-  if (m) return m;
-  // 2) sound[lang] legacy
+
+/* ---------- الصوت ---------- */
+function voiceLabel(v, lang){
+  const map = {
+    ar: {boy:'ولد', girl:'بنت', teacher:'معلّم'},
+    en: {boy:'Boy', girl:'Girl', teacher:'Teacher'},
+    he: {boy:'ילד', girl:'ילדה', teacher:'מורה'},
+  };
+  return (map[lang]||map.ar)[v] || v;
+}
+
+// المصدر المباشر حسب بنية sound.paths أو sound.base
+function pickAudioDirect(data, lang, voice){
+  // media.sounds[lang] (array/object/string)
+  const m1 = extractSoundPath(data?.media?.sounds?.[lang]);
+  if (m1) return m1;
+
+  // sound.paths[lang][voice] = "audio/en/animals/alligator_boy_en.mp3"
+  const p = data?.sound?.paths?.[lang];
+  if (p){
+    const chosen = p?.[voice] || p?.teacher || p?.boy || p?.girl;
+    if (chosen) return prefixSlash(chosen);
+  }
+
+  // sound.base + نمط اسم ملف: {base}_{voice}_{lang}.mp3
+  const base = data?.sound?.base || data?.sound_base;
+  const subjDir = subjectToDir(data?.subject || data?.type || data?.subjectType || data?.category);
+  if (base && subjDir){
+    const candidate = `/audio/${lang}/${subjDir}/${base}_${voice}_${lang}.mp3`;
+    return candidate;
+  }
+
+  // تراجعات قديمة
   const s = data?.sound?.[lang];
   if (typeof s === 'string') return prefixSlash(s);
   if (s?.boy) return prefixSlash(s.boy);
   if (s?.default) return prefixSlash(s.default);
-  // 3) sound_base fallback
-  if (data?.sound_base){
-    const dir = subjectToDir(data?.subject || data?.type || data?.subjectType || data?.category);
-    if (dir) return `/audio/${lang}/${dir}/${data.sound_base}.mp3`;
-  }
+
   return '';
 }
-
-/* ===================== محلّل احتمالات + فاحص ===================== */
-function buildImageCandidates(it){
+function buildAudioCandidates(it, lang, voice){
   const dir = subjectToDir(it.subject);
-  const baseName = sanitizeId(it.image_base || it.id || it.name?.[state.lang] || it.name?.en || it.name?.ar);
-  const bases = HINTS.imageBases, exts = HINTS.imageExts, out=[];
-  if (dir && baseName){ for (const b of bases){ for (const e of exts){ out.push(`${b}/${dir}/${baseName}.${e}`); out.push(`${b}/${dir}/${baseName}_main.${e}`); out.push(`${b}/${dir}/${baseName}_1.${e}`); } } }
-  if (baseName){ for (const b of bases){ for (const e of exts){ out.push(`${b}/${baseName}.${e}`); } } }
-  return out.map(prefixSlash);
-}
-function buildAudioCandidates(it, lang){
-  const dir = subjectToDir(it.subject);
-  const baseName = sanitizeId(it.audio_base || it.sound_base || it.id || it.name?.[state.lang] || it.name?.en || it.name?.ar);
+  const baseName = it?.sound?.base || it?.sound_base || sanitizeId(it.id || it.name?.[lang] || it.name?.en || it.name?.ar);
   const bases = HINTS.audioBases, exts = HINTS.audioExts, out=[];
-  if (dir && baseName){ for (const b of bases){ for (const e of exts){ out.push(`${b}/${lang}/${dir}/${baseName}.${e}`); out.push(`${b}/${lang}/${dir}/${baseName}_main.${e}`); } } }
-  if (baseName){ for (const b of bases){ for (const e of exts){ out.push(`${b}/${lang}/${baseName}.${e}`); } } }
+  if (dir && baseName){
+    for (const b of bases){
+      for (const e of exts){
+        out.push(`${b}/${lang}/${dir}/${baseName}_${voice}_${lang}.${e}`);
+        out.push(`${b}/${lang}/${dir}/${baseName}.${e}`);
+      }
+    }
+  }
   return out.map(prefixSlash);
-}
-function probeImage(url){
-  return new Promise((resolve)=> {
-    const key = 'img:'+url;
-    if (assetCache.has(key)) return resolve(assetCache.get(key) || '');
-    const im = new Image();
-    im.onload  = ()=>{ assetCache.set(key, url); resolve(url); };
-    im.onerror = ()=>{ assetCache.set(key, ''); resolve(''); };
-    im.src = url;
-  });
 }
 async function probeAudio(url){
   const key = 'aud:'+url;
@@ -171,16 +200,10 @@ async function probeAudio(url){
   try{ const res = await fetch(url, { method:'HEAD' }); if (res.ok){ assetCache.set(key, url); return url; } }catch(e){}
   assetCache.set(key, ''); return '';
 }
-async function resolveImageUrl(it){
-  const direct = it.image || pickImageDirect(it);
+async function resolveAudioUrl(it, lang, voice){
+  const direct = pickAudioDirect(it.raw || it, lang, voice);
   if (direct) return direct;
-  for (const u of buildImageCandidates(it)){ const ok = await probeImage(u); if (ok) return ok; }
-  return '';
-}
-async function resolveAudioUrl(it, lang){
-  const direct = it?.audio?.[lang] || pickAudioDirect(it, lang);
-  if (direct) return direct;
-  for (const u of buildAudioCandidates(it, lang)){ const ok = await probeAudio(u); if (ok) return ok; }
+  for (const u of buildAudioCandidates(it, lang, voice)){ const ok = await probeAudio(u); if (ok) return ok; }
   return '';
 }
 
@@ -230,7 +253,10 @@ async function fetchItemsBySubjects(subjects){
       name: { ar: pickName(data,'ar'), en: pickName(data,'en'), he: pickName(data,'he') },
       description: { ar: pickDescription(data,'ar'), en: pickDescription(data,'en'), he: pickDescription(data,'he') },
       image: pickImageDirect(data) || '',
-      audio: { ar: pickAudioDirect(data,'ar') || '', en: pickAudioDirect(data,'en') || '', he: pickAudioDirect(data,'he') || '' },
+      // لا نخزّن الصوت ثابتًا لأن اختيار الصوت يتغير؛ سنستخدم raw عند التشغيل
+      sound: data?.sound || null,
+      media: data?.media || null,
+      raw: data, // للإتاحة الكاملة عند التشغيل
       tags: data?.tags || [],
       difficulty: data?.difficulty || 'normal',
     };
@@ -239,7 +265,7 @@ async function fetchItemsBySubjects(subjects){
 
   const bySubject = all.reduce((acc,it)=>{ acc[it.subject]=(acc[it.subject]||0)+1; return acc; },{});
   const missingName = all.filter(it => !it.name[state.lang]).length;
-  const sample = all.slice(0,12).map(it=>({ id: it.id, subject: it.subject, name: it.name[state.lang]||'', image: it.image, audio: it.audio[state.lang]||'' }));
+  const sample = all.slice(0,12).map(it=>({ id: it.id, subject: it.subject, name: it.name[state.lang]||'', image: it.image }));
   dbg('fetched:summary', { total: all.length, bySubject, missingNameForLang: { lang: state.lang, count: missingName } });
   dbgt('fetched:sample(<=12)', sample);
 
@@ -268,6 +294,7 @@ function bindDom(){
   ELS.lettersGrid = qs('#aa-letters') || null;
   ELS.subjectsWrap= qs('#aa-subjects') || null;
   ELS.langSelect  = qs('#aa-lang') || null;
+  ELS.voiceWrap   = qs('#aa-voice') || null;
 }
 
 function ensureSidebar(){
@@ -290,6 +317,10 @@ function ensureSidebar(){
       </select>
     </div>
     <div class="sidebar-section">
+      <h3 class="sidebar-title">نوع الصوت</h3>
+      <div id="aa-voice" class="voice-filter" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+    </div>
+    <div class="sidebar-section">
       <h3 class="sidebar-title">الحروف</h3>
       <div id="aa-letters" class="letters-grid" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px"></div>
     </div>
@@ -305,10 +336,30 @@ function ensureSidebar(){
     ELS.langSelect.addEventListener('change', ()=>{
       ensureLang(ELS.langSelect.value);
       dbg('lang:changed', { lang: state.lang });
-      buildLetters(); refilterAndRender();
+      buildLetters(); buildVoiceFilter(); refilterAndRender();
     });
   }
-  buildLetters(); buildSubjectsFilter();
+  buildVoiceFilter();
+  buildLetters();
+  buildSubjectsFilter();
+}
+function buildVoiceFilter(){
+  if (!ELS.voiceWrap) ELS.voiceWrap = qs('#aa-voice');
+  if (!ELS.voiceWrap) return;
+  ELS.voiceWrap.innerHTML = VOICES.map(v => `
+    <label style="display:flex;align-items:center;gap:4px">
+      <input type="radio" name="aa-voice" value="${v}" ${state.voice===v?'checked':''}>
+      <span>${voiceLabel(v, state.lang)}</span>
+    </label>
+  `).join('');
+  ELS.voiceWrap.querySelectorAll('input[name="aa-voice"]').forEach(r => {
+    r.addEventListener('change', ()=>{
+      state.voice = r.value;
+      try{ localStorage.setItem(VOICE_KEY, state.voice); }catch(e){}
+      dbg('voice:changed', { voice: state.voice });
+      stopCurrentAudio?.();
+    });
+  });
 }
 
 function buildLetters(){
@@ -354,7 +405,6 @@ function buildSubjectsFilter(){
     });
   });
 }
-function labelOf(subject){ return { animal:'الحيوانات', fruit:'الفواكه', vegetable:'الخضروات', tool:'الأدوات', profession:'المهن', human_body:'جسم الإنسان' }[subject] || subject; }
 
 let lastRenderedKey = '';
 async function renderCurrent(){
@@ -387,19 +437,13 @@ async function renderCurrent(){
       ELS.img._aa_bound = true;
     }
     ELS.img.setAttribute('data-aa-id', key);
-    const direct = it.image || pickImageDirect(it);
-    if (direct){
-      ELS.img.src = direct;
-      dbg('image:direct', { id: it.id, src: direct });
+    const directImg = it.image || pickImageDirect(it.raw || it);
+    if (directImg){
+      ELS.img.src = directImg;
+      dbg('image:direct', { id: it.id, src: directImg });
     }else{
       ELS.img.src = HINTS.placeholderSVG;
-      const resolved = await resolveImageUrl(it);
-      if (resolved && ELS.img.getAttribute('data-aa-id') === key){
-        ELS.img.src = resolved;
-        dbg('image:resolved', { id: it.id, src: resolved });
-      }else if (!resolved){
-        dbg('image:not-found', { id: it.id, tried: buildImageCandidates(it) });
-      }
+      // لا حاجة لحلّ مرن هنا لأن بياناتك الصور جاهزة
     }
   }
 
@@ -410,14 +454,14 @@ async function renderCurrent(){
   }
 
   if (ELS.count) ELS.count.textContent = String(state.filtered.length);
-  dbg('render:item', { index: state.index, total: state.filtered.length, id: it.id, subject: it.subject, name: it.name?.[state.lang] || '', image: it.image, audio: it.audio?.[state.lang] || '', showDescription: state.showDescription });
+  dbg('render:item', { index: state.index, total: state.filtered.length, id: it.id, subject: it.subject, name: it.name?.[state.lang] || '', voice: state.voice });
   toggleNavButtons(true);
 }
 function toggleNavButtons(enabled){ [ELS.btnPrev, ELS.btnNext, ELS.btnPlay, ELS.btnToggleDesc].forEach(b => { if (b) b.disabled = !enabled; }); }
 
 async function refetchAndRender(){
   stopCurrentAudio?.();
-  dbg('refetch:start', { lang: state.lang, letter: state.letter, subjects: state.subjects });
+  dbg('refetch:start', { lang: state.lang, letter: state.letter, subjects: state.subjects, voice: state.voice });
   state.items = await fetchItemsBySubjects(state.subjects);
   state.filtered = filterByLetter(state.items, state.letter, state.lang);
   state.index = 0; renderCurrent();
@@ -452,10 +496,10 @@ function bindMainActions(){
     ELS.btnPlay.addEventListener('click', async ()=>{
       if (!state.filtered.length) return;
       const it = state.filtered[state.index];
-      let src = it?.audio?.[state.lang] || pickAudioDirect(it, state.lang);
-      if (!src) src = await resolveAudioUrl(it, state.lang);
+      let src = pickAudioDirect(it.raw || it, state.lang, state.voice);
+      if (!src) src = await resolveAudioUrl(it, state.lang, state.voice);
       if (src){ dbg('audio:play', { id: it?.id, name: it?.name?.[state.lang], src }); playAudio(src); }
-      else { dbg('audio:missing', { id: it?.id, name: it?.name?.[state.lang], tried: buildAudioCandidates(it, state.lang) }); }
+      else { dbg('audio:missing', { id: it?.id, name: it?.name?.[state.lang], voice: state.voice }); }
     });
   }
   if (ELS.btnToggleDesc && !ELS.btnToggleDesc._aa_bound){
@@ -474,7 +518,7 @@ function observeGlobalLang(){
     if (newLang !== state.lang){
       ensureLang(newLang);
       dbg('lang:global-mut observed', { lang: state.lang });
-      buildLetters(); refilterAndRender();
+      buildLetters(); buildVoiceFilter(); refilterAndRender();
     }
   });
   m.observe(document.documentElement, { attributes:true, attributeFilter:['lang'] });
@@ -486,7 +530,7 @@ export async function loadAlphabetActivity(){
     ensureLang(document.documentElement.lang || state.lang);
     bindDom(); ensureSidebar(); bindMainActions(); observeGlobalLang();
     await refetchAndRender();
-    console.log('✅ [alphabet-activity] ready:', {lang: state.lang, letter: state.letter, subjects: state.subjects});
+    console.log('✅ [alphabet-activity] ready:', {lang: state.lang, letter: state.letter, subjects: state.subjects, voice: state.voice});
   }catch(err){
     console.error('[alphabet-activity] failed to init', err);
     if (ELS.name) ELS.name.textContent = 'حدث خطأ أثناء التحميل';
