@@ -118,7 +118,7 @@ export async function loadFruitsGameContent() {
   _uiLang = getCurrentLang();
   bindControls();
   try {
-    _raw = await fetchSubjectItems(SUBJECT_KEY);
+    _raw = await fetchSubjectItems(SUBJECT_KEY, { strict: true });
     console.log('[fruits] fetched', _raw.length);
     // ترتيب مبدئي
     _raw.sort((a,b) => String(pickLocalized(a?.name,_uiLang)).localeCompare(pickLocalized(b?.name,_uiLang)));

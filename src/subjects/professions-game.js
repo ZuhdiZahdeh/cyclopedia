@@ -3,12 +3,15 @@ import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '.
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 import { fetchSubjectItems } from '../core/items-repo.js';
-import { pickLocalized, getImagePath } from '../core/media-utils.js';
+import { pickLocalized, getImagePath, slugify } from '../core/media-utils.js';
 
-// حالة الصفحة
+// الحالة
 let professions = [];
 let currentIndex = 0;
 let currentItem  = null;
+
+// كاش للأدوات لاحتساب "الأدوات المرتبطة" بسرعة
+let toolsCache = null;
 
 function $(id){ return document.getElementById(id); }
 const isAbs = (p) => /^https?:\/\//i.test(p) || /^data:/i.test(p) || /^blob:/i.test(p);
@@ -17,41 +20,53 @@ function getEffectiveLang() {
   return $('game-lang-select-profession')?.value || getCurrentLang();
 }
 
-function displayName(item, lang) {
-  return pickLocalized(item?.name, lang);
-}
-
-function setHighlightedName(el, name) {
-  if (!el) return;
-  const s = String(name || '');
-  el.innerHTML = `<span class="first-letter">${s[0] || ''}</span>${s.slice(1)}`;
-}
-
+function displayName(item, lang) { return pickLocalized(item?.name, lang); }
 function resolveImagePath(item) {
-  const p = getImagePath(item); // من media.images أو image_path (داخل items)
+  const p = getImagePath(item);
   return p || '/images/default.png';
 }
 
-function audioCandidates(item, lang, voice) {
-  let f = null;
-  if (item?.sound?.[lang]?.[voice])        f = item.sound[lang][voice];
-  else if (item?.voices && item.voices[`${voice}_${lang}`]) f = item.voices[`${voice}_${lang}`];
-  else if (item?.voices && item.voices[`${lang}_${voice}`]) f = item.voices[`${lang}_${voice}`];
-  else if (item?.sound_base)               f = `${item.sound_base}_${voice}_${lang}.mp3`;
-  else if (typeof item?.audio === 'string') f = item.audio;
-
-  if (!f) return [];
-  if (isAbs(f) || f.startsWith('/')) return [f];
-  const base = f.replace(/^.*\//, '');
-  return [
-    `/audio/${lang}/professions/${base}`,
-    `/audio/${lang}/profession/${base}`,
-    `/audio/${lang}/${f.replace(/^public\//, '')}`,
-  ];
+// اختيار مسار الصوت (بأولوية: sound[lang][voice] → voices → تركيب مسار افتراضي)
+function audioPath(item, lang, voice='teacher') {
+  const s = item?.sound;
+  if (s && s[lang]) {
+    const node = s[lang];
+    if (typeof node === 'string' && node) return node.startsWith('/') ? node : `/${node}`;
+    const v = node?.[voice] || node?.teacher || node?.boy || node?.girl;
+    if (typeof v === 'string' && v) return v.startsWith('/') ? v : `/${v}`;
+  }
+  if (item?.voices?.[`${voice}_${lang}`]) {
+    const f = item.voices[`${voice}_${lang}`];
+    return f.startsWith('/') ? f : `/${f}`;
+  }
+  if (item?.voices?.[`${lang}_${voice}`]) {
+    const f = item.voices[`${lang}_${voice}`];
+    return f.startsWith('/') ? f : `/${f}`;
+  }
+  const base = item?.sound_base || item?.audio_base || item?.id || slugify(displayName(item, lang));
+  if (base) return `/audio/${lang}/professions/${slugify(base)}_${voice}_${lang}.mp3`;
+  if (typeof item?.audio === 'string') return item.audio.startsWith('/') ? item.audio : `/${item.audio}`;
+  return '';
 }
 
-// ———————————————— تحديث الواجهة ————————————————
-function updateUI() {
+// الأدوات المرتبطة بهذه المهنة (مطابقة على معرف/أسماء)
+async function getRelatedTools(prof) {
+  if (!toolsCache) toolsCache = await fetchSubjectItems('tools', { strict:false });
+  const keys = [
+    prof?.id,
+    pickLocalized(prof?.name,'en'),
+    pickLocalized(prof?.name,'ar'),
+    pickLocalized(prof?.name,'he')
+  ].filter(Boolean).map(s => String(s).toLowerCase());
+
+  return (toolsCache || []).filter(t => {
+    const arr = Array.isArray(t?.professions) ? t.professions : [];
+    return arr.some(x => keys.includes(String(x).toLowerCase()));
+  });
+}
+
+// رسم الواجهة
+async function updateUI() {
   const lang = getEffectiveLang();
 
   if (!professions.length) {
@@ -59,17 +74,23 @@ function updateUI() {
     const imgEl  = $('profession-image');
     if (nameEl) nameEl.textContent = '—';
     if (imgEl) { imgEl.removeAttribute('src'); imgEl.alt = ''; }
+    // امسح الحقول الأخرى
+    const descEl = $('profession-description'); if (descEl) descEl.textContent = '';
+    const detSec = $('profession-details-section'); if (detSec) detSec.innerHTML = '';
+    const toolsSec = $('profession-tools-section'); if (toolsSec) toolsSec.innerHTML = '';
     return;
   }
 
   currentItem = professions[currentIndex];
   const name = displayName(currentItem, lang);
 
+  // الاسم + الصورة
   const nameEl = $('profession-word')  || $('item-word')  || $('item-name');
   const imgEl  = $('profession-image') || $('item-image');
 
   if (nameEl) {
-    setHighlightedName(nameEl, name);
+    const s = String(name || '');
+    nameEl.innerHTML = `<span class="first-letter">${s[0] || ''}</span>${s.slice(1)}`;
     nameEl.style.cursor = 'pointer';
     nameEl.onclick = playCurrentProfessionAudio;
   }
@@ -82,15 +103,57 @@ function updateUI() {
     imgEl.src = src;
   }
 
+  // الوصف
+  const descEl = $('profession-description');
+  if (descEl) descEl.textContent = pickLocalized(currentItem?.description, lang) || '—';
+
+  // التفاصيل (التصنيف + الحرف الأول)
+  const detSec = $('profession-details-section');
+  if (detSec) {
+    const category = pickLocalized(currentItem?.category, lang) || '---';
+    const letter   = pickLocalized(currentItem?.letter, lang)   || '---';
+    detSec.innerHTML = `
+      <ul class="details-list">
+        <li><strong>Category:</strong> ${category}</li>
+        <li><strong>الحرف الأول:</strong> ${letter}</li>
+      </ul>
+    `;
+  }
+
+  // الأدوات المرتبطة
+  const toolsSec = $('profession-tools-section');
+  if (toolsSec) {
+    const related = await getRelatedTools(currentItem);
+    if (!related.length) {
+      toolsSec.innerHTML = `<div class="empty">—</div>`;
+    } else {
+      const langNow = getEffectiveLang();
+      toolsSec.innerHTML = `
+        <ul class="tools-list">
+          ${related.map(t => `<li>${pickLocalized(t?.name, langNow) || t?.id || ''}</li>`).join('')}
+        </ul>
+      `;
+    }
+  }
+
+  // تفعيل/تعطيل أزرار السابق/التالي
   const prevBtn = $('prev-profession-btn');
   const nextBtn = $('next-profession-btn');
   if (prevBtn) prevBtn.disabled = (currentIndex === 0 || professions.length <= 1);
   if (nextBtn) nextBtn.disabled = (currentIndex >= professions.length - 1 || professions.length <= 1);
 
+  // تعطيل زر الاستماع إذا لا يوجد مسار
+  const playBtn  = $('play-sound-btn-profession');
+  if (playBtn) {
+    const voice = $('voice-select-profession')?.value || 'teacher';
+    const src   = audioPath(currentItem, lang, voice);
+    playBtn.disabled = !src;
+  }
+
   stopCurrentAudio();
 }
 
-// ———————————————— تنقّل/صوت ————————————————
+// تنقّل/صوت
 export function showNextProfession() {
   if (!professions.length) return;
   if (currentIndex < professions.length - 1) currentIndex++;
@@ -109,22 +172,21 @@ export async function playCurrentProfessionAudio() {
   if (!professions.length || !currentItem) return;
   const lang  = getEffectiveLang();
   const voice = $('voice-select-profession')?.value || 'teacher';
-
-  for (const src of audioCandidates(currentItem, lang, voice)) {
-    try { stopCurrentAudio(); await Promise.resolve(playAudio(src)); return; }
-    catch { /* جرّب التالي */ }
+  const src   = audioPath(currentItem, lang, voice);
+  if (!src) return;
+  try { stopCurrentAudio(); await Promise.resolve(playAudio(src)); } catch (e) {
+    console.warn('[professions] audio failed:', src, e);
   }
-  console.warn('[professions] لا يوجد ملف صوت مناسب');
 }
 
-// ———————————————— البيانات: من items فقط ————————————————
+// جلب البيانات (من items فقط) + strict لمنع عرض غير المطابق
 async function fetchProfessionsData() {
-  const arr = await fetchSubjectItems('professions'); // ← حصريًا من items
+  const arr = await fetchSubjectItems('professions', { strict:true });
   console.log('[professions] ✅ source: items | count =', arr?.length || 0);
   return arr || [];
 }
 
-// ———————————————— ربط عناصر التحكم ————————————————
+// ربط عناصر التحكم
 function bindControls() {
   const prevBtn  = $('prev-profession-btn');
   const nextBtn  = $('next-profession-btn');
@@ -165,14 +227,14 @@ function bindControls() {
   if (toggleTools)   toggleTools.onclick   = () => toggleDisplay('profession-tools-section');
 }
 
-// ———————————————— نقطة الدخول ————————————————
+// نقطة الدخول
 export async function loadProfessionsGameContent() {
   ['prev-profession-btn','next-profession-btn','play-sound-btn-profession'].forEach(id => {
     const b = $(id); if (b) b.disabled = true;
   });
 
   bindControls();
-  professions = await fetchProfessionsData();  // ← من items حصريًا
+  professions = await fetchProfessionsData();
 
   if (!professions.length) {
     const nameEl = $('profession-word');
@@ -185,7 +247,7 @@ export async function loadProfessionsGameContent() {
   const lang = getEffectiveLang();
   professions.sort((a, b) => (displayName(a, lang) || '').localeCompare(displayName(b, lang) || ''));
   currentIndex = 0;
-  updateUI();
+  await updateUI();
 
   ['prev-profession-btn','next-profession-btn','play-sound-btn-profession'].forEach(id => {
     const b = $(id); if (b) b.disabled = false;

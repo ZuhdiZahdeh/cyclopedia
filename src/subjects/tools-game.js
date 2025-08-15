@@ -3,13 +3,16 @@ import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '.
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 import { fetchSubjectItems } from '../core/items-repo.js';
-import { pickLocalized, getImagePath } from '../core/media-utils.js';
+import { pickLocalized, getImagePath, slugify } from '../core/media-utils.js';
 
 /* -------------------- الحالة -------------------- */
 let tools = [];
 let currentIndex = 0;
 let currentToolData = null;
 let currentUILang = 'ar';
+
+// كاش للمهن لإظهار أسماء "المهن المرتبطة" بشكل جميل
+let professionsCache = null;
 
 /* -------------------- عناصر الصفحة -------------------- */
 const els = {
@@ -25,6 +28,7 @@ const els = {
   btnNextId:   'next-tools-btn',
   btnListenId: 'play-sound-btn-tools',
   btnToggleId: 'toggle-description-btn-tools',
+  btnProfId:   'toggle-professions-btn-tools',  // زر جديد: المهن المرتبطة
   voiceSelId:  'voice-select-tools',
   langSelId:   'game-lang-select-tools'
 };
@@ -37,23 +41,20 @@ function setHighlightedName(el, txt) {
 }
 function toolName(t, lang){ return pickLocalized(t?.name, lang); }
 function toolDescription(t, lang){ return pickLocalized(t?.description, lang); }
+function toolImagePath(t) { const p = getImagePath(t); return p || ''; }
 
-/** الصورة من media.images أو image_path (داخل items) */
-function toolImagePath(t) {
-  const p = getImagePath(t);
-  return p || '';
-}
-
-/** صوت “باللغة المختارة” فقط */
-function toolAudioPathExact(tool, lang, voice) {
+// مسار الصوت: sound[lang][voice] → سلاسل مباشرة → تركيب مسار افتراضي
+function toolAudioPath(tool, lang, voice='teacher') {
   const s = tool?.sound;
-  if (!s || typeof s !== 'object') return '';
-  const node = s[lang];
-  if (!node) return '';
-  if (typeof node === 'string') return node.startsWith('/') ? node : `/${node}`;
-  const v = node?.[voice] || node?.teacher || node?.boy || node?.girl || '';
-  if (typeof v === 'string' && v) return v.startsWith('/') ? v : `/${v}`;
-  return '';
+  if (s && s[lang]) {
+    const node = s[lang];
+    if (typeof node === 'string' && node) return node.startsWith('/') ? node : `/${node}`;
+    const v = node?.[voice] || node?.teacher || node?.boy || node?.girl;
+    if (typeof v === 'string' && v) return v.startsWith('/') ? v : `/${v}`;
+  }
+  if (typeof tool?.audio === 'string') return tool.audio.startsWith('/') ? tool.audio : `/${tool.audio}`;
+  const base = tool?.sound_base || tool?.audio_base || tool?.id || slugify(toolName(tool, lang));
+  return base ? `/audio/${lang}/tools/${slugify(base)}_${voice}_${lang}.mp3` : '';
 }
 
 /* -------------------- حقن وربط الأزرار -------------------- */
@@ -72,7 +73,9 @@ async function ensureToolsSidebar() {
     const account = sidebar.querySelector('.static-section');
     account ? sidebar.insertBefore(container, account) : sidebar.appendChild(container);
   }
-  const needsLoad = !container.querySelector(`#${els.btnPrevId}, #${els.btnNextId}, #${els.btnListenId}, #${els.btnToggleId}, #${els.voiceSelId}, #${els.langSelId}`);
+  const needsLoad = !container.querySelector(
+    `#${els.btnPrevId}, #${els.btnNextId}, #${els.btnListenId}, #${els.btnToggleId}, #${els.voiceSelId}, #${els.langSelId}, #${els.btnProfId}`
+  );
   if (needsLoad) {
     let html = '';
     try {
@@ -87,6 +90,7 @@ async function ensureToolsSidebar() {
         </div>
         <div class="row"><button id="${els.btnListenId}" class="btn listen">استمع</button></div>
         <div class="row"><button id="${els.btnToggleId}" class="btn ghost">الوصف</button></div>
+        <div class="row"><button id="${els.btnProfId}"  class="btn ghost">المهن المرتبطة</button></div>
         <div class="row">
           <label for="${els.voiceSelId}" class="ctrl-label">الصوت</label>
           <select id="${els.voiceSelId}" class="ctrl-select">
@@ -124,6 +128,7 @@ function bindControls() {
     if (id === els.btnNextId)   return showNextTool();
     if (id === els.btnListenId) return playCurrentToolAudio();
     if (id === els.btnToggleId) return toggleDescription();
+    if (id === els.btnProfId)   return toggleProfessions();
   });
 
   cc.addEventListener('change', (e) => {
@@ -133,7 +138,7 @@ function bindControls() {
   });
 }
 
-/* -------------------- العرض والصوت -------------------- */
+/* -------------------- العرض -------------------- */
 function ensureClickToPlay() {
   const nameEl = els.nameEl();
   const imgEl  = els.imgEl();
@@ -149,7 +154,7 @@ function ensureClickToPlay() {
   }
 }
 
-function renderCurrentTool(lang = currentUILang) {
+async function renderCurrentTool(lang = currentUILang) {
   currentUILang = lang;
   const data = tools[currentIndex] || null;
   currentToolData = data;
@@ -158,18 +163,32 @@ function renderCurrentTool(lang = currentUILang) {
   const imgEl  = els.imgEl();
   const descEl = els.descText();
   const profEl = els.profList();
+  const playBtn = document.getElementById(els.btnListenId);
 
   if (!data) {
     if (nameEl) nameEl.textContent = '—';
     if (imgEl)  { imgEl.alt = ''; imgEl.removeAttribute('src'); }
     if (descEl) descEl.textContent = '';
     if (profEl) profEl.textContent = '';
+    if (playBtn) playBtn.disabled = true;
     return;
   }
 
   setHighlightedName(nameEl, toolName(data, lang));
   if (descEl) descEl.textContent = toolDescription(data, lang) || '';
-  if (profEl) profEl.textContent = Array.isArray(data.professions) ? data.professions.join('، ') : '';
+
+  // المهن المرتبطة: لو أردتها بأسماء أنيقة → نقرأ كاش المهن ونحوّل
+  if (profEl) {
+    const arr = Array.isArray(data.professions) ? data.professions : [];
+    if (!professionsCache) professionsCache = await fetchSubjectItems('professions', { strict:false });
+    const nameMap = new Map((professionsCache || []).map(p => [String(p?.id || '').toLowerCase(), p]));
+    const pretty = arr.map(x => {
+      const id = String(x).toLowerCase();
+      const p  = nameMap.get(id);
+      return p ? pickLocalized(p.name, lang) : x;
+    });
+    profEl.textContent = pretty.join('، ');
+  }
 
   const img = toolImagePath(data);
   if (imgEl) {
@@ -177,13 +196,21 @@ function renderCurrentTool(lang = currentUILang) {
     else { imgEl.alt = ''; imgEl.removeAttribute('src'); }
   }
 
+  // حالة زر الاستماع
+  if (playBtn) {
+    const voice = document.getElementById(els.voiceSelId)?.value || 'teacher';
+    const src   = toolAudioPath(data, lang, voice);
+    playBtn.disabled = !src;
+  }
+
   ensureClickToPlay();
 }
 
+/* -------------------- الصوت/التبديل -------------------- */
 function playCurrentToolAudio() {
   stopCurrentAudio?.();
   const voice = document.getElementById(els.voiceSelId)?.value || 'teacher';
-  const path  = toolAudioPathExact(currentToolData, currentUILang, voice);
+  const path  = toolAudioPath(currentToolData, currentUILang, voice);
   if (path) playAudio(path);
 }
 
@@ -193,6 +220,13 @@ function toggleDescription() {
   box.style.setProperty('display', hidden ? 'block' : 'none', 'important');
 }
 
+function toggleProfessions() {
+  const el = els.profList(); if (!el) return;
+  const hidden = getComputedStyle(el).display === 'none';
+  el.style.display = hidden ? 'block' : 'none';
+}
+
+/* -------------------- تنقّل -------------------- */
 function showNextTool() {
   if (!tools.length) return;
   currentIndex = (currentIndex + 1) % tools.length;
@@ -206,9 +240,9 @@ function showPreviousTool() {
   recordActivity?.('tools_prev', { id: currentToolData?.id, index: currentIndex });
 }
 
-/* -------------------- البيانات: من items فقط -------------------- */
+/* -------------------- البيانات: من items فقط + strict -------------------- */
 async function fetchToolsData() {
-  const arr = await fetchSubjectItems('tools'); // ← حصريًا من items
+  const arr = await fetchSubjectItems('tools', { strict:true });
   console.log('[tools] ✅ source: items | count =', arr?.length || 0);
   return arr || [];
 }
@@ -232,7 +266,6 @@ async function onLanguageChanged(newLang) {
 
 /* -------------------- التهيئة -------------------- */
 export async function loadToolsGameContent() {
-  console.log('[tools] loadToolsGameContent()');
   try {
     const resp = await fetch('/html/tools.html', { cache: 'no-store' });
     if (resp.ok) {
@@ -254,10 +287,10 @@ export async function loadToolsGameContent() {
   const selLang = document.getElementById(els.langSelId);
   if (selLang) selLang.value = currentUILang;
 
-  tools = await fetchToolsData();     // ← من items حصريًا
+  tools = await fetchToolsData();
   tools.sort((a,b)=> String(pickLocalized(a?.name,currentUILang)).localeCompare(pickLocalized(b?.name,currentUILang)));
   currentIndex = 0;
-  renderCurrentTool(currentUILang);
+  await renderCurrentTool(currentUILang);
 
   document.removeEventListener('app:language-changed', _appLang, true);
   document.addEventListener('app:language-changed', _appLang, true);

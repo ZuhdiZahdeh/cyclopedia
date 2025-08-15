@@ -3,21 +3,24 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../js/firebase-config.js';
 import { getImagePath, getImageAlt, pickLocalized } from './media-utils.js';
 
-/** مرادفات معقولة لمفاتيح المواضيع */
+/** مرادفات لكل موضوع لتحسين المطابقة */
 function subjectSynonyms(key) {
-  const k = String(key).toLowerCase();
+  const k = String(key || '').toLowerCase();
   const map = {
     animals:     ['animals','animal'],
     fruits:      ['fruits','fruit'],
     vegetables:  ['vegetables','vegetable','veggies'],
-    human_body:  ['human_body','human-body','human body','body','humanbody'],
+    human_body:  [
+      'human_body','human-body','human body','humanbody',
+      'body','bodyparts','body_parts','organs','skeleton','bones'
+    ],
     tools:       ['tools','tool','profession_tools','profession-tools'],
     professions: ['professions','profession','jobs','job'],
   };
   return map[k] || [k];
 }
 
-/** نجرب where على عدة حقول داخل items */
+/** نحاول where على عدة حقول داخل items */
 async function tryQueries(colRef, key) {
   const fields = ['subject', 'subjectType', 'category.slug', 'key'];
   const values = subjectSynonyms(key);
@@ -31,20 +34,23 @@ async function tryQueries(colRef, key) {
           return snap.docs.map(d => ({ id: d.id, ...d.data() }));
         }
       } catch {
-        /* قد يتطلب فهرس — سنتابع المحاولات الأخرى */
+        // قد يتطلب فهرس؛ نكمل بالمحاولات الأخرى
       }
     }
   }
   return null;
 }
 
-/** فلترة احتياطية (داخل items فقط) حسب مسارات الصور */
+/** فلترة احتياطية — داخل items فقط — حسب مسارات الصور */
 function filterByPathHeuristic(all, key) {
   const needles = subjectSynonyms(key).map(v => `/${v}/`);
   const out = all.filter(item => {
     const imgs = item?.media?.images;
     if (Array.isArray(imgs) && imgs.length) {
-      return imgs.some(im => needles.some(n => String(im?.path || '').includes(n)));
+      return imgs.some(im => {
+        const p = String(im?.path || '');
+        return needles.some(n => p.includes(n));
+      });
     }
     const p = String(item?.image_path || '');
     return needles.some(n => p.includes(n));
@@ -53,23 +59,30 @@ function filterByPathHeuristic(all, key) {
   return out;
 }
 
-export async function fetchSubjectItems(subjectKey) {
+/**
+ * يجلب عناصر موضوع من مجموعة items فقط.
+ * strict=true: إن لم توجد مطابقات، يُعيد [] بدل كل العناصر (لمنع ظهور عناصر خاطئة).
+ */
+export async function fetchSubjectItems(subjectKey, { strict = true } = {}) {
   const col = collection(db, 'items');
 
-  // 1) استعلام مباشر داخل items
+  // محاولة استعلامات مباشرة
   const hit = await tryQueries(col, subjectKey);
   if (hit && hit.length) return hit;
 
-  // 2) Fallback داخل items فقط (لا رجوع لأي collection قديم)
+  // اجلب الكل ثم جرّب فِلترة المسار
   const snapAll = await getDocs(col);
   const all = snapAll.docs.map(d => ({ id: d.id, ...d.data() }));
   console.log(`[items-repo] ℹ️ items(all) fetched → total=${all.length}`);
 
   const filtered = filterByPathHeuristic(all, subjectKey);
-  return filtered.length ? filtered : all;
+  if (filtered.length) return filtered;
+
+  console.warn(`[items-repo] ⚠️ no matches for subject="${subjectKey}"`);
+  return strict ? [] : all;  // ← هذا يمنع سقوط الصفحة على عناصر غير صحيحة
 }
 
-/** تطبيع عنصر للواجهة */
+/** تطبيع العنصر لواجهة العرض */
 export function normalizeItemForView(raw, lang = 'ar') {
   const name = pickLocalized(raw?.name, lang);
   const description = pickLocalized(raw?.description, lang);

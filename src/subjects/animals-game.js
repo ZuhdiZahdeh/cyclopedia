@@ -257,7 +257,7 @@ export async function loadAnimalsGameContent() {
   bindControls();
 
   try {
-    _raw = await fetchSubjectItems(SUBJECT_KEY);
+    _raw = await fetchSubjectItems(SUBJECT_KEY, { strict: true });
     console.log('[animals] fetched', _raw.length);
     _raw.sort((a,b) => String(pickLocalized(a?.name,_uiLang)).localeCompare(pickLocalized(b?.name,_uiLang)));
     _i = 0;
