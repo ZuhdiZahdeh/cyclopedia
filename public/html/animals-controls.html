@@ -1,33 +1,32 @@
-<section class="sidebar-section subject-controls" data-subject="animal">
-  <h3 data-i18n="controls_title">أدوات التحكم</h3>
+<section class="sidebar-section subject-controls" data-subject="animal" id="animals-sidebar-controls">
+  <h3 class="sidebar-title" data-i18n="controls_title">أدوات التحكم</h3>
 
-  <label for="game-lang-select-animal" data-i18n="language">اللغة</label>
-  <select id="game-lang-select-animal">
-    <option value="ar">العربية</option>
-    <option value="en">English</option>
-    <option value="he">עברית</option>
-  </select>
+  <div class="control-grid">
+    <div class="row two-col">
+      <button id="prev-animal-btn" class="btn secondary" data-i18n="prev">السابق</button>
+      <button id="next-animal-btn" class="btn primary"   data-i18n="next">التالي</button>
+    </div>
 
-  <label for="voice-select-animal" data-i18n="voice">الصوت</label>
-  <select id="voice-select-animal">
-    <option value="boy" data-i18n="voice_boy">ولد</option>
-    <option value="girl" data-i18n="voice_girl">بنت</option>
-    <option value="teacher" data-i18n="voice_teacher">معلّم</option>
-  </select>
+    <div class="row">
+      <button id="toggle-description-btn-animal" class="btn ghost" data-i18n="toggle_description">الوصف</button>
+    </div>
 
-  <button id="play-sound-btn-animal" data-i18n="play_name_audio">استمع للاسم</button>
-  <button id="play-baby-sound-btn-animal" data-i18n="play_baby_audio">استمع لاسم الابن</button>
+    <div class="row">
+      <label for="voice-select-animal" class="ctrl-label" data-i18n="voice">الصوت</label>
+      <select id="voice-select-animal" class="ctrl-select">
+        <option value="teacher" data-i18n="voice_teacher">معلّم</option>
+        <option value="boy"     data-i18n="voice_boy">ولد</option>
+        <option value="girl"    data-i18n="voice_girl">بنت</option>
+      </select>
+    </div>
 
-  <hr />
-
-  <button id="toggle-description-btn" data-i18n="toggle_description">إظهار/إخفاء الوصف</button>
-  <button id="toggle-details-btn" data-i18n="toggle_details">إظهار/إخفاء التفاصيل</button>
-  <button id="toggle-baby-image-btn" data-i18n="toggle_baby_image">إظهار/إخفاء صورة الابن</button>
-
-  <hr />
-
-  <div class="nav-controls">
-    <button id="prev-animal-btn" data-i18n="prev">السابق</button>
-    <button id="next-animal-btn" data-i18n="next">التالي</button>
+    <div class="row">
+      <label for="game-lang-select-animal" class="ctrl-label" data-i18n="language">اللغة</label>
+      <select id="game-lang-select-animal" class="ctrl-select">
+        <option value="ar">العربية</option>
+        <option value="en">English</option>
+        <option value="he">עברית</option>
+      </select>
+    </div>
   </div>
 </section>

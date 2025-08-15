@@ -43,3 +43,10 @@
 .tool-card img { width:100%; height:100px; object-fit:cover; border-radius:10px; }
 .tool-card .tool-name { margin-top:6px; text-align:center; font-size:0.95rem; }
 
+.item-main-name .first-letter{ color:#e53935; font-weight:900; margin-inline-end:4px; }
+
+/* لو أردت ضمان اللون هنا أيضًا */
+#sidebar .btn.ghost, #sidebar-section .btn.ghost{
+  background: linear-gradient(180deg, var(--btn-ghost-bg,#0ea5e9), var(--btn-ghost-bg-2,#0284c7));
+  color:#fff;
+}

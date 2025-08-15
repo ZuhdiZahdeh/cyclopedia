@@ -13,6 +13,17 @@
 
 #human-body-description-box { width:min(820px,100%); text-align:center; }
 #human-body-description-box .line{ margin:6px 0; }
+:root{
+  --btn-ghost-bg:   #0ea5e9;
+  --btn-ghost-bg-2: #0284c7;
+}
+#sidebar .btn.ghost,
+#sidebar-section .btn.ghost{
+  background: linear-gradient(180deg, var(--btn-ghost-bg), var(--btn-ghost-bg-2));
+  color:#fff;
+}
+/* كدعم إضافي للحرف الأول في كل الصفحات */
+.item-main-name .first-letter{ color:#e53935; font-weight:900; }
 
 /* موبايل */
 @media (max-width:900px){

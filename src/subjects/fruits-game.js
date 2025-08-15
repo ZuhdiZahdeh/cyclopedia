@@ -84,13 +84,11 @@ function onPlay() {
 function bindControls() {
   const prev = document.getElementById('prev-fruit-btn') || document.getElementById('prev-btn');
   const next = document.getElementById('next-fruit-btn') || document.getElementById('next-btn');
-  const play = document.getElementById('play-sound-btn-fruit') || document.getElementById('listen') || document.getElementById('listen-btn');
   const langSel  = document.getElementById('game-lang-select-fruit') || document.getElementById('game-lang-select');
   const toggleDesc = document.getElementById('toggle-description-btn-fruit') || document.getElementById('toggle-description-btn') || document.getElementById('toggle-description');
 
   if (prev) prev.onclick = onPrev;
   if (next) next.onclick = onNext;
-  if (play) play.onclick = onPlay;
 
   if (toggleDesc) {
     toggleDesc.onclick = () => {
@@ -107,12 +105,12 @@ function bindControls() {
       await loadLanguage(_uiLang);
       setDirection(_uiLang);
       applyTranslations();
-      // ترتيب حسب الاسم المترجم
       _raw.sort((a,b) => String(pickLocalized(a?.name,_uiLang)).localeCompare(pickLocalized(b?.name,_uiLang)));
       render();
     };
   }
 }
+
 
 export async function loadFruitsGameContent() {
   _uiLang = getCurrentLang();

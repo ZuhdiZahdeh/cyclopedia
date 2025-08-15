@@ -1,4 +1,4 @@
-// src/subjects/vegetables-game.js
+// src/subjects/vegetables-game.js  (UNIFIED, no listen button)
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
@@ -70,12 +70,10 @@ function onPlay(){
 function bind() {
   const prev = document.getElementById('prev-vegetable-btn') || document.getElementById('prev-btn');
   const next = document.getElementById('next-vegetable-btn') || document.getElementById('next-btn');
-  const play = document.getElementById('play-sound-btn-vegetable') || document.getElementById('listen') || document.getElementById('listen-btn');
   const langSel = document.getElementById('game-lang-select-vegetable') || document.getElementById('game-lang-select');
   let   toggleDesc = document.getElementById('toggle-description-btn-vegetable') || document.getElementById('toggle-description-btn') || document.getElementById('toggle-description');
 
   if (!toggleDesc) {
-    // إنشاء زر الوصف إذا لم يكن موجودًا
     const grid = document.querySelector('#vegetable-sidebar-controls .control-grid') || document.getElementById('vegetable-sidebar-controls');
     if (grid) {
       const row = document.createElement('div'); row.className = 'row';
@@ -88,7 +86,6 @@ function bind() {
 
   if (prev) prev.onclick = onPrev;
   if (next) next.onclick = onNext;
-  if (play) play.onclick = onPlay;
   if (toggleDesc) toggleDesc.onclick = () => {
     const box = document.getElementById('vegetable-description-box') || document.getElementById('subject-description-box') || document.getElementById('item-description-box');
     if (!box) return;

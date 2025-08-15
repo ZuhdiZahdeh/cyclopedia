@@ -1,6 +1,27 @@
-<!-- html/vegetables-controls.html -->
-<div class="control-grid" data-subject="vegetable">
-  <!-- السطر 1: اللغة -->
+<!-- html/vegetables-controls.html (unified, NO listen) -->
+<div class="control-grid" id="vegetable-sidebar-controls" data-subject="vegetable">
+  <!-- السابق / التالي -->
+  <div class="row two-col">
+    <button id="prev-vegetable-btn" class="btn secondary" type="button" data-i18n="prev">السابق</button>
+    <button id="next-vegetable-btn" class="btn primary"   type="button" data-i18n="next">التالي</button>
+  </div>
+
+  <!-- الوصف -->
+  <div class="row">
+    <button id="toggle-description-btn-vegetable" class="btn ghost" type="button" data-i18n="description">الوصف</button>
+  </div>
+
+  <!-- الصوت -->
+  <div class="row">
+    <label for="voice-select-vegetable" class="ctrl-label" data-i18n="voice">الصوت</label>
+    <select id="voice-select-vegetable" class="ctrl-select">
+      <option value="teacher" data-i18n="voice_teacher">صوت المعلّم</option>
+      <option value="boy"     data-i18n="voice_boy">صوت الولد</option>
+      <option value="girl"    data-i18n="voice_girl">صوت البنت</option>
+    </select>
+  </div>
+
+  <!-- اللغة -->
   <div class="row">
     <label for="game-lang-select-vegetable" class="ctrl-label" data-i18n="language">اللغة</label>
     <select id="game-lang-select-vegetable" class="ctrl-select">
@@ -8,31 +29,5 @@
       <option value="en">English</option>
       <option value="he">עברית</option>
     </select>
-  </div>
-
-  <!-- السطر 2: الصوت -->
-  <div class="row">
-    <label for="voice-select-vegetable" class="ctrl-label" data-i18n="voice">الصوت</label>
-    <select id="voice-select-vegetable" class="ctrl-select">
-      <option value="boy"     data-i18n="voice_boy">صوت الولد</option>
-      <option value="girl"    data-i18n="voice_girl">صوت البنت</option>
-      <option value="teacher" data-i18n="voice_teacher">صوت المعلّم</option>
-    </select>
-  </div>
-
-  <!-- السطر 3: السابق / التالي -->
-  <div class="row two-col">
-    <button id="prev-vegetable-btn" class="btn secondary" type="button" data-i18n="prev">السابق</button>
-    <button id="next-vegetable-btn" class="btn primary"   type="button" data-i18n="next">التالي</button>
-  </div>
-
-  <!-- السطر 4: استمع -->
-  <div class="row">
-    <button id="play-sound-btn-vegetable" class="btn listen" type="button" data-i18n="listen">استمع</button>
-  </div>
-
-  <!-- السطر 5: الوصف -->
-  <div class="row">
-    <button id="toggle-description-btn" class="btn ghost" type="button" data-i18n="description">الوصف</button>
   </div>
 </div>

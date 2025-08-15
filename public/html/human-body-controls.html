@@ -1,5 +1,27 @@
-<!-- html/human-body-controls.html -->
-<div class="control-grid" data-subject="human-body">
+<!-- /html/human-body-controls.html (unified, NO listen) -->
+<div class="control-grid" id="human-body-sidebar-controls" data-subject="human-body">
+  <!-- السابق / التالي -->
+  <div class="row two-col">
+    <button id="prev-human-body-btn" class="btn secondary" type="button" data-i18n="prev">السابق</button>
+    <button id="next-human-body-btn" class="btn primary"   type="button" data-i18n="next">التالي</button>
+  </div>
+
+  <!-- الوصف -->
+  <div class="row">
+    <button id="toggle-description-btn-human-body" class="btn ghost" type="button" data-i18n="description">الوصف</button>
+  </div>
+
+  <!-- الصوت -->
+  <div class="row">
+    <label for="voice-select-human-body" class="ctrl-label" data-i18n="voice">الصوت</label>
+    <select id="voice-select-human-body" class="ctrl-select">
+      <option value="teacher" data-i18n="voice_teacher">المعلّم</option>
+      <option value="boy"     data-i18n="voice_boy">ولد</option>
+      <option value="girl"    data-i18n="voice_girl">بنت</option>
+    </select>
+  </div>
+
+  <!-- اللغة -->
   <div class="row">
     <label for="game-lang-select-human-body" class="ctrl-label" data-i18n="language">اللغة</label>
     <select id="game-lang-select-human-body" class="ctrl-select">
@@ -7,23 +29,5 @@
       <option value="en">English</option>
       <option value="he">עברית</option>
     </select>
-  </div>
-  <div class="row">
-    <label for="voice-select-human-body" class="ctrl-label" data-i18n="voice">الصوت</label>
-    <select id="voice-select-human-body" class="ctrl-select">
-      <option value="boy" data-i18n="voice_boy">صوت الولد</option>
-      <option value="girl" data-i18n="voice_girl">صوت البنت</option>
-      <option value="teacher" data-i18n="voice_teacher">صوت المعلّم</option>
-    </select>
-  </div>
-  <div class="row two-col">
-    <button id="prev-human-body-btn" class="btn secondary" type="button" data-i18n="prev">السابق</button>
-    <button id="next-human-body-btn" class="btn primary"   type="button" data-i18n="next">التالي</button>
-  </div>
-  <div class="row">
-    <button id="play-sound-btn-human-body" class="btn listen" type="button" data-i18n="listen">استمع</button>
-  </div>
-  <div class="row">
-    <button id="toggle-description-btn" class="btn ghost" type="button" data-i18n="description">الوصف</button>
   </div>
 </div>

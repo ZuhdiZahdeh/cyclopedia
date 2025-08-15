@@ -1,4 +1,9 @@
 /* public/css/common-components-subjects.css */
+/* العنوان الرئيسي لكل صفحة عنصر */
+
+
+/* مؤشرات النقر */
+.clickable-text, .clickable-image { cursor: pointer; }
 
 /* صندوق اللعبة داخل المحتوى */
 .game-box{
@@ -28,7 +33,10 @@
   color:var(--color-text-primary);
 }
 /* تلوين الحرف الأول — يُولَّد كـ <span class="first-letter">A</span> من السكربت */
-.item-main-name .first-letter{ color:#d32f2f; }
+.item-main-name .highlight-first-letter{
+  color: var(--color-danger, #e53935);       /* أول حرف باللون الأحمر */
+  font-weight: 900;
+}
 .highlight-first-letter{color:red;font-weight:700;margin-inline-end:4px}
 
 
@@ -129,6 +137,15 @@
 /* =========================
    Account Actions (Sidebar)
    ========================= */
+/* زر الوصف (نفس مظهر "استمع" ولكن بالأزرق الفاتح) */
+#sidebar .btn.ghost{
+  background: linear-gradient(180deg, var(--btn-ghost-bg), var(--btn-ghost-bg-2));
+  color: #fff;
+}
+#sidebar .btn.ghost:hover{
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
 
 /* حاوية أزرار الحساب — ضَعها أسفل أقسام التحكم */
 .account-actions{
@@ -223,9 +240,12 @@
 }
 
 /* العنوان في المنتصف */
-.item-main-name{ 
-  text-align:center; 
-  margin:8px 0 12px; 
+.item-main-name{
+  margin: 8px 0 18px;
+  text-align: center;
+  line-height: 1.25;
+  font-weight: 800;                          /* Bold */
+  font-size: clamp(28px, 2.2vw + 18px, 46px);
 }
 
 /* جعل أي صورة رئيسية في الوسط */
@@ -256,11 +276,10 @@
   --btn-primary-bg-2:#ea580c;
   --btn-secondary-bg:#fb923c; /* برتقالي أغمق (Prev/وصف إن لزم) */
   --btn-secondary-bg-2:#f97316;
-  --btn-ghost-bg:   #0ea5e9; /* أزرق واضح (استمع) */
-  --btn-ghost-bg-2: #0284c7;
-
-  --btn-text-dark:   #0f172a;
-  --btn-text-light:  #ffffff;
+  --btn-ghost-bg:   	#0ea5e9; /* أزرق واضح (استمع) */
+  --btn-ghost-bg-2: 	#0284c7; /* أزرق أغمق قليلاً */
+  --btn-text-dark:   #0f172a; 	/* اسود فاتح*/
+  --btn-text-light:  #ffffff;	/* أبيض  */
 }
 
 /* الشكل الأساسي */

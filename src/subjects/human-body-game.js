@@ -1,4 +1,4 @@
-// src/subjects/human-body-game.js
+// /src/subjects/human-body-game.js (UNIFIED, no listen button)
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
@@ -36,13 +36,16 @@ function render() {
   const nameEl = pickEl('#subject-title','#human-body-word','#item-name','.subject-title','.subject-name');
   const imgEl  = pickEl('#subject-image','#human-body-image','#item-image','.subject-image img','.subject-image');
   const descEl = pickEl('#subject-description','#human-body-description','#item-description','.subject-description');
+  const catEl  = pickEl('#human-body-category','#item-category');
 
+  // الاسم: Bold + أول حرف أحمر + انقر للاستماع
   if (nameEl) {
     const s = String(view.name || '');
     nameEl.innerHTML = `<span class="first-letter">${s[0] || ''}</span>${s.slice(1)}`;
     nameEl.style.cursor = 'pointer';
     nameEl.onclick = onPlay;
   }
+  // الصورة: انقر للاستماع
   if (imgEl) {
     imgEl.alt = view.imageAlt || '';
     imgEl.onerror = () => console.warn('[human_body] missing image:', view.imagePath);
@@ -51,10 +54,12 @@ function render() {
     imgEl.onclick = onPlay;
   }
   if (descEl) descEl.textContent = view.description || '';
+  if (catEl)  catEl.textContent  = pickLocalized(_raw[_i]?.category, lang) || '—';
 }
 
 function onNext(){ if(!_raw.length) return; _i = (_i+1)%_raw.length; render(); try{recordActivity('human_body','next',{index:_i});}catch{} }
 function onPrev(){ if(!_raw.length) return; _i = (_i-1+_raw.length)%_raw.length; render(); try{recordActivity('human_body','prev',{index:_i});}catch{} }
+
 function onPlay(){
   const langSel  = document.getElementById('game-lang-select-human-body') || document.getElementById('game-lang-select');
   const voiceSel = document.getElementById('voice-select-human-body')     || document.getElementById('voice-select');
@@ -68,14 +73,23 @@ function onPlay(){
 function bind() {
   const prev = document.getElementById('prev-human-body-btn') || document.getElementById('prev-btn');
   const next = document.getElementById('next-human-body-btn') || document.getElementById('next-btn');
-  const play = document.getElementById('play-sound-btn-human-body') || document.getElementById('listen') || document.getElementById('listen-btn');
   const langSel = document.getElementById('game-lang-select-human-body') || document.getElementById('game-lang-select');
-  const toggleDesc = document.getElementById('toggle-description-btn-human-body') || document.getElementById('toggle-description-btn') || document.getElementById('toggle-description');
+  let   toggleDesc = document.getElementById('toggle-description-btn-human-body') || document.getElementById('toggle-description-btn') || document.getElementById('toggle-description');
 
   if (prev) prev.onclick = onPrev;
   if (next) next.onclick = onNext;
-  if (play) play.onclick = onPlay;
 
+  if (!toggleDesc) {
+    // أمان: لو لسبب ما لم يوجد زر الوصف، أنشئه سريعًا
+    const grid = document.getElementById('human-body-sidebar-controls') || document.querySelector('.control-grid[data-subject="human-body"]');
+    if (grid) {
+      const row = document.createElement('div'); row.className = 'row';
+      toggleDesc = document.createElement('button');
+      toggleDesc.id = 'toggle-description-btn-human-body';
+      toggleDesc.className = 'btn ghost'; toggleDesc.textContent = 'الوصف';
+      row.appendChild(toggleDesc); grid.appendChild(row);
+    }
+  }
   if (toggleDesc) {
     toggleDesc.onclick = () => {
       const box = document.getElementById('human-body-description-box') || document.getElementById('subject-description-box') || document.getElementById('item-description-box');

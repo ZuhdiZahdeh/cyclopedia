@@ -117,3 +117,9 @@
 #sidebar-section .btn.secondary { background: #fdae63; }   /* السابق */
 #sidebar-section .btn.listen    { background: #7ad6fb; }   /* استمع */
 #sidebar-section .btn.ghost     { background: #eaeef0; }   /* الوصف */
+/* أسفل الملف: ضمان لون زر الوصف */
+#sidebar-section .btn.ghost,
+#sidebar .btn.ghost{
+  background: linear-gradient(180deg, var(--btn-ghost-bg,#0ea5e9), var(--btn-ghost-bg-2,#0284c7));
+  color:#fff;
+}
