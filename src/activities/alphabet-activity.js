@@ -1,7 +1,8 @@
 // src/activities/alphabet-activity.js
-// نشاط الحروف — DEBUG v2
-// إصلاح جذري: دعم media.images و media.sounds كمصفوفات (array) أو كائنات،
-// + استخراج path بطريقة موحّدة، + Placeholder للصورة، + كاش فحص المسارات
+// نشاط الحروف — DEBUG v3 (إصلاح خطأ النشر: إزالة التكرارات)
+// - دعم media.images/sounds كمصفوفات أو كائنات
+// - Placeholder للصورة + كاش للمسارات
+// - بدون أي دوال مُعادة التصريح (No duplicate identifiers)
 
 import { db } from '@/core/db-handler.js';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -140,7 +141,7 @@ function pickAudioDirect(data, lang){
 /* ===================== محلّل احتمالات + فاحص ===================== */
 function buildImageCandidates(it){
   const dir = subjectToDir(it.subject);
-  const baseName = sanitizeId(it.image_base || it.id || it.name?.en || it.name?.ar);
+  const baseName = sanitizeId(it.image_base || it.id || it.name?.[state.lang] || it.name?.en || it.name?.ar);
   const bases = HINTS.imageBases, exts = HINTS.imageExts, out=[];
   if (dir && baseName){ for (const b of bases){ for (const e of exts){ out.push(`${b}/${dir}/${baseName}.${e}`); out.push(`${b}/${dir}/${baseName}_main.${e}`); out.push(`${b}/${dir}/${baseName}_1.${e}`); } } }
   if (baseName){ for (const b of bases){ for (const e of exts){ out.push(`${b}/${baseName}.${e}`); } } }
@@ -148,7 +149,7 @@ function buildImageCandidates(it){
 }
 function buildAudioCandidates(it, lang){
   const dir = subjectToDir(it.subject);
-  const baseName = sanitizeId(it.audio_base || it.sound_base || it.id || it.name?.en || it.name?.ar);
+  const baseName = sanitizeId(it.audio_base || it.sound_base || it.id || it.name?.[state.lang] || it.name?.en || it.name?.ar);
   const bases = HINTS.audioBases, exts = HINTS.audioExts, out=[];
   if (dir && baseName){ for (const b of bases){ for (const e of exts){ out.push(`${b}/${lang}/${dir}/${baseName}.${e}`); out.push(`${b}/${lang}/${dir}/${baseName}_main.${e}`); } } }
   if (baseName){ for (const b of bases){ for (const e of exts){ out.push(`${b}/${lang}/${baseName}.${e}`); } } }
@@ -479,66 +480,6 @@ function observeGlobalLang(){
   m.observe(document.documentElement, { attributes:true, attributeFilter:['lang'] });
   dbg('lang:observer-ready');
 }
-
-/* ===================== Firestore (core) ===================== */
-async function fetchItemsBySubjects(subjects){
-  const wanted = normalizeSubjects(subjects && subjects.length ? subjects : SUBJECTS);
-  const variants = expandSubjectVariants(wanted);
-  dbg('fetch:subjects', { wanted, variants });
-
-  const colRef = collection(db, 'items');
-  const bag = new Map();
-
-  for (const rec of await fetchByFieldValues(colRef, 'subject', variants)) bag.set(rec.id, rec.data);
-  if (bag.size < 5){
-    for (const altField of ['type','subjectType','category']){
-      const arr = await fetchByFieldValues(colRef, altField, variants);
-      for (const rec of arr) bag.set(rec.id, rec.data);
-    }
-  }
-  if (bag.size === 0){
-    dbg('fetch:fallback-full-scan');
-    const snapAll = await getDocs(colRef);
-    snapAll.forEach(doc => {
-      const data = doc.data();
-      const subj = normalizeDocSubject(data);
-      if (wanted.includes(subj)) bag.set(doc.id, data);
-    });
-  }
-
-  const all = [];
-  bag.forEach((data, id)=>{
-    const subject = normalizeDocSubject(data);
-    const rec = {
-      id, subject,
-      name: { ar: pickName(data,'ar'), en: pickName(data,'en'), he: pickName(data,'he') },
-      description: { ar: pickDescription(data,'ar'), en: pickDescription(data,'en'), he: pickDescription(data,'he') },
-      image: pickImageDirect(data) || '',
-      audio: { ar: pickAudioDirect(data,'ar') || '', en: pickAudioDirect(data,'en') || '', he: pickAudioDirect(data,'he') || '' },
-      tags: data?.tags || [], difficulty: data?.difficulty || 'normal',
-    };
-    all.push(rec);
-  });
-
-  const bySubject = all.reduce((acc,it)=>{ acc[it.subject]=(acc[it.subject]||0)+1; return acc; },{});
-  const missingName = all.filter(it => !it.name[state.lang]).length;
-  const sample = all.slice(0,12).map(it=>({ id: it.id, subject: it.subject, name: it.name[state.lang]||'', image: it.image, audio: it.audio[state.lang]||'' }));
-  dbg('fetched:summary', { total: all.length, bySubject, missingNameForLang: { lang: state.lang, count: missingName } });
-  dbgt('fetched:sample(<=12)', sample);
-
-  return all;
-}
-async function fetchByFieldValues(colRef, field, values){
-  const results = [];
-  for (const part of chunk(values, 10)){
-    const qy = query(colRef, where(field, 'in', part));
-    dbg('fetch:query', { field, part });
-    const snap = await getDocs(qy);
-    snap.forEach(doc => results.push({ id: doc.id, data: doc.data() }));
-  }
-  return results;
-}
-function normalizeDocSubject(d){ const raw = d.subject ?? d.type ?? d.subjectType ?? d.category ?? ''; return SUBJECT_ALIASES[raw] || raw; }
 
 export async function loadAlphabetActivity(){
   try{
