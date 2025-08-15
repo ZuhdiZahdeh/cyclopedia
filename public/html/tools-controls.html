@@ -1,27 +1,26 @@
-<!-- /html/tools-controls.html -->
+<!-- /html/tools-controls.html (NO-LISTEN v2) -->
 <div class="sidebar-section subject-controls" id="tools-sidebar-controls" style="display:block;">
   <h3 class="sidebar-title" data-i18n="tools.controls_title">🧰 أدوات — التحكم</h3>
 
   <div class="control-grid">
     <div class="row two-col">
       <button id="prev-tools-btn" class="btn secondary" data-i18n="common.prev">السابق</button>
-      <button id="next-tools-btn" class="btn primary"   data-i18n="common.next">التالي</button>
+      <button id="next-tools-btn" class="btn primary" data-i18n="common.next">التالي</button>
     </div>
 
-    <div class="row">
-      <button id="play-sound-btn-tools" class="btn listen" data-i18n="common.listen">استمع</button>
-    </div>
+    <!-- حُذِف زر الاستماع نهائيًا -->
 
     <div class="row">
-      <button id="toggle-description-btn-tools" class="btn ghost" data-i18n="common.toggle_description">الوصف</button>
+      <!-- إن أردت مظهر زر "استمع" لزر الوصف، أعطه الكلاس listen بدل ghost -->
+      <button id="toggle-description-btn-tools" class="btn listen" data-i18n="common.toggle_description">الوصف</button>
     </div>
 
     <div class="row">
       <label for="voice-select-tools" class="ctrl-label" data-i18n="common.voice">الصوت</label>
       <select id="voice-select-tools" class="ctrl-select">
         <option value="teacher" data-i18n="voices.teacher">المعلم</option>
-        <option value="boy"     data-i18n="voices.boy">ولد</option>
-        <option value="girl"    data-i18n="voices.girl">بنت</option>
+        <option value="boy" data-i18n="voices.boy">ولد</option>
+        <option value="girl" data-i18n="voices.girl">بنت</option>
       </select>
     </div>
 
