@@ -1,4 +1,4 @@
-// src/subjects/tools-match-game.js — Unified items (tools + professions)
+// src/subjects/tools-match-game.js — Unified items (tools + professions) — RELATIONS-ONLY
 
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs, query, where, limit } from 'firebase/firestore';
@@ -21,7 +21,7 @@ const state = {
   voice: 'teacher',
   mode: 'image-image',  // image-image | image-text | text-image | sound-image | sound-text | text-text
   currentTool: null,
-  currentCorrectProfessionId: null,
+  currentCorrectProfessionIds: [],  // ← ندعم عدة إجابات صحيحة
   options: []
 };
 
@@ -29,13 +29,24 @@ function imagesDirFor(t){ return IMAGES_DIR[t] || `${t}s`; }
 function audioDirFor(t){ return AUDIO_DIR[t]  || `${t}s`; }
 function isRtl(lang){ return lang === 'ar' || lang === 'he'; }
 
-/* --------------------------- أدوات موحّدة --------------------------- */
+/* --------------------------- أدوات مساعدة --------------------------- */
 function pickMainImageFromMedia(media) {
   if (!media || !Array.isArray(media.images)) return '';
   const main = media.images.find(it => (it.role === 'main' || it.id === 'main'));
   return (main && (main.path || main.url)) || (media.images[0]?.path || media.images[0]?.url || '');
 }
+function tName(obj, lang){ return (obj?.name?.[lang] || obj?.name?.en || obj?.name?.ar || obj?.name?.he || '').trim(); }
+function pickRandom(arr, n){
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
+}
 
+/* --------------------------- توحيد الوثائق --------------------------- */
+// الأداة: نقرأ relations.professions كسلسلة IDs للمهن
 function unifyTool(doc){
   const d = doc.data();
   const name  = d.name || {};
@@ -46,8 +57,9 @@ function unifyTool(doc){
   const voices = d.voices || d.sound || d.sounds || null;
   const sound_base = d.sound_base || d.soundBase || null;
 
-  // مصفوفة المهن المرتبطة: قد تكون IDs أو أكواد
-  const professions = Array.isArray(d.professions) ? d.professions : [];
+  const rel = d.relations || {};
+  const profession_ids_from_rel = Array.isArray(rel.professions) ? rel.professions : []; // ← المهم عندك
+  const professions_by_name     = Array.isArray(d.professions)   ? d.professions   : []; // fallback بالأسماء
 
   return {
     id: doc.id,
@@ -57,10 +69,13 @@ function unifyTool(doc){
     image_file: d.image || d.image_file || '',
     voices,
     sound_base,
-    professions // as-is (قد تكون ids)
+    // روابط
+    profession_ids_from_rel,
+    professions_by_name
   };
 }
 
+// المهنة: نقرأ relations.tools كسلسلة IDs للأدوات (للربط العكسي عند الحاجة)
 function unifyProfession(doc){
   const d = doc.data();
   const name  = d.name || {};
@@ -69,12 +84,16 @@ function unifyProfession(doc){
                   || pickMainImageFromMedia(media)
                   || (d.image ? `images/${imagesDirFor('profession')}/${d.image}` : '');
 
+  const rel = d.relations || {};
+  const tool_ids_from_rel = Array.isArray(rel.tools) ? rel.tools : [];
+
   return {
     id: doc.id,
     type: 'profession',
     name: { ar: name.ar || d.name_ar || '', en: name.en || d.name_en || '', he: name.he || d.name_he || '' },
     image_path,
-    image_file: d.image || d.image_file || ''
+    image_file: d.image || d.image_file || '',
+    tool_ids_from_rel
   };
 }
 
@@ -102,8 +121,6 @@ function resolveAudioForTool(tool, lang, voice){
   return '';
 }
 
-function tName(obj, lang){ return (obj?.name?.[lang] || obj?.name?.en || obj?.name?.ar || obj?.name?.he || '').trim(); }
-
 /* --------------------------- جلب البيانات --------------------------- */
 async function fetchByTypes(syns){
   const ref = collection(db, 'items');
@@ -122,7 +139,58 @@ async function loadData(){
   state.professions = pDocs.map(unifyProfession);
 }
 
-/* --------------------------- عرض اللعبة --------------------------- */
+/* --------------------------- اختيار الإجابة الصحيحة --------------------------- */
+// نعيد قائمة IDs صحيحة، باستعمال الربط من الأداة أولًا، ثم الربط العكسي من المهنة، ثم fallback بالأسماء
+function chooseCorrectProfessionIds(tool){
+  const profs = state.professions;
+
+  // 1) ids من relations.professions داخل الأداة
+  const fromRel = (tool.profession_ids_from_rel || []).filter(Boolean);
+  const matchByRelIds = profs
+    .filter(p => fromRel.includes(p.id))
+    .map(p => p.id);
+
+  if (matchByRelIds.length) return matchByRelIds;
+
+  // 2) الربط العكسي: أي مهنة تشير للأداة عبر relations.tools
+  const reverseMatches = profs
+    .filter(p => Array.isArray(p.tool_ids_from_rel) && p.tool_ids_from_rel.includes(tool.id))
+    .map(p => p.id);
+
+  if (reverseMatches.length) return reverseMatches;
+
+  // 3) fallback بالأسماء لو عندك tools.professions أسماء (ar/en/he) قديمة
+  const names = Array.isArray(tool.professions_by_name) ? tool.professions_by_name : [];
+  if (names.length){
+    const matchByNames = profs.filter(p =>
+      names.includes(p?.name?.ar) || names.includes(p?.name?.en) || names.includes(p?.name?.he)
+    ).map(p => p.id);
+    if (matchByNames.length) return matchByNames;
+  }
+
+  // 4) احتياطي
+  console.warn('[tools-match] لا يوجد ربط صالح لهذه الأداة:', tool.id, tool.name?.en || tool.name?.ar);
+  return [];
+}
+
+/* --------------------------- بناء الخيارات --------------------------- */
+function buildOptions(correctIds){
+  const correctSet = new Set(correctIds);
+  const correctList = state.professions.filter(p => correctSet.has(p.id));
+
+  // اختر حتى 2 إجابات صحيحة لإظهارها (إن توفرت)
+  const chosenCorrect = pickRandom(correctList, Math.min(2, correctList.length));
+
+  // كمل بـ 2–3 مُشتّتات حتى يصل المجموع إلى 4
+  const distractors = state.professions.filter(p => !correctSet.has(p.id));
+  const need = Math.max(0, 4 - chosenCorrect.length);
+  const chosenDistractors = pickRandom(distractors, need);
+
+  const all = [...chosenCorrect, ...chosenDistractors].slice(0, 4);
+  return pickRandom(all, all.length); // اخلط
+}
+
+/* --------------------------- العرض --------------------------- */
 function $(sel){ return document.querySelector(sel); }
 function clearResult(){
   const msg = $('#result-message');
@@ -133,54 +201,11 @@ function disableOptions(disabled){
   document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = disabled);
 }
 
-function pickRandom(arr, n){
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--){
-    const j = Math.floor(Math.random() * (i+1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy.slice(0, n);
-}
-
-function chooseTool(){
-  if (!state.tools.length) return null;
-  return state.tools[Math.floor(Math.random() * state.tools.length)];
-}
-
-function chooseCorrectProfessionId(tool){
-  // نحاول من حقل tool.professions (IDs أو أسماء)
-  const ids = (tool.professions || []).filter(Boolean);
-  if (!ids.length) {
-    // احتياطي: اختر واحدة عشوائيًا
-    const any = state.professions.length ? state.professions[0].id : null;
-    return any;
-  }
-  // لو كانت أسماء، حوّلها إلى ID بمطابقة الاسم الحالي (تقريبي)
-  const lang = state.lang;
-  const profSet = new Set(ids);
-  // طابق بالـid مباشرة إن وُجد
-  const byId = state.professions.find(p => profSet.has(p.id));
-  if (byId) return byId.id;
-
-  // طابق بالأسماء (ar/en/he)
-  const byName = state.professions.find(p => ids.includes(tName(p, lang)) || ids.includes(tName(p,'en')) || ids.includes(tName(p,'ar')) || ids.includes(tName(p,'he')));
-  return byName ? byName.id : (state.professions[0]?.id || null);
-}
-
-function buildOptions(correctId){
-  const correct = state.professions.find(p => p.id === correctId);
-  const distractors = state.professions.filter(p => p.id !== correctId);
-  const pool = pickRandom(distractors, Math.max(0, 3));
-  const all = [...pool, correct];
-  return pickRandom(all, all.length); // اخلط
-}
-
 function renderToolDisplay(){
   const holder = document.querySelector('.tool-display');
   if (!holder) return;
   const lang = state.lang;
 
-  // حدد طريقة عرض الأداة (صورة / نص / صوت)
   const showText = state.mode.startsWith('text-');    // النص للأداة
   const showSound= state.mode.startsWith('sound-');   // الصوت للأداة
   const imgSrc   = resolveImage(state.currentTool);
@@ -192,20 +217,17 @@ function renderToolDisplay(){
     holder.innerHTML = `<img id="tool-image" class="tool-image clickable-image" src="${imgSrc}" alt="${toolText}" />`;
   }
 
-  // تشغيل الصوت تلقائيًا في أنماط الصوت
   if (showSound){
     const src = resolveAudioForTool(state.currentTool, state.lang, state.voice);
     if (src) playAudio(src);
   }
 
-  // زر "استمع مرة أخرى"
   const replayBtn = $('#tools-match-replay-sound-btn');
   if (replayBtn){
     replayBtn.onclick = () => {
       const src = resolveAudioForTool(state.currentTool, state.lang, state.voice);
       if (src) playAudio(src);
     };
-    // أخفِ/أظهر حسب النمط
     replayBtn.style.display = showSound ? '' : 'none';
   }
 }
@@ -249,13 +271,12 @@ function renderOptions(){
 }
 
 function onOptionClick(chosenId, btnEl){
-  const correct = state.currentCorrectProfessionId;
   const msg = $('#result-message');
 
   document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
   btnEl.classList.add('selected');
 
-  if (chosenId === correct){
+  if (state.currentCorrectProfessionIds.includes(chosenId)){
     if (msg){ msg.textContent = (state.lang==='ar'?'إجابة صحيحة!': state.lang==='he'?'תשובה נכונה!':'Correct!'); msg.className = 'result-message ok'; }
     disableOptions(true);
     const user = JSON.parse(localStorage.getItem('user'));
@@ -266,13 +287,23 @@ function onOptionClick(chosenId, btnEl){
   }
 }
 
+/* --------------------------- جولات اللعبة --------------------------- */
+function chooseTool(){
+  if (!state.tools.length) return null;
+  return state.tools[Math.floor(Math.random() * state.tools.length)];
+}
+
 function nextRound(){
   clearResult();
   state.currentTool = chooseTool();
   if (!state.currentTool) return;
 
-  state.currentCorrectProfessionId = chooseCorrectProfessionId(state.currentTool);
-  state.options = buildOptions(state.currentCorrectProfessionId);
+  state.currentCorrectProfessionIds = chooseCorrectProfessionIds(state.currentTool);
+  // ضمان وجود خيار صحيح واحد على الأقل: إن لم نجد، خذ أول مهنة كحلّ احتياطي حتى لا تتعطل الواجهة
+  if (!state.currentCorrectProfessionIds.length && state.professions.length) {
+    state.currentCorrectProfessionIds = [state.professions[0].id];
+  }
+  state.options = buildOptions(state.currentCorrectProfessionIds);
 
   renderToolDisplay();
   renderOptions();
@@ -280,21 +311,17 @@ function nextRound(){
 
 /* --------------------------- ربط الصفحة والسايدبار --------------------------- */
 export async function loadToolsMatchGameContent(){
-  // الصفحة HTML جاهزة في /html/tools-match.html
-  // نضمن تحميل البيانات ثم نبدأ أول جولة
   await loadData();
   state.lang = getCurrentLang();
   setDirection(state.lang);
 
-  // زر "التالي"
-  const nextBtn = $('#next-button');
+  const nextBtn = document.querySelector('#next-button');
   if (nextBtn) nextBtn.onclick = () => nextRound();
 
   nextRound();
   try { await applyTranslations(); } catch {}
 }
 
-// يُستدعى بعد حقن /html/tools-match-controls.html في السايدبار
 export function initializeToolsMatchSidebarControls(){
   const langSel  = document.getElementById('tools-match-lang-select');
   const voiceSel = document.getElementById('tools-match-voice-select');
@@ -315,7 +342,6 @@ export function initializeToolsMatchSidebarControls(){
     voiceSel.value = state.voice;
     voiceSel.onchange = (e) => {
       state.voice = e.target.value;
-      // إن كنا في نمط صوت، حدّث المشغل
       if (state.mode.startsWith('sound-')) {
         const src = resolveAudioForTool(state.currentTool, state.lang, state.voice);
         if (src) playAudio(src);
