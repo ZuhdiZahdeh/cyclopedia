@@ -163,7 +163,7 @@ function onPlay(){
   const langSel  = document.getElementById('game-lang-select-animal') || document.getElementById('game-lang-select');
   const voiceSel = document.getElementById('voice-select-animal')     || document.getElementById('voice-select');
   const lang  = (langSel?.value || _uiLang || getCurrentLang());
-  const voice = (voiceSel?.value || 'teacher');
+  const voice = (voiceSel?.value || 'boy');
   const src   = audioPathAnimal(_raw[_i], lang, voice);
   stopCurrentAudio?.();
   if (src) playAudio(src);
@@ -173,7 +173,7 @@ function onPlayBaby(){
   const langSel  = document.getElementById('game-lang-select-animal') || document.getElementById('game-lang-select');
   const voiceSel = document.getElementById('voice-select-animal')     || document.getElementById('voice-select');
   const lang  = (langSel?.value || _uiLang || getCurrentLang());
-  const voice = (voiceSel?.value || 'teacher');
+  const voice = (voiceSel?.value || 'boy');
   const src   = audioPathBaby(_raw[_i], lang, voice);
   stopCurrentAudio?.();
   if (src) playAudio(src);

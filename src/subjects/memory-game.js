@@ -287,7 +287,7 @@ function createBoard(){
       cardSet.push({ type:'char',  value:ch,  id:item.id, ...names });
     }
     if (currentPlayMode === 'image-audio'){
-      const audio = resolveAudioPath(item, getCurrentLang(), 'teacher');
+      const audio = resolveAudioPath(item, getCurrentLang(), 'boy');
       if (audio){
         cardSet.push({ type:'image', value:img,   id:item.id, ...names });
         cardSet.push({ type:'audio', value:audio, id:item.id, ...names, image_url_for_audio_card: img });

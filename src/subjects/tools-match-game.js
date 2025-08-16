@@ -18,7 +18,7 @@ const state = {
   tools: [],
   professions: [],
   lang: getCurrentLang(),
-  voice: 'teacher',
+  voice: 'boy',
   mode: 'image-image',  // image-image | image-text | text-image | sound-image | sound-text | text-text
   currentTool: null,
   currentCorrectProfessionIds: [],  // ← ندعم عدة إجابات صحيحة
@@ -120,6 +120,22 @@ function resolveAudioForTool(tool, lang, voice){
   }
   return '';
 }
+function resolveAudioForToolWithFallback(tool, lang, voice){
+  // جرّب الصوت المطلوب أولاً
+  let src = resolveAudioForTool(tool, lang, voice);
+  if (src) return src;
+
+  // Fallback منظم (لا يغيّر اختيار المستخدم؛ فقط يحاول تشغيل المتاح)
+  const order = voice === 'boy'
+    ? ['boy', 'girl','teacher']
+    : [voice, 'boy', 'girl','teacher'];
+
+  for (const v of order){
+    src = resolveAudioForTool(tool, lang, v);
+    if (src) return src;
+  }
+  return '';
+}
 
 /* --------------------------- جلب البيانات --------------------------- */
 async function fetchByTypes(syns){
@@ -211,26 +227,55 @@ function renderToolDisplay(){
   const imgSrc   = resolveImage(state.currentTool);
   const toolText = tName(state.currentTool, lang) || '—';
 
+  // حقن واجهة الأداة
   if (showText){
     holder.innerHTML = `<div class="tool-name" style="direction:${isRtl(lang)?'rtl':'ltr'}">${toolText}</div>`;
   } else {
     holder.innerHTML = `<img id="tool-image" class="tool-image clickable-image" src="${imgSrc}" alt="${toolText}" />`;
   }
 
+  // 🔊 تشغيل تلقائي فقط في أنماط الصوت
   if (showSound){
-    const src = resolveAudioForTool(state.currentTool, state.lang, state.voice);
-    if (src) playAudio(src);
+    const autoSrc = resolveAudioForToolWithFallback(state.currentTool, state.lang, state.voice);
+    if (autoSrc) playAudio(autoSrc);
   }
 
-  const replayBtn = $('#tools-match-replay-sound-btn');
+  // ⏯ زر "استمع مرة أخرى"
+  const replayBtn = document.getElementById('tools-match-replay-sound-btn');
   if (replayBtn){
     replayBtn.onclick = () => {
-      const src = resolveAudioForTool(state.currentTool, state.lang, state.voice);
+      const src = resolveAudioForToolWithFallback(state.currentTool, state.lang, state.voice);
       if (src) playAudio(src);
     };
+    // نُظهر الزر فقط في أنماط الصوت (كما كان)
     replayBtn.style.display = showSound ? '' : 'none';
   }
+
+  // 🖱️ تشغيل الصوت عند الضغط على الأداة (صورة أو نص) — دائمًا
+  const clickTarget = showText
+    ? holder.querySelector('.tool-name')
+    : holder.querySelector('#tool-image');
+
+  if (clickTarget){
+    clickTarget.style.cursor = 'pointer';
+    clickTarget.tabIndex = 0;                    // وصولية
+    clickTarget.title = 'اضغط للاستماع';        // تلميح بسيط
+
+    const play = () => {
+      const src = resolveAudioForToolWithFallback(state.currentTool, state.lang, state.voice);
+      if (src) playAudio(src);
+    };
+
+    clickTarget.addEventListener('click', play);
+    clickTarget.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        play();
+      }
+    });
+  }
 }
+
 
 function renderOptions(){
   const grid = $('#profession-options');

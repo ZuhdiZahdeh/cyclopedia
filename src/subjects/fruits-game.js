@@ -75,7 +75,7 @@ function onPlay() {
   const langSel  = document.getElementById('game-lang-select-fruit') || document.getElementById('game-lang-select');
   const voiceSel = document.getElementById('voice-select-fruit')     || document.getElementById('voice-select');
   const lang  = (langSel?.value || _uiLang || getCurrentLang());
-  const voice = (voiceSel?.value || 'teacher');
+  const voice = (voiceSel?.value || 'boy');
   const src   = getAudioPath(_raw[_i], lang, voice);
   stopCurrentAudio?.();
   if (src) playAudio(src);

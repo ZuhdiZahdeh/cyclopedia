@@ -136,7 +136,7 @@ function onPlay(){
   const langSel  = document.getElementById('game-lang-select-human-body') || document.getElementById('game-lang-select');
   const voiceSel = document.getElementById('voice-select-human-body')     || document.getElementById('voice-select');
   const lang  = (langSel?.value || _uiLang || getCurrentLang());
-  const voice = (voiceSel?.value || 'teacher');
+  const voice = (voiceSel?.value || 'boy');
   const src   = audioPath(_raw[_i], lang, voice);
   stopCurrentAudio?.();
   if (src) playAudio(src);

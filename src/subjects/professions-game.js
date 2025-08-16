@@ -26,7 +26,7 @@ function resolveImagePath(item) {
 }
 
 // اختيار مسار الصوت (sound[lang][voice] → voices → تركيب افتراضي)
-function audioPath(item, lang, voice='teacher') {
+function audioPath(item, lang, voice='boy') {
   const s = item?.sound;
   if (s && s[lang]) {
     const node = s[lang];
@@ -185,7 +185,7 @@ function bindControls() {
 
   if (prevBtn) prevBtn.onclick = showPreviousProfession;
   if (nextBtn) nextBtn.onclick = showNextProfession;
-  if (voiceSel && !voiceSel.value) voiceSel.value = 'teacher';
+  if (voiceSel && !voiceSel.value) voiceSel.value = 'boy';
 
   if (langSel) {
     try { langSel.value = getCurrentLang(); } catch {}

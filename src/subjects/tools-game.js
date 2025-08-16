@@ -207,7 +207,7 @@ async function renderCurrentTool(lang = currentUILang) {
 /* -------------------- الصوت/التبديل -------------------- */
 function playCurrentToolAudio() {
   stopCurrentAudio?.();
-  const voice = document.getElementById(els.voiceSelId)?.value || 'teacher';
+  const voice = document.getElementById(els.voiceSelId)?.value || 'boy';
   const path  = toolAudioPath(currentToolData, currentUILang, voice);
   if (path) playAudio(path);
 }
