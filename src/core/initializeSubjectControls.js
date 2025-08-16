@@ -1,36 +1,38 @@
 // src/core/initializeSubjectControls.js
 import { getCurrentLang } from './lang-handler.js';
 
-function controlsTemplate(prefix, { withDescriptionToggle = false } = {}) {
+// قالب مطابق لصفحة الأدوات: [السابق|التالي] ثم [الوصف] ثم [الصوت] ثم [اللغة]
+function controlsTemplate(prefix, { withDescription = true } = {}) {
   const lang = getCurrentLang() || 'ar';
   return `
-    <div class="sidebar-controls">
-      <div class="control-group">
-        <label for="game-lang-select-${prefix}" data-i18n="Language">اللغة</label>
-        <select id="game-lang-select-${prefix}">
-          <option value="ar" data-i18n="lang_arabic" ${lang === 'ar' ? 'selected' : ''}>العربية</option>
-          <option value="en" data-i18n="lang_english" ${lang === 'en' ? 'selected' : ''}>English</option>
-          <option value="he" data-i18n="lang_hebrew"  ${lang === 'he' ? 'selected' : ''}>עברית</option>
+    <div class="control-grid">
+      <div class="row two-col">
+        <button id="prev-${prefix}-btn" class="btn secondary" data-i18n="common.prev">السابق</button>
+        <button id="next-${prefix}-btn" class="btn primary" data-i18n="common.next">التالي</button>
+      </div>
+
+      ${withDescription ? `
+      <div class="row">
+        <!-- استخدمت نفس مظهر زر الأدوات -->
+        <button id="toggle-description-btn-${prefix}" class="btn listen" data-i18n="common.toggle_description">الوصف</button>
+      </div>` : ''}
+
+      <div class="row">
+        <label for="voice-select-${prefix}" class="ctrl-label" data-i18n="common.voice">الصوت</label>
+        <select id="voice-select-${prefix}" class="ctrl-select">
+          <option value="teacher" data-i18n="voices.teacher">المعلم</option>
+          <option value="boy" data-i18n="voices.boy">ولد</option>
+          <option value="girl" data-i18n="voices.girl">بنت</option>
         </select>
       </div>
 
-      <div class="control-group">
-        <label for="voice-select-${prefix}" data-i18n="Voice">الصوت</label>
-        <select id="voice-select-${prefix}">
-          <option value="boy"     data-i18n="boy_voice">صوت الولد</option>
-          <option value="girl"    data-i18n="girl_voice">صوت البنت</option>
-          <option value="teacher" data-i18n="teacher_voice">صوت المعلم</option>
+      <div class="row">
+        <label for="game-lang-select-${prefix}" class="ctrl-label" data-i18n="common.language">اللغة</label>
+        <select id="game-lang-select-${prefix}" class="ctrl-select">
+          <option value="ar" ${lang==='ar'?'selected':''}>العربية</option>
+          <option value="en" ${lang==='en'?'selected':''}>English</option>
+          <option value="he" ${lang==='he'?'selected':''}>עברית</option>
         </select>
-      </div>
-
-      <div class="control-actions">
-        <button id="prev-${prefix}-btn" class="btn" data-i18n="previous">◀ السابق</button>
-        <button id="play-sound-btn-${prefix}" class="btn" data-i18n="listen">▶ استمع</button>
-        <button id="next-${prefix}-btn" class="btn" data-i18n="next">التالي ▶</button>
-        ${withDescriptionToggle
-          ? `<button id="toggle-description-btn-${prefix}" class="btn secondary" data-i18n="show_description">📝 الوصف</button>`
-          : ''
-        }
       </div>
     </div>
   `;
@@ -39,72 +41,52 @@ function controlsTemplate(prefix, { withDescriptionToggle = false } = {}) {
 export function initializeSubjectControls(subjectType) {
   const id = `${subjectType}-sidebar-controls`;
   const host = document.getElementById(id);
-  if (!host) {
-    console.warn(`[sidebar] الحاوية غير موجودة: #${id}`);
-    return;
-  }
+  if (!host) { console.warn(`[sidebar] الحاوية غير موجودة: #${id}`); return; }
 
   let html = '';
-
   switch (subjectType) {
-    case 'fruit': {
-      // نفس نسق الخضروات (بدون أزرار إضافية)
-      html = controlsTemplate('fruit');
+    // كل هذه المواضيع ستأخذ نفس شريط الأدوات تماماً
+    case 'fruit':
+    case 'vegetable':
+    case 'human-body':
+    case 'animal':
+    case 'profession':
+      html = controlsTemplate(subjectType, { withDescription: true });
       break;
-    }
 
-    case 'vegetable': {
-      html = controlsTemplate('vegetable');
-      break;
-    }
-
-    case 'human-body': {
-      html = controlsTemplate('human-body');
-      break;
-    }
-
-    case 'profession': {
-      // المهن: نضيف زر الوصف + (التفاصيل/الأدوات) مثل ما اتفقنا
-      html = controlsTemplate('profession', { withDescriptionToggle: true });
-      html += `
-        <div class="control-actions">
-          <button id="toggle-details-btn-profession" class="btn secondary" data-i18n="show_details">ℹ️ التفاصيل</button>
-          <button id="toggle-tools-btn-profession"   class="btn secondary" data-i18n="tool_related_professions">🧰 الأدوات</button>
-        </div>
-      `;
-      break;
-    }
-
-    case 'animal': {
-      // الحيوانات: نضيف الوصف + التفاصيل + صورة الابن + زر صوت الابن (باللواحق المطلوبة)
-      html = controlsTemplate('animal', { withDescriptionToggle: true });
-      html += `
-        <div class="control-actions">
-          <button id="play-baby-sound-btn-animal"   class="btn"          data-i18n="listen_baby_animal">👶🔊 اسم الابن</button>
-          <button id="toggle-details-btn-animal"    class="btn secondary" data-i18n="show_details">ℹ️ التفاصيل</button>
-          <button id="toggle-baby-image-btn-animal" class="btn secondary" data-i18n="show_baby_image">🍼 صورة الابن</button>
-        </div>
-      `;
-      break;
-    }
-
+    // صفحات الألعاب/خلافه
     case 'tools':
     case 'alphabet-press':
     case 'memory-game':
-    case 'tools-match': {
+    case 'tools-match':
       html = `<div class="sidebar-tip" data-i18n="start_game">ابدأ اللعب</div>`;
       break;
-    }
 
-    default: {
+    default:
       html = `<div class="sidebar-tip" data-i18n="select_topic">اختر الموضوع</div>`;
-    }
+  }
+
+  // إضافات خاصة (تأتي أسفل الشريط الموحد)
+  if (subjectType === 'animal') {
+    html += `
+    <div class="control-grid">
+      <div class="row"><button id="play-baby-sound-btn-animal" class="btn" data-i18n="listen_baby_animal">👶🔊 اسم الابن</button></div>
+      <div class="row"><button id="toggle-details-btn-animal" class="btn secondary" data-i18n="show_details">ℹ️ التفاصيل</button></div>
+      <div class="row"><button id="toggle-baby-image-btn-animal" class="btn secondary" data-i18n="show_baby_image">🍼 صورة الابن</button></div>
+    </div>`;
+  }
+  if (subjectType === 'profession') {
+    html += `
+    <div class="control-grid">
+      <div class="row"><button id="toggle-details-btn-profession" class="btn secondary" data-i18n="show_details">ℹ️ التفاصيل</button></div>
+      <div class="row"><button id="toggle-tools-btn-profession" class="btn secondary" data-i18n="tool_related_professions">🧰 الأدوات</button></div>
+    </div>`;
   }
 
   host.innerHTML = html;
   host.style.display = 'block';
 
-  // أبقِ القسم الثابت (إن وُجد) ظاهرًا
+  // أبقِ قسم "حسابك" ظاهرًا
   const staticSection = document.querySelector('#sidebar-section .static-section');
   if (staticSection) staticSection.style.display = '';
 }

@@ -7,25 +7,43 @@ import { pickLocalized, slugify } from '../core/media-utils.js';
 
 const SUBJECT_KEY = 'human_body';
 
+// بديل SVG inline لا يحتاج شبكة (نستخدمه إن فشل حتى /images/404.png)
+const FALLBACK_IMG_DATA =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500">
+       <rect width="100%" height="100%" fill="#f7f7f7"/>
+       <rect x="20" y="20" width="760" height="460" rx="16" ry="16" fill="#ffffff" stroke="#e6e6e6"/>
+       <text x="50%" y="50%" font-size="28" font-family="sans-serif" fill="#9aa0a6"
+             dominant-baseline="middle" text-anchor="middle">Image not found</text>
+     </svg>`
+  );
+
 let _raw = [];
 let _i = 0;
 let _uiLang = 'ar';
 
-const $q = (s) => document.querySelector(s);
-const pickEl = (...sels) => sels.map(s => $q(s)).find(Boolean) || null;
-
-const FALLBACK_404 = '/images/404.png'; // ضع الصورة في هذا المسار أو غيّره لما يناسبك
+const $ = (s) => document.querySelector(s);
+const pickEl = (...sels) => sels.map(s => $(s)).find(Boolean) || null;
 
 function toPublicUrl(p) {
-  if (!p) return FALLBACK_404;
-  let path = String(p).trim().replace(/^public\//i, '');
+  if (!p) return '';
+  let path = String(p).trim();
+  // لا نستخدم public/ مع Vite
+  path = path.replace(/^public\//i, '');
   if (!path.startsWith('/')) path = '/' + path;
   return path;
 }
 
-function getImgPath(view, raw) {
-  const p = view?.imagePath || raw?.image_path || raw?.imagePath || raw?.image || '';
-  return toPublicUrl(p);
+function getImagePath(raw, view) {
+  // نقبل أكثر من تسمية للحقل
+  const src =
+    view?.imagePath ||
+    raw?.image_path ||
+    raw?.imagePath ||
+    raw?.image ||
+    '';
+  return toPublicUrl(src);
 }
 
 function audioPath(raw, lang, voice) {
@@ -38,8 +56,45 @@ function audioPath(raw, lang, voice) {
   }
   if (typeof raw?.sound_file === 'string') return raw.sound_file.startsWith('/') ? raw.sound_file : `/${raw.sound_file}`;
   if (typeof raw?.audio === 'string')      return raw.audio.startsWith('/') ? raw.audio : `/${raw.audio}`;
-  const base = raw?.sound_base || raw?.audio_base || raw?.base || raw?.id || slugify(pickLocalized(raw?.name, lang));
+  const base = raw?.sound_base || raw?.audio_base || raw?.id || slugify(pickLocalized(raw?.name, lang) || '');
   return base ? `/audio/${lang}/human_body/${slugify(base)}_${voice}_${lang}.mp3` : '';
+}
+
+/**
+ * يضبط صورة العنصر مرة واحدة بشكل آمن:
+ * - يعيّن src المطلوب.
+ * - لو فشل التحميل: يبدّل إلى /images/404.png مرة واحدة فقط.
+ * - لو فشل حتى 404.png: يضع SVG inline (FALLBACK_IMG_DATA).
+ * لا حلقات إطلاقًا.
+ */
+function setImgOnce(el, src) {
+  if (!el) return;
+
+  // أزل أي onerror مباشر قديم
+  el.onerror = null;
+
+  // مستمع خطأ "مرة واحدة فقط"
+  const onerr = () => {
+    el.removeEventListener('error', onerr);
+    el.classList.add('img-error');
+
+    const current = el.getAttribute('src') || '';
+    // إن كان الخطأ على الصورة الأصلية، جرّب 404.png
+    if (!current.endsWith('/images/404.png') && !current.startsWith('data:image')) {
+      el.src = '/images/404.png'; // موجودة الآن داخل public/images/404.png
+      // لو فشلت 404.png أيضًا، نستخدم SVG inline (لن يسبّب أي طلب شبكة)
+      el.addEventListener('error', () => { el.src = FALLBACK_IMG_DATA; }, { once: true });
+      return;
+    }
+
+    // لو وصلنا هنا، استخدم SVG inline مباشرة
+    el.src = FALLBACK_IMG_DATA;
+  };
+  el.addEventListener('error', onerr, { once: true });
+
+  // اضبط src المطلوب (أو ضع 404 مباشرة إن كان فارغًا)
+  const finalSrc = src && src.trim() ? src : '/images/404.png';
+  if (el.getAttribute('src') !== finalSrc) el.setAttribute('src', finalSrc);
 }
 
 function render() {
@@ -48,12 +103,12 @@ function render() {
   const raw  = _raw[_i];
   const view = normalizeItemForView(raw, lang);
 
-  const nameEl = pickEl('#subject-title','#human-body-word','#item-name','.subject-title','.subject-name');
-  const imgEl  = pickEl('#subject-image','#human-body-image','#item-image','.subject-image img','.subject-image');
-  const descEl = pickEl('#subject-description','#human-body-description','#item-description','.subject-description');
-  const catEl  = pickEl('#human-body-category','#item-category');
+  const nameEl = pickEl('#human-body-word', '#item-name', '.item-main-name', '.subject-title');
+  const imgEl  = pickEl('#human-body-image', '#item-image', '.subject-image img');
+  const descEl = pickEl('#human-body-description', '#item-description', '.subject-description');
+  const catEl  = pickEl('#human-body-category', '#item-category');
 
-  // الاسم: الحرف الأول أحمر ويمكن الضغط للاستماع
+  // الاسم: الحرف الأول ملوّن + قابل للنقر لتشغيل الصوت
   if (nameEl) {
     const s = String(view.name || '');
     nameEl.innerHTML = `<span class="first-letter">${s[0] || ''}</span>${s.slice(1)}`;
@@ -61,17 +116,13 @@ function render() {
     nameEl.onclick = onPlay;
   }
 
-  // الصورة + إصلاح المسار + fallback
+  // الصورة: إصلاح المسار + حماية من الحلقات
   if (imgEl) {
-    imgEl.alt = view.imageAlt || '';
+    imgEl.alt = view.imageAlt || view.name || '';
     imgEl.classList.remove('img-error');
-    imgEl.src = getImgPath(view, raw);
     imgEl.style.cursor = 'pointer';
     imgEl.onclick = onPlay;
-    imgEl.onerror = () => {
-      imgEl.classList.add('img-error');
-      imgEl.src = FALLBACK_404;
-    };
+    setImgOnce(imgEl, getImagePath(raw, view));
   }
 
   if (descEl) descEl.textContent = view.description || '';
@@ -95,13 +146,14 @@ function bind() {
   const prev = document.getElementById('prev-human-body-btn') || document.getElementById('prev-btn');
   const next = document.getElementById('next-human-body-btn') || document.getElementById('next-btn');
   const langSel = document.getElementById('game-lang-select-human-body') || document.getElementById('game-lang-select');
-  let   toggleDesc = document.getElementById('toggle-description-btn-human-body') || document.getElementById('toggle-description-btn') || document.getElementById('toggle-description');
+  let   toggleDesc = document.getElementById('toggle-description-btn-human-body') || document.getElementById('toggle-description-btn');
 
   if (prev) prev.onclick = onPrev;
   if (next) next.onclick = onNext;
 
+  // زر الوصف (إظهار/إخفاء الصندوق السفلي)
   if (!toggleDesc) {
-    const grid = document.getElementById('human-body-sidebar-controls') || document.querySelector('.control-grid[data-subject="human-body"]');
+    const grid = document.getElementById('human-body-sidebar-controls');
     if (grid) {
       const row = document.createElement('div'); row.className = 'row';
       toggleDesc = document.createElement('button');
@@ -112,10 +164,9 @@ function bind() {
   }
   if (toggleDesc) {
     toggleDesc.onclick = () => {
-      const box = document.getElementById('human-body-description-box') || document.getElementById('subject-description-box') || document.getElementById('item-description-box');
+      const box = document.getElementById('human-body-description-box');
       if (!box) return;
-      const show = getComputedStyle(box).display === 'none';
-      box.style.display = show ? 'block' : 'none';
+      box.style.display = (getComputedStyle(box).display === 'none') ? 'block' : 'none';
     };
   }
 
