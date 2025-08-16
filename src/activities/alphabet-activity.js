@@ -1,30 +1,30 @@
-// src/activities/alphabet-activity.js
-// نشاط الحروف — DEBUG v5
-// تحسينات:
-// 1) عنوان العنصر: عريض + أول حرف أحمر (مثل صفحة الحيوانات)
-// 2) تشغيل الصوت عند الضغط على الاسم أو الصورة (وحذف زر الاستماع)
-// 3) مُقلع تلقائي Auto-Boot عند العودة للصفحة بدون تحديث (pageshow/popstate/MutationObserver)
-// 4) إصلاح مسارات الصوت (sound.paths[lang][voice] / sound.base) + مُحدد نوع الصوت
-// 5) سجلات DEBUG مفصلة
+// src/activities/alphabet-activity.js (FIXED)
+// إصلاح شامل لتسريع نشاط الحروف وتنظيف التهيئة
+// يطبق: (أ) منع التهيئة المزدوجة، (ب) fetch مرة ثم refilter بلا refetch، (ج) اختيار مجموعة واحدة افتراضيًا، (د) منع المسح الكامل للمجموعة
+// ملاحظات مهمة:
+// - هذا الملف لا يُقلِع ذاتيًا بعد الآن. يجب استدعاء loadAlphabetActivity() من main.js فقط.
+// - لا نعيد الجلب عند تغيير اللغة/الحرف. نكتفي بإعادة الفلترة/العرض من الكاش المحلي.
+// - الاستعلام الافتراضي يقتصر على مجموعة واحدة (animal). يمكن للمستخدم تغييرها من واجهة الفلاتر.
+// - أزلنا أي Fallback لمسح كامل مجموعة items بلا شروط.
 
 import { db } from '@/core/db-handler.js';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { playAudio, stopCurrentAudio } from '@/core/audio-handler.js';
 
 /* ===================== DEBUG ===================== */
-const AA_DBG = true; // ← ضع false لإخفاء كل السجلات
+const AA_DBG = true; // ← ضع false لإخفاء السجلات
 const dbg  = (...a)=>{ if(AA_DBG) console.log('[AA]', ...a); };
-const dbgt = (title, rows)=>{ if(AA_DBG && console.table){ console.groupCollapsed('[AA] ' + title); console.table(rows); console.groupEnd(); } };
+const dbgt = (title, rows)=>{ if(AA_DBG && console.table){ console.groupCollapsed('[AA] '+title); console.table(rows); console.groupEnd(); } };
 /* ================================================= */
 
 const LANGS = ['ar','en','he'];
 const ALPHABET = {
-  ar: ["أ","ب","ت","ث","ج","ح","خ","د","ذ","ر","ز","س","ش","ص","ض","ط","ظ","ع","غ","ف","ق","ك","ل","م","ن","ه","و","ي"],
-  en: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
-  he: ["א","ב","ג","ד","ה","ו","ז","ח","ט","י","כ","ך","ל","מ","ם","נ","ן","ס","ע","פ","ף","צ","ץ","ק","ר","ש","ת"]
+  ar: ['أ','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ي'],
+  en: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+  he: ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','כ','ך','ל','מ','ם','נ','ן','ס','ע','פ','ף','צ','ץ','ק','ר','ש','ת'],
 };
 
-const SUBJECTS = ["animal","fruit","vegetable","tool","profession","human_body"];
+const SUBJECTS = ['animal','fruit','vegetable','tool','profession','human_body'];
 const SUBJECT_ALIASES = { animals:'animal', fruits:'fruit', vegetables:'vegetable', tools:'tool', professions:'profession', body:'human_body', human_body:'human_body' };
 const SUBJECT_PLURALS = { animal:'animals', fruit:'fruits', vegetable:'vegetables', tool:'tools', profession:'professions', human_body:'body' };
 
@@ -33,32 +33,34 @@ const DEFAULT_HINTS = {
   audioBases: ['/audio','/media/audio','/sounds'],
   imageExts:  ['webp','jpg','jpeg','png'],
   audioExts:  ['mp3','ogg','wav'],
-  placeholderSVG: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="360"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" fill="#9ca3af" font-size="22">لا توجد صورة</text></svg>')
+  placeholderSVG: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="360"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" fill="#9ca3af" font-size="22">لا توجد صورة</text></svg>'),
 };
 const HINTS = (typeof window!=='undefined' && window.ASSET_HINTS) ? { ...DEFAULT_HINTS, ...window.ASSET_HINTS } : DEFAULT_HINTS;
 
-const assetCache = new Map(); // key -> url or ''
-
+const assetCache = new Map();
 const VOICES = ['boy','girl','teacher'];
 const VOICE_KEY = 'aa.voice';
 
+// (ج) مجموعة واحدة افتراضيًا
 const state = {
   lang:'ar',
   letter:'أ',
-  subjects:[...SUBJECTS],
+  subjects:['animal'], // ← كان [...SUBJECTS]
   items:[],
   filtered:[],
   index:0,
   showDescription:false,
   voice: (typeof localStorage!=='undefined' && localStorage.getItem(VOICE_KEY)) || 'teacher',
+  fetchedOnce:false, // لمنع الجلب أكثر من مرة بلا داعٍ
 };
 
 const ELS = {
   name:null,img:null,desc:null,letterBar:null,count:null,
-  btnPrev:null,btnNext:null,btnPlay:null,btnToggleDesc:null,
+  btnPrev:null,btnNext:null,btnToggleDesc:null,
   sidebar:null,lettersGrid:null,subjectsWrap:null,langSelect:null,voiceWrap:null,
 };
 
+/* ===================== Utilities ===================== */
 function normalizeSubjects(list){ return (list||[]).map(s => SUBJECT_ALIASES[s] || s); }
 function expandSubjectVariants(wanted){ const set=new Set(); for(const s of wanted){ set.add(s); const p=SUBJECT_PLURALS[s]; if(p) set.add(p); } if(set.has('human_body')) set.add('body'); if(set.has('body')) set.add('human_body'); return [...set]; }
 function ensureLang(lang){
@@ -85,9 +87,8 @@ function qsa(sel){ return Array.from(document.querySelectorAll(sel)); }
 function chunk(arr, size){ const out=[]; for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size)); return out; }
 function prefixSlash(p){ if (!p) return ''; return p.startsWith('/') ? p : `/${p}`; }
 function subjectToDir(subject){ const s = SUBJECT_ALIASES[subject] || subject; return { animal:'animals', fruit:'fruits', vegetable:'vegetables', tool:'tools', profession:'professions', human_body:'body' }[s]; }
-function sanitizeId(x){ return String(x||'').trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_\-]/g,''); }
 
-/* ===================== حقن تنسيقات العنوان ===================== */
+/* ===================== حقن تنسيقات العنوان + إخفاء زر الاستماع ===================== */
 function injectStyles(){
   if (document.getElementById('aa-style')) return;
   const style = document.createElement('style');
@@ -95,18 +96,14 @@ function injectStyles(){
   style.textContent = `
     .aa-title{ font-weight:800; text-align:center; line-height:1.25; margin:.25rem 0 .75rem; font-size:clamp(22px,3.5vw,40px); }
     .aa-title .first-letter{ color: var(--aa-accent, #e11d48); }
-    #listen-btn, .listen-btn, #aa-play{ display:none !important; } /* إخفاء زر الاستماع في كل الصفحات */
-    #aa-image{ cursor:pointer; }
-    #aa-name{ cursor:pointer; }
+    #listen-btn, .listen-btn, #aa-play{ display:none !important; }
+    #aa-image, #aa-name{ cursor:pointer; }
   `;
   document.head.appendChild(style);
 }
 
 /* ===================== استخراج مسارات مرنة ===================== */
-function pickFromMediaNode(node){
-  if (!node) return '';
-  return prefixSlash(node.image_path || node.path || node.src || node.url || '');
-}
+function pickFromMediaNode(node){ if (!node) return ''; return prefixSlash(node.image_path || node.path || node.src || node.url || ''); }
 function extractImagePath(mediaImages){
   if (!mediaImages) return '';
   if (typeof mediaImages === 'string') return prefixSlash(mediaImages);
@@ -121,7 +118,6 @@ function extractImagePath(mediaImages){
   }
   return '';
 }
-// sounds: قد تكون media.sounds[lang] مصفوفة أو كائنًا
 function extractSoundPath(soundsLang){
   if (!soundsLang) return '';
   if (typeof soundsLang === 'string') return prefixSlash(soundsLang);
@@ -143,20 +139,19 @@ function pickName(data, lang){ return data?.name?.[lang] || data?.name?.ar || da
 function pickDescription(data, lang){ return data?.description?.[lang] || data?.description?.ar || ''; }
 function labelOf(subject){ return { animal:'الحيوانات', fruit:'الفواكه', vegetable:'الخضروات', tool:'الأدوات', profession:'المهن', human_body:'جسم الإنسان' }[subject] || subject; }
 
-/* ---------- الصور ---------- */
 function pickImageDirect(data){
   const m = extractImagePath(data?.media?.images);
   if (m) return m;
   if (data?.image_path) return prefixSlash(data.image_path);
   if (data?.image) return prefixSlash(data.image);
   if (data?.image_file){
-    const dir = subjectToDir(data?.subject || data?.type || data?.subjectType || data?.category);
+    const s = (data?.subject || data?.type || data?.subjectType || data?.category);
+    const dir = { animal:'animals', fruit:'fruits', vegetable:'vegetables', tool:'tools', profession:'professions', human_body:'body' }[SUBJECT_ALIASES[s]||s];
     if (dir) return `/images/${dir}/${data.image_file}`;
   }
   return '';
 }
 
-/* ---------- الصوت ---------- */
 function voiceLabel(v, lang){
   const map = {
     ar: {boy:'ولد', girl:'بنت', teacher:'معلّم'},
@@ -168,25 +163,16 @@ function voiceLabel(v, lang){
 function pickAudioDirect(data, lang, voice){
   const m1 = extractSoundPath(data?.media?.sounds?.[lang]);
   if (m1) return m1;
-
   const p = data?.sound?.paths?.[lang];
-  if (p){
-    const chosen = p?.[voice] || p?.teacher || p?.boy || p?.girl;
-    if (chosen) return prefixSlash(chosen);
-  }
-
+  if (p){ const chosen = p?.[voice] || p?.teacher || p?.boy || p?.girl; if (chosen) return prefixSlash(chosen); }
   const base = data?.sound?.base || data?.sound_base;
-  const subjDir = subjectToDir(data?.subject || data?.type || data?.subjectType || data?.category);
-  if (base && subjDir){
-    const candidate = `/audio/${lang}/${subjDir}/${base}_${voice}_${lang}.mp3`;
-    return candidate;
-  }
-
+  const subjRaw = data?.subject || data?.type || data?.subjectType || data?.category;
+  const subjDir = { animal:'animals', fruit:'fruits', vegetable:'vegetables', tool:'tools', profession:'professions', human_body:'body' }[SUBJECT_ALIASES[subjRaw]||subjRaw];
+  if (base && subjDir) return `/audio/${lang}/${subjDir}/${base}_${voice}_${lang}.mp3`;
   const s = data?.sound?.[lang];
   if (typeof s === 'string') return prefixSlash(s);
   if (s?.boy) return prefixSlash(s.boy);
   if (s?.default) return prefixSlash(s.default);
-
   return '';
 }
 function buildAudioCandidates(it, lang, voice){
@@ -194,12 +180,7 @@ function buildAudioCandidates(it, lang, voice){
   const baseName = it?.sound?.base || it?.sound_base || sanitizeId(it.id || it.name?.[lang] || it.name?.en || it.name?.ar);
   const bases = HINTS.audioBases, exts = HINTS.audioExts, out=[];
   if (dir && baseName){
-    for (const b of bases){
-      for (const e of exts){
-        out.push(`${b}/${lang}/${dir}/${baseName}_${voice}_${lang}.${e}`);
-        out.push(`${b}/${lang}/${dir}/${baseName}.${e}`);
-      }
-    }
+    for (const b of bases){ for (const e of exts){ out.push(`${b}/${lang}/${dir}/${baseName}_${voice}_${lang}.${e}`); out.push(`${b}/${lang}/${dir}/${baseName}.${e}`); } }
   }
   return out.map(prefixSlash);
 }
@@ -217,8 +198,9 @@ async function resolveAudioUrl(it, lang, voice){
 }
 
 /* ===================== Firestore ===================== */
+function normalizeDocSubject(d){ const raw = d.subject ?? d.type ?? d.subjectType ?? d.category ?? ''; return SUBJECT_ALIASES[raw] || raw; }
 function prefixItem(data, id){
-  const rec = {
+  return {
     id,
     subject: normalizeDocSubject(data),
     name: { ar: pickName(data,'ar'), en: pickName(data,'en'), he: pickName(data,'he') },
@@ -230,7 +212,6 @@ function prefixItem(data, id){
     tags: data?.tags || [],
     difficulty: data?.difficulty || 'normal',
   };
-  return rec;
 }
 async function fetchByFieldValues(colRef, field, values){
   const results = [];
@@ -242,41 +223,30 @@ async function fetchByFieldValues(colRef, field, values){
   }
   return results;
 }
-function normalizeDocSubject(d){ const raw = d.subject ?? d.type ?? d.subjectType ?? d.category ?? ''; return SUBJECT_ALIASES[raw] || raw; }
 async function fetchItemsBySubjects(subjects){
-  const wanted = normalizeSubjects(subjects && subjects.length ? subjects : SUBJECTS);
+  const wanted = normalizeSubjects(subjects && subjects.length ? subjects : ['animal']); // ← ضمان قائمة غير فارغة
   const variants = expandSubjectVariants(wanted);
   dbg('fetch:subjects', { wanted, variants });
 
   const colRef = collection(db, 'items');
   const bag = new Map();
 
+  // استعلم بالحقل subject أولاً
   for (const rec of await fetchByFieldValues(colRef, 'subject', variants)) bag.set(rec.id, rec.data);
+
+  // إن كانت النتائج قليلة جدًا، جرّب حقولًا بديلة—but بدون أي Full Scan
   if (bag.size < 5){
     for (const altField of ['type','subjectType','category']){
       const arr = await fetchByFieldValues(colRef, altField, variants);
       for (const rec of arr) bag.set(rec.id, rec.data);
     }
   }
-  if (bag.size === 0){
-    dbg('fetch:fallback-full-scan');
-    const snapAll = await getDocs(colRef);
-    snapAll.forEach(doc => {
-      const data = doc.data();
-      const subj = normalizeDocSubject(data);
-      if (wanted.includes(subj)) bag.set(doc.id, data);
-    });
-  }
 
-  const all = [];
-  bag.forEach((data, id)=> all.push(prefixItem(data, id)) );
-
+  const all = []; bag.forEach((data, id)=> all.push(prefixItem(data, id)) );
   const bySubject = all.reduce((acc,it)=>{ acc[it.subject]=(acc[it.subject]||0)+1; return acc; },{});
-  const missingName = all.filter(it => !it.name[state.lang]).length;
   const sample = all.slice(0,12).map(it=>({ id: it.id, subject: it.subject, name: it.name[state.lang]||'', image: it.image }));
-  dbg('fetched:summary', { total: all.length, bySubject, missingNameForLang: { lang: state.lang, count: missingName } });
+  dbg('fetched:summary', { total: all.length, bySubject });
   dbgt('fetched:sample(<=12)', sample);
-
   return all;
 }
 
@@ -296,7 +266,6 @@ function bindDom(){
   ELS.count = qs('#aa-count') || qs('#item-count');
   ELS.btnPrev      = qs('#aa-prev')        || qs('#prev-btn');
   ELS.btnNext      = qs('#aa-next')        || qs('#next-btn');
-  ELS.btnPlay      = qs('#aa-play')        || qs('#listen-btn');
   ELS.btnToggleDesc= qs('#aa-toggle-desc') || qs('#toggle-desc-btn');
   ELS.sidebar   = qs('#alphabet-activity-controls') || null;
   ELS.lettersGrid = qs('#aa-letters') || null;
@@ -344,7 +313,7 @@ function ensureSidebar(){
     ELS.langSelect.addEventListener('change', ()=>{
       ensureLang(ELS.langSelect.value);
       dbg('lang:changed', { lang: state.lang });
-      buildLetters(); buildVoiceFilter(); refilterAndRender();
+      buildLetters(); buildVoiceFilter(); refilterAndRender(); // ← بدون refetch
     });
   }
   buildVoiceFilter();
@@ -387,7 +356,7 @@ function buildLetters(){
       qsa('#aa-letters .letter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       if (ELS.letterBar) ELS.letterBar.textContent = state.letter;
-      refilterAndRender();
+      refilterAndRender(); // ← بدون refetch
     });
     if (ch === state.letter) btn.classList.add('active');
     ELS.lettersGrid.appendChild(btn);
@@ -405,12 +374,12 @@ function buildSubjectsFilter(){
     </label>
   `).join('');
   ELS.subjectsWrap.querySelectorAll('input[type="checkbox"]').forEach(chk => {
-    chk.addEventListener('change', ()=>{
+    chk.addEventListener('change', async ()=>{
       const val = chk.value;
       if (chk.checked && !state.subjects.includes(val)) state.subjects.push(val);
       if (!chk.checked) state.subjects = state.subjects.filter(v => v!==val);
       dbg('subjects:changed', { subjects: state.subjects.slice() });
-      refetchAndRender();
+      await refetchAndRender(); // ← الجلب فقط عند تغيير المجموعات
     });
   });
 }
@@ -426,22 +395,12 @@ async function playCurrent(){
 }
 function bindClickToPlay(){
   const handler = ()=> playCurrent();
-  if (ELS.img && !ELS.img._aa_play){
-    ELS.img._aa_play = true;
-    ELS.img.addEventListener('click', handler);
-    ELS.img.style.cursor = 'pointer';
-  }
-  if (ELS.name && !ELS.name._aa_play){
-    ELS.name._aa_play = true;
-    ELS.name.addEventListener('click', handler);
-    ELS.name.style.cursor = 'pointer';
-  }
+  if (ELS.img && !ELS.img._aa_play){ ELS.img._aa_play = true; ELS.img.addEventListener('click', handler); }
+  if (ELS.name && !ELS.name._aa_play){ ELS.name._aa_play = true; ELS.name.addEventListener('click', handler); }
 }
 
 /* ===================== العرض ===================== */
-let langObserver = null;
-let lastRenderedKey = '';
-async function renderCurrent(){
+function renderCurrent(){
   if (ELS.letterBar) ELS.letterBar.textContent = state.letter || '';
 
   if (!state.filtered.length){
@@ -456,17 +415,12 @@ async function renderCurrent(){
   const idx = Math.max(0, Math.min(state.index, state.filtered.length-1));
   state.index = idx;
   const it = state.filtered[idx];
-  const key = `${it.id}|${state.lang}`;
-  lastRenderedKey = key;
 
   // عنوان عريض + أول حرف أحمر
   const nm = it.name[state.lang] || '';
   const first = nm ? nm[0] : '';
   const rest  = nm ? nm.slice(1) : '';
-  if (ELS.name){
-    ELS.name.classList.add('aa-title');
-    ELS.name.innerHTML = `<span class="first-letter">${first}</span>${rest}`;
-  }
+  if (ELS.name){ ELS.name.classList.add('aa-title'); ELS.name.innerHTML = `<span class="first-letter">${first}</span>${rest}`; }
 
   if (ELS.img){
     if (!ELS.img._aa_bound){
@@ -474,14 +428,9 @@ async function renderCurrent(){
       ELS.img.addEventListener('load',  ()=> dbg('image:ok',    { src: ELS.img.src }));
       ELS.img._aa_bound = true;
     }
-    ELS.img.setAttribute('data-aa-id', key);
+    ELS.img.setAttribute('data-aa-id', it.id);
     const directImg = it.image || pickImageDirect(it.raw || it);
-    if (directImg){
-      ELS.img.src = directImg;
-      dbg('image:direct', { id: it.id, src: directImg });
-    }else{
-      ELS.img.src = HINTS.placeholderSVG;
-    }
+    ELS.img.src = directImg || HINTS.placeholderSVG;
   }
 
   if (ELS.desc){
@@ -495,18 +444,17 @@ async function renderCurrent(){
   dbg('render:item', { index: state.index, total: state.filtered.length, id: it.id, subject: it.subject, name: it.name?.[state.lang] || '', voice: state.voice });
   toggleNavButtons(true);
 }
-function toggleNavButtons(enabled){
-  [ELS.btnPrev, ELS.btnNext, ELS.btnToggleDesc].forEach(b => { if (b) b.disabled = !enabled; });
-  if (ELS.btnPlay){ ELS.btnPlay.style.display = 'none'; } // إخفاء زر الاستماع
-}
+function toggleNavButtons(enabled){ [ELS.btnPrev, ELS.btnNext, ELS.btnToggleDesc].forEach(b => { if (b) b.disabled = !enabled; }); }
 
-/* ===================== أعادة الجلب/الفلترة ===================== */
+/* ===================== إعادة الجلب/الفلترة ===================== */
 async function refetchAndRender(){
   stopCurrentAudio?.();
-  dbg('refetch:start', { lang: state.lang, letter: state.letter, subjects: state.subjects, voice: state.voice });
-  state.items = await fetchItemsBySubjects(state.subjects);
+  const nowSubjects = state.subjects && state.subjects.length ? state.subjects : ['animal'];
+  dbg('refetch:start', { lang: state.lang, letter: state.letter, subjects: nowSubjects, voice: state.voice });
+  state.items = await fetchItemsBySubjects(nowSubjects); // ← جلب مضبوط بلا Full Scan
   state.filtered = filterByLetter(state.items, state.letter, state.lang);
   state.index = 0; renderCurrent();
+  state.fetchedOnce = true;
 }
 function refilterAndRender(){
   stopCurrentAudio?.();
@@ -514,7 +462,7 @@ function refilterAndRender(){
   state.index = 0; renderCurrent();
 }
 
-/* ===================== أزرار التنقل والوصف ===================== */
+/* ===================== الأزرار ===================== */
 function bindMainActions(){
   if (ELS.btnPrev && !ELS.btnPrev._aa_bound){
     ELS.btnPrev._aa_bound = true;
@@ -536,71 +484,35 @@ function bindMainActions(){
   }
   if (ELS.btnToggleDesc && !ELS.btnToggleDesc._aa_bound){
     ELS.btnToggleDesc._aa_bound = true;
-    ELS.btnToggleDesc.addEventListener('click', ()=>{
-      state.showDescription = !state.showDescription;
-      dbg('ui:toggle-desc', { showDescription: state.showDescription });
-      renderCurrent();
-    });
+    ELS.btnToggleDesc.addEventListener('click', ()=>{ state.showDescription = !state.showDescription; dbg('ui:toggle-desc', { showDescription: state.showDescription }); renderCurrent(); });
   }
 }
 
 /* ===================== مراقبة تغيّر اللغة العالمية ===================== */
+let langObserver = null;
 function observeGlobalLang(){
-  if (langObserver) return; // منع تكرار المراقب
+  if (langObserver) return;
   langObserver = new MutationObserver(() => {
     const newLang = document.documentElement.lang || 'ar';
-    if (newLang !== state.lang){
-      ensureLang(newLang);
-      dbg('lang:global-mut observed', { lang: state.lang });
-      buildLetters(); buildVoiceFilter(); refilterAndRender();
-    }
+    if (newLang !== state.lang){ ensureLang(newLang); dbg('lang:global-mut observed', { lang: state.lang }); buildLetters(); buildVoiceFilter(); refilterAndRender(); }
   });
   langObserver.observe(document.documentElement, { attributes:true, attributeFilter:['lang'] });
-  dbg('lang:observer-ready');
 }
 
-/* ===================== مُقلع تلقائي (حل مشكلة الرجوع من الرئيسية) ===================== */
-function maybeBoot(){
-  // نقرر إن كانت هذه الصفحة هي "نشاط الحروف"
-  const onAA = /alphabet-activity\.html($|\?)/.test(location.pathname)
-            || document.querySelector('#aa-letter-bar, #item-name, #aa-name');
-  if (!onAA) return;
-
-  // كل زيارة/عودة للصفحة نعيد التهيئة نظراً لاحتمال SPA
-  injectStyles();
-  ensureLang(document.documentElement.lang || state.lang);
-  bindDom(); ensureSidebar(); bindMainActions(); observeGlobalLang();
-  refetchAndRender();
-  console.log('✅ [alphabet-activity] ready:', {lang: state.lang, letter: state.letter, subjects: state.subjects, voice: state.voice});
-}
-
-function installAutoBootOnce(){
-  if (window.__AA_AUTOboot_INSTALLED__) return;
-  window.__AA_AUTOboot_INSTALLED__ = true;
-
-  const trigger = ()=> setTimeout(maybeBoot, 30);
-  if (document.readyState !== 'loading') trigger();
-  document.addEventListener('DOMContentLoaded', trigger);
-  window.addEventListener('pageshow', trigger);
-  window.addEventListener('popstate', trigger);
-  document.addEventListener('click', (e)=>{
-    const a = e.target && e.target.closest && e.target.closest('a');
-    if (a) setTimeout(maybeBoot, 60);
-  });
-  // لو كان النظام SPA ويستبدل المحتوى، نلتقط الظهور عبر المراقب
-  const mo = new MutationObserver(()=>{
-    if (document.querySelector('#aa-letter-bar, #item-name, #aa-name')) trigger();
-  });
-  mo.observe(document.body, { childList:true, subtree:true });
-}
-
+/* ===================== Init Guard + API ===================== */
 export async function loadAlphabetActivity(){
+  // (أ) حارس تهيئة لمنع التشغيل مرتين
+  if (window.__AA_INIT__){ dbg('init:skipped (already initialized)'); return; }
+  window.__AA_INIT__ = true;
+
   try{
     injectStyles();
     ensureLang(document.documentElement.lang || state.lang);
     bindDom(); ensureSidebar(); bindMainActions(); observeGlobalLang();
+
+    // (ب) الجلب مرة واحدة عند الدخول
     await refetchAndRender();
-    console.log('✅ [alphabet-activity] ready:', {lang: state.lang, letter: state.letter, subjects: state.subjects, voice: state.voice});
+    dbg('✅ ready', { lang: state.lang, letter: state.letter, subjects: state.subjects, voice: state.voice });
   }catch(err){
     console.error('[alphabet-activity] failed to init', err);
     if (ELS.name) ELS.name.textContent = 'حدث خطأ أثناء التحميل';
@@ -608,5 +520,4 @@ export async function loadAlphabetActivity(){
 }
 export const loadAlphabetActivityContent = loadAlphabetActivity;
 
-// تفعيل المقلع الذاتي
-installAutoBootOnce();
+// (أ) لا يوجد Auto-Boot هنا. يجب أن يستدعي main.js هذه الدالة مرة واحدة فقط.
