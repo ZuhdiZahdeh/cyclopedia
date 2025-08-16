@@ -1,4 +1,12 @@
-*{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Arial}
+*{box-sizing:border-box} 
+:root{
+  --aa-btn:       #0ea5e9;
+  --aa-btn-2:     #0284c7;
+  --aa-btn-hover: #06b6d4;
+  --aa-btn-ring:  rgba(14,165,233,.35);
+}
+
+body{margin:0;font-family:system-ui,Segoe UI,Arial}
 .page{display:grid;grid-template-columns:290px 1fr;min-height:100vh;background:#fafafa}
 .sidebar{background:#fff;border-inline-end:1px solid #eee;padding:14px;overflow:auto}
 .sidebar-section{margin:0 0 18px}

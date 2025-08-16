@@ -105,10 +105,29 @@ function injectStyles(){
   const style = document.createElement('style');
   style.id = 'aa-style';
   style.textContent = `
+    /* عنوان الاسم + إخفاء أزرار النشاط القديمة */
     .aa-title{ font-weight:800; text-align:center; line-height:1.25; margin:.25rem 0 .75rem; font-size:clamp(22px,3.5vw,40px); }
     .aa-title .first-letter{ color: var(--aa-accent, #e11d48); }
     #listen-btn, .listen-btn, #aa-play{ display:none !important; }
     #aa-image, #aa-name{ cursor:pointer; }
+    /* إخفاء أزرار التحكم السفلية (السابق/التالي/الوصف) لهذا النشاط */
+    .controls, #aa-toggle-desc, #toggle-desc-btn, #prev-btn, #next-btn, #aa-prev, #aa-next{ display:none !important; }
+
+    /* ألوان جذّابة لأزرار الحروف */
+    :root{
+      --aa-btn:       #0ea5e9; /* سماوي أساسي */
+      --aa-btn-2:     #0284c7; /* أزرق أغمق قليلاً */
+      --aa-btn-hover: #06b6d4; /* فيروزي عند التحويم */
+      --aa-btn-ring:  rgba(14,165,233,.35);
+    }
+    .letters-grid .letter-btn{
+      border:none; color:#fff; font-weight:700; border-radius:12px; padding:10px 0;
+      background:linear-gradient(135deg,var(--aa-btn),var(--aa-btn-2));
+      box-shadow:0 2px 8px rgba(0,0,0,.06);
+      transition:transform .08s ease, box-shadow .15s ease, filter .15s ease;
+    }
+    .letters-grid .letter-btn:hover{ filter:brightness(1.06); box-shadow:0 4px 14px var(--aa-btn-ring); }
+    .letters-grid .letter-btn.active{ outline:2px solid #fff; box-shadow:0 0 0 3px var(--aa-btn-ring); }
   `;
   document.head.appendChild(style);
 }
@@ -360,8 +379,18 @@ function buildLetters(){
     const btn = document.createElement('button');
     btn.className = 'btn letter-btn';
     btn.textContent = ch;
-    btn.style.padding = '8px 0';
+    btn.style.padding = '10px 0';
     btn.addEventListener('click', ()=>{
+      // سلوك جديد: الضغط على نفس الحرف مرة ثانية ينتقل للصورة التالية ضمن نفس الحرف
+      if (state.letter === ch){
+        if (state.filtered.length){
+          state.index = (state.index + 1) % state.filtered.length; // التالي ضمن نفس الحرف
+          dbg('letter:reclick-next', { letter: ch, index: state.index, total: state.filtered.length });
+          renderCurrent();
+        }
+        return;
+      }
+      // تغيير حرف: إعادة فلترة من الكاش فقط
       state.letter = ch;
       dbg('letter:selected', { letter: ch, lang: state.lang });
       qsa('#aa-letters .letter-btn').forEach(b => b.classList.remove('active'));

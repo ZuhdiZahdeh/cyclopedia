@@ -15,7 +15,6 @@ import { loadVegetablesGameContent }     	from "../subjects/vegetables-game.js";
 import { loadProfessionsGameContent }    	from "../subjects/professions-game.js";
 import { loadToolsGameContent }          	from "../subjects/tools-game.js";
 import { loadAlphabetActivityContent } 		from "../activities/alphabet-activity.js";
-import { loadAlphabetPressGameContent }  	from "../subjects/alphabet-press-game.js";
 import { loadMemoryGameContent }         	from "../subjects/memory-game.js";
 import { loadToolsMatchGameContent }     	from "../subjects/tools-match-game.js";
 import { loadHumanBodyGameContent }      	from "../subjects/human-body-game.js";
@@ -41,7 +40,6 @@ const SUBJECT_CSS = {
   vegetable:      '/css/vegetables.css',
   profession:     '/css/professions.css',
   tools:          '/css/tools.css',
-  'alphabet-press': '/css/alphabet-press.css',
   'human-body':   '/css/human-body.css',
   'memory-game':  '/css/memory-game.css',
   'tools-match':  '/css/tools-match.css'
@@ -254,7 +252,6 @@ window.loadAlphabetActivity = () =>  loadPage(
   }
 );
 
-window.loadAlphabetPressPage = () => loadPage("/html/alphabet-press.html", loadAlphabetPressGameContent, "alphabet-press");
 window.loadMemoryGamePage    = () => loadPage("/html/memory-game.html",    loadMemoryGameContent,        "memory-game");
 window.loadToolsMatchPage    = () => loadPage("/html/tools-match.html",    loadToolsMatchGameContent,    "tools-match");
 
