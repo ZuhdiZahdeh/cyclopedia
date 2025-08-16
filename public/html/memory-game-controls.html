@@ -1,6 +1,7 @@
-<div class="memory-game-controls">
+<div class="sidebar-section" id="memory-game-sidebar-controls" style="display: block;">
   <h3 class="sidebar-title">🃏 لعبة الذاكرة</h3>
 
+  <!-- اختيار اللغة -->
   <div class="control-group">
     <label for="memory-game-lang-select">اللغة / Language</label>
     <select id="memory-game-lang-select">
@@ -10,16 +11,18 @@
     </select>
   </div>
 
+  <!-- اختيار النوع/الموضوع (حيوانات، فواكه، أدوات...) يُعبّأ تلقائيًا -->
   <div class="control-group">
-    <label for="memory-game-topic-select">الموضوع</label>
+    <label for="memory-game-topic-select">النوع/الموضوع</label>
     <select id="memory-game-topic-select"></select>
   </div>
 
+  <!-- اختيار نمط المطابقة -->
   <div class="control-group">
-    <label for="memory-game-mode-select">نمط اللعب</label>
+    <label for="memory-game-mode-select">نمط المطابقة</label>
     <select id="memory-game-mode-select">
       <option value="image-image">صورة + صورة</option>
-      <option value="image-word">صورة + كلمة</option>
+      <option value="image-word">صورة + اسم</option>
       <option value="image-char">صورة + حرف</option>
       <option value="image-audio">صورة + صوت</option>
     </select>

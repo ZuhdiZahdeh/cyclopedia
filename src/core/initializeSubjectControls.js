@@ -44,14 +44,39 @@ export function initializeSubjectControls(subjectType) {
   const host = document.getElementById(hostId);
   if (!host) { console.warn(`[sidebar] لم يتم العثور على الحاوية: #${hostId}`); return; }
 
-  // مواضيع تتبع القالب الموحّد (بدون زر "استمع")
+  // 🎮 مسار خاص: لعبة الذاكرة — حقن ملف HTML خارجي ثم تهيئة السكربت
+  if (subjectType === 'memory-game') {
+    fetch('/html/memory-game-controls.html')
+      .then(r => r.text())
+      .then(html => {
+        host.innerHTML = html;
+        host.style.display = 'block';
+
+        // تفعيل مهيّئ لعبة الذاكرة بعد الحقن
+        if (typeof window.initializeMemoryGameSidebarControls === 'function') {
+          window.initializeMemoryGameSidebarControls();
+        }
+
+        // الحفاظ على ظهور قسم "حسابي" أسفل الشريط
+        const staticSection = document.querySelector('#sidebar-section .static-section');
+        if (staticSection) staticSection.style.display = '';
+      })
+      .catch(err => {
+        console.error('[sidebar] فشل تحميل أدوات لعبة الذاكرة:', err);
+        host.innerHTML = `<div class="sidebar-tip" data-i18n="select_topic">تعذر تحميل أدوات لعبة الذاكرة</div>`;
+        host.style.display = 'block';
+      });
+    return;
+  }
+
+  // مواضيع تتبع القالب الموحّد
   const unified = new Set(['animal', 'fruit', 'vegetable', 'profession', 'human-body', 'human_body', 'humanbody']);
   let html = '';
 
   if (unified.has(subjectType)) {
     html = controlsTemplate(subjectType, { withDescription: true });
   } else if (subjectType === 'tools') {
-    // إن أردت ترك صفحة الأدوات كما هي (لكنها أصل القالب أصلاً)
+    // إبقاء صفحة الأدوات على القالب الموحّد (هي أصل القالب أساسًا)
     html = controlsTemplate('tools', { withDescription: true });
   } else {
     html = `<div class="sidebar-tip" data-i18n="select_topic">اختر الموضوع</div>`;
