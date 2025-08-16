@@ -69,6 +69,31 @@ export function initializeSubjectControls(subjectType) {
     return;
   }
 
+  // ✅ مسار خاص: لعبة "من صاحب الأداة؟" — حقن ملف HTML خارجي ثم تهيئة السكربت
+  if (subjectType === 'tools-match') {
+    fetch('/html/tools-match-controls.html')
+      .then(r => r.text())
+      .then(html => {
+        host.innerHTML = html;
+        host.style.display = 'block';
+
+        // تفعيل مهيّئ لعبة الأدوات بعد الحقن
+        if (typeof window.initializeToolsMatchSidebarControls === 'function') {
+          window.initializeToolsMatchSidebarControls();
+        }
+
+        // الحفاظ على ظهور قسم "حسابي" أسفل الشريط
+        const staticSection = document.querySelector('#sidebar-section .static-section');
+        if (staticSection) staticSection.style.display = '';
+      })
+      .catch(err => {
+        console.error('[sidebar] فشل تحميل أدوات لعبة من صاحب الأداة:', err);
+        host.innerHTML = `<div class="sidebar-tip">تعذر تحميل أدوات لعبة من صاحب الأداة</div>`;
+        host.style.display = 'block';
+      });
+    return;
+  }
+
   // مواضيع تتبع القالب الموحّد
   const unified = new Set(['animal', 'fruit', 'vegetable', 'profession', 'human-body', 'human_body', 'humanbody']);
   let html = '';
