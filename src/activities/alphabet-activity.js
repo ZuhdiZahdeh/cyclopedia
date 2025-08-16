@@ -61,6 +61,17 @@ const ELS = {
 };
 
 /* ===================== Utilities ===================== */
+// 🧼 دالة مساعدة لازالة المحارف غير المناسبة من المعرّف/الاسم لتكوين اسم ملف صوتي صالح
+function sanitizeId(s){
+  // يحوّل إلى أحرف صغيرة ويستبدل أي محارف غير [a-z0-9_-] بشرطة سفلية
+  // ثم يزيل التكرارات الزائدة والشرطات في الأطراف
+  const t = String(s||'').toLowerCase()
+    .normalize('NFKD')                 // يزيل التشكيل/اللكنات قدر الإمكان
+    .replace(/[^a-z0-9_\-]+/g,'_')
+    .replace(/_{2,}/g,'_')
+    .replace(/^_+|_+$/g,'');
+  return t || 'item';
+}
 function normalizeSubjects(list){ return (list||[]).map(s => SUBJECT_ALIASES[s] || s); }
 function expandSubjectVariants(wanted){ const set=new Set(); for(const s of wanted){ set.add(s); const p=SUBJECT_PLURALS[s]; if(p) set.add(p); } if(set.has('human_body')) set.add('body'); if(set.has('body')) set.add('human_body'); return [...set]; }
 function ensureLang(lang){
