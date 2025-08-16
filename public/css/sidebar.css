@@ -1,0 +1,38 @@
+/* غلاف الشريط */
+.sidebar {
+  width: 260px;
+  max-width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,.06);
+}
+
+/* صف أزرار السابق/التالي */
+.ctrl-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* الأزرار */
+.btn {
+  display: inline-block;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 0;
+  cursor: pointer;
+  font-weight: 700;
+  text-align: center;
+}
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+
+/* ألوان مثل صفحة الأدوات */
+.btn-nav   { background: #ffa940; color: #222; }   /* السابق/التالي */
+.btn-desc  { background: #5ad1ff; color: #0b2130; }/* الوصف */
+
+.form-group { margin: 12px 0; }
+.form-label { display:block; margin-bottom:6px; font-weight:600; color:#444; }
+.select { width:100%; padding:8px 10px; border-radius:10px; border:1px solid #e6e6e6; background:#fff; }

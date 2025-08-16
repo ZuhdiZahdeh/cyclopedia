@@ -1,4 +1,4 @@
-// /src/subjects/human-body-game.js (UNIFIED, no listen button)
+// /src/subjects/human-body-game.js
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
@@ -13,6 +13,20 @@ let _uiLang = 'ar';
 
 const $q = (s) => document.querySelector(s);
 const pickEl = (...sels) => sels.map(s => $q(s)).find(Boolean) || null;
+
+const FALLBACK_404 = '/images/404.png'; // ضع الصورة في هذا المسار أو غيّره لما يناسبك
+
+function toPublicUrl(p) {
+  if (!p) return FALLBACK_404;
+  let path = String(p).trim().replace(/^public\//i, '');
+  if (!path.startsWith('/')) path = '/' + path;
+  return path;
+}
+
+function getImgPath(view, raw) {
+  const p = view?.imagePath || raw?.image_path || raw?.imagePath || raw?.image || '';
+  return toPublicUrl(p);
+}
 
 function audioPath(raw, lang, voice) {
   const s = raw?.sound;
@@ -31,30 +45,37 @@ function audioPath(raw, lang, voice) {
 function render() {
   if (!_raw.length) return;
   const lang = _uiLang;
-  const view = normalizeItemForView(_raw[_i], lang);
+  const raw  = _raw[_i];
+  const view = normalizeItemForView(raw, lang);
 
   const nameEl = pickEl('#subject-title','#human-body-word','#item-name','.subject-title','.subject-name');
   const imgEl  = pickEl('#subject-image','#human-body-image','#item-image','.subject-image img','.subject-image');
   const descEl = pickEl('#subject-description','#human-body-description','#item-description','.subject-description');
   const catEl  = pickEl('#human-body-category','#item-category');
 
-  // الاسم: Bold + أول حرف أحمر + انقر للاستماع
+  // الاسم: الحرف الأول أحمر ويمكن الضغط للاستماع
   if (nameEl) {
     const s = String(view.name || '');
     nameEl.innerHTML = `<span class="first-letter">${s[0] || ''}</span>${s.slice(1)}`;
     nameEl.style.cursor = 'pointer';
     nameEl.onclick = onPlay;
   }
-  // الصورة: انقر للاستماع
+
+  // الصورة + إصلاح المسار + fallback
   if (imgEl) {
     imgEl.alt = view.imageAlt || '';
-    imgEl.onerror = () => console.warn('[human_body] missing image:', view.imagePath);
-    imgEl.src = view.imagePath || '';
+    imgEl.classList.remove('img-error');
+    imgEl.src = getImgPath(view, raw);
     imgEl.style.cursor = 'pointer';
     imgEl.onclick = onPlay;
+    imgEl.onerror = () => {
+      imgEl.classList.add('img-error');
+      imgEl.src = FALLBACK_404;
+    };
   }
+
   if (descEl) descEl.textContent = view.description || '';
-  if (catEl)  catEl.textContent  = pickLocalized(_raw[_i]?.category, lang) || '—';
+  if (catEl)  catEl.textContent  = pickLocalized(raw?.category, lang) || '—';
 }
 
 function onNext(){ if(!_raw.length) return; _i = (_i+1)%_raw.length; render(); try{recordActivity('human_body','next',{index:_i});}catch{} }
@@ -80,7 +101,6 @@ function bind() {
   if (next) next.onclick = onNext;
 
   if (!toggleDesc) {
-    // أمان: لو لسبب ما لم يوجد زر الوصف، أنشئه سريعًا
     const grid = document.getElementById('human-body-sidebar-controls') || document.querySelector('.control-grid[data-subject="human-body"]');
     if (grid) {
       const row = document.createElement('div'); row.className = 'row';
@@ -116,7 +136,6 @@ export async function loadHumanBodyGameContent() {
   bind();
   try {
     _raw = await fetchSubjectItems(SUBJECT_KEY, { strict: true });
-    console.log('[human_body] fetched', _raw.length);
     _raw.sort((a,b) => String(pickLocalized(a?.name,_uiLang)).localeCompare(pickLocalized(b?.name,_uiLang)));
     _i = 0;
     render();
