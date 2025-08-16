@@ -1,33 +1,33 @@
 // src/core/initializeSubjectControls.js
 import { getCurrentLang } from './lang-handler.js';
 
-// قالب مطابق لصفحة الأدوات: [السابق|التالي] ثم [الوصف] ثم [الصوت] ثم [اللغة]
+/** قالب موحّد: [السابق|التالي] ثم [الوصف (ghost)] ثم [الصوت] ثم [اللغة] */
 function controlsTemplate(prefix, { withDescription = true } = {}) {
-  const lang = getCurrentLang() || 'ar';
+  const lang = getCurrentLang?.() || 'ar';
   return `
-    <div class="control-grid">
+    <div class="control-grid" data-subject="${prefix}">
       <div class="row two-col">
-        <button id="prev-${prefix}-btn" class="btn secondary" data-i18n="common.prev">السابق</button>
-        <button id="next-${prefix}-btn" class="btn primary" data-i18n="common.next">التالي</button>
+        <button id="prev-${prefix}-btn" class="btn secondary" type="button" data-i18n="prev">السابق</button>
+        <button id="next-${prefix}-btn" class="btn primary"  type="button" data-i18n="next">التالي</button>
       </div>
 
       ${withDescription ? `
       <div class="row">
-        <!-- استخدمت نفس مظهر زر الأدوات -->
-        <button id="toggle-description-btn-${prefix}" class="btn listen" data-i18n="common.toggle_description">الوصف</button>
+        <!-- مهم: زر الوصف بصنف ghost -->
+        <button id="toggle-description-btn-${prefix}" class="btn ghost" type="button" data-i18n="description">الوصف</button>
       </div>` : ''}
 
       <div class="row">
-        <label for="voice-select-${prefix}" class="ctrl-label" data-i18n="common.voice">الصوت</label>
+        <label for="voice-select-${prefix}" class="ctrl-label" data-i18n="voice">الصوت</label>
         <select id="voice-select-${prefix}" class="ctrl-select">
-          <option value="teacher" data-i18n="voices.teacher">المعلم</option>
-          <option value="boy" data-i18n="voices.boy">ولد</option>
-          <option value="girl" data-i18n="voices.girl">بنت</option>
+          <option value="teacher" data-i18n="voice_teacher">المعلّم</option>
+          <option value="boy"     data-i18n="voice_boy">ولد</option>
+          <option value="girl"    data-i18n="voice_girl">بنت</option>
         </select>
       </div>
 
       <div class="row">
-        <label for="game-lang-select-${prefix}" class="ctrl-label" data-i18n="common.language">اللغة</label>
+        <label for="game-lang-select-${prefix}" class="ctrl-label" data-i18n="language">اللغة</label>
         <select id="game-lang-select-${prefix}" class="ctrl-select">
           <option value="ar" ${lang==='ar'?'selected':''}>العربية</option>
           <option value="en" ${lang==='en'?'selected':''}>English</option>
@@ -38,55 +38,29 @@ function controlsTemplate(prefix, { withDescription = true } = {}) {
   `;
 }
 
+/** يبني الشريط داخل الحاوية #<subject>-sidebar-controls */
 export function initializeSubjectControls(subjectType) {
-  const id = `${subjectType}-sidebar-controls`;
-  const host = document.getElementById(id);
-  if (!host) { console.warn(`[sidebar] الحاوية غير موجودة: #${id}`); return; }
+  const hostId = `${subjectType}-sidebar-controls`;
+  const host = document.getElementById(hostId);
+  if (!host) { console.warn(`[sidebar] لم يتم العثور على الحاوية: #${hostId}`); return; }
 
+  // مواضيع تتبع القالب الموحّد (بدون زر "استمع")
+  const unified = new Set(['animal', 'fruit', 'vegetable', 'profession', 'human-body', 'human_body', 'humanbody']);
   let html = '';
-  switch (subjectType) {
-    // كل هذه المواضيع ستأخذ نفس شريط الأدوات تماماً
-    case 'fruit':
-    case 'vegetable':
-    case 'human-body':
-    case 'animal':
-    case 'profession':
-      html = controlsTemplate(subjectType, { withDescription: true });
-      break;
 
-    // صفحات الألعاب/خلافه
-    case 'tools':
-    case 'alphabet-press':
-    case 'memory-game':
-    case 'tools-match':
-      html = `<div class="sidebar-tip" data-i18n="start_game">ابدأ اللعب</div>`;
-      break;
-
-    default:
-      html = `<div class="sidebar-tip" data-i18n="select_topic">اختر الموضوع</div>`;
-  }
-
-  // إضافات خاصة (تأتي أسفل الشريط الموحد)
-  if (subjectType === 'animal') {
-    html += `
-    <div class="control-grid">
-      <div class="row"><button id="play-baby-sound-btn-animal" class="btn" data-i18n="listen_baby_animal">👶🔊 اسم الابن</button></div>
-      <div class="row"><button id="toggle-details-btn-animal" class="btn secondary" data-i18n="show_details">ℹ️ التفاصيل</button></div>
-      <div class="row"><button id="toggle-baby-image-btn-animal" class="btn secondary" data-i18n="show_baby_image">🍼 صورة الابن</button></div>
-    </div>`;
-  }
-  if (subjectType === 'profession') {
-    html += `
-    <div class="control-grid">
-      <div class="row"><button id="toggle-details-btn-profession" class="btn secondary" data-i18n="show_details">ℹ️ التفاصيل</button></div>
-      <div class="row"><button id="toggle-tools-btn-profession" class="btn secondary" data-i18n="tool_related_professions">🧰 الأدوات</button></div>
-    </div>`;
+  if (unified.has(subjectType)) {
+    html = controlsTemplate(subjectType, { withDescription: true });
+  } else if (subjectType === 'tools') {
+    // إن أردت ترك صفحة الأدوات كما هي (لكنها أصل القالب أصلاً)
+    html = controlsTemplate('tools', { withDescription: true });
+  } else {
+    html = `<div class="sidebar-tip" data-i18n="select_topic">اختر الموضوع</div>`;
   }
 
   host.innerHTML = html;
   host.style.display = 'block';
 
-  // أبقِ قسم "حسابك" ظاهرًا
+  // الحفاظ على ظهور قسم "حسابي" أسفل الشريط
   const staticSection = document.querySelector('#sidebar-section .static-section');
   if (staticSection) staticSection.style.display = '';
 }

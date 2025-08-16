@@ -1,7 +1,22 @@
 /* public/css/common-components-subjects.css */
 /* العنوان الرئيسي لكل صفحة عنصر */
 
+/* ألوان ومتغيرات عامة للثيم */
+:root{
+  --btn-radius: 14px;
+  --btn-shadow: 0 1px 0 rgba(0,0,0,.05), 0 6px 14px rgba(0,0,0,.06);
+  --btn-focus: 0 0 0 3px rgba(14,165,233,.35);
 
+  /* ألوان المتغيرات (تباين عالي) */
+  --btn-primary-bg:  #f59e0b; /* برتقالي قوي (Next) */
+  --btn-primary-bg-2:#ea580c;
+  --btn-secondary-bg:#fb923c; /* برتقالي أغمق (Prev/وصف إن لزم) */
+  --btn-secondary-bg-2:#f97316;
+  --btn-ghost-bg:   	#0ea5e9; /* أزرق واضح (استمع) */
+  --btn-ghost-bg-2: 	#0284c7; /* أزرق أغمق قليلاً */
+  --btn-text-dark:   #0f172a; 	/* اسود فاتح*/
+  --btn-text-light:  #ffffff;	/* أبيض  */
+}
 /* مؤشرات النقر */
 .clickable-text, .clickable-image { cursor: pointer; }
 
@@ -138,10 +153,13 @@
    Account Actions (Sidebar)
    ========================= */
 /* زر الوصف (نفس مظهر "استمع" ولكن بالأزرق الفاتح) */
-#sidebar .btn.ghost{
+/* زر الوصف الأزرق الموحّد في كل الصفحات */
+#sidebar .btn.ghost,
+#sidebar-section .btn.ghost{
   background: linear-gradient(180deg, var(--btn-ghost-bg), var(--btn-ghost-bg-2));
-  color: #fff;
+  color:#fff;
 }
+
 #sidebar .btn.ghost:hover{
   filter: brightness(1.05);
   transform: translateY(-1px);
@@ -264,23 +282,6 @@
 /* ================================
    Buttons — Clear, Accessible UI
    ================================ */
-
-/* ألوان ومتغيرات عامة للثيم */
-:root{
-  --btn-radius: 14px;
-  --btn-shadow: 0 1px 0 rgba(0,0,0,.05), 0 6px 14px rgba(0,0,0,.06);
-  --btn-focus: 0 0 0 3px rgba(14,165,233,.35);
-
-  /* ألوان المتغيرات (تباين عالي) */
-  --btn-primary-bg:  #f59e0b; /* برتقالي قوي (Next) */
-  --btn-primary-bg-2:#ea580c;
-  --btn-secondary-bg:#fb923c; /* برتقالي أغمق (Prev/وصف إن لزم) */
-  --btn-secondary-bg-2:#f97316;
-  --btn-ghost-bg:   	#0ea5e9; /* أزرق واضح (استمع) */
-  --btn-ghost-bg-2: 	#0284c7; /* أزرق أغمق قليلاً */
-  --btn-text-dark:   #0f172a; 	/* اسود فاتح*/
-  --btn-text-light:  #ffffff;	/* أبيض  */
-}
 
 /* الشكل الأساسي */
 #sidebar-section .btn{
