@@ -14,7 +14,10 @@ export default defineConfig({
     alias: {
       "@":           resolve(__dirname, "src"),
       "@core":       resolve(__dirname, "src/core"),
-      "@activities": resolve(__dirname, "src/activities"),
+      "@config": path.resolve(__dirname, "src/js/firebase-config.js"),
+	  "@activities": resolve(__dirname, "src/activities"),
+      "@subjects": path.resolve(__dirname, "src/subjects"),
+    }
     }
   },
   server:  { port: 5173, open: false },

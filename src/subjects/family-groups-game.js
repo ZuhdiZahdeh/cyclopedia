@@ -6,7 +6,7 @@
  *  - متغيرات CSS العامة للأزرار، والشريط الجانبي موحد
  */
 
-import { db } from "../firebase-config.js";
+import { db } from "../js/firebase-config.js";
 import {
   getFirestore, collection, doc, getDoc, getDocs, query, orderBy, limit, startAt
 } from "firebase/firestore";
