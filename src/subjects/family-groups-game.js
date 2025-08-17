@@ -432,8 +432,12 @@ function getMainFallbackHTML(){
     <h2 id="fg-item-name" class="subject-title"></h2>
     <div class="fg-stage">
       <button id="fg-card" class="fg-card" aria-grabbed="false">
-        <img id="fg-image" src="" alt="" width="360" height="270" loading="lazy" decoding="async"
-             style="aspect-ratio:4/3;object-fit:contain;" />
+        <img id="fg-image"
+     src=""
+     alt=""
+     width="400" height="300"   <!-- لتثبيت النسبة 4:3 وتقليل CLS -->
+     loading="lazy" decoding="async"
+     style="aspect-ratio: 4 / 3; object-fit: contain;" />
       </button>
       <div class="fg-bins" id="fg-bins"></div>
     </div>

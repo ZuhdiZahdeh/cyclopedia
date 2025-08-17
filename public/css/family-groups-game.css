@@ -1,48 +1,125 @@
-#family-groups-game { padding: 0.5rem 0.75rem; }
-
-#family-groups-game .subject-title {
-  text-align:center; font-size:clamp(1.3rem,2.5vw,1.8rem);
-  margin: 0.25rem 0 0.75rem; line-height:1.2;
+/* ===== إعدادات عامّة ===== */
+:root{
+  /* أقصى عرض للصورة داخل البطاقة */
+  --fg-max-img: 400px;
+  --fg-gap: 0.75rem;
+  --fg-border: 1px solid var(--border-color, #e5e7eb);
+  --fg-shadow: 0 6px 18px rgba(0,0,0,.06);
 }
 
-.fg-stage {
-  display:grid; gap:1rem; align-items:center; justify-items:center;
-}
-.fg-card {
-  border:1px solid var(--border-color,#e5e7eb);
-  background:var(--panel-bg,#fff);
-  border-radius:1rem; padding:0.5rem;
-  box-shadow:0 6px 18px rgba(0,0,0,.06);
-  cursor:grab; touch-action:none;
-}
-.fg-card:active { cursor:grabbing; }
+#family-groups-game{ padding: .5rem .75rem; }
 
-.fg-bins {
-  display:grid; gap:0.75rem;
+#family-groups-game .subject-title{
+  text-align: center;
+  font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+  margin: .25rem 0 .75rem;
+  line-height: 1.2;
+}
+
+/* ===== المسرح (البطاقة + صناديق التصنيف) ===== */
+.fg-stage{
+  display: grid;
+  gap: 1rem;
+  align-items: center;
+  justify-items: center;
+}
+
+/* البطاقة الحاوية للصورة */
+#family-groups-game .fg-card{
+  border: var(--fg-border);
+  background: var(--panel-bg, #fff);
+  border-radius: 1rem;
+  padding: .5rem;
+  box-shadow: var(--fg-shadow);
+  cursor: grab;
+  touch-action: none;
+
+  /* قياسات مرنة مع سقف 400px للصورة + حواف البطاقة */
+  width: min(92vw, calc(var(--fg-max-img) + 24px));
+  max-width: calc(var(--fg-max-img) + 24px);
+  margin-inline: auto;
+}
+.fg-card:active{ cursor: grabbing; }
+
+/* الصورة نفسها */
+#family-groups-game #fg-image{
+  display: block;
+  width: 100%;
+  height: auto;          /* يحافظ على النسبة */
+  max-width: var(--fg-max-img);
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+}
+
+/* شبكة صناديق التصنيف — افتراض: عمودان (ملائم للموبايل) */
+.fg-bins{
+  display: grid;
+  gap: var(--fg-gap);
   grid-template-columns: repeat(2, minmax(140px, 1fr));
-  width:100%; max-width:900px;
-}
-@media (min-width: 720px) {
-  .fg-bins { grid-template-columns: repeat(4, minmax(140px, 1fr)); }
-}
-.fg-bin {
-  border:2px dashed var(--border-color,#cbd5e1);
-  border-radius:1rem; padding:0.75rem; min-height:72px;
-  background:var(--bin-bg,#f8fafc);
-  text-align:center; font-weight:700;
-  display:flex; align-items:center; justify-content:center;
-  user-select:none;
-}
-.fg-bin[aria-selected="true"] { outline:3px solid var(--focus-color,#60a5fa); }
-
-.fg-bin.correct    { border-color:#22c55e; background:#ecfdf5; color:#065f46; }
-.fg-bin.incorrect  { animation:shake 240ms ease-in-out; border-color:#ef4444; color:#991b1b; }
-@keyframes shake {
-  0%,100% { transform: translateX(0); }
-  25% { transform: translateX(-6px); }
-  75% { transform: translateX(6px); }
+  width: 100%;
+  max-width: 900px;
 }
 
-.fg-feedback { min-height:1.25rem; text-align:center; font-weight:600; margin-top:0.25rem; }
+/* صندوق التصنيف */
+.fg-bin{
+  border: 2px dashed var(--border-color, #cbd5e1);
+  border-radius: 1rem;
+  padding: .75rem;
+  min-height: 72px;
+  background: var(--bin-bg, #f8fafc);
+  text-align: center;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.fg-bin[aria-selected="true"]{ outline: 3px solid var(--focus-color, #60a5fa); }
 
-[dir="rtl"] .fg-bin { direction:rtl; }
+.fg-bin.correct{
+  border-color: #22c55e;
+  background: #ecfdf5;
+  color: #065f46;
+}
+.fg-bin.incorrect{
+  animation: shake 240ms ease-in-out;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+/* اهتزاز الخطأ */
+@keyframes shake{
+  0%,100%{ transform: translateX(0); }
+  25%    { transform: translateX(-6px); }
+  75%    { transform: translateX(6px); }
+}
+
+/* رسالة التغذية الراجعة */
+.fg-feedback{
+  min-height: 1.25rem;
+  text-align: center;
+  font-weight: 600;
+  margin-top: .25rem;
+}
+
+/* احترام اتجاه الواجهة العربية/العبرية */
+[dir="rtl"] .fg-bin{ direction: rtl; }
+
+/* ===== تكيّف المقاسات ===== */
+
+/* شاشات متوسطة (تابلت) — 3 أعمدة لطيف */
+@media (min-width: 540px){
+  .fg-bins{ grid-template-columns: repeat(3, minmax(140px, 1fr)); }
+}
+
+/* شاشات كبيرة (≥ 720px) — 4 أعمدة */
+@media (min-width: 720px){
+  .fg-bins{ grid-template-columns: repeat(4, minmax(140px, 1fr)); }
+}
+
+/* شاشات صغيرة جدًا (≤ 420px) — تضييق البطاقة */
+@media (max-width: 420px){
+  #family-groups-game .fg-card{ width: 88vw; }
+  .fg-bins{ grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+  .fg-feedback{ font-size: .95rem; margin-top: .5rem; }
+}
