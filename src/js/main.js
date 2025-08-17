@@ -18,6 +18,8 @@ import { loadAlphabetActivityContent } 		from "../activities/alphabet-activity.j
 import { loadMemoryGameContent }         	from "../subjects/memory-game.js";
 import { loadToolsMatchGameContent }     	from "../subjects/tools-match-game.js";
 import { loadHumanBodyGameContent }      	from "../subjects/human-body-game.js";
+import { loadFamilyGroupsGameContent } 		from "../subjects/family-groups-game.js";
+
 
 // 🔐 Firebase Auth
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -242,6 +244,19 @@ window.loadVegetablesPage    = () => loadPage("/html/vegetables.html",     loadV
 window.loadHumanBodyPage     = () => loadPage("/html/human-body.html",     loadHumanBodyGameContent,     "human-body");
 window.loadProfessionsPage   = () => loadPage("/html/professions.html",    loadProfessionsGameContent,   "profession");
 window.loadToolsPage         = () => loadPage("/html/tools.html",          loadToolsGameContent,         "tools");
+window.loadFamilyGroupsGamePage = () => 
+  loadPage(
+    "/html/family-groups-game.html",
+    async () => {
+      // CSS الخاص باللعبة + المشترك
+      ensureCss([
+        "/css/common-components-subjects.css",
+        "/css/family-groups-game.css"
+      ]);
+      // تشغيل منطق اللعبة
+      await loadFamilyGroupsGameContent();
+    }
+  );
 
 // نشاط الحروف (جديد بالكامل — بلا subjectType)
 window.loadAlphabetActivity = () =>  loadPage(
