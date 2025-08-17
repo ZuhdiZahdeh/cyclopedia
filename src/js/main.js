@@ -64,7 +64,13 @@ function ensureCss(paths = []) {
       appended = true;
     }
   }
-  if (appended) requestAnimationFrame(() => {});
+  if (appended) requestAnimationFrame(() => {
+      // راقب أي تغييرات DOM ضمن الصفحة الحالية وعزّز صور LCP تلقائيًا
+      try {
+        const _lcpObs = new MutationObserver(() => boostLcpImages(mainContent));
+        _lcpObs.observe(mainContent, { subtree: true, childList: true });
+      } catch(e) {}
+});
 }
 // حمل الأساسي مرة واحدة
 ensureCss(BASE_CSS);
@@ -146,6 +152,12 @@ function initSidebarObserver() {
     if (scheduled) return;
     scheduled = true;
     requestAnimationFrame(() => {
+      // راقب أي تغييرات DOM ضمن الصفحة الحالية وعزّز صور LCP تلقائيًا
+      try {
+        const _lcpObs = new MutationObserver(() => boostLcpImages(mainContent));
+        _lcpObs.observe(mainContent, { subtree: true, childList: true });
+      } catch(e) {}
+
       placeAccountSectionBelowActiveControls();
       scheduled = false;
     });
@@ -157,6 +169,44 @@ function initSidebarObserver() {
     attributes: true,
     attributeFilter: ['style', 'hidden', 'class']
   });
+}
+
+
+/* ------------------------- مراقبة الأداء: LCP + تعزيز صورة LCP ------------------------- */
+function initPerfMonitor() {
+  try {
+    const obs = new PerformanceObserver((list) => {
+      const entries = list.getEntries();
+      const last = entries[entries.length - 1];
+      if (last) console.log('[PERF] LCP', Math.round(last.startTime), 'ms', last);
+    });
+    obs.observe({ type: 'largest-contentful-paint', buffered: true });
+  } catch (e) {}
+}
+
+// عدّل خصائص <img> الرئيسية (المحتمل أنها LCP) لرفع الأولوية وتجنّب التأخير
+function boostLcpImages(root = document) {
+  try {
+    const selectors = [
+      '#subject-image',
+      '#fruit-image',
+      '#vegetable-image',
+      '#animal-image',
+      '#profession-image',
+      '#tools-image',
+      '#tool-image',
+      '#body-image',
+      'img.main-subject-image',
+      '.image-area img'
+    ];
+    const imgs = root.querySelectorAll(selectors.join(','));
+    imgs.forEach(img => {
+      if (!img) return;
+      if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+      if (img.getAttribute('loading') !== 'eager') img.setAttribute('loading', 'eager');
+      if (img.getAttribute('fetchpriority') !== 'high') img.setAttribute('fetchpriority', 'high');
+    });
+  } catch (e) {}
 }
 
 /* ------------------------- محمل صفحات عام (مُحصَّن) ------------------------- */
@@ -188,10 +238,12 @@ async function loadPage(htmlPath, moduleLoader, subjectType) {
       console.warn(`[loader] "${htmlPath}" أعاد وثيقة كاملة (غالبًا index.html). سأحاول استخراج جزء المحتوى فقط.`);
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const candidate = FRAGMENT_SELECTORS.map(sel => doc.querySelector(sel)).find(Boolean);
-      mainContent.innerHTML = candidate ? candidate.innerHTML : '<p>تعذّر تحميل الصفحة.</p>';
-    } else {
-      mainContent.innerHTML = html;
-    }
+      \1    try { boostLcpImages(mainContent); } catch(e) {}
+} else {
+      \1
+    // عزّز صورة LCP فوراً بعد حقن المحتوى
+    try { boostLcpImages(mainContent); } catch(e) {}
+}
 
     // ترجمات فورية لمحتوى الصفحة المحقون
     try { await applyTranslations(); } catch {}
@@ -201,6 +253,12 @@ async function loadPage(htmlPath, moduleLoader, subjectType) {
 
     // ننتظر فريم لضمان اكتمال حقن عناصر التحكم ثم نرتّب «حسابك»
     requestAnimationFrame(() => {
+      // راقب أي تغييرات DOM ضمن الصفحة الحالية وعزّز صور LCP تلقائيًا
+      try {
+        const _lcpObs = new MutationObserver(() => boostLcpImages(mainContent));
+        _lcpObs.observe(mainContent, { subtree: true, childList: true });
+      } catch(e) {}
+
       placeAccountSectionBelowActiveControls();
       initSidebarObserver(); // مرّة واحدة، وبعدها يراقب أي تغييرات لاحقة
     });
@@ -230,6 +288,12 @@ window.showHomePage = () => {
   `;
   hideAllControls();
   requestAnimationFrame(() => {
+      // راقب أي تغييرات DOM ضمن الصفحة الحالية وعزّز صور LCP تلقائيًا
+      try {
+        const _lcpObs = new MutationObserver(() => boostLcpImages(mainContent));
+        _lcpObs.observe(mainContent, { subtree: true, childList: true });
+      } catch(e) {}
+
     placeAccountSectionBelowActiveControls();
     initSidebarObserver();
   });
@@ -262,6 +326,7 @@ window.loadProfile  = () => loadPage("/users/profile.html");
 window.loadMyReport = () => loadPage("/users/my-report.html");
 
 /* ------------------------- تهيئة اللغة ------------------------- */
+initPerfMonitor();
 (function initLang() {
   const lang = getCurrentLang();
   loadLanguage(lang).then(() => applyTranslations());
