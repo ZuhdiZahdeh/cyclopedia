@@ -5,6 +5,31 @@ import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '.
 import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 
+
+// ---- Fixed image + LCP helpers (unified) ----
+const __FIXED_IMG_W = 800, __FIXED_IMG_H = 600;
+function __ensureGlobalFixedImgCSS(){
+  if (document.getElementById('fixed-img-css')) return;
+  const st = document.createElement('style');
+  st.id = 'fixed-img-css';
+  st.textContent = `[id$="-image"], #subject-image, .subject-image img, img.tool-image, img.option-image { width:100%; height:auto; display:block; aspect-ratio: 4 / 3; }`;
+  document.head.appendChild(st);
+}
+function __ensureFixedLcpAttrs(img, isLcp=true){
+  if (!img) return;
+  try {
+    img.setAttribute('width',  img.getAttribute('width')  || String(__FIXED_IMG_W));
+    img.setAttribute('height', img.getAttribute('height') || String(__FIXED_IMG_H));
+    img.setAttribute('decoding', 'async');
+    img.setAttribute('loading', isLcp ? 'eager' : 'lazy');
+    img.setAttribute('fetchpriority', isLcp ? 'high' : 'low');
+    // CSS safety
+    img.style.width = '100%'; img.style.height = 'auto'; img.style.display = 'block'; img.style.aspectRatio = '4 / 3';
+  } catch {}
+}
+__ensureGlobalFixedImgCSS();
+
+
 const log  = (...a)=>console.log('[subject]', ...a);
 const warn = (...a)=>console.warn('[subject]', ...a);
 
@@ -127,6 +152,7 @@ export function makeSubjectGame(cfg) {
     if (!imgEl) return;
     imgEl.classList.remove('img-error');
     imgEl.alt = safeText(alt);
+    __ensureFixedLcpAttrs(imgEl, true);
     if (!src) { imgEl.removeAttribute('src'); return; }
     imgEl.onload  = ()=> imgEl.classList.remove('img-error');
     imgEl.onerror = ()=> { imgEl.classList.add('img-error'); warnP('missing image', src); };

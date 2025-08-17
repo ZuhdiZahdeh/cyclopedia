@@ -5,6 +5,31 @@ import { recordActivity } from '../core/activity-handler.js';
 import { fetchSubjectItems, normalizeItemForView } from '../core/items-repo.js';
 import { pickLocalized, slugify } from '../core/media-utils.js';
 
+
+// ---- Fixed image + LCP helpers (unified) ----
+const __FIXED_IMG_W = 800, __FIXED_IMG_H = 600;
+function __ensureGlobalFixedImgCSS(){
+  if (document.getElementById('fixed-img-css')) return;
+  const st = document.createElement('style');
+  st.id = 'fixed-img-css';
+  st.textContent = `[id$="-image"], #subject-image, .subject-image img, img.tool-image, img.option-image { width:100%; height:auto; display:block; aspect-ratio: 4 / 3; }`;
+  document.head.appendChild(st);
+}
+function __ensureFixedLcpAttrs(img, isLcp=true){
+  if (!img) return;
+  try {
+    img.setAttribute('width',  img.getAttribute('width')  || String(__FIXED_IMG_W));
+    img.setAttribute('height', img.getAttribute('height') || String(__FIXED_IMG_H));
+    img.setAttribute('decoding', 'async');
+    img.setAttribute('loading', isLcp ? 'eager' : 'lazy');
+    img.setAttribute('fetchpriority', isLcp ? 'high' : 'low');
+    // CSS safety
+    img.style.width = '100%'; img.style.height = 'auto'; img.style.display = 'block'; img.style.aspectRatio = '4 / 3';
+  } catch {}
+}
+__ensureGlobalFixedImgCSS();
+
+
 const SUBJECT_KEY = 'human_body';
 
 // بديل SVG inline لا يحتاج شبكة (نستخدمه إن فشل حتى /images/404.png)
@@ -122,7 +147,8 @@ function render() {
     imgEl.classList.remove('img-error');
     imgEl.style.cursor = 'pointer';
     imgEl.onclick = onPlay;
-    setImgOnce(imgEl, getImagePath(raw, view));
+        __ensureFixedLcpAttrs(imgEl, true);
+setImgOnce(imgEl, getImagePath(raw, view));
   }
 
   if (descEl) descEl.textContent = view.description || '';

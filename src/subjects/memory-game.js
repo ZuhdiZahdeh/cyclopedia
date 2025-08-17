@@ -6,6 +6,31 @@ import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '.
 import { playAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 
+
+// ---- Fixed image + LCP helpers (unified) ----
+const __FIXED_IMG_W = 800, __FIXED_IMG_H = 600;
+function __ensureGlobalFixedImgCSS(){
+  if (document.getElementById('fixed-img-css')) return;
+  const st = document.createElement('style');
+  st.id = 'fixed-img-css';
+  st.textContent = `[id$="-image"], #subject-image, .subject-image img, img.tool-image, img.option-image { width:100%; height:auto; display:block; aspect-ratio: 4 / 3; }`;
+  document.head.appendChild(st);
+}
+function __ensureFixedLcpAttrs(img, isLcp=true){
+  if (!img) return;
+  try {
+    img.setAttribute('width',  img.getAttribute('width')  || String(__FIXED_IMG_W));
+    img.setAttribute('height', img.getAttribute('height') || String(__FIXED_IMG_H));
+    img.setAttribute('decoding', 'async');
+    img.setAttribute('loading', isLcp ? 'eager' : 'lazy');
+    img.setAttribute('fetchpriority', isLcp ? 'high' : 'low');
+    // CSS safety
+    img.style.width = '100%'; img.style.height = 'auto'; img.style.display = 'block'; img.style.aspectRatio = '4 / 3';
+  } catch {}
+}
+__ensureGlobalFixedImgCSS();
+
+
 // -------------------- إعدادات وأنماط الأنواع --------------------
 const TYPE_SYNONYMS = {
   'animal':      ['animal','animals','Animal','Animals'],
@@ -313,7 +338,7 @@ function createBoard(){
 
     let front = '';
     if (card.type === 'image'){
-      front = `<img src="${card.value}" alt="${card.id}" />`;
+      front = `<img src="${card.value}" alt="${card.id}" width="240" height="180" loading="lazy" decoding="async" fetchpriority="low" />`;
     } else if (card.type === 'word' || card.type === 'char'){
       front = `<span class="card-display-text">${card.value || ''}</span>`;
     } else if (card.type === 'audio'){

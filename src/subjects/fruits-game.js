@@ -5,6 +5,31 @@ import { recordActivity } from '../core/activity-handler.js';
 import { fetchSubjectItems, normalizeItemForView } from '../core/items-repo.js';
 import { pickLocalized, slugify } from '../core/media-utils.js';
 
+
+// ---- Fixed image + LCP helpers (unified) ----
+const __FIXED_IMG_W = 800, __FIXED_IMG_H = 600;
+function __ensureGlobalFixedImgCSS(){
+  if (document.getElementById('fixed-img-css')) return;
+  const st = document.createElement('style');
+  st.id = 'fixed-img-css';
+  st.textContent = `[id$="-image"], #subject-image, .subject-image img, img.tool-image, img.option-image { width:100%; height:auto; display:block; aspect-ratio: 4 / 3; }`;
+  document.head.appendChild(st);
+}
+function __ensureFixedLcpAttrs(img, isLcp=true){
+  if (!img) return;
+  try {
+    img.setAttribute('width',  img.getAttribute('width')  || String(__FIXED_IMG_W));
+    img.setAttribute('height', img.getAttribute('height') || String(__FIXED_IMG_H));
+    img.setAttribute('decoding', 'async');
+    img.setAttribute('loading', isLcp ? 'eager' : 'lazy');
+    img.setAttribute('fetchpriority', isLcp ? 'high' : 'low');
+    // CSS safety
+    img.style.width = '100%'; img.style.height = 'auto'; img.style.display = 'block'; img.style.aspectRatio = '4 / 3';
+  } catch {}
+}
+__ensureGlobalFixedImgCSS();
+
+
 const SUBJECT_KEY = 'fruits';
 
 let _raw = [];
@@ -52,7 +77,8 @@ function render() {
   if (imgEl) {
     imgEl.alt = view.imageAlt || '';
     imgEl.onerror = () => console.warn('[fruits] missing image:', view.imagePath);
-    imgEl.src = view.imagePath || '';
+        __ensureFixedLcpAttrs(imgEl, true);
+imgEl.src = view.imagePath || '';
     imgEl.style.cursor = 'pointer';
     imgEl.onclick = onPlay;
   }

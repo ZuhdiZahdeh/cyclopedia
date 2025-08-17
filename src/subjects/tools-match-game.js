@@ -6,6 +6,31 @@ import { getCurrentLang, loadLanguage, setDirection, applyTranslations } from '.
 import { playAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 
+
+// ---- Fixed image + LCP helpers (unified) ----
+const __FIXED_IMG_W = 800, __FIXED_IMG_H = 600;
+function __ensureGlobalFixedImgCSS(){
+  if (document.getElementById('fixed-img-css')) return;
+  const st = document.createElement('style');
+  st.id = 'fixed-img-css';
+  st.textContent = `[id$="-image"], #subject-image, .subject-image img, img.tool-image, img.option-image { width:100%; height:auto; display:block; aspect-ratio: 4 / 3; }`;
+  document.head.appendChild(st);
+}
+function __ensureFixedLcpAttrs(img, isLcp=true){
+  if (!img) return;
+  try {
+    img.setAttribute('width',  img.getAttribute('width')  || String(__FIXED_IMG_W));
+    img.setAttribute('height', img.getAttribute('height') || String(__FIXED_IMG_H));
+    img.setAttribute('decoding', 'async');
+    img.setAttribute('loading', isLcp ? 'eager' : 'lazy');
+    img.setAttribute('fetchpriority', isLcp ? 'high' : 'low');
+    // CSS safety
+    img.style.width = '100%'; img.style.height = 'auto'; img.style.display = 'block'; img.style.aspectRatio = '4 / 3';
+  } catch {}
+}
+__ensureGlobalFixedImgCSS();
+
+
 /* --------------------------- إعدادات عامّة --------------------------- */
 const TYPE_SYNONYMS = {
   tool:        ['tool','tools','profession_tool','profession_tools','Tool','Tools'],
@@ -231,7 +256,7 @@ function renderToolDisplay(){
   if (showText){
     holder.innerHTML = `<div class="tool-name" style="direction:${isRtl(lang)?'rtl':'ltr'}">${toolText}</div>`;
   } else {
-    holder.innerHTML = `<img id="tool-image" class="tool-image clickable-image" src="${imgSrc}" alt="${toolText}" />`;
+    holder.innerHTML = `<img id="tool-image" class="tool-image clickable-image" src="${imgSrc}" alt="${toolText}" width="800" height="600" loading="eager" decoding="async" fetchpriority="high" />`;
   }
 
   // 🔊 تشغيل تلقائي فقط في أنماط الصوت
@@ -295,7 +320,8 @@ function renderOptions(){
       img.className = 'option-image';
       img.src = resolveImage(p);
       img.alt = tName(p, lang);
-      const cap = document.createElement('div');
+      img.setAttribute('width','240'); img.setAttribute('height','180'); img.setAttribute('loading','lazy'); img.setAttribute('decoding','async'); img.setAttribute('fetchpriority','low');
+const cap = document.createElement('div');
       cap.className = 'option-caption';
       cap.textContent = tName(p, lang);
       cap.style.direction = isRtl(lang) ? 'rtl' : 'ltr';
