@@ -64,8 +64,7 @@ function ensureCss(paths = []) {
       appended = true;
     }
   }
-  } catch(e) {}
-});
+  if (appended) requestAnimationFrame(() => {});
 }
 // حمل الأساسي مرة واحدة
 ensureCss(BASE_CSS);
@@ -146,7 +145,95 @@ function initSidebarObserver() {
   _sidebarObserver = new MutationObserver(() => {
     if (scheduled) return;
     scheduled = true;
-    requestAnimationFrame(() => { placeAccountSectionBelowActiveControls(); initSidebarObserver(); });};
+    requestAnimationFrame(() => {
+      placeAccountSectionBelowActiveControls();
+      scheduled = false;
+    });
+  });
+
+  _sidebarObserver.observe(aside, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['style', 'hidden', 'class']
+  });
+}
+
+/* ------------------------- محمل صفحات عام (مُحصَّن) ------------------------- */
+const FRAGMENT_SELECTORS = [
+  "#page-content",
+  ".subject-page",
+  "#fruits-game",
+  "main .main-content",
+  "main",
+  "body"
+];
+
+async function loadPage(htmlPath, moduleLoader, subjectType) {
+  const mainContent = document.getElementById('app-main') || document.querySelector('main.main-content');
+  try {
+    // CSS الموضوع (إن وُجد)
+    if (subjectType && SUBJECT_CSS[subjectType]) {
+      ensureCss(['/css/common-components-subjects.css', SUBJECT_CSS[subjectType]]);
+    }
+
+    hideAllControls();
+
+    const res = await fetch(htmlPath, { cache: 'no-cache' });
+    if (!res.ok) throw new Error(`فشل تحميل الصفحة: ${htmlPath} (status ${res.status})`);
+    const html = await res.text();
+
+    // لو رجعت وثيقة كاملة بالخطأ
+    if (/<\!doctype html>|<html|<header[^>]+top-navbar/i.test(html)) {
+      console.warn(`[loader] "${htmlPath}" أعاد وثيقة كاملة (غالبًا index.html). سأحاول استخراج جزء المحتوى فقط.`);
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const candidate = FRAGMENT_SELECTORS.map(sel => doc.querySelector(sel)).find(Boolean);
+      mainContent.innerHTML = candidate ? candidate.innerHTML : '<p>تعذّر تحميل الصفحة.</p>';
+    } else {
+      mainContent.innerHTML = html;
+    }
+
+    // ترجمات فورية لمحتوى الصفحة المحقون
+    try { await applyTranslations(); } catch {}
+
+    // تهيئة مجموعة التحكم للموضوع (إن وُجد)، ثم ضع «حسابك» تحتها
+    if (subjectType) initializeSubjectControls(subjectType);
+
+    // ننتظر فريم لضمان اكتمال حقن عناصر التحكم ثم نرتّب «حسابك»
+    requestAnimationFrame(() => {
+      placeAccountSectionBelowActiveControls();
+      initSidebarObserver(); // مرّة واحدة، وبعدها يراقب أي تغييرات لاحقة
+    });
+
+    // تشغيل منطق الصفحة/اللعبة إن وُجد
+    if (typeof moduleLoader === 'function') {
+      await moduleLoader();
+    }
+
+    console.log(`✅ تم تحميل الصفحة: ${htmlPath}`);
+  } catch (err) {
+    console.error(`❌ خطأ في تحميل الصفحة: ${htmlPath}`, err);
+    if (mainContent) {
+      mainContent.innerHTML = `<div class="error-box">حدث خطأ أثناء تحميل الصفحة المطلوبة.</div>`;
+    }
+  }
+}
+
+/* ------------------------- ربط الدوال بنافذة المتصفح ------------------------- */
+window.showHomePage = () => {
+  const main = document.getElementById('app-main') || document.querySelector('main.main-content');
+  main.innerHTML = `
+    <section id="welcome-message">
+      <h1>مرحباً بك في الموسوعة التفاعلية للأطفال</h1>
+      <p>اختر موضوعاً من القائمة لبدء التعلم واللعب.</p>
+    </section>
+  `;
+  hideAllControls();
+  requestAnimationFrame(() => {
+    placeAccountSectionBelowActiveControls();
+    initSidebarObserver();
+  });
+};
 
 // صفحات المواضيع
 window.loadAnimalsPage       = () => loadPage("/html/animals.html",        loadAnimalsGameContent,       "animal");
@@ -175,7 +262,6 @@ window.loadProfile  = () => loadPage("/users/profile.html");
 window.loadMyReport = () => loadPage("/users/my-report.html");
 
 /* ------------------------- تهيئة اللغة ------------------------- */
-initPerfMonitor();
 (function initLang() {
   const lang = getCurrentLang();
   loadLanguage(lang).then(() => applyTranslations());
