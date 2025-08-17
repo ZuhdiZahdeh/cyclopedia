@@ -1,4 +1,4 @@
-// vite.config.js (محدَّث)
+// vite.config.js
 import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -7,29 +7,37 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname  = dirname(__filename);
 
 export default defineConfig({
-  root: __dirname,
-  base: "/",                                // إبقِها كما هي للنشر على Firebase
-  publicDir: resolve(__dirname, "public"),  // نخزّن html الجزئية داخل public/html
+  // الأساس مناسب لـ Firebase Hosting على الجذر /
+  base: "/",
+
+  // يتعامل Vite تلقائيًا مع مجلد public؛ نثبّت المسار صراحةً
+  publicDir: resolve(__dirname, "public"),
+
+  // مسارات مختصرة موحّدة لكل المشروع
   resolve: {
     alias: {
       "@":           resolve(__dirname, "src"),
       "@core":       resolve(__dirname, "src/core"),
-      "@config": path.resolve(__dirname, "src/js/firebase-config.js"),
-	  "@activities": resolve(__dirname, "src/activities"),
-      "@subjects": path.resolve(__dirname, "src/subjects"),
-    }
-    }
+      "@subjects":   resolve(__dirname, "src/subjects"),
+      "@activities": resolve(__dirname, "src/activities"),
+      "@js":         resolve(__dirname, "src/js"),
+      // Alias مباشر لملف Firebase لديك (استعمله: import { db } from "@config")
+      "@config":     resolve(__dirname, "src/js/firebase-config.js"),
+      "@public":     resolve(__dirname, "public"),
+    },
   },
-  server:  { port: 5173, open: false },
-  preview: { port: 4173, open: false },
-  // تحسين الاستيراد لفirebase + اعتماد أصوات كأصول عند الاستيراد (إن لزم)
+
+  server:  { port: 5173, open: false, host: true },
+  preview: { port: 4173, open: false, host: true },
+
+  // تحسين الاستيراد لفirebase + اعتبار الصوت أصولًا
   optimizeDeps: { include: ["firebase/app", "firebase/firestore"] },
   assetsInclude: ["**/*.mp3", "**/*.ogg", "**/*.wav", "**/*.m4a", "**/*.webm"],
-  build:   {
+
+  build: {
     outDir: resolve(__dirname, "dist"),
     emptyOutDir: true,
-    sourcemap: true
-    // لا نضيف rollupOptions.input لأننا نعتمد على public/html + الحقن الديناميكي
-  }
+    sourcemap: true,
+    // لا حاجة لتحديد rollupOptions.input؛ نستخدم index.html والحقن الديناميكي لصفحات html الجزئية
+  },
 });
-
