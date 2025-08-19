@@ -1,10 +1,5 @@
 // src/subjects/family-groups-game.js
-/* لعبة "أين عائلتي؟" — تصنيف بالسحب والإفلات
- * تعتمد على:
- *  - Firestore: مجموعة /items فيها fields مثل name{ar,en,he}, categories{ar,en,he}, media.images[], sound{lang}{variant}
- *  - html/family-groups-game.html + html/family-groups-controls.html
- *  - متغيرات CSS العامة للأزرار، والشريط الجانبي موحد
- */
+/* لعبة "أين عائلتي؟" — تصنيف بالسحب والإفلات */
 
 import { db } from "../js/firebase-config.js";
 import {
@@ -14,7 +9,8 @@ import * as LangMod from "../core/lang-handler.js";
 import * as AudioMod from "../core/audio-handler.js";
 import * as Activity from "../core/activity-handler.js";
 
-const GAME_KEY = "family-groups"; // للاستخدام في السجلات
+const GAME_KEY = "family-groups";
+
 const SELECTORS = {
   mainWrap:    "#family-groups-game",
   binsWrap:    "#fg-bins",
@@ -32,14 +28,12 @@ const SELECTORS = {
   langSel:     "#fg-lang-select",
 };
 
-// نصوص واجهة صغيرة (محلية داخل الملف)
 const UI = {
   ar: { title: "أين عائلتي؟", hint: "اسحب الصورة إلى السلة الصحيحة.", correct: "أحسنت! إجابة صحيحة.", wrong: "حاول مرة أخرى.", newRound: "جولة جديدة", listen: "استمع" },
   en: { title: "Where is my family?", hint: "Drag the picture to the correct basket.", correct: "Great! Correct.", wrong: "Try again.", newRound: "New Round", listen: "Listen" },
   he: { title: "איפה המשפחה שלי?", hint: "גרור את התמונה לסל הנכון.", correct: "כל הכבוד! תשובה נכונה.", wrong: "נסה שוב.", newRound: "סיבוב חדש", listen: "האזן" }
 };
 
-// قائمة تصنيفات احتياطية (لو لم تُوفَّر من Firestore)
 const FALLBACK_CATEGORIES = {
   ar: ["ثديي","طائر","زاحف","مفترس","عاشب","فاكهة","خضار","أداة","مهنة","جزء جسم"],
   en: ["Mammal","Bird","Reptile","Predator","Herbivore","Fruit","Vegetable","Tool","Profession","Body Part"],
@@ -57,17 +51,20 @@ const state = {
   soundVariant: "boy",     // boy | girl | teacher
 };
 
-// ====== نقاط دخول الموديول ======
+// ====== نقطة الدخول ======
 export async function loadFamilyGroupsGameContent() {
   await mountViews();
   state.lang = safeGetLang();
-  onLangChange(relocalizeUI);
 
-  // ربط التحكمات الأساسية
+  // ⬅️ في نسختك السابقة كان onLangChange يعيد تعريب الواجهة فقط؛
+  // الآن نحافظ على نفس العنصر ونعيد بناء الصناديق عند تغيير اللغة:
+  onLangChange(handleLangChanged);
+
+  // أزرار
   qs(SELECTORS.btnNew)?.addEventListener("click", () => newRound());
   qs(SELECTORS.btnListen)?.addEventListener("click", () => tryPlayItemSound());
 
-  // ربط الشكل/الصوت/اللغة (عناصر اختيارية إن لم تكن موجودة في القالب الحالي)
+  // قوائم اختيار
   const modeSel  = qs(SELECTORS.modeSel);
   const voiceSel = qs(SELECTORS.voiceSel);
   const langSel  = qs(SELECTORS.langSel);
@@ -87,28 +84,49 @@ export async function loadFamilyGroupsGameContent() {
     });
   }
   if (langSel){
-    // مزامنة صندوق اللغة مع الحالة الحالية إن وُجد
-    try { langSel.value = state.lang; } catch {}
+    // صندوق اللغة موجود بتنسيقك الحالي في التحكمات:contentReference[oaicite:3]{index=3}
+    langSel.value = state.lang;
     langSel.addEventListener("change", (e) => {
       const next = e.target.value;
       if (LangMod?.setLang) LangMod.setLang(next);
       else if (LangMod?.changeLang) LangMod.changeLang(next);
+      // عند اكتمال التحويل، سيُستدعى handleLangChanged عبر onLangChange
     });
   }
 
-  // أول جولة
   await newRound();
 }
 
-// ====== عرض الواجهات ======
+// ====== عند تغيير اللغة — حافظ على نفس العنصر ======
+async function handleLangChanged() {
+  state.lang = safeGetLang();
+  relocalizeUI();
+
+  // مزامنة قيمة صندوق اللغة (إن وُجد)
+  const langSel = qs(SELECTORS.langSel);
+  if (langSel) { try { langSel.value = state.lang; } catch {} }
+
+  // إن لم يكن هناك عنصر (في أول تحميل مثلاً) نبدأ جولة جديدة
+  if (!state.item) return newRound();
+
+  // تحديث بطاقة نفس العنصر باللغة الجديدة
+  fillItemCard(state.item, state.lang);
+  applyDisplayMode();
+
+  // إعادة بناء صناديق الفئات فقط باللغة الجديدة
+  await rebuildBinsForCurrentItem();
+  tryPreloadItemAudio();
+}
+
+// ====== حقن الواجهات ======
 async function mountViews() {
-  // المحتوى الرئيسي
+  // المسرح — يحتوي span للاسم على البطاقة في قالبك الحالي:contentReference[oaicite:4]{index=4}
   const main = document.querySelector("main.main-content") || document.getElementById("main-content");
   if (main) {
     const html = await fetch("/html/family-groups-game.html").then(r => r.text()).catch(() => null);
     main.innerHTML = html || getMainFallbackHTML();
   }
-  // الشريط الجانبي
+  // الشريط الجانبي — فيه صندوق اللغة/العرض/الصوت في نسختك الحالية:contentReference[oaicite:5]{index=5}
   const sidebar = document.getElementById("sidebar") || document.getElementById("sidebar-wrapper") || document.querySelector(".sidebar");
   if (sidebar) {
     const html = await fetch("/html/family-groups-controls.html").then(r => r.text()).catch(() => null);
@@ -121,45 +139,53 @@ async function mountViews() {
     }
   }
   relocalizeUI();
-  applyDisplayMode(); // ضبط الوضع الافتراضي على البطاقة
+  applyDisplayMode();
 }
 
-// ====== جولة جديدة ======
+// ====== جولة جديدة (تبديل عنصر) ======
 async function newRound() {
   clearFeedback();
   const lang = safeGetLang();
   state.lang = lang;
 
   const itemData = await pickRandomItemWithCategories(lang);
-  if (!itemData) {
-    setFeedback(msg(lang, "wrong"));
-    return;
-  }
+  if (!itemData) { setFeedback(msg(lang, "wrong")); return; }
+
   state.item = itemData;
   fillItemCard(itemData, lang);
-  applyDisplayMode(); // ليظهر الاسم/الصورة حسب الاختيار الحالي
+  applyDisplayMode();
 
-  // توليد خيارات التصنيف: 1 صحيح + 3 مشتتات
-  const master = await getMasterCategories(lang);
-  const itemCats = (itemData.categories?.[lang] || itemData.categories?.ar || []).filter(Boolean);
-  const correct = randFrom(itemCats);
-  if (!correct) { return newRound(); }
-
-  const distractors = master.filter(c => c && c !== correct);
-  shuffle(distractors);
-  const options = [correct, ...distractors.slice(0,3)];
-  shuffle(options);
-  state.correctCategory = correct;
-  state.options = options;
-
-  renderBins(options, lang);
+  await rebuildBinsForCurrentItem();
   attachDragAndDrop();
   tryPreloadItemAudio();
 }
 
+// ====== إعادة بناء صناديق الفئات للعنصر الحالي (حسب اللغة الحالية) ======
+async function rebuildBinsForCurrentItem(){
+  const lang = state.lang;
+  const master   = await getMasterCategories(lang);
+  const itemCats = (state.item?.categories?.[lang] || state.item?.categories?.ar || []).filter(Boolean);
+  // اختر فئة صحيحة من فئات العنصر باللغة الحالية
+  const correct = randFrom(itemCats);
+  if (!correct){
+    // لو لم توجد فئات بالترجمة الحالية، نرجع لجولة جديدة
+    return newRound();
+  }
+
+  // ولد مشتتات من القاموس العام، ثم طبّقها
+  const distractors = master.filter(c => c && c !== correct);
+  shuffle(distractors);
+  const options = [correct, ...distractors.slice(0,3)];
+  shuffle(options);
+
+  state.correctCategory = correct;
+  state.options = options;
+
+  renderBins(options, lang);
+}
+
 // ====== جلب عنصر عشوائي ======
 async function pickRandomItemWithCategories(lang) {
-  // 1) إن وُجد index
   try {
     const idxSnap = await getDoc(doc(db, "config", "classification_index"));
     if (idxSnap.exists()) {
@@ -173,7 +199,6 @@ async function pickRandomItemWithCategories(lang) {
     }
   } catch (e) {}
 
-  // 2) فfallback: نسحب 50 وثيقة تقريبًا ونتحرى
   const seed = Math.random().toString(36).slice(2, 8);
   const q1 = query(collection(db, "items"), orderBy("__name__"), startAt(seed), limit(50));
   const snap = await getDocs(q1);
@@ -184,7 +209,6 @@ async function pickRandomItemWithCategories(lang) {
   });
   if (pool.length) return randFrom(pool);
 
-  // 3) لو فشلت، جرّب من البداية
   const q2 = query(collection(db, "items"), orderBy("__name__"), limit(50));
   const snap2 = await getDocs(q2);
   const pool2 = [];
@@ -201,7 +225,7 @@ function hasCategories(item, lang) {
   return Array.isArray(arr) && arr.length > 0;
 }
 
-// ====== قاموس التصنيفات ======
+// ====== قاموس الفئات ======
 async function getMasterCategories(lang) {
   try {
     const cfg = await getDoc(doc(db, "config", "classification_categories"));
@@ -220,20 +244,25 @@ function fillItemCard(item, lang) {
   const nameOn  = qs(SELECTORS.nameOnCard);
 
   const label = (item.name?.[lang] || item.name?.ar || "").toString();
-  titleEl.textContent = label;
-  titleEl.setAttribute("dir", isRTL(lang) ? "rtl" : "ltr");
-  if (nameOn) {
+  if (titleEl){
+    titleEl.textContent = label;
+    titleEl.setAttribute("dir", isRTL(lang) ? "rtl" : "ltr");
+  }
+  if (nameOn){
     nameOn.textContent = label;
     nameOn.setAttribute("dir", isRTL(lang) ? "rtl" : "ltr");
   }
 
   const mainImage = pickItemImage(item);
-  imgEl.src = mainImage?.path || mainImage?.url || item.image_path || "";
-  imgEl.alt = mainImage?.alt?.[lang] || mainImage?.alt?.ar || label || "item";
+  if (imgEl){
+    imgEl.src = mainImage?.path || mainImage?.url || item.image_path || "";
+    imgEl.alt = mainImage?.alt?.[lang] || mainImage?.alt?.ar || label || "item";
+  }
 }
 
 function renderBins(options, lang) {
   const binsWrap = qs(SELECTORS.binsWrap);
+  if (!binsWrap) return;
   binsWrap.innerHTML = "";
   options.forEach((opt) => {
     const btn = document.createElement("button");
@@ -247,12 +276,13 @@ function renderBins(options, lang) {
   });
 }
 
-// ====== سحب/إفلات + وصول ======
+// ====== سحب/إفلات ======
 function attachDragAndDrop() {
   const card = qs(SELECTORS.card);
   const bins = qsa(".fg-bin");
+  if (!card) return;
 
-  // بالنقر على البطاقة، نُشغّل الصوت في وضع "صوت"
+  // بالنقر على البطاقة في وضع "صوت" نشغّل الصوت
   card.addEventListener("click", () => {
     if (state.displayMode === "sound") tryPlayItemSound();
   });
@@ -326,9 +356,11 @@ function tryDropOn(binEl) {
     logActivity(false, chosen, correct);
     window.setTimeout(() => binEl.classList.remove("incorrect"), 360);
     const card = qs(SELECTORS.card);
-    card.style.transition = "transform 160ms ease";
-    card.style.transform = "translate(0,0)";
-    card.setAttribute("aria-grabbed","false");
+    if (card){
+      card.style.transition = "transform 160ms ease";
+      card.style.transform = "translate(0,0)";
+      card.setAttribute("aria-grabbed","false");
+    }
   }
 }
 
@@ -343,7 +375,7 @@ function swallowCard(binEl) {
   card.style.transform = `translate(${dx}px, ${dy}px) scale(0.8)`;
 }
 
-// ====== صوت ونقاط وسجل ======
+// ====== صوت/نقاط/سجل ======
 function tryPlayItemSound() {
   const url = pickItemSoundUrl(state.item, state.lang, state.soundVariant);
   if (url) {
@@ -359,32 +391,17 @@ function tryPreloadItemAudio() {
   a.src = url; a.preload = "auto";
 }
 
-function playCorrect() {
-  if (AudioMod?.playFeedback) AudioMod.playFeedback("correct", state.lang);
-  else beep(600, 120);
-}
-function playWrong() {
-  if (AudioMod?.playFeedback) AudioMod.playFeedback("wrong", state.lang);
-  else beep(220, 160);
-}
+function playCorrect() { if (AudioMod?.playFeedback) AudioMod.playFeedback("correct", state.lang); else beep(600, 120); }
+function playWrong()   { if (AudioMod?.playFeedback) AudioMod.playFeedback("wrong", state.lang);   else beep(220, 160); }
 
-function addScore(n=1) {
-  state.score += n;
-  const el = qs(SELECTORS.score); if (el) el.textContent = String(state.score);
-}
+function addScore(n=1) { state.score += n; const el = qs(SELECTORS.score); if (el) el.textContent = String(state.score); }
 
 function logActivity(ok, chosen, correct) {
-  const payload = {
-    type: GAME_KEY,
-    ok, chosen, correct,
-    itemId: state.item?.id,
-    lang: state.lang,
-    ts: Date.now()
-  };
+  const payload = { type: GAME_KEY, ok, chosen, correct, itemId: state.item?.id, lang: state.lang, ts: Date.now() };
   if (Activity?.recordActivity) Activity.recordActivity(payload);
 }
 
-// ====== أدوات مساعدة ======
+// ====== مساعدين ======
 function pickItemImage(item) {
   const images = item?.media?.images;
   if (Array.isArray(images) && images.length) {
@@ -403,7 +420,6 @@ function pickItemSoundUrl(item, lang, preferredVariant) {
   if (!s) return null;
   if (typeof s === "string") return s;
   if (typeof s === "object") {
-    // نحترم اختيار المستخدم إن وُجد، ثم نسق افتراضي
     return s[preferredVariant] || s.boy || s.girl || s.teacher || Object.values(s)[0];
   }
   return null;
@@ -418,15 +434,15 @@ function applyDisplayMode() {
   card.classList.remove("mode-image","mode-name","mode-sound");
   if (state.displayMode === "name") {
     card.classList.add("mode-name");
-    if (img)  img.setAttribute("aria-hidden","true");
+    img.setAttribute("aria-hidden","true");
     if (name) name.setAttribute("aria-hidden","false");
   } else if (state.displayMode === "sound") {
     card.classList.add("mode-sound");
-    if (img)  img.setAttribute("aria-hidden","true");
+    img.setAttribute("aria-hidden","true");
     if (name) name.setAttribute("aria-hidden","false");
   } else {
     card.classList.add("mode-image");
-    if (img)  img.setAttribute("aria-hidden","false");
+    img.setAttribute("aria-hidden","false");
     if (name) name.setAttribute("aria-hidden","true");
   }
 }
@@ -439,7 +455,6 @@ function relocalizeUI() {
   const btnListen = qs(SELECTORS.btnListen);
   const hint = document.getElementById("fg-hint");
   const title = qs(SELECTORS.title);
-
   if (sb) sb.setAttribute("dir", isRTL(lang) ? "rtl" : "ltr");
   if (btnNew)    btnNew.textContent    = (lang==="ar"?"🔄 ":"") + t.newRound;
   if (btnListen) btnListen.textContent = (lang==="ar"?"🔊 ":"") + t.listen;
@@ -447,8 +462,8 @@ function relocalizeUI() {
   if (title)     title.setAttribute("dir", isRTL(lang) ? "rtl" : "ltr");
 }
 
-function setFeedback(text) { const el = qs(SELECTORS.feedback); if (el) el.textContent = text || ""; }
-function clearFeedback()   { setFeedback(""); }
+function setFeedback(text){ const el = qs(SELECTORS.feedback); if (el) el.textContent = text || ""; }
+function clearFeedback(){ setFeedback(""); }
 
 function safeGetLang() {
   const l = (LangMod?.getCurrentLang && LangMod.getCurrentLang())
@@ -458,11 +473,11 @@ function safeGetLang() {
 }
 function onLangChange(fn){ if (LangMod?.onLangChange) LangMod.onLangChange(fn); }
 
-function msg(lang, key){ return (UI[lang] || UI.ar)[key]; }
 function isRTL(lang){ return lang==="ar" || lang==="he"; }
 function randFrom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function unique(a){ return [...new Set(a.filter(Boolean).map(x=>String(x)))]; }
+
 function qs(s){ return document.querySelector(s); }
 function qsa(s){ return Array.from(document.querySelectorAll(s)); }
 
@@ -480,7 +495,7 @@ function beep(freq=440, ms=120){
   } catch {}
 }
 
-// Fallbacks (لو فشل جلب الملفين)
+// ==== Fallbacks ====
 function getMainFallbackHTML(){
   return `
   <section id="family-groups-game" class="subject-screen">
