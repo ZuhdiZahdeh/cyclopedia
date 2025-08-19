@@ -8,7 +8,7 @@
 
 import { db } from "../js/firebase-config.js";
 import {
-  getFirestore, collection, doc, getDoc, getDocs, query, orderBy, limit, startAt
+  collection, doc, getDoc, getDocs, query, orderBy, limit, startAt
 } from "firebase/firestore";
 import * as LangMod from "../core/lang-handler.js";
 import * as AudioMod from "../core/audio-handler.js";
@@ -20,22 +20,23 @@ const SELECTORS = {
   binsWrap:    "#fg-bins",
   card:        "#fg-card",
   img:         "#fg-image",
+  nameOnCard:  "#fg-name-on-card",
   title:       "#fg-item-name",
   feedback:    "#fg-feedback",
   score:       "#fg-score",
   btnNew:      "#fg-new-round-btn",
   btnListen:   "#fg-listen-btn",
-  sidebarBox:  "#family-groups-controls"
+  sidebarBox:  "#family-groups-controls",
+  modeSel:     "#fg-display-mode",
+  voiceSel:    "#fg-sound-variant",
 };
 
-// نصوص واجهة صغيرة (محلية داخل الملف)
 const UI = {
   ar: { title: "أين عائلتي؟", hint: "اسحب الصورة إلى السلة الصحيحة.", correct: "أحسنت! إجابة صحيحة.", wrong: "حاول مرة أخرى.", newRound: "جولة جديدة", listen: "استمع" },
   en: { title: "Where is my family?", hint: "Drag the picture to the correct basket.", correct: "Great! Correct.", wrong: "Try again.", newRound: "New Round", listen: "Listen" },
   he: { title: "איפה המשפחה שלי?", hint: "גרור את התמונה לסל הנכון.", correct: "כל הכבוד! תשובה נכונה.", wrong: "נסה שוב.", newRound: "סיבוב חדש", listen: "האזן" }
 };
 
-// قائمة تصنيفات احتياطية (لو لم تُوفَّر من Firestore)
 const FALLBACK_CATEGORIES = {
   ar: ["ثديي","طائر","زاحف","مفترس","عاشب","فاكهة","خضار","أداة","مهنة","جزء جسم"],
   en: ["Mammal","Bird","Reptile","Predator","Herbivore","Fruit","Vegetable","Tool","Profession","Body Part"],
@@ -48,22 +49,39 @@ const state = {
   correctCategory: null,
   options: [],
   score: 0,
-  autoNextMs: 1100
+  autoNextMs: 1100,
+  displayMode: "image",   // image | name | sound
+  soundVariant: "boy",     // boy | girl | teacher
 };
 
 // ====== نقاط دخول الموديول ======
 export async function loadFamilyGroupsGameContent() {
-  // حقن الواجهات
   await mountViews();
-  // لغة البدء + مزامنة تغيّر اللغة
   state.lang = safeGetLang();
   onLangChange(relocalizeUI);
 
   // ربط التحكمات
-  const btnNew = qs(SELECTORS.btnNew);
-  const btnListen = qs(SELECTORS.btnListen);
-  btnNew?.addEventListener("click", () => newRound());
-  btnListen?.addEventListener("click", () => tryPlayItemSound());
+  qs(SELECTORS.btnNew)?.addEventListener("click", () => newRound());
+  qs(SELECTORS.btnListen)?.addEventListener("click", () => tryPlayItemSound());
+
+  // ربط أوضاع العرض والصوت
+  const modeSel  = qs(SELECTORS.modeSel);
+  const voiceSel = qs(SELECTORS.voiceSel);
+  if (modeSel) {
+    modeSel.value = state.displayMode;
+    modeSel.addEventListener("change", (e) => {
+      state.displayMode = e.target.value || "image";
+      applyDisplayMode();
+    });
+  }
+  if (voiceSel) {
+    voiceSel.value = state.soundVariant;
+    voiceSel.addEventListener("change", (e) => {
+      state.soundVariant = e.target.value || "boy";
+      // تحسين تجربة الصوت: نعيد تحميل التمهيد للصوت الجديد
+      tryPreloadItemAudio();
+    });
+  }
 
   // أول جولة
   await newRound();
@@ -82,7 +100,6 @@ async function mountViews() {
   if (sidebar) {
     const html = await fetch("/html/family-groups-controls.html").then(r => r.text()).catch(() => null);
     if (html) {
-      // نضيفه كقسم مستقل
       const wrap = document.createElement("div");
       wrap.innerHTML = html;
       sidebar.appendChild(wrap.firstElementChild);
@@ -90,8 +107,8 @@ async function mountViews() {
       sidebar.insertAdjacentHTML("beforeend", getSidebarFallbackHTML());
     }
   }
-  // تطبيق عبارات الواجهة حسب اللغة
   relocalizeUI();
+  applyDisplayMode(); // ضبط الوضع الافتراضي على البطاقة
 }
 
 // ====== جولة جديدة ======
@@ -107,8 +124,9 @@ async function newRound() {
   }
   state.item = itemData;
   fillItemCard(itemData, lang);
+  applyDisplayMode(); // ليظهر الاسم/الصورة حسب الاختيار الحالي
 
-  // توليد خيارات التصنيف: 1 صحيح + 3 مشتتات
+  // خيارات التصنيف
   const master = await getMasterCategories(lang);
   const itemCats = (itemData.categories?.[lang] || itemData.categories?.ar || []).filter(Boolean);
   const correct = randFrom(itemCats);
@@ -123,7 +141,6 @@ async function newRound() {
 
   renderBins(options, lang);
   attachDragAndDrop();
-  // تهيئة الصوت (لا يُشغّل تلقائيًا احترامًا للمتصفح)
   tryPreloadItemAudio();
 }
 
@@ -141,9 +158,9 @@ async function pickRandomItemWithCategories(lang) {
         if (hasCategories(v, lang)) return v;
       }
     }
-  } catch (e) { /* يتابع للخطة ب */ }
+  } catch (e) {}
 
-  // 2) فallback: نسحب 50 وثيقة تقريبًا ونتحرى
+  // 2) فfallback: نسحب 50 وثيقة تقريبًا ونتحرى
   const seed = Math.random().toString(36).slice(2, 8);
   const q1 = query(collection(db, "items"), orderBy("__name__"), startAt(seed), limit(50));
   const snap = await getDocs(q1);
@@ -179,20 +196,23 @@ async function getMasterCategories(lang) {
       const list = cfg.data()?.[lang] || cfg.data()?.ar;
       if (Array.isArray(list) && list.length) return unique(list);
     }
-  } catch (e) { /* فallback */ }
-
-  // جمع سريع من جولة الاستعلام السابقة أو قائمة افتراضية
+  } catch (e) {}
   return unique(FALLBACK_CATEGORIES[lang] || FALLBACK_CATEGORIES.ar);
 }
 
-// ====== رسم البطاقة والصناديق ======
+// ====== البطاقة والصناديق ======
 function fillItemCard(item, lang) {
   const titleEl = qs(SELECTORS.title);
   const imgEl   = qs(SELECTORS.img);
+  const nameOn  = qs(SELECTORS.nameOnCard);
 
   const label = (item.name?.[lang] || item.name?.ar || "").toString();
   titleEl.textContent = label;
   titleEl.setAttribute("dir", isRTL(lang) ? "rtl" : "ltr");
+  if (nameOn) {
+    nameOn.textContent = label;
+    nameOn.setAttribute("dir", isRTL(lang) ? "rtl" : "ltr");
+  }
 
   const mainImage = pickItemImage(item);
   imgEl.src = mainImage?.path || mainImage?.url || item.image_path || "";
@@ -202,7 +222,7 @@ function fillItemCard(item, lang) {
 function renderBins(options, lang) {
   const binsWrap = qs(SELECTORS.binsWrap);
   binsWrap.innerHTML = "";
-  options.forEach((opt, i) => {
+  options.forEach((opt) => {
     const btn = document.createElement("button");
     btn.className = "fg-bin";
     btn.type = "button";
@@ -214,14 +234,16 @@ function renderBins(options, lang) {
   });
 }
 
-// ====== سحب/إفلات + بدائل وصولية ======
+// ====== سحب/إفلات + وصول ======
 function attachDragAndDrop() {
   const card = qs(SELECTORS.card);
   const bins = qsa(".fg-bin");
-  // بالنقر على البطاقة، نُشغّل الصوت
-  card.addEventListener("click", tryPlayItemSound);
 
-  // سحب بالإشارة (يدعم اللمس/الفأرة)
+  // بالنقر على البطاقة، نُشغّل الصوت
+  card.addEventListener("click", () => {
+    if (state.displayMode === "sound") tryPlayItemSound();
+  });
+
   let dragging = false, startX=0, startY=0, dx=0, dy=0;
   const onDown = (e) => {
     dragging = true; dx = dy = 0;
@@ -240,12 +262,10 @@ function attachDragAndDrop() {
   const onUp = () => {
     if (!dragging) return;
     dragging = false;
-    // هل فوق صندوق؟
     const target = detectBinHover(card, bins);
     if (target) {
       tryDropOn(target);
     } else {
-      // يرجع مكانه
       card.style.transition = "transform 160ms ease";
       card.style.transform = "translate(0,0)";
       card.setAttribute("aria-grabbed","false");
@@ -270,7 +290,7 @@ function detectBinHover(card, bins) {
     const area = interW * interH;
     if (area > bestArea) { bestArea = area; best = bin; }
   });
-  return bestArea > 200 ? best : null; // عتبة بسيطة
+  return bestArea > 200 ? best : null;
 }
 
 function tryDropOn(binEl) {
@@ -285,16 +305,13 @@ function tryDropOn(binEl) {
     playCorrect();
     logActivity(true, chosen, correct);
     swallowCard(binEl);
-    // انتقال تلقائي
     window.setTimeout(() => newRound(), state.autoNextMs);
   } else {
     binEl.classList.add("incorrect");
     setFeedback(msg(state.lang, "wrong"));
     playWrong();
     logActivity(false, chosen, correct);
-    // إزالة وميض الخطأ بعد قليل
     window.setTimeout(() => binEl.classList.remove("incorrect"), 360);
-    // إعادة البطاقة لمكانها
     const card = qs(SELECTORS.card);
     card.style.transition = "transform 160ms ease";
     card.style.transform = "translate(0,0)";
@@ -315,7 +332,7 @@ function swallowCard(binEl) {
 
 // ====== صوت ونقاط وسجل ======
 function tryPlayItemSound() {
-  const url = pickItemSoundUrl(state.item, state.lang);
+  const url = pickItemSoundUrl(state.item, state.lang, state.soundVariant);
   if (url) {
     if (AudioMod?.playUrl) AudioMod.playUrl(url);
     else new Audio(url).play().catch(()=>{});
@@ -323,7 +340,7 @@ function tryPlayItemSound() {
 }
 
 function tryPreloadItemAudio() {
-  const url = pickItemSoundUrl(state.item, state.lang);
+  const url = pickItemSoundUrl(state.item, state.lang, state.soundVariant);
   if (!url) return;
   const a = document.createElement("audio");
   a.src = url; a.preload = "auto";
@@ -367,15 +384,38 @@ function pickItemImage(item) {
   return null;
 }
 
-function pickItemSoundUrl(item, lang) {
+function pickItemSoundUrl(item, lang, preferredVariant) {
   if (!item?.sound) return null;
   const s = item.sound[lang] || item.sound.ar;
   if (!s) return null;
   if (typeof s === "string") return s;
   if (typeof s === "object") {
-    return s.boy || s.girl || s.teacher || Object.values(s)[0];
+    // نحترم اختيار المستخدم إن وُجد، ثم نسق افتراضي
+    return s[preferredVariant] || s.boy || s.girl || s.teacher || Object.values(s)[0];
   }
   return null;
+}
+
+function applyDisplayMode() {
+  const card = qs(SELECTORS.card);
+  const img  = qs(SELECTORS.img);
+  const name = qs(SELECTORS.nameOnCard);
+  if (!card || !img || !name) return;
+
+  card.classList.remove("mode-image","mode-name","mode-sound");
+  if (state.displayMode === "name") {
+    card.classList.add("mode-name");
+    img.setAttribute("aria-hidden","true");
+    name.setAttribute("aria-hidden","false");
+  } else if (state.displayMode === "sound") {
+    card.classList.add("mode-sound");
+    img.setAttribute("aria-hidden","true");
+    name.setAttribute("aria-hidden","false");
+  } else {
+    card.classList.add("mode-image");
+    img.setAttribute("aria-hidden","false");
+    name.setAttribute("aria-hidden","true");
+  }
 }
 
 function relocalizeUI() {
@@ -388,10 +428,10 @@ function relocalizeUI() {
   const title = qs(SELECTORS.title);
 
   if (sb) sb.setAttribute("dir", isRTL(lang) ? "rtl" : "ltr");
-  if (btnNew)   btnNew.textContent   = (lang==="ar"?"🔄 ":"") + t.newRound;
-  if (btnListen)btnListen.textContent= (lang==="ar"?"🔊 ":"") + t.listen;
-  if (hint)     hint.textContent     = t.hint;
-  if (title)    title.setAttribute("dir", isRTL(lang) ? "rtl" : "ltr");
+  if (btnNew)    btnNew.textContent    = (lang==="ar"?"🔄 ":"") + t.newRound;
+  if (btnListen) btnListen.textContent = (lang==="ar"?"🔊 ":"") + t.listen;
+  if (hint)      hint.textContent      = t.hint;
+  if (title)     title.setAttribute("dir", isRTL(lang) ? "rtl" : "ltr");
 }
 
 function setFeedback(text) { const el = qs(SELECTORS.feedback); if (el) el.textContent = text || ""; }
@@ -425,19 +465,20 @@ function beep(freq=440, ms=120){
   } catch {}
 }
 
-// HTML fallback (لو فشل جلب الملف)
+// Fallbacks (لو فشل جلب الملفين)
 function getMainFallbackHTML(){
   return `
   <section id="family-groups-game" class="subject-screen">
     <h2 id="fg-item-name" class="subject-title"></h2>
     <div class="fg-stage">
-      <button id="fg-card" class="fg-card" aria-grabbed="false">
+      <button id="fg-card" class="fg-card mode-image" aria-grabbed="false">
         <img id="fg-image"
-     src=""
-     alt=""
-     width="400" height="300"   <!-- لتثبيت النسبة 4:3 وتقليل CLS -->
-     loading="lazy" decoding="async"
-     style="aspect-ratio: 4 / 3; object-fit: contain;" />
+             src=""
+             alt=""
+             width="400" height="300"
+             loading="lazy" decoding="async"
+             style="aspect-ratio: 4 / 3; object-fit: contain;" />
+        <span id="fg-name-on-card" class="fg-name-on-card" aria-hidden="true"></span>
       </button>
       <div class="fg-bins" id="fg-bins"></div>
     </div>
@@ -450,8 +491,26 @@ function getSidebarFallbackHTML(){
   <div class="sidebar-section" id="family-groups-controls" style="display:block;">
     <h3 class="sidebar-title">🎯 أين عائلتي؟</h3>
     <div class="sidebar-controls">
-      <button id="fg-new-round-btn" class="nav-btn">🔄 جولة جديدة</button>
-      <button id="fg-listen-btn" class="nav-btn ghost">🔊 استمع</button>
+      <label class="control-line">
+        <span>شكل العرض:</span>
+        <select id="fg-display-mode">
+          <option value="image">صورة</option>
+          <option value="name">اسم</option>
+          <option value="sound">صوت</option>
+        </select>
+      </label>
+      <label class="control-line">
+        <span>اختيار الصوت:</span>
+        <select id="fg-sound-variant">
+          <option value="boy">ولد</option>
+          <option value="girl">بنت</option>
+          <option value="teacher">معلّم</option>
+        </select>
+      </label>
+      <div class="btn-row">
+        <button id="fg-new-round-btn" class="nav-btn">🔄 جولة جديدة</button>
+        <button id="fg-listen-btn" class="nav-btn ghost">🔊 استمع</button>
+      </div>
     </div>
     <div class="sidebar-stats">
       <div class="stat-line"><span>⭐ النقاط:</span> <strong id="fg-score">0</strong></div>

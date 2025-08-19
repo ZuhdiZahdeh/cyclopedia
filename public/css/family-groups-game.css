@@ -1,6 +1,5 @@
 /* ===== إعدادات عامّة ===== */
 :root{
-  /* أقصى عرض للصورة داخل البطاقة */
   --fg-max-img: 400px;
   --fg-gap: 0.75rem;
   --fg-border: 1px solid var(--border-color, #e5e7eb);
@@ -16,7 +15,7 @@
   line-height: 1.2;
 }
 
-/* ===== المسرح (البطاقة + صناديق التصنيف) ===== */
+/* ===== المسرح ===== */
 .fg-stage{
   display: grid;
   gap: 1rem;
@@ -24,7 +23,7 @@
   justify-items: center;
 }
 
-/* البطاقة الحاوية للصورة */
+/* البطاقة */
 #family-groups-game .fg-card{
   border: var(--fg-border);
   background: var(--panel-bg, #fff);
@@ -33,25 +32,49 @@
   box-shadow: var(--fg-shadow);
   cursor: grab;
   touch-action: none;
-
-  /* قياسات مرنة مع سقف 400px للصورة + حواف البطاقة */
   width: min(92vw, calc(var(--fg-max-img) + 24px));
   max-width: calc(var(--fg-max-img) + 24px);
   margin-inline: auto;
 }
 .fg-card:active{ cursor: grabbing; }
 
-/* الصورة نفسها */
+/* الصورة */
 #family-groups-game #fg-image{
   display: block;
   width: 100%;
-  height: auto;          /* يحافظ على النسبة */
+  height: auto;
   max-width: var(--fg-max-img);
   aspect-ratio: 4 / 3;
   object-fit: contain;
 }
 
-/* شبكة صناديق التصنيف — افتراض: عمودان (ملائم للموبايل) */
+/* الاسم داخل البطاقة (لوضع name/sound) */
+#family-groups-game .fg-name-on-card{
+  display: none;
+  font-weight: 800;
+  font-size: clamp(1.4rem, 5vw, 2rem);
+  text-align: center;
+  padding: .5rem .75rem;
+}
+
+/* أوضاع العرض على البطاقة */
+#family-groups-game .fg-card.mode-image #fg-image{ display:block; }
+#family-groups-game .fg-card.mode-image #fg-name-on-card{ display:none; }
+
+#family-groups-game .fg-card.mode-name #fg-image{ display:none; }
+#family-groups-game .fg-card.mode-name #fg-name-on-card{ display:block; }
+
+#family-groups-game .fg-card.mode-sound #fg-image{ display:none; }
+#family-groups-game .fg-card.mode-sound #fg-name-on-card{
+  display:block;
+  position: relative;
+}
+#family-groups-game .fg-card.mode-sound #fg-name-on-card::after{
+  content: " 🔊";
+  font-weight: 600;
+}
+
+/* شبكة صناديق التصنيف */
 .fg-bins{
   display: grid;
   gap: var(--fg-gap);
@@ -60,7 +83,6 @@
   max-width: 900px;
 }
 
-/* صندوق التصنيف */
 .fg-bin{
   border: 2px dashed var(--border-color, #cbd5e1);
   border-radius: 1rem;
@@ -87,14 +109,13 @@
   color: #991b1b;
 }
 
-/* اهتزاز الخطأ */
 @keyframes shake{
   0%,100%{ transform: translateX(0); }
   25%    { transform: translateX(-6px); }
   75%    { transform: translateX(6px); }
 }
 
-/* رسالة التغذية الراجعة */
+/* رسالة التغذية */
 .fg-feedback{
   min-height: 1.25rem;
   text-align: center;
@@ -102,24 +123,32 @@
   margin-top: .25rem;
 }
 
-/* احترام اتجاه الواجهة العربية/العبرية */
+/* اتجاه RTL */
 [dir="rtl"] .fg-bin{ direction: rtl; }
 
 /* ===== تكيّف المقاسات ===== */
-
-/* شاشات متوسطة (تابلت) — 3 أعمدة لطيف */
 @media (min-width: 540px){
   .fg-bins{ grid-template-columns: repeat(3, minmax(140px, 1fr)); }
 }
 
-/* شاشات كبيرة (≥ 720px) — 4 أعمدة */
 @media (min-width: 720px){
   .fg-bins{ grid-template-columns: repeat(4, minmax(140px, 1fr)); }
 }
 
-/* شاشات صغيرة جدًا (≤ 420px) — تضييق البطاقة */
 @media (max-width: 420px){
   #family-groups-game .fg-card{ width: 88vw; }
   .fg-bins{ grid-template-columns: repeat(2, minmax(120px, 1fr)); }
   .fg-feedback{ font-size: .95rem; margin-top: .5rem; }
+}
+
+/* عناصر صغيرة للجانب */
+#family-groups-controls .control-line{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
+#family-groups-controls .btn-row{
+  display: flex; gap: .5rem; margin-top: .25rem; flex-wrap: wrap;
 }

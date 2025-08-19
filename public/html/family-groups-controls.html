@@ -2,13 +2,35 @@
   <h3 class="sidebar-title">🎯 أين عائلتي؟</h3>
 
   <div class="sidebar-controls">
-    <button id="fg-new-round-btn" class="nav-btn">
-      🔄 جولة جديدة
-    </button>
+    <!-- شكل العرض -->
+    <label class="control-line">
+      <span>شكل العرض:</span>
+      <select id="fg-display-mode">
+        <option value="image">صورة</option>
+        <option value="name">اسم</option>
+        <option value="sound">صوت</option>
+      </select>
+    </label>
 
-    <button id="fg-listen-btn" class="nav-btn ghost">
-      🔊 استمع
-    </button>
+    <!-- نوع الصوت -->
+    <label class="control-line">
+      <span>اختيار الصوت:</span>
+      <select id="fg-sound-variant">
+        <option value="boy">ولد</option>
+        <option value="girl">بنت</option>
+        <option value="teacher">معلّم</option>
+      </select>
+    </label>
+
+    <div class="btn-row">
+      <button id="fg-new-round-btn" class="nav-btn">
+        🔄 جولة جديدة
+      </button>
+
+      <button id="fg-listen-btn" class="nav-btn ghost" title="تشغيل صوت الاسم">
+        🔊 استمع
+      </button>
+    </div>
   </div>
 
   <div class="sidebar-stats">
@@ -18,4 +40,5 @@
     <p class="hint" id="fg-hint">اسحب الصورة إلى السلة الصحيحة.</p>
   </div>
 </div>
+
 
