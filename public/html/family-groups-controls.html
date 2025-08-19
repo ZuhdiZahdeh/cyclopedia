@@ -2,6 +2,16 @@
   <h3 class="sidebar-title">🎯 أين عائلتي؟</h3>
 
   <div class="sidebar-controls">
+    <!-- تحديد اللغة -->
+    <label class="control-line">
+      <span>اللغة:</span>
+      <select id="fg-lang-select">
+        <option value="ar">العربية</option>
+        <option value="en">English</option>
+        <option value="he">עברית</option>
+      </select>
+    </label>
+
     <!-- شكل العرض -->
     <label class="control-line">
       <span>شكل العرض:</span>
@@ -23,22 +33,13 @@
     </label>
 
     <div class="btn-row">
-      <button id="fg-new-round-btn" class="nav-btn">
-        🔄 جولة جديدة
-      </button>
-
-      <button id="fg-listen-btn" class="nav-btn ghost" title="تشغيل صوت الاسم">
-        🔊 استمع
-      </button>
+      <button id="fg-new-round-btn" class="nav-btn">🔄 جولة جديدة</button>
+      <button id="fg-listen-btn" class="nav-btn ghost">🔊 استمع</button>
     </div>
   </div>
 
   <div class="sidebar-stats">
-    <div class="stat-line">
-      <span>⭐ النقاط:</span> <strong id="fg-score">0</strong>
-    </div>
+    <div class="stat-line"><span>⭐ النقاط:</span> <strong id="fg-score">0</strong></div>
     <p class="hint" id="fg-hint">اسحب الصورة إلى السلة الصحيحة.</p>
   </div>
 </div>
-
-

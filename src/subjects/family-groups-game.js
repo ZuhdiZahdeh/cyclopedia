@@ -29,14 +29,17 @@ const SELECTORS = {
   sidebarBox:  "#family-groups-controls",
   modeSel:     "#fg-display-mode",
   voiceSel:    "#fg-sound-variant",
+  langSel:     "#fg-lang-select",
 };
 
+// نصوص واجهة صغيرة (محلية داخل الملف)
 const UI = {
   ar: { title: "أين عائلتي؟", hint: "اسحب الصورة إلى السلة الصحيحة.", correct: "أحسنت! إجابة صحيحة.", wrong: "حاول مرة أخرى.", newRound: "جولة جديدة", listen: "استمع" },
   en: { title: "Where is my family?", hint: "Drag the picture to the correct basket.", correct: "Great! Correct.", wrong: "Try again.", newRound: "New Round", listen: "Listen" },
   he: { title: "איפה המשפחה שלי?", hint: "גרור את התמונה לסל הנכון.", correct: "כל הכבוד! תשובה נכונה.", wrong: "נסה שוב.", newRound: "סיבוב חדש", listen: "האזן" }
 };
 
+// قائمة تصنيفات احتياطية (لو لم تُوفَّر من Firestore)
 const FALLBACK_CATEGORIES = {
   ar: ["ثديي","طائر","زاحف","مفترس","عاشب","فاكهة","خضار","أداة","مهنة","جزء جسم"],
   en: ["Mammal","Bird","Reptile","Predator","Herbivore","Fruit","Vegetable","Tool","Profession","Body Part"],
@@ -60,26 +63,36 @@ export async function loadFamilyGroupsGameContent() {
   state.lang = safeGetLang();
   onLangChange(relocalizeUI);
 
-  // ربط التحكمات
+  // ربط التحكمات الأساسية
   qs(SELECTORS.btnNew)?.addEventListener("click", () => newRound());
   qs(SELECTORS.btnListen)?.addEventListener("click", () => tryPlayItemSound());
 
-  // ربط أوضاع العرض والصوت
+  // ربط الشكل/الصوت/اللغة (عناصر اختيارية إن لم تكن موجودة في القالب الحالي)
   const modeSel  = qs(SELECTORS.modeSel);
   const voiceSel = qs(SELECTORS.voiceSel);
-  if (modeSel) {
+  const langSel  = qs(SELECTORS.langSel);
+
+  if (modeSel){
     modeSel.value = state.displayMode;
     modeSel.addEventListener("change", (e) => {
       state.displayMode = e.target.value || "image";
       applyDisplayMode();
     });
   }
-  if (voiceSel) {
+  if (voiceSel){
     voiceSel.value = state.soundVariant;
     voiceSel.addEventListener("change", (e) => {
       state.soundVariant = e.target.value || "boy";
-      // تحسين تجربة الصوت: نعيد تحميل التمهيد للصوت الجديد
       tryPreloadItemAudio();
+    });
+  }
+  if (langSel){
+    // مزامنة صندوق اللغة مع الحالة الحالية إن وُجد
+    try { langSel.value = state.lang; } catch {}
+    langSel.addEventListener("change", (e) => {
+      const next = e.target.value;
+      if (LangMod?.setLang) LangMod.setLang(next);
+      else if (LangMod?.changeLang) LangMod.changeLang(next);
     });
   }
 
@@ -126,7 +139,7 @@ async function newRound() {
   fillItemCard(itemData, lang);
   applyDisplayMode(); // ليظهر الاسم/الصورة حسب الاختيار الحالي
 
-  // خيارات التصنيف
+  // توليد خيارات التصنيف: 1 صحيح + 3 مشتتات
   const master = await getMasterCategories(lang);
   const itemCats = (itemData.categories?.[lang] || itemData.categories?.ar || []).filter(Boolean);
   const correct = randFrom(itemCats);
@@ -239,7 +252,7 @@ function attachDragAndDrop() {
   const card = qs(SELECTORS.card);
   const bins = qsa(".fg-bin");
 
-  // بالنقر على البطاقة، نُشغّل الصوت
+  // بالنقر على البطاقة، نُشغّل الصوت في وضع "صوت"
   card.addEventListener("click", () => {
     if (state.displayMode === "sound") tryPlayItemSound();
   });
@@ -400,21 +413,21 @@ function applyDisplayMode() {
   const card = qs(SELECTORS.card);
   const img  = qs(SELECTORS.img);
   const name = qs(SELECTORS.nameOnCard);
-  if (!card || !img || !name) return;
+  if (!card || !img) return;
 
   card.classList.remove("mode-image","mode-name","mode-sound");
   if (state.displayMode === "name") {
     card.classList.add("mode-name");
-    img.setAttribute("aria-hidden","true");
-    name.setAttribute("aria-hidden","false");
+    if (img)  img.setAttribute("aria-hidden","true");
+    if (name) name.setAttribute("aria-hidden","false");
   } else if (state.displayMode === "sound") {
     card.classList.add("mode-sound");
-    img.setAttribute("aria-hidden","true");
-    name.setAttribute("aria-hidden","false");
+    if (img)  img.setAttribute("aria-hidden","true");
+    if (name) name.setAttribute("aria-hidden","false");
   } else {
     card.classList.add("mode-image");
-    img.setAttribute("aria-hidden","false");
-    name.setAttribute("aria-hidden","true");
+    if (img)  img.setAttribute("aria-hidden","false");
+    if (name) name.setAttribute("aria-hidden","true");
   }
 }
 
@@ -438,7 +451,9 @@ function setFeedback(text) { const el = qs(SELECTORS.feedback); if (el) el.textC
 function clearFeedback()   { setFeedback(""); }
 
 function safeGetLang() {
-  const l = (LangMod?.getCurrentLang && LangMod.getCurrentLang()) || (LangMod?.getActiveLang && LangMod.getActiveLang()) || "ar";
+  const l = (LangMod?.getCurrentLang && LangMod.getCurrentLang())
+         || (LangMod?.getActiveLang && LangMod.getActiveLang())
+         || "ar";
   return (l==="ar"||l==="en"||l==="he") ? l : "ar";
 }
 function onLangChange(fn){ if (LangMod?.onLangChange) LangMod.onLangChange(fn); }
