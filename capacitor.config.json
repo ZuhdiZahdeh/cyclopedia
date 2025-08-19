@@ -1,0 +1,8 @@
+{
+  "appId": "edu.cyclopedia.app",
+  "appName": "cyclopedia",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

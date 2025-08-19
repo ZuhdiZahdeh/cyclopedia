@@ -12,12 +12,15 @@
     "format": "prettier -w ."
   },
   "dependencies": {
+    "@capacitor/android": "^7.4.2",
     "dotenv": "^16.5.0",
     "firebase": "^12.1.0",
     "firebase-admin": "^13.4.0",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.4.2",
+    "@capacitor/core": "^7.4.2",
     "eslint": "^9.9.0",
     "fast-glob": "^3.3.3",
     "playwright": "^1.46.0",

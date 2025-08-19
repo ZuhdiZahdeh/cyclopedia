@@ -6,9 +6,9 @@ import { dirname, resolve } from "node:path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = dirname(__filename);
 
-export default defineConfig({
+export default defineConfig(	{
   // الأساس مناسب لـ Firebase Hosting على الجذر /
-  base: "/",
+  base: "./",	 // مهم لعمل التطبيق داخل WebView
 
   // يتعامل Vite تلقائيًا مع مجلد public؛ نثبّت المسار صراحةً
   publicDir: resolve(__dirname, "public"),
