@@ -3,31 +3,21 @@
   "name": "cyclopedia-app",
   "version": "1.0.0",
   "private": true,
-
   "scripts": {
     "dev": "vite",
-    "build": "vite build",                 // ينتج مجلد dist (متوافق مع webDir)
+    "build": "vite build",
     "preview": "vite preview",
-
     "verify": "node scripts/verify.js",
     "lint": "eslint .",
     "format": "prettier -w .",
-
-    // --- Capacitor / Native helper scripts ---
     "cap:init": "npx cap init cyclopedia edu.cyclopedia.app --web-dir=dist",
     "cap:sync": "npx cap sync",
     "cap:copy": "npx cap copy",
-
     "android": "npx cap open android",
     "ios": "npx cap open ios",
-
-    // بناء سريع للتجربة على جهاز فعلي
     "dev:native": "npm run build && npm run cap:sync",
-
-    // (اختياري) توليد حزمة المتجر لأندرويد
     "android:bundle": "cd android && ./gradlew bundleRelease"
   },
-
   "dependencies": {
     "@capacitor/core": "^7.4.2",
     "dotenv": "^16.5.0",
@@ -35,16 +25,17 @@
     "firebase-admin": "^13.4.0",
     "node-fetch": "^3.3.2"
   },
-
   "devDependencies": {
-    "@capacitor/cli": "^7.4.2",
     "@capacitor/android": "^7.4.2",
+    "@capacitor/cli": "^7.4.2",
     "@capacitor/ios": "^7.4.2",
+    "@types/node": "^24.3.0",
     "eslint": "^9.9.0",
     "fast-glob": "^3.3.3",
     "playwright": "^1.46.0",
     "prettier": "^3.3.3",
     "sirv": "^2.0.4",
+    "typescript": "^5.9.2",
     "vite": "^7.1.1"
   }
 }

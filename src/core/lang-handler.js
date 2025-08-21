@@ -72,6 +72,13 @@ export async function setLanguage(lang) {
   document.dispatchEvent(new CustomEvent("languageChanged", { detail: lang }));
   return currentLang;
 }
+// توافق مع صفحات قديمة:
+export function setLang(lang) {
+  return setLanguage(lang);
+}
+export function changeLang(lang) {
+  return setLanguage(lang);
+}
 
 /* ============== واجهة توافقية ==============
    بعض الصفحات تستدعي onLangChange(callback)

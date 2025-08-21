@@ -1,30 +1,73 @@
-# dependencies
+# =========================
+# Node / Vite
+# =========================
 node_modules/
-
-# production build
 dist/
+.vite/
 
-# env files
+# =========================
+# Environment files
+# =========================
 .env
-.env.*
+.env.*.local
+firebase-debug.log
 !.env.example
 
-
-# logs
+# =========================
+# Logs
+# =========================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-firebase-debug.log*
 
-# editors
+# =========================
+# Editors / IDEs
+# =========================
 .vscode/
 .idea/
+*.iml
 
-# OS
+# =========================
+# OS specific
+# =========================
 .DS_Store
 Thumbs.db
 
-# tests / artifacts
+# =========================
+# Tests / coverage
+# =========================
 coverage/
 playwright-report/
+
+# =========================
+# Android / Capacitor
+# =========================
+android/.gradle/
+android/build/
+android/app/build/
+android/.idea/
+.gradle/
+local.properties
+*.apk
+*.keystore
+
+# =========================
+# iOS / Capacitor
+# =========================
+ios/Pods/
+ios/build/
+ios/DerivedData/
+*.xcworkspace
+*.xcuserstate
+*.xcuserdatad
+
+# =========================
+# Firebase Hosting cache
+# =========================
+.firebase/
+
+# =========================
+# Misc
+# =========================
+*.log
