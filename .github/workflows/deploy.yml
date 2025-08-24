@@ -42,7 +42,6 @@ jobs:
       - name: Build (Vite)
         run: npm run build
 
-      # فحص قاطع للتأكد أن الأصول ليست مؤشرات LFS (ملفات بحجم > 1KB)
       - name: Sanity check assets
         run: |
           test -f dist/index.html
@@ -60,11 +59,10 @@ jobs:
           for p in [
               "dist/images/fruits/apple_main.jpg",
               "dist/images/animals/alligator_main.jpg",
-              # أضف مسارات أخرى مهمة إذا رغبت
           ]:
               check(p)
           print("Sanity OK")
           PY
 
       - name: Deploy to Firebase Hosting
-        run: npx firebase deploy --only hosting --project cyclopedia-edu --non-interactive --token "${{ secrets.FIREBASE_TOKEN }}"
+        run: npx --yes firebase-tools@latest deploy --only hosting --project cyclopedia-edu --non-interactive --token "${{ secrets.FIREBASE_TOKEN }}"
