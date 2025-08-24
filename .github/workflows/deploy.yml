@@ -1,35 +1,70 @@
-name: Deploy to Firebase Hosting
+name: Build & Deploy (Firebase Hosting)
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
-      - name: Checkout 🛎️
+      - name: Checkout (with LFS)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
 
-      - name: Setup Node.js ⚙️
+      - name: Ensure LFS objects
+        run: |
+          git lfs install --local
+          git lfs pull
+          git lfs checkout
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: "20"
+          cache: "npm"
 
-      - name: Install deps 📦
+      - name: Install dependencies
         run: npm ci
 
-      - name: Build 🔧
+      - name: Build (Vite)
         run: npm run build
 
-      - name: Deploy to Firebase Hosting 🚀
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_CYCLOPEDIA }}"
-          channelId: live
-          projectId: cyclopedia-edu
+      # فحص قاطع للتأكد أن الأصول ليست مؤشرات LFS (ملفات بحجم > 1KB)
+      - name: Sanity check assets
+        run: |
+          test -f dist/index.html
+          python - <<'PY'
+          import os, sys
+          def check(p, minb=1024):
+              if not os.path.exists(p):
+                  print(f"[WARN] missing: {p}")
+                  return
+              sz = os.path.getsize(p)
+              if sz < minb:
+                  print(f"[ERROR] {p} too small ({sz} bytes) — likely LFS pointer", file=sys.stderr)
+                  sys.exit(1)
+              print(f"[OK] {p} ({sz} bytes)")
+          for p in [
+              "dist/images/fruits/apple_main.jpg",
+              "dist/images/animals/alligator_main.jpg",
+              # أضف مسارات أخرى مهمة إذا رغبت
+          ]:
+              check(p)
+          print("Sanity OK")
+          PY
+
+      - name: Deploy to Firebase Hosting
+        run: npx firebase deploy --only hosting --project cyclopedia-edu --non-interactive --token "${{ secrets.FIREBASE_TOKEN }}"
