@@ -5,7 +5,9 @@ import {
 } from "firebase/firestore";
 import * as LangMod from "../core/lang-handler.js";
 import * as AudioMod from "../core/audio-handler.js";
+
 import * as Activity from "../core/activity-handler.js";
+import { mountSidebarControls } from "../core/sidebar-controls.js";
 
 const GAME_KEY = "family-groups";
 
@@ -20,6 +22,7 @@ const SEL = {
   btnNew:     "#fg-new-round-btn",
   btnListen:  "#fg-listen-btn",
   sidebar:    "#family-groups-controls",
+  // دعم النسخ القديمة (اختياري)
   modeSel:    "#fg-display-mode",
   voiceSel:   "#fg-sound-variant",
   langSel:    "#fg-lang-select",
@@ -45,15 +48,13 @@ const state = {
   score:0,
   autoNextMs:1100,
   displayMode:"image", // image | name | sound
-  soundVariant:"boy"   // boy | girl | teacher
+  soundVariant:"boy"   // boy | girl | teacher | child
 };
 
 export async function loadFamilyGroupsGameContent(){
   await mountViews();
   state.lang = getSelectedLang();
   bindControls();
-  // نسمع تغيّر اللغة على مستوى التطبيق ونحتفظ بنفس العنصر
-  onLangChange(handleLangChanged);
   await newRound(true);
 }
 
@@ -64,7 +65,7 @@ async function mountViews(){
     const html = await fetch("/html/family-groups-game.html").then(r=>r.text()).catch(()=>null);
     main.innerHTML = html || fallbackMainHTML();
   }
-  // الشريط الجانبي (عندك نسخة فيها قوائم اللغة/العرض/الصوت)
+  // الشريط الجانبي
   const sidebar = document.getElementById("sidebar") || document.querySelector(".sidebar");
   if (sidebar){
     const html = await fetch("/html/family-groups-controls.html").then(r=>r.text()).catch(()=>null);
@@ -75,42 +76,62 @@ async function mountViews(){
       sidebar.insertAdjacentHTML("beforeend", fallbackSidebarHTML());
     }
   }
+
+  // تركيب الشريط الموحّد (لغة/صوت) داخل #sidebar-controls
+  const scRoot = document.querySelector("#family-groups-controls #sidebar-controls");
+  if (scRoot){
+    const initLang  = getSelectedLang();
+    const initVoice = getSelectedVoice();
+    mountSidebarControls({ mount: scRoot, initialLang: initLang, initialVoice: initVoice });
+  }
+
   relocalizeUI();
   applyDisplayMode();
 }
 
 function bindControls(){
+  // أزرار النشاط الخاصة
   qs(SEL.btnNew)?.addEventListener("click", ()=>newRound(true));
   qs(SEL.btnListen)?.addEventListener("click", ()=>tryPlayItemSound());
 
-  const modeSel  = qs(SEL.modeSel);
-  const voiceSel = qs(SEL.voiceSel);
-  const langSel  = qs(SEL.langSel);
+  // أحداث عامة من الشريط الموحّد
+  window.addEventListener("lang:change", (e)=>{
+    const next = (e.detail?.lang) || "ar";
+    LangMod?.setLang?.(next);
+    state.lang = next;
+    handleLangChanged();
+  });
 
-  if (modeSel){
-    modeSel.value = state.displayMode;
-    modeSel.addEventListener("change", e=>{
-      state.displayMode = e.target.value || "image";
-      applyDisplayMode();
-    });
-  }
-  if (voiceSel){
-    voiceSel.value = state.soundVariant;
-    voiceSel.addEventListener("change", e=>{
-      state.soundVariant = e.target.value || "boy";
-      tryPreloadItemAudio();
-    });
-  }
-  if (langSel){
-    langSel.value = state.lang;
-    langSel.addEventListener("change", e=>{
-      const next = e.target.value;
-      // نخبر نظام اللغة (إن وُجد) ثم نحدّث العنصر الحالي فورًا
-      if (LangMod?.setLang) LangMod.setLang(next);
-      else if (LangMod?.changeLang) LangMod.changeLang(next);
-      handleLangChanged(); // تحديث فوري لو لم يُطلق onLangChange
-    });
-  }
+  window.addEventListener("voice:change", (e)=>{
+    const v = (e.detail?.voice) || "boy";
+    AudioMod?.setVoiceShape?.(v); // آمنة حتى لو غير موجودة
+    state.soundVariant = v;
+    tryPreloadItemAudio();
+  });
+
+  window.addEventListener("controls:next", ()=> newRound(true));
+  window.addEventListener("controls:prev", ()=> newRound(true));
+  window.addEventListener("controls:description", ()=> {
+    // في هذا النشاط: اجعل زر "الوصف" يشغّل الصوت كمساعدة
+    tryPlayItemSound();
+  });
+
+  // دعم قديم (selects) إذا كانت موجودة
+  qs(SEL.langSel)?.addEventListener("change", e=>{
+    const next = e.target.value;
+    LangMod?.setLang?.(next);
+    state.lang = next;
+    handleLangChanged();
+  });
+  qs(SEL.voiceSel)?.addEventListener("change", e=>{
+    state.soundVariant = e.target.value || "boy";
+    AudioMod?.setVoiceShape?.(state.soundVariant);
+    tryPreloadItemAudio();
+  });
+  qs(SEL.modeSel)?.addEventListener("change", e=>{
+    state.displayMode = e.target.value || "image";
+    applyDisplayMode();
+  });
 }
 
 async function newRound(autoPlay){
@@ -132,9 +153,7 @@ async function newRound(autoPlay){
 async function handleLangChanged(){
   state.lang = getSelectedLang();
   relocalizeUI();
-  // لو لا يوجد عنصر بعد، نبدأ جولة جديدة
   if (!state.item) return newRound(true);
-  // احتفظ بنفس العنصر، أعِد تعريبه وأعِد بناء الصناديق
   fillItemCard(state.item, state.lang);
   await rebuildBinsForCurrentItem();
   tryPreloadItemAudio();
@@ -194,7 +213,6 @@ function attachDragAndDrop(){
   const bins = qsa(".fg-bin");
   if (!card) return;
 
-  // في وضع "صوت": النقر على البطاقة يشغّل الصوت
   card.addEventListener("click", ()=>{
     if (state.displayMode==="sound") tryPlayItemSound();
   });
@@ -298,49 +316,46 @@ function tryPreloadItemAudio(){
   const a = document.createElement("audio");
   a.src = url; a.preload = "auto";
 }
-function playCorrect(){ if (AudioMod?.playFeedback) AudioMod.playFeedback("correct", state.lang); }
-function playWrong(){   if (AudioMod?.playFeedback) AudioMod.playFeedback("wrong",   state.lang); }
+function playCorrect(){ AudioMod?.playFeedback?.("correct", state.lang); }
+function playWrong(){   AudioMod?.playFeedback?.("wrong",   state.lang); }
 function addScore(n=1){ state.score+=n; const el=qs(SEL.score); if (el) el.textContent=String(state.score); }
 function logActivity(ok, chosen, correct){
   const payload={ type:GAME_KEY, ok, chosen, correct, itemId:state.item?.id, lang:state.lang, ts:Date.now() };
-  if (Activity?.recordActivity) Activity.recordActivity(payload);
+  Activity?.recordActivity?.(payload);
 }
 
 // ---------------- مساعدين ----------------
 function getSelectedLang(){
-  const sel = qs(SEL.langSel);
-  const fromSel = sel && sel.value;
-  const sys = (LangMod?.getCurrentLang && LangMod.getCurrentLang()) || (LangMod?.getActiveLang && LangMod.getActiveLang());
-  const v = fromSel || sys || "ar";
+  const sys = (LangMod?.getCurrentLang && LangMod.getCurrentLang())
+           || (LangMod?.getActiveLang && LangMod.getActiveLang());
+  const v = sys || state.lang || "ar";
   return (v==="ar"||v==="en"||v==="he") ? v : "ar";
 }
 function getSelectedVoice(){
-  const sel = qs(SEL.voiceSel);
-  return (sel && sel.value) || state.soundVariant || "boy";
+  const sys = (AudioMod?.getVoiceShape && AudioMod.getVoiceShape()) || state.soundVariant || "boy";
+  return sys;
 }
 function applyDisplayMode(){
   const card = qs(SEL.card), img=qs(SEL.img), name=qs(SEL.nameOnCard);
   if (!card || !img) return;
-  const mode = (qs(SEL.modeSel)?.value) || state.displayMode || "image";
-  state.displayMode = mode;
-
+  const mode = state.displayMode || "image";
   card.classList.remove("mode-image","mode-name","mode-sound");
   if (mode==="name"){ card.classList.add("mode-name"); img.setAttribute("aria-hidden","true");  name?.setAttribute("aria-hidden","false"); }
   else if (mode==="sound"){ card.classList.add("mode-sound"); img.setAttribute("aria-hidden","true"); name?.setAttribute("aria-hidden","false"); }
   else { card.classList.add("mode-image"); img.setAttribute("aria-hidden","false"); name?.setAttribute("aria-hidden","true"); }
 }
 function relocalizeUI(){
-  const lang = state.lang;
+  const lang = state.lang = getSelectedLang();
   const t = UI[lang] || UI.ar;
   const sb = qs(SEL.sidebar);
   const btnNew   = qs(SEL.btnNew);
   const btnListen= qs(SEL.btnListen);
   const hint     = document.getElementById("fg-hint");
   const title    = qs(SEL.title);
-  if (sb)    sb.setAttribute("dir", isRTL(lang)?"rtl":"ltr");
-  if (btnNew)   btnNew.textContent   = (lang==="ar"?"🔄 ":"") + t.newRound;
-  if (btnListen)btnListen.textContent= (lang==="ar"?"🔊 ":"") + t.listen;
-  if (hint)     hint.textContent     = t.hint;
+  if (sb)       sb.setAttribute("dir", isRTL(lang)?"rtl":"ltr");
+  if (btnNew)   btnNew.textContent    = (lang==="ar"?"🔄 ":"") + t.newRound;
+  if (btnListen)btnListen.textContent = (lang==="ar"?"🔊 ":"") + t.listen;
+  if (hint)     hint.textContent      = t.hint;
   if (title)    title.setAttribute("dir", isRTL(lang)?"rtl":"ltr");
 }
 function setFeedback(text){ const el=qs(SEL.feedback); if (el) el.textContent=text||""; }
@@ -432,22 +447,14 @@ function fallbackSidebarHTML(){
   return `
   <div class="sidebar-section" id="family-groups-controls" style="display:block;">
     <h3 class="sidebar-title">🎯 أين عائلتي؟</h3>
-    <div class="sidebar-controls">
-      <label class="control-line"><span>اللغة:</span>
-        <select id="fg-lang-select"><option value="ar">العربية</option><option value="en">English</option><option value="he">עברית</option></select>
-      </label>
-      <label class="control-line"><span>شكل العرض:</span>
-        <select id="fg-display-mode"><option value="image">صورة</option><option value="name">اسم</option><option value="sound">صوت</option></select>
-      </label>
-      <label class="control-line"><span>اختيار الصوت:</span>
-        <select id="fg-sound-variant"><option value="boy">ولد</option><option value="girl">بنت</option><option value="teacher">معلّم</option></select>
-      </label>
-      <div class="btn-row">
-        <button id="fg-new-round-btn" class="nav-btn">🔄 جولة جديدة</button>
-        <button id="fg-listen-btn" class="nav-btn ghost">🔊 استمع</button>
-      </div>
+    <div id="sidebar-controls"></div>
+    <div class="btn-row" style="margin-top:.5rem">
+      <button id="fg-new-round-btn" class="nav-btn">🔄 ${UI.ar.newRound}</button>
+      <button id="fg-listen-btn"   class="nav-btn ghost">🔊 ${UI.ar.listen}</button>
     </div>
-    <div class="sidebar-stats"><div class="stat-line"><span>⭐ النقاط:</span> <strong id="fg-score">0</strong></div>
-      <p class="hint" id="fg-hint">${UI.ar.hint}</p></div>
+    <div class="sidebar-stats">
+      <div class="stat-line"><span>⭐ النقاط:</span> <strong id="fg-score">0</strong></div>
+      <p class="hint" id="fg-hint">${UI.ar.hint}</p>
+    </div>
   </div>`;
 }

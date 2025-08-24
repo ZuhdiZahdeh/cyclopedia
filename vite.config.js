@@ -1,43 +1,44 @@
 // vite.config.js
-import { defineConfig } from "vite";
-import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname  = dirname(__filename);
-
-export default defineConfig(	{
-  // الأساس مناسب لـ Firebase Hosting على الجذر /
-  base: "./",	 // مهم لعمل التطبيق داخل WebView
-
-  // يتعامل Vite تلقائيًا مع مجلد public؛ نثبّت المسار صراحةً
-  publicDir: resolve(__dirname, "public"),
-
-  // مسارات مختصرة موحّدة لكل المشروع
+export default defineConfig({
+  base: '/',            // للويب (Firebase Hosting)
+  publicDir: 'public',
   resolve: {
     alias: {
-      "@":           resolve(__dirname, "src"),
-      "@core":       resolve(__dirname, "src/core"),
-      "@subjects":   resolve(__dirname, "src/subjects"),
-      "@activities": resolve(__dirname, "src/activities"),
-      "@js":         resolve(__dirname, "src/js"),
-      // Alias مباشر لملف Firebase لديك (استعمله: import { db } from "@config")
-      "@config":     resolve(__dirname, "src/js/firebase-config.js"),
-      "@public":     resolve(__dirname, "public"),
+      '@':           resolve(__dirname, 'src'),
+      '@core':       resolve(__dirname, 'src/core'),
+      '@subjects':   resolve(__dirname, 'src/subjects'),
+      '@activities': resolve(__dirname, 'src/activities'),
+      '@js':         resolve(__dirname, 'src/js'),
+      '@public':     resolve(__dirname, 'public'),
     },
   },
-
-  server:  { port: 5173, open: false, host: true },
-  preview: { port: 4173, open: false, host: true },
-
-  // تحسين الاستيراد لفirebase + اعتبار الصوت أصولًا
-  optimizeDeps: { include: ["firebase/app", "firebase/firestore"] },
-  assetsInclude: ["**/*.mp3", "**/*.ogg", "**/*.wav", "**/*.m4a", "**/*.webm"],
-
   build: {
-    outDir: resolve(__dirname, "dist"),
+    outDir: 'dist',
     emptyOutDir: true,
-    sourcemap: true,
-    // لا حاجة لتحديد rollupOptions.input؛ نستخدم index.html والحقن الديناميكي لصفحات html الجزئية
+    rollupOptions: {
+      // اجبر Vite أن يعتبر index.html (وغيره) مداخل البناء
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        // أضِف صفحات HTML أخرى هنا إن أردت بنائها كصفحات مستقلة:
+        // animals: resolve(__dirname, 'html/animals.html'),
+        // fruits: resolve(__dirname, 'html/fruits.html'),
+        // ...
+      },
+    },
   },
+  plugins: [
+    // يضمن بقاء سطر نقطة الدخول حتى إن شالته أداة أخرى بالخطأ
+    {
+      name: 'ensure-main-entry',
+      transformIndexHtml(html) {
+        const tag = '<script type="module" src="/src/js/main.js"></script>';
+        return html.includes(tag)
+          ? html
+          : html.replace('</body>', `\n  <!-- نقطة الدخول (Vite) -->\n  ${tag}\n</body>`);
+      },
+    },
+  ],
 });

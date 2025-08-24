@@ -2,8 +2,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'edu.cyclopedia.app',   // نفس المعرّف الحالي
-  appName: 'cyclopedia',         // نفس الاسم الحالي
+  appId: 'com.cyclopedia.edu',   // نفس المعرّف الحالي
+  appName: 'KidCyclopedia',         // نفس الاسم الحالي
   webDir: 'dist',                // يتوافق مع مخرجات vite build لديك
   server: {
     androidScheme: 'https'

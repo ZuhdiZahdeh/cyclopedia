@@ -36,3 +36,9 @@
 .form-group { margin: 12px 0; }
 .form-label { display:block; margin-bottom:6px; font-weight:600; color:#444; }
 .select { width:100%; padding:8px 10px; border-radius:10px; border:1px solid #e6e6e6; background:#fff; }
+/*====*/
+.voice-group,.lang-group { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+.btn-voice,.btn-lang { border:1px solid #ddd; border-radius:12px; padding:.4rem .6rem; background:#fff; font-size:1rem; }
+.btn-voice.active,.btn-lang.active { outline:2px solid #0ea5e9; }
+.btn.btn-nav{ min-width:6rem; }
+.btn.btn-desc.ghost{ background:#0ea5e9; color:#fff; }

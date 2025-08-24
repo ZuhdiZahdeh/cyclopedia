@@ -1,12 +1,10 @@
-// src/subjects/tools-game.js  (PATCH v1)
+// src/subjects/tools-game.js
 // تشغيل بالصورة/الاسم فقط — بلا زر استماع
-
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
-import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
+import { playItemSound, stopCurrentAudio, setVoiceShape, setLanguage } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 import { fetchSubjectItems } from '../core/items-repo.js';
 import { pickLocalized, getImagePath, slugify } from '../core/media-utils.js';
-
 
 // ---- Fixed image + LCP helpers (unified) ----
 const __FIXED_IMG_W = 800, __FIXED_IMG_H = 600;
@@ -25,20 +23,16 @@ function __ensureFixedLcpAttrs(img, isLcp=true){
     img.setAttribute('decoding', 'async');
     img.setAttribute('loading', isLcp ? 'eager' : 'lazy');
     img.setAttribute('fetchpriority', isLcp ? 'high' : 'low');
-    // CSS safety
-    img.style.width = '100%'; img.style.height = 'auto'; img.style.display = 'block'; img.style.aspectRatio = '4 / 3';
+    img.style.width='100%'; img.style.height='auto'; img.style.display='block'; img.style.aspectRatio='4 / 3';
   } catch {}
 }
 __ensureGlobalFixedImgCSS();
-
 
 /* -------------------- الحالة -------------------- */
 let tools = [];
 let currentIndex = 0;
 let currentToolData = null;
 let currentUILang = 'ar';
-
-// كاش للمهن لإظهار أسماء "المهن المرتبطة"
 let professionsCache = null;
 
 /* -------------------- عناصر الصفحة -------------------- */
@@ -49,15 +43,12 @@ const els = {
   descBox:  () => document.getElementById('tool-description-box'),
   descText: () => document.getElementById('tool-description'),
   profList: () => document.getElementById('tool-professions'),
-
   sidebar:  () => document.querySelector('#sidebar, #sidebar-section, .sidebar'),
   controls: () => document.getElementById('tools-sidebar-controls'),
-
   btnPrevId:   'prev-tools-btn',
   btnNextId:   'next-tools-btn',
   btnToggleId: 'toggle-description-btn-tools',
   btnProfId:   'toggle-professions-btn-tools',
-
   voiceSelId:  'voice-select-tools',
   langSelId:   'game-lang-select-tools'
 };
@@ -72,7 +63,6 @@ function toolName(t, lang){ return pickLocalized(t?.name, lang); }
 function toolDescription(t, lang){ return pickLocalized(t?.description, lang); }
 function toolImagePath(t){ return getImagePath(t) || ''; }
 
-// مسار الصوت: sound[lang][voice] → سلاسل مباشرة → تركيب افتراضي
 function toolAudioPath(tool, lang, voice='teacher') {
   const s = tool?.sound;
   if (s && s[lang]) {
@@ -166,7 +156,7 @@ function bindControls() {
     const t = e.target;
     if (!t?.id) return;
     if (t.id === els.langSelId)  onLanguageChanged(t.value);
-    if (t.id === els.voiceSelId) playCurrentToolAudio(); // تشغيل فوري عند تغيير نوع الصوت
+    if (t.id === els.voiceSelId) { setVoiceShape(t.value); playCurrentToolAudio(); }
   });
 }
 
@@ -207,7 +197,6 @@ async function renderCurrentTool(lang = currentUILang) {
   setHighlightedName(nameEl, toolName(data, lang));
   if (descEl) descEl.textContent = toolDescription(data, lang) || '';
 
-  // المهن المرتبطة (اختياري)
   if (profEl) {
     const arr = Array.isArray(data.professions) ? data.professions : [];
     if (!professionsCache) professionsCache = await fetchSubjectItems('professions', { strict: false });
@@ -226,23 +215,21 @@ async function renderCurrentTool(lang = currentUILang) {
     if (img) { imgEl.src = img; imgEl.alt = toolName(data, lang) || ''; }
     else     { imgEl.alt = ''; imgEl.removeAttribute('src'); }
   }
-ensureClickToPlay();
+  ensureClickToPlay();
 }
 
 /* -------------------- الصوت/التبديل -------------------- */
 function playCurrentToolAudio() {
+  if (!currentToolData) return;
   stopCurrentAudio?.();
-  const voice = document.getElementById(els.voiceSelId)?.value || 'boy';
-  const path  = toolAudioPath(currentToolData, currentUILang, voice);
-  if (path) playAudio(path);
+  const key = currentToolData?.id || slugify(toolName(currentToolData,'en') || toolName(currentToolData,currentUILang) || '');
+  playItemSound({ type: 'tools', key });
 }
-
 function toggleDescription() {
   const box = els.descBox(); if (!box) return;
   const hidden = getComputedStyle(box).display === 'none';
   box.style.setProperty('display', hidden ? 'block' : 'none', 'important');
 }
-
 function toggleProfessions() {
   const el = els.profList(); if (!el) return;
   const hidden = getComputedStyle(el).display === 'none';
@@ -275,6 +262,7 @@ async function onLanguageChanged(newLang) {
   try {
     stopCurrentAudio?.();
     currentUILang = newLang;
+    setLanguage(newLang);
     await loadLanguage(newLang);
     setDirection(newLang);
     applyTranslations();
@@ -282,9 +270,7 @@ async function onLanguageChanged(newLang) {
     if (sel && sel.value !== newLang) sel.value = newLang;
     tools.sort((a,b)=> String(pickLocalized(a?.name,newLang)).localeCompare(pickLocalized(b?.name,newLang)));
     renderCurrentTool(newLang);
-  } catch (err) {
-    console.warn('[tools] change language failed', err);
-  }
+  } catch (err) { console.warn('[tools] change language failed', err); }
 }
 
 /* -------------------- التهيئة -------------------- */
@@ -297,9 +283,7 @@ export async function loadToolsGameContent() {
       if (main) main.innerHTML = html;
       console.log('[tools] ✔ تم تحميل الصفحة: /html/tools.html');
     }
-  } catch (e) {
-    console.warn('[tools] failed to fetch tools.html', e);
-  }
+  } catch (e) { console.warn('[tools] failed to fetch tools.html', e); }
 
   await ensureToolsSidebar();
   bindControls();
@@ -328,6 +312,5 @@ export async function loadToolsGameContent() {
     window.showPreviousTool = showPreviousTool;
   }
 }
-
 function _appLang(e){ const L = e?.detail?.lang; if (L) onLanguageChanged(L); }
 function _storageLang(e){ if (e.key === 'lang' && e.newValue) onLanguageChanged(e.newValue); }

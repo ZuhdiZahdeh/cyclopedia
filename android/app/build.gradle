@@ -1,57 +1,88 @@
 apply plugin: 'com.android.application'
 
+import java.util.Properties
+import java.io.FileInputStream
+
+// تحميل خصائص التوقيع من android/keystore.properties إن وُجد
+def keystorePropsFile = rootProject.file("keystore.properties")
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystoreProps.load(new FileInputStream(keystorePropsFile))
+}
+
 android {
     namespace "edu.cyclopedia.app"
     compileSdk rootProject.ext.compileSdkVersion
+
     defaultConfig {
         applicationId "edu.cyclopedia.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 2          // ارفعها قبل كل إصدار
+        versionName "2.0"      // حدّث رقم النسخة حسب الحاجة
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Files/dirs to omit from packaged assets (مفيد لتطبيقات الويب)
+        // المرجع الأصلي كان ضمن AaptAssets.cpp
         aaptOptions {
-             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    buildTypes {
+
+    // توقيع الإصدار - يقرأ من keystore.properties أو من متغيرات البيئة
+    signingConfigs {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // المسار يُقرأ بهذا الترتيب: keystore.properties → ENV → قيمة افتراضية داخل android/
+            def store = keystoreProps['storeFile'] ?: System.getenv('UPLOAD_STORE_FILE') ?: '../upload-keystore.jks'
+            storeFile file(store)
+            storePassword keystoreProps['storePassword'] ?: System.getenv('UPLOAD_STORE_PASSWORD')
+            keyAlias keystoreProps['keyAlias'] ?: System.getenv('UPLOAD_KEY_ALIAS') ?: 'upload'
+            keyPassword keystoreProps['keyPassword'] ?: System.getenv('UPLOAD_KEY_PASSWORD')
         }
     }
-	    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            shrinkResources false
+            // إن أردت تقليص الكود لاحقًا:
+            // proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            // Debug يستخدم debug keystore الافتراضي
+        }
     }
 
-}
-
-repositories {
-    flatDir{
-        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    // Java 17 موصى به لمشاريع Capacitor الحديثة
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
+
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+
     implementation project(':capacitor-android')
+    implementation project(':capacitor-cordova-android-plugins')
+
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
-    implementation project(':capacitor-cordova-android-plugins')
 }
 
+// سكربت Capacitor (يجب أن يبقى بعد dependencies)
 apply from: 'capacitor.build.gradle'
 
+// تفعيل Google Services فقط عند وجود google-services.json
 try {
     def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
+    if (servicesJSON != null && servicesJSON.exists() && servicesJSON.length() > 0) {
         apply plugin: 'com.google.gms.google-services'
     }
 } catch(Exception e) {

@@ -1,68 +1,90 @@
-// شريط جانبي موحّد — لا يحتوي زر "استمع"
+// src/core/sidebar-controls.js
+// شريط جانبي موحّد — أيقونات للصوت واللغة + أحداث عامة
 export function mountSidebarControls({
   mount = '#sidebar-controls',
-  langList = ['ar','en','he'],
-  voiceList = ['teacher','boy','girl'],
-  initialLang = 'ar'
+  langs = ['ar','en','he'],
+  voices = ['teacher','boy','girl','child'],
+  initialLang = 'ar',
+  initialVoice = 'boy'
 } = {}) {
   const root = typeof mount === 'string' ? document.querySelector(mount) : mount;
   if (!root) return;
 
-  root.classList.add('sidebar');
+  root.classList.add('sidebar-controls-unified');
   root.innerHTML = `
     <div class="ctrl-row">
-      <button class="btn btn-nav"  id="btn-prev">السابق</button>
-      <button class="btn btn-nav"  id="btn-next">التالي</button>
+      <button class="btn btn-nav"  data-action="prev">السابق</button>
+      <button class="btn btn-nav"  data-action="next">التالي</button>
     </div>
 
-    <button class="btn btn-desc" id="btn-desc">الوصف</button>
+    <button class="btn btn-desc ghost" data-action="desc">الوصف</button>
 
     <div class="form-group">
       <label class="form-label">الصوت</label>
-      <select class="select" id="sel-voice">
-        ${voiceList.map(v => `<option value="${v}">${voiceLabel(v)}</option>`).join('')}
-      </select>
+      <div class="voice-group">
+        ${voices.map(v => `
+          <button type="button" class="btn-voice" data-voice="${v}" title="${voiceLabel(v)}">${voiceIcon(v)}</button>
+        `).join('')}
+      </div>
     </div>
 
     <div class="form-group">
       <label class="form-label">اللغة</label>
-      <select class="select" id="sel-lang">
-        ${langList.map(l => `<option value="${l}" ${l===initialLang?'selected':''}>${langLabel(l)}</option>`).join('')}
-      </select>
+      <div class="lang-group">
+        ${langs.map(l => `
+          <button type="button" class="btn-lang" data-lang="${l}" title="${langLabel(l)}">${langIcon(l)}</button>
+        `).join('')}
+      </div>
     </div>
   `;
 
-  // نطلق أحداثًا عامة ليستمع لها كل موضوع (بدون ربط أسماء دوال محددة)
-  root.querySelector('#btn-prev').addEventListener('click', () => {
+  // تفعيل الحالة الأولية
+  setActive(root.querySelectorAll('.btn-voice'), b => b.dataset.voice === initialVoice);
+  setActive(root.querySelectorAll('.btn-lang'),  b => b.dataset.lang  === initialLang);
+
+  // أحداث تنقّل ووصف
+  root.querySelector('[data-action="prev"]')?.addEventListener('click', () => {
     window.dispatchEvent(new CustomEvent('controls:prev'));
   });
-  root.querySelector('#btn-next').addEventListener('click', () => {
+  root.querySelector('[data-action="next"]')?.addEventListener('click', () => {
     window.dispatchEvent(new CustomEvent('controls:next'));
   });
-  root.querySelector('#btn-desc').addEventListener('click', () => {
+  root.querySelector('[data-action="desc"]')?.addEventListener('click', () => {
     window.dispatchEvent(new CustomEvent('controls:description'));
   });
-  root.querySelector('#sel-lang').addEventListener('change', (e) => {
-    window.dispatchEvent(new CustomEvent('lang:change', { detail: { lang: e.target.value }}));
+
+  // أحداث الصوت
+  root.querySelectorAll('.btn-voice').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      setActive(root.querySelectorAll('.btn-voice'), b=>b===btn);
+      window.dispatchEvent(new CustomEvent('voice:change', { detail:{ voice: btn.dataset.voice }}));
+    });
   });
-  root.querySelector('#sel-voice').addEventListener('change', (e) => {
-    window.dispatchEvent(new CustomEvent('voice:change', { detail: { voice: e.target.value }}));
+
+  // أحداث اللغة
+  root.querySelectorAll('.btn-lang').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      setActive(root.querySelectorAll('.btn-lang'), b=>b===btn);
+      window.dispatchEvent(new CustomEvent('lang:change', { detail:{ lang: btn.dataset.lang }}));
+    });
   });
 }
 
-function voiceLabel(v) {
-  switch (v) {
-    case 'teacher': return 'المعلّم';
-    case 'boy':     return 'صوت الولد';
-    case 'girl':    return 'صوت البنت';
-    default:        return v;
-  }
+// ——— مساعدات ———
+function setActive(list, isActive){
+  list.forEach(el => el.classList.toggle('active', !!isActive(el)));
 }
-function langLabel(l) {
-  switch (l) {
-    case 'ar': return 'العربية';
-    case 'en': return 'English';
-    case 'he': return 'עברית';
-    default:   return l;
-  }
+
+function voiceLabel(v){
+  return v==='teacher' ? 'المعلّم' : v==='boy' ? 'ولد' : v==='girl' ? 'بنت' : 'طفل';
+}
+function voiceIcon(v){
+  return v==='teacher' ? '👩‍🏫' : v==='boy' ? '👦' : v==='girl' ? '👧' : '🧒';
+}
+function langLabel(l){
+  return l==='ar' ? 'العربية' : l==='en' ? 'English' : 'עברית';
+}
+function langIcon(l){
+  // يمكنك تبديلها لأعلام لاحقًا إن رغبت
+  return l==='ar' ? 'AR' : l==='en' ? 'EN' : 'HE';
 }

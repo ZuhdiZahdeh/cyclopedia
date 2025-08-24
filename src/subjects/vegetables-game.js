@@ -1,10 +1,13 @@
-// src/subjects/vegetables-game.js  (UNIFIED, no listen button)
+// src/subjects/vegetables-game.js
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
-import { playAudio, stopCurrentAudio } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
 import { fetchSubjectItems, normalizeItemForView } from '../core/items-repo.js';
 import { pickLocalized, slugify } from '../core/media-utils.js';
+import { playItemSound, stopCurrentAudio, setVoiceShape, setLanguage } from '../core/audio-handler.js';
 
+function deriveKey(raw) {
+  return raw?.id || slugify(pickLocalized(raw?.name, 'en') || pickLocalized(raw?.name, _uiLang) || '');
+}
 
 // ---- Fixed image + LCP helpers (unified) ----
 const __FIXED_IMG_W = 800, __FIXED_IMG_H = 600;
@@ -23,43 +26,32 @@ function __ensureFixedLcpAttrs(img, isLcp=true){
     img.setAttribute('decoding', 'async');
     img.setAttribute('loading', isLcp ? 'eager' : 'lazy');
     img.setAttribute('fetchpriority', isLcp ? 'high' : 'low');
-    // CSS safety
-    img.style.width = '100%'; img.style.height = 'auto'; img.style.display = 'block'; img.style.aspectRatio = '4 / 3';
+    img.style.width='100%'; img.style.height='auto'; img.style.display='block'; img.style.aspectRatio='4 / 3';
   } catch {}
 }
 __ensureGlobalFixedImgCSS();
 
-
 const SUBJECT_KEY = 'vegetables';
-
-let _raw = [];
-let _i = 0;
-let _uiLang = 'ar';
+let _raw = []; let _i = 0; let _uiLang = 'ar';
 
 const $q = (s) => document.querySelector(s);
 const pickEl = (...sels) => sels.map(s => $q(s)).find(Boolean) || null;
 
-function audioPath(raw, lang, voice) {
-  const s = raw?.sound;
-  if (s && typeof s === 'object') {
-    const node = s[lang];
-    if (typeof node === 'string' && node) return node.startsWith('/') ? node : `/${node}`;
-    const v = node?.[voice] || node?.teacher || node?.boy || node?.girl;
-    if (typeof v === 'string' && v) return v.startsWith('/') ? v : `/${v}`;
-  }
-  if (typeof raw?.sound_file === 'string') return raw.sound_file.startsWith('/') ? raw.sound_file : `/${raw.sound_file}`;
-  if (typeof raw?.audio === 'string')      return raw.audio.startsWith('/') ? raw.audio : `/${raw.audio}`;
-  const base = raw?.sound_base || raw?.audio_base || raw?.base || raw?.id || slugify(pickLocalized(raw?.name, lang));
-  return base ? `/audio/${lang}/vegetables/${slugify(base)}_${voice}_${lang}.mp3` : '';
-}
-
 function render() {
   if (!_raw.length) return;
-  const lang = _uiLang;
-  const view = normalizeItemForView(_raw[_i], lang);
+  const view = normalizeItemForView(_raw[_i], _uiLang);
 
   const nameEl = pickEl('#subject-title','#vegetable-word','#vegetable-name','#item-name','.subject-title','.subject-name');
-  const imgEl  = pickEl('#subject-image','#vegetable-image','#item-image','.subject-image img','.subject-image');
+
+  let imgEl  = pickEl('#subject-image','#vegetable-image','#item-image','.subject-image img');
+  if (!imgEl) {
+    const container = pickEl('.subject-image','#subject-image');
+    if (container) {
+      imgEl = container.querySelector('img') || document.createElement('img');
+      if (!imgEl.parentElement) container.appendChild(imgEl);
+    }
+  }
+
   const descEl = pickEl('#subject-description','#vegetable-description','#item-description','.subject-description');
   const catEl  = pickEl('#vegetable-category','#item-category');
 
@@ -72,32 +64,31 @@ function render() {
   if (imgEl) {
     imgEl.alt = view.imageAlt || '';
     imgEl.onerror = () => console.warn('[vegetables] missing image:', view.imagePath);
-        __ensureFixedLcpAttrs(imgEl, true);
-imgEl.src = view.imagePath || '';
+    __ensureFixedLcpAttrs(imgEl, true);
+    imgEl.src = view.imagePath || '';
     imgEl.style.cursor = 'pointer';
     imgEl.onclick = onPlay;
   }
   if (descEl) descEl.textContent = view.description || '';
-  if (catEl)  catEl.textContent  = pickLocalized(_raw[_i]?.category, lang) || '—';
+  if (catEl)  catEl.textContent  = pickLocalized(_raw[_i]?.category, _uiLang) || '—';
 }
 
 function onNext(){ if(!_raw.length) return; _i = (_i+1)%_raw.length; render(); try{recordActivity('vegetables','next',{index:_i});}catch{} }
 function onPrev(){ if(!_raw.length) return; _i = (_i-1+_raw.length)%_raw.length; render(); try{recordActivity('vegetables','prev',{index:_i});}catch{} }
+
 function onPlay(){
-  const langSel  = document.getElementById('game-lang-select-vegetable') || document.getElementById('game-lang-select');
-  const voiceSel = document.getElementById('voice-select-vegetable')     || document.getElementById('voice-select');
-  const lang  = (langSel?.value || _uiLang || getCurrentLang());
-  const voice = (voiceSel?.value || 'boy');
-  const src   = audioPath(_raw[_i], lang, voice);
+  if(!_raw.length) return;
   stopCurrentAudio?.();
-  if (src) playAudio(src);
+  const key = deriveKey(_raw[_i]);
+  playItemSound({ type: SUBJECT_KEY, key });
 }
 
 function bind() {
   const prev = document.getElementById('prev-vegetable-btn') || document.getElementById('prev-btn');
   const next = document.getElementById('next-vegetable-btn') || document.getElementById('next-btn');
   const langSel = document.getElementById('game-lang-select-vegetable') || document.getElementById('game-lang-select');
-  let   toggleDesc = document.getElementById('toggle-description-btn-vegetable') || document.getElementById('toggle-description-btn') || document.getElementById('toggle-description');
+  const voiceSel = document.getElementById('voice-select-vegetable')     || document.getElementById('voice-select');
+  let toggleDesc = document.getElementById('toggle-description-btn-vegetable') || document.getElementById('toggle-description-btn') || document.getElementById('toggle-description');
 
   if (!toggleDesc) {
     const grid = document.querySelector('#vegetable-sidebar-controls .control-grid') || document.getElementById('vegetable-sidebar-controls');
@@ -122,6 +113,7 @@ function bind() {
   if (langSel) {
     langSel.onchange = async () => {
       _uiLang = langSel.value;
+      setLanguage(_uiLang);
       await loadLanguage(_uiLang);
       setDirection(_uiLang);
       applyTranslations();
@@ -129,6 +121,7 @@ function bind() {
       render();
     };
   }
+  if (voiceSel) voiceSel.onchange = () => setVoiceShape(voiceSel.value);
 }
 
 export async function loadVegetablesGameContent() {
@@ -136,15 +129,11 @@ export async function loadVegetablesGameContent() {
   bind();
   try {
     _raw = await fetchSubjectItems(SUBJECT_KEY, { strict: true });
-    console.log('[vegetables] fetched', _raw.length);
     _raw.sort((a,b) => String(pickLocalized(a?.name,_uiLang)).localeCompare(pickLocalized(b?.name,_uiLang)));
     _i = 0;
     render();
-  } catch (e) {
-    console.error('[vegetables] load failed:', e);
-  }
+  } catch (e) { console.error('[vegetables] load failed:', e); }
 }
-
 export function rerenderVegetables(){ render(); }
 
 if (typeof window !== 'undefined') {

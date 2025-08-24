@@ -3,23 +3,22 @@
 // =========================
 
 // لغة الواجهة
-import { getCurrentLang, loadLanguage, applyTranslations } from '../core/lang-handler.js';
+import { getCurrentLang, loadLanguage, applyTranslations, onLangChange } from '../core/lang-handler.js';
 
 // تهيئة السايدبار الخاص بكل موضوع (تتولّى حقن ملف التحكم المناسب)
-import { initializeSubjectControls } 		from '../core/initializeSubjectControls.js';
+import { initializeSubjectControls } from '../core/initializeSubjectControls.js';
 
 // ألعاب/صفحات المواضيع
-import { loadAnimalsGameContent }        	from "../subjects/animals-game.js";
-import { loadFruitsGameContent }         	from "../subjects/fruits-game.js";
-import { loadVegetablesGameContent }     	from "../subjects/vegetables-game.js";
-import { loadProfessionsGameContent }    	from "../subjects/professions-game.js";
-import { loadToolsGameContent }          	from "../subjects/tools-game.js";
-import { loadAlphabetActivityContent } 		from "../activities/alphabet-activity.js";
-import { loadMemoryGameContent }         	from "../subjects/memory-game.js";
-import { loadToolsMatchGameContent }     	from "../subjects/tools-match-game.js";
-import { loadHumanBodyGameContent }      	from "../subjects/human-body-game.js";
-import { loadFamilyGroupsGameContent } 		from "../subjects/family-groups-game.js";
-
+import { loadAnimalsGameContent }        from "../subjects/animals-game.js";
+import { loadFruitsGameContent }         from "../subjects/fruits-game.js";
+import { loadVegetablesGameContent }     from "../subjects/vegetables-game.js";
+import { loadProfessionsGameContent }    from "../subjects/professions-game.js";
+import { loadToolsGameContent }          from "../subjects/tools-game.js";
+import { loadAlphabetActivityContent }   from "../activities/alphabet-activity.js";
+import { loadMemoryGameContent }         from "../subjects/memory-game.js";
+import { loadToolsMatchGameContent }     from "../subjects/tools-match-game.js";
+import { loadHumanBodyGameContent }      from "../subjects/human-body-game.js";
+import { loadFamilyGroupsGameContent }   from "../subjects/family-groups-game.js";
 
 // 🔐 Firebase Auth
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -35,6 +34,59 @@ const BASE_CSS = [
   '/css/common-components-subjects.css',
   '/css/style.css'
 ];
+
+// ————— i18n: تطبيع عناصر التحكم وترجمة خيارات الصوت —————
+function rebuildVoiceOptions(sel) {
+  if (!sel) return;
+  const keep = sel.value || 'boy';
+  const options = [
+    ['teacher', 'teacher_voice'],
+    ['boy',     'boy_voice'],
+    ['girl',    'girl_voice'],
+    ['child',   'child_voice']
+  ];
+  sel.innerHTML = options
+    .map(([val, key]) => `<option value="${val}" data-i18n="${key}"></option>`)
+    .join('');
+  sel.value = keep;
+}
+
+function i18nNormalizeControls() {
+  // أزرار السابق/التالي الشائعة لكل الصفحات
+  const prevIds = ['prev-animal-btn','prev-fruit-btn','prev-vegetable-btn','prev-human-body-btn','prev-profession-btn','prev-tools-btn','prev-btn'];
+  const nextIds = ['next-animal-btn','next-fruit-btn','next-vegetable-btn','next-human-body-btn','next-profession-btn','next-tools-btn','next-btn'];
+
+  prevIds.forEach(id => { const el = document.getElementById(id); if (el) el.setAttribute('data-i18n','previous'); });
+  nextIds.forEach(id => { const el = document.getElementById(id); if (el) el.setAttribute('data-i18n','next'); });
+
+  // زر عرض الوصف (إن وُجد في أي صفحة) — المفتاح الصحيح الموجود في القواميس هو "Description"
+  document
+    .querySelectorAll('[id^="toggle-description-btn"]')
+    .forEach(el => el.setAttribute('data-i18n','Description'));
+
+  // ملصقات اللغة/الصوت + خيارات الصوت
+  document.querySelectorAll('select[id^="voice-select"]').forEach(sel => {
+    const lab = document.querySelector(`label[for="${sel.id}"]`);
+    if (lab) lab.setAttribute('data-i18n','Voice');
+    rebuildVoiceOptions(sel);
+  });
+  document.querySelectorAll('select[id^="game-lang-select"]').forEach(sel => {
+    const lab = document.querySelector(`label[for="${sel.id}"]`);
+    if (lab) lab.setAttribute('data-i18n','Language');
+  });
+
+  // عنوان «حسابك» (القسم الثابت): حاول على العنصر الداخلي النصّي أولاً للحفاظ على الأيقونة
+  const accTitleInner = document.querySelector('.static-section .sidebar-title [data-i18n]');
+  if (accTitleInner) {
+    accTitleInner.setAttribute('data-i18n','your_account');
+  } else {
+    const accTitle = document.querySelector('.static-section .sidebar-title');
+    if (accTitle) accTitle.setAttribute('data-i18n','your_account');
+  }
+
+  // طبّق الترجمة الآن
+  try { applyTranslations(); } catch {}
+}
 
 const SUBJECT_CSS = {
   animal:         '/css/animals.css',
@@ -113,12 +165,9 @@ window.handleLogout = handleLogout;
 function getActiveControlsSection() {
   const aside = document.getElementById('sidebar-section');
   if (!aside) return null;
-
-  // استبعد static-section، وخذ آخر قسم تحكّم ظاهر وبداخله محتوى
   const candidates = Array
     .from(aside.querySelectorAll('.sidebar-section:not(.static-section)'))
     .filter(sec => getComputedStyle(sec).display !== 'none' && sec.innerHTML.trim() !== '');
-
   return candidates.length ? candidates[candidates.length - 1] : null;
 }
 
@@ -126,12 +175,10 @@ function placeAccountSectionBelowActiveControls() {
   const aside   = document.getElementById('sidebar-section');
   const account = aside ? aside.querySelector('.sidebar-section.static-section') : null;
   if (!aside || !account) return;
-
   const active = getActiveControlsSection();
   if (active) {
     active.insertAdjacentElement('afterend', account);
   } else {
-    // احتياطي: إن لم يوجد تحكّم ظاهر، ضع «حسابك» في آخر الشريط
     aside.appendChild(account);
   }
 }
@@ -198,8 +245,9 @@ async function loadPage(htmlPath, moduleLoader, subjectType) {
     // ترجمات فورية لمحتوى الصفحة المحقون
     try { await applyTranslations(); } catch {}
 
-    // تهيئة مجموعة التحكم للموضوع (إن وُجد)، ثم ضع «حسابك» تحتها
+    // تهيئة مجموعة التحكم للموضوع (إن وُجد)، ثم ضع «حسابك» تحتها + طبّق i18n لتلك العناصر
     if (subjectType) initializeSubjectControls(subjectType);
+    i18nNormalizeControls();
 
     // ننتظر فريم لضمان اكتمال حقن عناصر التحكم ثم نرتّب «حسابك»
     requestAnimationFrame(() => {
@@ -221,6 +269,10 @@ async function loadPage(htmlPath, moduleLoader, subjectType) {
   }
 }
 
+onLangChange(() => {
+  i18nNormalizeControls();
+});
+
 /* ------------------------- ربط الدوال بنافذة المتصفح ------------------------- */
 window.showHomePage = () => {
   const main = document.getElementById('app-main') || document.querySelector('main.main-content');
@@ -238,13 +290,13 @@ window.showHomePage = () => {
 };
 
 // صفحات المواضيع
-window.loadAnimalsPage       = () => loadPage("/html/animals.html",        loadAnimalsGameContent,       "animal");
-window.loadFruitsPage        = () => loadPage("/html/fruits.html",         loadFruitsGameContent,        "fruit");
-window.loadVegetablesPage    = () => loadPage("/html/vegetables.html",     loadVegetablesGameContent,    "vegetable");
-window.loadHumanBodyPage     = () => loadPage("/html/human-body.html",     loadHumanBodyGameContent,     "human-body");
-window.loadProfessionsPage   = () => loadPage("/html/professions.html",    loadProfessionsGameContent,   "profession");
-window.loadToolsPage         = () => loadPage("/html/tools.html",          loadToolsGameContent,         "tools");
-window.loadFamilyGroupsGamePage = () => 
+window.loadAnimalsPage        = () => loadPage("/html/animals.html",        loadAnimalsGameContent,       "animal");
+window.loadFruitsPage         = () => loadPage("/html/fruits.html",         loadFruitsGameContent,        "fruit");
+window.loadVegetablesPage     = () => loadPage("/html/vegetables.html",     loadVegetablesGameContent,    "vegetable");
+window.loadHumanBodyPage      = () => loadPage("/html/human-body.html",     loadHumanBodyGameContent,     "human-body");
+window.loadProfessionsPage    = () => loadPage("/html/professions.html",    loadProfessionsGameContent,   "profession");
+window.loadToolsPage          = () => loadPage("/html/tools.html",          loadToolsGameContent,         "tools");
+window.loadFamilyGroupsGamePage = () =>
   loadPage(
     "/html/family-groups-game.html",
     async () => {
