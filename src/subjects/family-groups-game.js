@@ -210,20 +210,45 @@ async function handleLangChanged(){
 
 async function rebuildBinsForCurrentItem(){
   const lang = state.lang;
-  const master   = await getMasterCategories(lang);
-  const itemCats = (state.item?.categories?.[lang] || state.item?.categories?.ar || []).filter(Boolean);
-  const correct  = itemCats.length ? rand(itemCats) : null;
-  if (!correct) return newRound(true);
+  const master = (await getMasterCategories(lang)).filter(Boolean);
 
-  const distractors = master.filter(c=>c && c!==correct);
-  shuffle(distractors);
-  const options = [correct, ...distractors.slice(0,3)];
+  const itemCatsRaw = state.item?.categories?.[lang] || state.item?.categories?.ar || [];
+  const itemCats = Array.isArray(itemCatsRaw)
+    ? itemCatsRaw.map(x => (x && String(x).trim())).filter(Boolean)
+    : [];
+
+  const correct = itemCats.length ? rand(itemCats) : null;
+  if (!correct){
+    // لا نُكمل بجولة “غير معرّفة” — انتقل مباشرةً لجولة جديدة
+    return newRound(true);
+  }
+
+  // مشتّتات من master
+  const pool = master.filter(c => c && c !== correct);
+  shuffle(pool);
+  let options = [correct, ...pool.slice(0, 3)];
+
+  // لو ما كفت القائمة، نملأ من الاحتياطي
+  if (options.length < 4){
+    const fallback = (FALLBACK_CATS[lang] || FALLBACK_CATS.ar || []).filter(Boolean);
+    const extra = fallback.filter(x => x !== correct && !options.includes(x));
+    options = options.concat(extra.slice(0, 4 - options.length));
+  }
+
+  // تنظيف نهائي + ترتيب عشوائي
+  options = uniq(options.filter(Boolean)).slice(0, 4);
+  while (options.length < 4){
+    // حماية أخيرة (لن تصل غالبًا): كرر من الاحتياطي
+    const fb = rand(FALLBACK_CATS[lang] || FALLBACK_CATS.ar);
+    if (fb && !options.includes(fb)) options.push(fb);
+  }
   shuffle(options);
 
   state.correctCategory = correct;
   state.options = options;
   renderBins(options);
 }
+
 
 function fillItemCard(item, lang){
   const titleEl = qs(SEL.title);

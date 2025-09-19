@@ -1,5 +1,5 @@
 // =========================
-// main.js — النسخة النظيفة
+// main.js — النسخة المنقحة (خيار B: حقن ديناميكي)
 // =========================
 
 // لغة الواجهة
@@ -8,7 +8,7 @@ import { getCurrentLang, loadLanguage, applyTranslations, onLangChange } from '.
 // تهيئة السايدبار الخاص بكل موضوع (تتولّى حقن ملف التحكم المناسب)
 import { initializeSubjectControls } from '../core/initializeSubjectControls.js';
 
-// ألعاب/صفحات المواضيع
+// ألعاب/صفحات أخرى (تبقى كما هي باستيراد ثابت)
 import { loadAnimalsGameContent }        from "../subjects/animals-game.js";
 import { loadFruitsGameContent }         from "../subjects/fruits-game.js";
 import { loadVegetablesGameContent }     from "../subjects/vegetables-game.js";
@@ -18,7 +18,6 @@ import { loadAlphabetActivityContent }   from "../activities/alphabet-activity.j
 import { loadMemoryGameContent }         from "../subjects/memory-game.js";
 import { loadToolsMatchGameContent }     from "../subjects/tools-match-game.js";
 import { loadHumanBodyGameContent }      from "../subjects/human-body-game.js";
-import { loadFamilyGroupsGameContent }   from "../subjects/family-groups-game.js";
 
 // 🔐 Firebase Auth
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -35,59 +34,6 @@ const BASE_CSS = [
   '/css/style.css'
 ];
 
-// ————— i18n: تطبيع عناصر التحكم وترجمة خيارات الصوت —————
-function rebuildVoiceOptions(sel) {
-  if (!sel) return;
-  const keep = sel.value || 'boy';
-  const options = [
-    ['teacher', 'teacher_voice'],
-    ['boy',     'boy_voice'],
-    ['girl',    'girl_voice'],
-    ['child',   'child_voice']
-  ];
-  sel.innerHTML = options
-    .map(([val, key]) => `<option value="${val}" data-i18n="${key}"></option>`)
-    .join('');
-  sel.value = keep;
-}
-
-function i18nNormalizeControls() {
-  // أزرار السابق/التالي الشائعة لكل الصفحات
-  const prevIds = ['prev-animal-btn','prev-fruit-btn','prev-vegetable-btn','prev-human-body-btn','prev-profession-btn','prev-tools-btn','prev-btn'];
-  const nextIds = ['next-animal-btn','next-fruit-btn','next-vegetable-btn','next-human-body-btn','next-profession-btn','next-tools-btn','next-btn'];
-
-  prevIds.forEach(id => { const el = document.getElementById(id); if (el) el.setAttribute('data-i18n','previous'); });
-  nextIds.forEach(id => { const el = document.getElementById(id); if (el) el.setAttribute('data-i18n','next'); });
-
-  // زر عرض الوصف (إن وُجد في أي صفحة) — المفتاح الصحيح الموجود في القواميس هو "Description"
-  document
-    .querySelectorAll('[id^="toggle-description-btn"]')
-    .forEach(el => el.setAttribute('data-i18n','Description'));
-
-  // ملصقات اللغة/الصوت + خيارات الصوت
-  document.querySelectorAll('select[id^="voice-select"]').forEach(sel => {
-    const lab = document.querySelector(`label[for="${sel.id}"]`);
-    if (lab) lab.setAttribute('data-i18n','Voice');
-    rebuildVoiceOptions(sel);
-  });
-  document.querySelectorAll('select[id^="game-lang-select"]').forEach(sel => {
-    const lab = document.querySelector(`label[for="${sel.id}"]`);
-    if (lab) lab.setAttribute('data-i18n','Language');
-  });
-
-  // عنوان «حسابك» (القسم الثابت): حاول على العنصر الداخلي النصّي أولاً للحفاظ على الأيقونة
-  const accTitleInner = document.querySelector('.static-section .sidebar-title [data-i18n]');
-  if (accTitleInner) {
-    accTitleInner.setAttribute('data-i18n','your_account');
-  } else {
-    const accTitle = document.querySelector('.static-section .sidebar-title');
-    if (accTitle) accTitle.setAttribute('data-i18n','your_account');
-  }
-
-  // طبّق الترجمة الآن
-  try { applyTranslations(); } catch {}
-}
-
 const SUBJECT_CSS = {
   animal:         '/css/animals.css',
   fruit:          '/css/fruits.css',
@@ -96,7 +42,8 @@ const SUBJECT_CSS = {
   tools:          '/css/tools.css',
   'human-body':   '/css/human-body.css',
   'memory-game':  '/css/memory-game.css',
-  'tools-match':  '/css/tools-match.css'
+  'tools-match':  '/css/tools-match.css',
+  'family-groups':'/css/family-groups-game.css', // تأكيد تحميل CSS الخاص باللعبة
 };
 
 function ensureCss(paths = []) {
@@ -120,8 +67,60 @@ function ensureCss(paths = []) {
   }
   if (appended) requestAnimationFrame(() => {});
 }
-// حمل الأساسي مرة واحدة
+// حمّل الأساسي مرة واحدة
 ensureCss(BASE_CSS);
+
+/* ------------------------- i18n لعناصر التحكم ------------------------- */
+function rebuildVoiceOptions(sel) {
+  if (!sel) return;
+  const keep = sel.value || 'boy';
+  const options = [
+    ['teacher', 'teacher_voice'],
+    ['boy',     'boy_voice'],
+    ['girl',    'girl_voice'],
+    ['child',   'child_voice']
+  ];
+  sel.innerHTML = options
+    .map(([val, key]) => `<option value="${val}" data-i18n="${key}"></option>`)
+    .join('');
+  sel.value = keep;
+}
+
+function i18nNormalizeControls() {
+  // أزرار السابق/التالي الشائعة لكل الصفحات
+  const prevIds = ['prev-animal-btn','prev-fruit-btn','prev-vegetable-btn','prev-human-body-btn','prev-profession-btn','prev-tools-btn','prev-btn'];
+  const nextIds = ['next-animal-btn','next-fruit-btn','next-vegetable-btn','next-human-body-btn','next-profession-btn','next-tools-btn','next-btn'];
+
+  prevIds.forEach(id => { const el = document.getElementById(id); if (el) el.setAttribute('data-i18n','previous'); });
+  nextIds.forEach(id => { const el = document.getElementById(id); if (el) el.setAttribute('data-i18n','next'); });
+
+  // زر عرض الوصف إن وُجد
+  document
+    .querySelectorAll('[id^="toggle-description-btn"]')
+    .forEach(el => el.setAttribute('data-i18n','Description'));
+
+  // ملصقات اللغة/الصوت + خيارات الصوت
+  document.querySelectorAll('select[id^="voice-select"]').forEach(sel => {
+    const lab = document.querySelector(`label[for="${sel.id}"]`);
+    if (lab) lab.setAttribute('data-i18n','Voice');
+    rebuildVoiceOptions(sel);
+  });
+  document.querySelectorAll('select[id^="game-lang-select"]').forEach(sel => {
+    const lab = document.querySelector(`label[for="${sel.id}"]`);
+    if (lab) lab.setAttribute('data-i18n','Language');
+  });
+
+  // عنوان «حسابك»
+  const accTitleInner = document.querySelector('.static-section .sidebar-title [data-i18n]');
+  if (accTitleInner) {
+    accTitleInner.setAttribute('data-i18n','your_account');
+  } else {
+    const accTitle = document.querySelector('.static-section .sidebar-title');
+    if (accTitle) accTitle.setAttribute('data-i18n','your_account');
+  }
+
+  try { applyTranslations(); } catch {}
+}
 
 /* ------------------------- أدوات واجهة بسيطة للسايدبار ------------------------- */
 // لا تُفرّغ القسم الثابت (مثل «حسابك»)
@@ -143,7 +142,6 @@ function updateAccountActionsUI(user) {
     const el = document.getElementById(id);
     if (el) el.hidden = hidden;
   };
-  // عند تسجيل الدخول: أخفِ «تسجيل/إنشاء»، وأظهر «ملفي/تقاريري/خروج»
   setHidden('loginBtn',       loggedIn);
   setHidden('registerBtn',    loggedIn);
   setHidden('my-profile-btn', !loggedIn);
@@ -184,7 +182,6 @@ function placeAccountSectionBelowActiveControls() {
 }
 window.placeAccountSectionBelowActiveControls = placeAccountSectionBelowActiveControls;
 
-// راقب تغيّرات الشريط الجانبي لإعادة ترتيب «حسابك» تلقائيًا
 let _sidebarObserver;
 function initSidebarObserver() {
   const aside = document.getElementById('sidebar-section');
@@ -218,6 +215,17 @@ const FRAGMENT_SELECTORS = [
   "body"
 ];
 
+// إزالة جميع وسوم <script> من HTML الجزئي (حماية من أخطاء MIME)
+function stripScripts(html) {
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    doc.querySelectorAll('script').forEach(s => s.remove());
+    return doc.body.innerHTML || html;
+  } catch {
+    return html.replace(/<script[\s\S]*?<\/script>/gi, '');
+  }
+}
+
 async function loadPage(htmlPath, moduleLoader, subjectType) {
   const mainContent = document.getElementById('app-main') || document.querySelector('main.main-content');
   try {
@@ -230,17 +238,18 @@ async function loadPage(htmlPath, moduleLoader, subjectType) {
 
     const res = await fetch(htmlPath, { cache: 'no-cache' });
     if (!res.ok) throw new Error(`فشل تحميل الصفحة: ${htmlPath} (status ${res.status})`);
-    const html = await res.text();
+    let html = await res.text();
 
     // لو رجعت وثيقة كاملة بالخطأ
     if (/<\!doctype html>|<html|<header[^>]+top-navbar/i.test(html)) {
       console.warn(`[loader] "${htmlPath}" أعاد وثيقة كاملة (غالبًا index.html). سأحاول استخراج جزء المحتوى فقط.`);
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const candidate = FRAGMENT_SELECTORS.map(sel => doc.querySelector(sel)).find(Boolean);
-      mainContent.innerHTML = candidate ? candidate.innerHTML : '<p>تعذّر تحميل الصفحة.</p>';
-    } else {
-      mainContent.innerHTML = html;
+      html = candidate ? candidate.innerHTML : '<p>تعذّر تحميل الصفحة.</p>';
     }
+
+    // 🔒 تنظيف أي <script> داخل الجزئي
+    mainContent.innerHTML = stripScripts(html);
 
     // ترجمات فورية لمحتوى الصفحة المحقون
     try { await applyTranslations(); } catch {}
@@ -252,7 +261,7 @@ async function loadPage(htmlPath, moduleLoader, subjectType) {
     // ننتظر فريم لضمان اكتمال حقن عناصر التحكم ثم نرتّب «حسابك»
     requestAnimationFrame(() => {
       placeAccountSectionBelowActiveControls();
-      initSidebarObserver(); // مرّة واحدة، وبعدها يراقب أي تغييرات لاحقة
+      initSidebarObserver(); // مرّة واحدة
     });
 
     // تشغيل منطق الصفحة/اللعبة إن وُجد
@@ -289,40 +298,40 @@ window.showHomePage = () => {
   });
 };
 
-// صفحات المواضيع
+// صفحات المواضيع (تبقى كما هي)
 window.loadAnimalsPage        = () => loadPage("/html/animals.html",        loadAnimalsGameContent,       "animal");
 window.loadFruitsPage         = () => loadPage("/html/fruits.html",         loadFruitsGameContent,        "fruit");
 window.loadVegetablesPage     = () => loadPage("/html/vegetables.html",     loadVegetablesGameContent,    "vegetable");
 window.loadHumanBodyPage      = () => loadPage("/html/human-body.html",     loadHumanBodyGameContent,     "human-body");
 window.loadProfessionsPage    = () => loadPage("/html/professions.html",    loadProfessionsGameContent,   "profession");
 window.loadToolsPage          = () => loadPage("/html/tools.html",          loadToolsGameContent,         "tools");
+
+// ✅ «أين عائلتي؟» — حقن HTML ثم استيراد ديناميكي للموديول
 window.loadFamilyGroupsGamePage = () =>
   loadPage(
     "/html/family-groups-game.html",
     async () => {
-      // CSS الخاص باللعبة + المشترك
-      ensureCss([
-        "/css/common-components-subjects.css",
-        "/css/family-groups-game.css"
-      ]);
-      // تشغيل منطق اللعبة
-      await loadFamilyGroupsGameContent();
-    }
+      ensureCss(['/css/common-components-subjects.css', SUBJECT_CSS['family-groups']]);
+      const mod = await import('/src/subjects/family-groups-game.js');
+      await mod.loadFamilyGroupsGameContent(); // دالة التهيئة داخل الموديول
+    },
+    "family-groups"
   );
 
-// نشاط الحروف (جديد بالكامل — بلا subjectType)
-window.loadAlphabetActivity = () =>  loadPage(
-  "/html/alphabet-activity.html",
-  async () => {
-    ensureCss(['/css/common-components-subjects.css', '/css/alphabet-activity.css']);
-    await loadAlphabetActivityContent();
-  }
-);
+// نشاط الحروف
+window.loadAlphabetActivity = () =>
+  loadPage(
+    "/html/alphabet-activity.html",
+    async () => {
+      ensureCss(['/css/common-components-subjects.css', '/css/alphabet-activity.css']);
+      await loadAlphabetActivityContent();
+    }
+  );
 
 window.loadMemoryGamePage    = () => loadPage("/html/memory-game.html",    loadMemoryGameContent,        "memory-game");
 window.loadToolsMatchPage    = () => loadPage("/html/tools-match.html",    loadToolsMatchGameContent,    "tools-match");
 
-// حساب المستخدم: تنقلات الصفحات
+// حساب المستخدم
 window.loadLogin    = () => loadPage("/users/login.html");
 window.loadRegister = () => loadPage("/users/register.html");
 window.loadProfile  = () => loadPage("/users/profile.html");
@@ -334,7 +343,7 @@ window.loadMyReport = () => loadPage("/users/my-report.html");
   loadLanguage(lang).then(() => applyTranslations());
 })();
 
-/* ------------------------- تفعيل مراقبة حالة الدخول ------------------------- */
+/* ------------------------- مراقبة حالة الدخول ------------------------- */
 (function initAuthWatch() {
   try {
     const auth = getAuth();
