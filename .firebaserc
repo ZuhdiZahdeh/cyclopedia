@@ -1,7 +1,9 @@
 {
-  "projects": {
-    "default": "cyclopedia-edu"
-  },
-  "targets": {},
-  "etags": {}
+  "projects": { "default": "cyclopedia-edu" },
+  "targets": {
+    "cyclopedia-edu": {
+      "hosting": { "live": ["cyclopedia-edu"] }
+    }
+  }
 }
+
