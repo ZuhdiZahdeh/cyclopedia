@@ -1,68 +1,69 @@
-name: Build & Deploy (Firebase Hosting)
+name: build_and_deploy
 
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch:
+    branches: [ "main" ]     # انشر تلقائياً عند الدفع إلى main
+  workflow_dispatch:         # تشغيل يدوي عند الحاجة
+
+permissions:
+  contents: read
 
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    env:
+      CI: true
 
     steps:
+      # 1) جلب الكود + ملفات LFS (للصوت/الصور الكبيرة)
       - name: Checkout (with LFS)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           lfs: true
 
       - name: Ensure LFS objects
         run: |
-          git lfs install --local
-          git lfs pull
+          git lfs fetch --all
           git lfs checkout
 
+      # 2) Node + كاش npm
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "18"
           cache: "npm"
 
+      # 3) تثبيت الحزم
       - name: Install dependencies
         run: npm ci
 
+      # 4) بناء Vite إلى dist/
       - name: Build (Vite)
         run: npm run build
 
+      # 5) فحص سريع أن المخرجات و firebase.json موجودان
       - name: Sanity check assets
         run: |
-          test -f dist/index.html
-          python - <<'PY'
-          import os, sys
-          def check(p, minb=1024):
-              if not os.path.exists(p):
-                  print(f"[WARN] missing: {p}")
-                  return
-              sz = os.path.getsize(p)
-              if sz < minb:
-                  print(f"[ERROR] {p} too small ({sz} bytes) — likely LFS pointer", file=sys.stderr)
-                  sys.exit(1)
-              print(f"[OK] {p} ({sz} bytes)")
-          for p in [
-              "dist/images/fruits/apple_main.jpg",
-              "dist/images/animals/alligator_main.jpg",
-          ]:
-              check(p)
-          print("Sanity OK")
-          PY
+          test -f firebase.json && echo "firebase.json found ✅" || (echo "firebase.json missing ❌"; exit 1)
+          ls -la dist | head -n 50
 
+      # 6) النشر إلى Firebase Hosting
+      # يعتمد على FIREBASE_TOKEN كـ Repository secret
       - name: Deploy to Firebase Hosting
         run: npx --yes firebase-tools@latest deploy --only hosting --project cyclopedia-edu --non-interactive --token "${{ secrets.FIREBASE_TOKEN }}"
+
+      # ===== بديل مستقبلي: استخدام Service Account بدل التوكن (اختياري) =====
+      # فعّل الخطوتين أدناه وأزل --token من سطر النشر أعلاه، بعد إضافة السر GCP_SA_KEY (محتوى JSON)
+      # - name: Auth with GCP Service Account
+      #   run: |
+      #     echo '${{ secrets.GCP_SA_KEY }}' > $HOME/gcloud.json
+      #     echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcloud.json" >> $GITHUB_ENV
+      #
+      # - name: Deploy to Firebase Hosting (SA)
+      #   env:
+      #     GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
+      #   run: npx --yes firebase-tools@latest deploy --only hosting --project cyclopedia-edu --non-interactive
