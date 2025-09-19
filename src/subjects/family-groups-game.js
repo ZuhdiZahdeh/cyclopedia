@@ -233,15 +233,12 @@ async function handleLangChanged(){
 }
 
 async function rebuildBinsForCurrentItem(){
-  const lang = state.lang;
-  const master = (await getMasterCategories(lang)).filter(Boolean);
+  const lang   = state.lang;
+  const master = await getMasterCategories(lang);
 
-  const itemCatsRaw = state.item?.categories?.[lang] || state.item?.categories?.ar || [];
-  const itemCats = Array.isArray(itemCatsRaw)
-    ? itemCatsRaw.map(x => (x && String(x).trim())).filter(Boolean)
-    : [];
-
-  const correct = itemCats.length ? rand(itemCats) : null;
+  // فئات العنصر (من البيانات)
+  const itemCats = sanitizeCats(state.item?.categories?.[lang] || state.item?.categories?.ar);
+  const correct  = itemCats.length ? itemCats[Math.floor(Math.random()*itemCats.length)] : "";
 
   dgbg("Rebuild bins");
   dbg("Item cats:", itemCats);
@@ -254,34 +251,36 @@ async function rebuildBinsForCurrentItem(){
     return newRound(true);
   }
 
-  // مشتّتات من master
-  const pool = master.filter(c => c && c !== correct);
-  shuffle(pool);
-  let options = [correct, ...pool.slice(0, 3)];
+  // خذ 3 مشتّتات آمنة من master (بدون تكرار وبدون الصحيح)
+  const distractors = sampleWithoutReplacement(master, 3, new Set([correct]));
 
-  // إكمال النقص من الاحتياطي
-  if (options.length < 4){
-    const fallback = (FALLBACK_CATS[lang] || FALLBACK_CATS.ar || []).filter(Boolean);
-    const extra = fallback.filter(x => x !== correct && !options.includes(x));
-    options = options.concat(extra.slice(0, 4 - options.length));
+  // أكمل من الاحتياطي لو لزم
+  if (distractors.length < 3){
+    const fb = sanitizeCats(FALLBACK_CATS[lang] || FALLBACK_CATS.ar);
+    const more = sampleWithoutReplacement(fb, 3 - distractors.length, new Set([correct, ...distractors]));
+    distractors.push(...more);
   }
 
-  // تنظيف نهائي + ضمان 4 خيارات
-  options = uniq(options.filter(Boolean)).slice(0, 4);
+  // بناء الخيارات (4 دائمًا) ثم خلط آمن
+  let options = [correct, ...distractors].map(asCleanString).filter(Boolean);
+  options = uniq(options).slice(0, 4);
   while (options.length < 4){
-    const fb = rand(FALLBACK_CATS[lang] || FALLBACK_CATS.ar);
-    if (fb && !options.includes(fb)) options.push(fb);
+    const fb = sampleWithoutReplacement(FALLBACK_CATS[lang] || FALLBACK_CATS.ar, 1, new Set(options))[0];
+    if (fb) options.push(fb);
   }
-  shuffle(options);
+  // خلط في مكانه
+  for (let i = options.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [options[i], options[j]] = [options[j], options[i]];
+  }
 
-  dgbg("Options (final)");
-  if (FG_DEBUG) console.table(options.map((v,i)=>({ idx:i+1, option:v })));
-  dgend();
+  dgbg("Options (final)"); if (FG_DEBUG) console.table(options.map((v,i)=>({idx:i+1, option:v}))); dgend();
 
   state.correctCategory = correct;
   state.options = options;
   renderBins(options);
 }
+
 
 function fillItemCard(item, lang){
   const titleEl = qs(SEL.title);
@@ -570,25 +569,17 @@ function hasCats(item, lang){
 }
 async function getMasterCategories(lang){
   try{
-    const cfgSnap = await getDoc(doc(db,"config","classification_categories"));
-    if (cfgSnap.exists()){
-      const data = cfgSnap.data() || {};
-      let list =
+    const snap = await getDoc(doc(db,"config","classification_categories"));
+    if (snap.exists()){
+      const data = snap.data() || {};
+      const raw =
         data?.byLocale?.[lang] ??
         data?.byLocale?.ar ??
         data?.[lang] ??
         data?.ar ??
         [];
-      if (!Array.isArray(list)) list = [];
-      list = list
-        .map(v => (typeof v === "string" ? v.trim() : (v && String(v).trim())))
-        .filter(v => v && v.length > 0);
-
-      dgbg("Master categories");
-      dbg("lang=", lang, "count=", list.length);
-      if (FG_DEBUG) console.table(list.map(v => ({ category: v })));
-      dgend();
-
+      const list = sanitizeCats(raw);
+      dgbg("Master categories"); dbg("lang=", lang, "count=", list.length); if (FG_DEBUG) console.table(list.map(v=>({category:v}))); dgend();
       if (list.length) return uniq(list);
     } else {
       dbg("classification_categories doc missing");
@@ -596,12 +587,11 @@ async function getMasterCategories(lang){
   } catch (e) {
     console.warn("[FG] getMasterCategories error:", e);
   }
-  const fallback = (FALLBACK_CATS[lang] || FALLBACK_CATS.ar || []).filter(Boolean);
-  dgbg("Using FALLBACK_CATS");
-  if (FG_DEBUG) console.table(fallback.map(v => ({ category: v })));
-  dgend();
+  const fallback = sanitizeCats(FALLBACK_CATS[lang] || FALLBACK_CATS.ar);
+  dgbg("Using FALLBACK_CATS"); if (FG_DEBUG) console.table(fallback.map(v=>({category:v}))); dgend();
   return uniq(fallback);
 }
+
 
 function pickItemImage(item){
   const images = item?.media?.images;
@@ -631,6 +621,31 @@ function uniq(a){ return [...new Set(a.filter(Boolean).map(String))]; }
 function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 function qs(s){ return document.querySelector(s); }
 function qsa(s){ return Array.from(document.querySelectorAll(s)); }
+
+// ===== Helpers to enforce safe, non-undefined options =====
+function asCleanString(x){
+  if (typeof x === "string") return x.trim();
+  if (x == null) return "";
+  return String(x).trim();
+}
+function sanitizeCats(arr){
+  if (!Array.isArray(arr)) return [];
+  return arr.map(asCleanString).filter(Boolean);
+}
+function sampleWithoutReplacement(arr, k, exclude = new Set()){
+  const clean = sanitizeCats(arr).filter(v => !exclude.has(v));
+  const out = [];
+  for (let i = clean.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [clean[i], clean[j]] = [clean[j], clean[i]];
+  }
+  for (let i = 0; i < clean.length && out.length < k; i++){
+    const v = clean[i];
+    if (v && !out.includes(v)) out.push(v);
+  }
+  return out;
+}
+
 
 // Fallbacks (للاستخدام فقط إذا فشل جلب HTML الجزئي)
 function fallbackMainHTML(){
