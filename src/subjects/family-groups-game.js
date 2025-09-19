@@ -5,9 +5,9 @@ import {
   collection, doc, getDoc, getDocs, query, orderBy, limit, startAt
 } from "firebase/firestore";
 import * as LangMod from "../core/lang-handler.js";
-import * as AudioMod from "../core/audio-handler.js";     // إدارة الصوت الموحدة :contentReference[oaicite:3]{index=3}
-import * as Activity from "../core/activity-handler.js";   // تسجيل النشاط/النقاط     :contentReference[oaicite:4]{index=4}
-import { mountSidebarControls } from "../core/sidebar-controls.js"; // الشريط الموحد  :contentReference[oaicite:5]{index=5}
+import * as AudioMod from "../core/audio-handler.js";
+import * as Activity from "../core/activity-handler.js";
+import { mountSidebarControls } from "../core/sidebar-controls.js";
 
 const GAME_KEY = "family-groups";
 
@@ -22,7 +22,7 @@ const SEL = {
   btnNew:     "#fg-new-round-btn",
   btnListen:  "#fg-listen-btn",
   sidebar:    "#family-groups-controls",
-  // دعم اختياري لقدامى الواجهات
+  // legacy support (إن وُجد)
   modeSel:    "#fg-display-mode",
   voiceSel:   "#fg-sound-variant",
   langSel:    "#fg-lang-select",
@@ -35,9 +35,37 @@ const UI = {
 };
 
 const FALLBACK_CATS = {
-  ar:["ثديي","طائر","زاحف","مفترس","عاشب","فاكهة","خضار","أداة","مهنة","جزء جسم"],
+  ar:["ثديي","طائر","زاحف","مفترس","عاشب","فاكهة","خضروات","أدوات","مهن","جزء جسم"],
   en:["Mammal","Bird","Reptile","Predator","Herbivore","Fruit","Vegetable","Tool","Profession","Body Part"],
   he:["יונק","ציפור","זוחל","טורף","צמחוני","פרי","ירק","כלי","מקצוע","איבר"]
+};
+
+// ===== Debug Switch / أدوات فحص =====
+const FG_DEBUG =
+  new URLSearchParams(location.search).get("debug") === "1" ||
+  sessionStorage.getItem("FG_DEBUG") === "1";
+function dbg(...args){ if (FG_DEBUG) console.log("[FG]", ...args); }
+function dgbg(label){ if (FG_DEBUG) console.group(label); }
+function dgend(){ if (FG_DEBUG) console.groupEnd(); }
+
+window.FG = window.FG || {};
+window.FG.enableDebug  = () => { sessionStorage.setItem("FG_DEBUG","1"); location.reload(); };
+window.FG.disableDebug = () => { sessionStorage.removeItem("FG_DEBUG"); location.reload(); };
+window.FG.dump = () => {
+  console.group("[FG] dump");
+  console.log("lang:", state.lang);
+  console.log("itemId:", state.item?.id);
+  console.log("itemName:", state.item?.name?.[state.lang] || state.item?.name?.ar);
+  console.log("itemCats:", state.item?.categories?.[state.lang] || state.item?.categories?.ar);
+  console.log("correctCategory:", state.correctCategory);
+  console.log("options:", state.options);
+  console.groupEnd();
+};
+window.FG.next = () => newRound(true);
+window.FG.master = async (lng=state.lang) => {
+  const m = await getMasterCategories(lng);
+  console.table(m.map(v=>({category:v})));
+  return m;
 };
 
 const state = {
@@ -52,12 +80,9 @@ const state = {
 };
 
 /* ====================== مؤثرات النجاح/الفشل (مسارات Windows → ويب) ===================== */
-
-/** أساس المسارات كما طلبتَ (Windows paths) */
 const WIN_BASE_SUCCESS = "C:\\cyclopedia\\public\\audio\\success\\";
 const WIN_BASE_FAIL    = "C:\\cyclopedia\\public\\audio\\fail\\";
 
-/** أسماء الملفات المتوفرة */
 const SUCCESS_FILES = [
   "success_toolMatch_a.mp3",
   "success_toolMatch_b.mp3",
@@ -71,40 +96,33 @@ const FAIL_FILES = [
   "fail_toolMatch_c.mp3",
 ];
 
-/** يحوّل مسار Windows إلى مسار ويب صالح (يفترض أن الملفات تُقدّم من /audio/* على الخادم) */
 function normalizeAudioPath(winBase, fileName) {
-  // إن كنا على http/https: استخدم مسار الويب
   if (location.protocol.startsWith("http")) {
     const folder = winBase.toLowerCase().includes("\\success\\") ? "success" : "fail";
     return `/audio/${folder}/${fileName}`;
   }
-  // في حالة فتح ملف محلياً عبر file:// (نادر): جرّب تحويل C:\ إلى file:///C:/...
   try {
     const drive = winBase.slice(0, 2).replace(":", "");
     const tail  = winBase.slice(2).replace(/\\/g, "/");
     return `file:///${drive}:${tail}${fileName}`;
-  } catch(_) {
-    // احتياطي: أرجع الاسم فقط
-    return fileName;
-  }
+  } catch(_) { return fileName; }
 }
-
 function playRandomFrom(winBase, files){
   if (!files?.length) return;
   const name = files[Math.floor(Math.random()*files.length)];
   const url  = normalizeAudioPath(winBase, name);
+  dbg("SFX:", url);
   try {
     if (AudioMod?.playUrl) AudioMod.playUrl(url);
     else new Audio(url).play().catch(()=>{});
   } catch {}
 }
-
 function playCorrect(){ playRandomFrom(WIN_BASE_SUCCESS, SUCCESS_FILES); }
 function playWrong(){   playRandomFrom(WIN_BASE_FAIL,    FAIL_FILES);   }
-
 /* ======================================================================================= */
 
 export async function loadFamilyGroupsGameContent(){
+  dbg("loadFamilyGroupsGameContent()");
   await mountViews();
   state.lang = getSelectedLang();
   bindControls();
@@ -135,7 +153,7 @@ async function mountViews(){
   if (scRoot){
     const initLang  = getSelectedLang();
     const initVoice = getSelectedVoice();
-    mountSidebarControls({ mount: scRoot, initialLang: initLang, initialVoice: initVoice }); // :contentReference[oaicite:6]{index=6}
+    mountSidebarControls({ mount: scRoot, initialLang: initLang, initialVoice: initVoice });
   }
 
   relocalizeUI();
@@ -146,26 +164,23 @@ function bindControls(){
   qs(SEL.btnNew)?.addEventListener("click", ()=>newRound(true));
   qs(SEL.btnListen)?.addEventListener("click", ()=>tryPlayItemSound());
 
-  // أحداث الشريط الموحد
   window.addEventListener("lang:change", (e)=>{
     const next = (e.detail?.lang) || "ar";
     LangMod?.setLang?.(next);
     state.lang = next;
     handleLangChanged();
   });
-
   window.addEventListener("voice:change", (e)=>{
     const v = (e.detail?.voice) || "boy";
     AudioMod?.setVoiceShape?.(v);
     state.soundVariant = v;
     tryPreloadItemAudio();
   });
-
   window.addEventListener("controls:next", ()=> newRound(true));
   window.addEventListener("controls:prev", ()=> newRound(true));
   window.addEventListener("controls:description", ()=> { tryPlayItemSound(); });
 
-  // دعم قديم (إن وُجد)
+  // legacy (إن وُجد)
   qs(SEL.langSel)?.addEventListener("change", e=>{
     const next = e.target.value;
     LangMod?.setLang?.(next);
@@ -191,12 +206,21 @@ async function newRound(autoPlay){
   if (!it){ setFeedback(msg("wrong")); return; }
 
   state.item = it;
+
+  // نقاط فحص للجولة
+  dgbg("NEW ROUND");
+  dbg("lang:", state.lang);
+  dbg("itemId:", state.item?.id);
+  dbg("itemName:", state.item?.name?.[state.lang] || state.item?.name?.ar);
+  dbg("itemCats(raw):", state.item?.categories);
+  dgend();
+
   fillItemCard(it, state.lang);
   await rebuildBinsForCurrentItem();
 
   attachDragAndDrop();
   tryPreloadItemAudio();
-  if (autoPlay) tryPlayItemSound(); // تشغيل تلقائي ببداية الجولة
+  if (autoPlay) tryPlayItemSound();
 }
 
 async function handleLangChanged(){
@@ -218,8 +242,15 @@ async function rebuildBinsForCurrentItem(){
     : [];
 
   const correct = itemCats.length ? rand(itemCats) : null;
+
+  dgbg("Rebuild bins");
+  dbg("Item cats:", itemCats);
+  dbg("Correct (picked):", correct);
+  dbg("Master size:", master.length);
+  dgend();
+
   if (!correct){
-    // لا نُكمل بجولة “غير معرّفة” — انتقل مباشرةً لجولة جديدة
+    console.warn("[FG] No valid category on item, skipping round.");
     return newRound(true);
   }
 
@@ -228,27 +259,29 @@ async function rebuildBinsForCurrentItem(){
   shuffle(pool);
   let options = [correct, ...pool.slice(0, 3)];
 
-  // لو ما كفت القائمة، نملأ من الاحتياطي
+  // إكمال النقص من الاحتياطي
   if (options.length < 4){
     const fallback = (FALLBACK_CATS[lang] || FALLBACK_CATS.ar || []).filter(Boolean);
     const extra = fallback.filter(x => x !== correct && !options.includes(x));
     options = options.concat(extra.slice(0, 4 - options.length));
   }
 
-  // تنظيف نهائي + ترتيب عشوائي
+  // تنظيف نهائي + ضمان 4 خيارات
   options = uniq(options.filter(Boolean)).slice(0, 4);
   while (options.length < 4){
-    // حماية أخيرة (لن تصل غالبًا): كرر من الاحتياطي
     const fb = rand(FALLBACK_CATS[lang] || FALLBACK_CATS.ar);
     if (fb && !options.includes(fb)) options.push(fb);
   }
   shuffle(options);
 
+  dgbg("Options (final)");
+  if (FG_DEBUG) console.table(options.map((v,i)=>({ idx:i+1, option:v })));
+  dgend();
+
   state.correctCategory = correct;
   state.options = options;
   renderBins(options);
 }
-
 
 function fillItemCard(item, lang){
   const titleEl = qs(SEL.title);
@@ -283,7 +316,6 @@ function renderBins(options){
 }
 
 /* ====================== سحب/إفلات مع تصغير ديناميكي ====================== */
-
 function attachDragAndDrop(){
   const card = qs(SEL.card);
   const bins = qsa(".fg-bin");
@@ -310,7 +342,6 @@ function attachDragAndDrop(){
     const cy = ("clientY" in e? e.clientY : e.touches?.[0]?.clientY)||0;
     dx=cx-sx; dy=cy-sy;
 
-    // حساب أصغر مسافة من مركز البطاقة إلى أقرب سلّة
     const scale = dynamicScaleFor(card, bins, dx, dy);
     card.style.transform=`translate(${dx}px,${dy}px) scale(${scale})`;
   };
@@ -351,17 +382,15 @@ function dynamicScaleFor(card, bins, dx, dy){
     if (d < minD) minD = d;
   });
 
-  // عتبة مسافة للتطبيع
   const D0 = 120;   // داخل هذا النطاق يصبح أصغر حجم
   const D1 = 600;   // أبعد من هذا يعود لأكبر حجم
-  const t  = clamp01((minD - D0) / (D1 - D0)); // 0 قرب جدًا، 1 بعيد
-  const smooth = t * t * (3 - 2*t);           // Smoothstep
-  const sMax = 0.95, sMin = 0.62;             // حدود المقياس
+  const t  = clamp01((minD - D0) / (D1 - D0));
+  const smooth = t * t * (3 - 2*t); // Smoothstep
+  const sMax = 0.95, sMin = 0.62;
   return +(sMin + (sMax - sMin) * smooth).toFixed(3);
 }
 
 /* ====================== كشف التقاطع، تقييم الإسقاط ====================== */
-
 function detectBinHover(card, bins){
   const c = card.getBoundingClientRect();
   let best=null, bestArea=0;
@@ -372,7 +401,7 @@ function detectBinHover(card, bins){
     const area = interW*interH;
     if (area>bestArea){ bestArea=area; best=bin; }
   });
-  return bestArea>160 ? best : null; // خفّضنا العتبة قليلًا
+  return bestArea>160 ? best : null;
 }
 
 function tryDropOn(binEl){
@@ -406,26 +435,21 @@ function tryDropOn(binEl){
 function animateCorrectDrop(binEl){
   const card = qs(SEL.card); if (!card) return;
 
-  // وميض أخضر للسلّة
   flashBinGreen(binEl);
 
-  // احسب انتقال البطاقة إلى مركز السلّة
   const b = binEl.getBoundingClientRect();
   const c = card.getBoundingClientRect();
   const dx = (b.left+b.width/2)  - (c.left+c.width/2);
   const dy = (b.top +b.height/2) - (c.top +c.height/2);
 
-  // تسلسل ارتداد بسيط: إلى السلّة (تصغير) → تكبير خفيف → استقرار
   card.style.transition = "transform 220ms cubic-bezier(.2,.9,.3,1.2)";
   card.style.transform  = `translate(${dx}px,${dy}px) scale(0.72)`;
 
-  // المرحلة الثانية (Overshoot صغير)
   setTimeout(()=>{
     card.style.transition = "transform 120ms ease-out";
     card.style.transform  = `translate(${dx}px,${dy}px) scale(0.82)`;
   }, 220);
 
-  // تثبيت نهائي قبل الانتقال للجولة الجديدة
   setTimeout(()=>{
     card.style.transition = "transform 120ms ease-in";
     card.style.transform  = `translate(${dx}px,${dy}px) scale(0.78)`;
@@ -434,13 +458,10 @@ function animateCorrectDrop(binEl){
   }, 360);
 }
 
-/** وميض أخضر: نُنشئ @keyframes لمرة واحدة ونطبق Animation قصيرة */
 function flashBinGreen(binEl){
   ensureFlashStyle();
-  binEl.classList.remove("correct"); // نظّف حالة قديمة
-  // طبّق فلاش بصري قصير
+  binEl.classList.remove("correct");
   binEl.style.animation = "fg-correct-flash 420ms ease-out 1";
-  // أعدّ حالة correct العادية لإبقاء الإطار أخضر بعد الفلاش
   setTimeout(()=>{ binEl.classList.add("correct"); }, 420);
 }
 let __flashStyleInjected = false;
@@ -460,14 +481,11 @@ function ensureFlashStyle(){
 }
 
 /* ====================== الصوت/النقاط/السجل ====================== */
-
 function tryPlayItemSound(){
   const url = pickItemSoundUrl(state.item, state.lang, getSelectedVoice());
+  dbg("itemSound:", url);
   if (!url) return;
-  try {
-    if (AudioMod?.playUrl) AudioMod.playUrl(url);
-    else new Audio(url).play().catch(()=>{});
-  } catch {}
+  try { (AudioMod?.playUrl ? AudioMod.playUrl(url) : new Audio(url).play().catch(()=>{})); } catch {}
 }
 function tryPreloadItemAudio(){
   const url = pickItemSoundUrl(state.item, state.lang, getSelectedVoice());
@@ -486,7 +504,6 @@ function logActivity(ok, chosen, correct){
 }
 
 /* ====================== مساعدين ====================== */
-
 function getSelectedLang(){
   const sys = (LangMod?.getCurrentLang && LangMod.getCurrentLang())
            || (LangMod?.getActiveLang && LangMod.getActiveLang());
@@ -535,7 +552,7 @@ async function pickRandomItemWithCategories(lang){
         if (hasCats(v,lang)) return v;
       }
     }
-  }catch{}
+  }catch(e){ dbg("index lookup error:", e); }
   const seed = Math.random().toString(36).slice(2,8);
   const q1 = query(collection(db,"items"), orderBy("__name__"), startAt(seed), limit(50));
   const s1 = await getDocs(q1);
@@ -556,27 +573,33 @@ async function getMasterCategories(lang){
     const cfgSnap = await getDoc(doc(db,"config","classification_categories"));
     if (cfgSnap.exists()){
       const data = cfgSnap.data() || {};
-
-      // دعم شكلين: byLocale.{lang} أو {lang} مباشرة
       let list =
         data?.byLocale?.[lang] ??
         data?.byLocale?.ar ??
         data?.[lang] ??
         data?.ar ??
         [];
-
-      // تنظيف: إزالة undefined / null / فراغات وتحويل القيم لنصوص
       if (!Array.isArray(list)) list = [];
       list = list
         .map(v => (typeof v === "string" ? v.trim() : (v && String(v).trim())))
         .filter(v => v && v.length > 0);
 
-      if (list.length) return uniq(list);
-    }
-  } catch {}
+      dgbg("Master categories");
+      dbg("lang=", lang, "count=", list.length);
+      if (FG_DEBUG) console.table(list.map(v => ({ category: v })));
+      dgend();
 
-  // قائمة احتياطية مؤكدة
+      if (list.length) return uniq(list);
+    } else {
+      dbg("classification_categories doc missing");
+    }
+  } catch (e) {
+    console.warn("[FG] getMasterCategories error:", e);
+  }
   const fallback = (FALLBACK_CATS[lang] || FALLBACK_CATS.ar || []).filter(Boolean);
+  dgbg("Using FALLBACK_CATS");
+  if (FG_DEBUG) console.table(fallback.map(v => ({ category: v })));
+  dgend();
   return uniq(fallback);
 }
 
@@ -609,7 +632,7 @@ function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 function qs(s){ return document.querySelector(s); }
 function qsa(s){ return Array.from(document.querySelectorAll(s)); }
 
-// Fallbacks
+// Fallbacks (للاستخدام فقط إذا فشل جلب HTML الجزئي)
 function fallbackMainHTML(){
   return `
   <section id="family-groups-game" class="subject-screen">
