@@ -1,14 +1,14 @@
-// =========================
-// main.js — النسخة المنقحة (خيار B: حقن ديناميكي)
+﻿// =========================
+// main.js ג€” ״§„†״³״®״© ״§„…†‚״­״© (״®״§״± B: ״­‚† ״¯†״§…ƒ)
 // =========================
 
-// لغة الواجهة
+// „״÷״© ״§„ˆ״§״¬‡״©
 import { getCurrentLang, loadLanguage, applyTranslations, onLangChange } from '../core/lang-handler.js';
 
-// تهيئة السايدبار الخاص بكل موضوع (تتولّى حقن ملف التحكم المناسب)
+// ״×‡״¦״© ״§„״³״§״¯״¨״§״± ״§„״®״§״µ ״¨ƒ„ …ˆ״¶ˆ״¹ (״×״×ˆ„‘‰ ״­‚† …„ ״§„״×״­ƒ… ״§„…†״§״³״¨)
 import { initializeSubjectControls } from '../core/initializeSubjectControls.js';
 
-// ألعاب/صفحات أخرى (تبقى كما هي باستيراد ثابت)
+// ״£„״¹״§״¨/״µ״­״§״× ״£״®״±‰ (״×״¨‚‰ ƒ…״§ ‡ ״¨״§״³״×״±״§״¯ ״«״§״¨״×)
 import { loadAnimalsGameContent }        from "../subjects/animals-game.js";
 import { loadFruitsGameContent }         from "../subjects/fruits-game.js";
 import { loadVegetablesGameContent }     from "../subjects/vegetables-game.js";
@@ -19,11 +19,11 @@ import { loadMemoryGameContent }         from "../subjects/memory-game.js";
 import { loadToolsMatchGameContent }     from "../subjects/tools-match-game.js";
 import { loadHumanBodyGameContent }      from "../subjects/human-body-game.js";
 
-// 🔐 Firebase Auth
+// נ” Firebase Auth
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 
 /* ------------------------------------------------------------------
-   تحميل CSS الأساسي + CSS الخاص بكل موضوع تلقائيًا
+   ״×״­…„ CSS ״§„״£״³״§״³ + CSS ״§„״®״§״µ ״¨ƒ„ …ˆ״¶ˆ״¹ ״×„‚״§״¦‹״§
 -------------------------------------------------------------------*/
 const BASE_CSS = [
   '/css/colors.css',
@@ -43,7 +43,7 @@ const SUBJECT_CSS = {
   'human-body':   '/css/human-body.css',
   'memory-game':  '/css/memory-game.css',
   'tools-match':  '/css/tools-match.css',
-  'family-groups':'/css/family-groups-game.css', // تأكيد تحميل CSS الخاص باللعبة
+  'family-groups':'/css/family-groups-game.css', // ״×״£ƒ״¯ ״×״­…„ CSS ״§„״®״§״µ ״¨״§„„״¹״¨״©
 };
 
 function ensureCss(paths = []) {
@@ -67,10 +67,10 @@ function ensureCss(paths = []) {
   }
   if (appended) requestAnimationFrame(() => {});
 }
-// حمّل الأساسي مرة واحدة
+// ״­…‘„ ״§„״£״³״§״³ …״±״© ˆ״§״­״¯״©
 ensureCss(BASE_CSS);
 
-/* ------------------------- i18n لعناصر التحكم ------------------------- */
+/* ------------------------- i18n „״¹†״§״µ״± ״§„״×״­ƒ… ------------------------- */
 function rebuildVoiceOptions(sel) {
   if (!sel) return;
   const keep = sel.value || 'boy';
@@ -87,19 +87,19 @@ function rebuildVoiceOptions(sel) {
 }
 
 function i18nNormalizeControls() {
-  // أزرار السابق/التالي الشائعة لكل الصفحات
+  // ״£״²״±״§״± ״§„״³״§״¨‚/״§„״×״§„ ״§„״´״§״¦״¹״© „ƒ„ ״§„״µ״­״§״×
   const prevIds = ['prev-animal-btn','prev-fruit-btn','prev-vegetable-btn','prev-human-body-btn','prev-profession-btn','prev-tools-btn','prev-btn'];
   const nextIds = ['next-animal-btn','next-fruit-btn','next-vegetable-btn','next-human-body-btn','next-profession-btn','next-tools-btn','next-btn'];
 
   prevIds.forEach(id => { const el = document.getElementById(id); if (el) el.setAttribute('data-i18n','previous'); });
   nextIds.forEach(id => { const el = document.getElementById(id); if (el) el.setAttribute('data-i18n','next'); });
 
-  // زر عرض الوصف إن وُجد
+  // ״²״± ״¹״±״¶ ״§„ˆ״µ ״¥† ˆ״¬״¯
   document
     .querySelectorAll('[id^="toggle-description-btn"]')
     .forEach(el => el.setAttribute('data-i18n','Description'));
 
-  // ملصقات اللغة/الصوت + خيارات الصوت
+  // …„״µ‚״§״× ״§„„״÷״©/״§„״µˆ״× + ״®״§״±״§״× ״§„״µˆ״×
   document.querySelectorAll('select[id^="voice-select"]').forEach(sel => {
     const lab = document.querySelector(`label[for="${sel.id}"]`);
     if (lab) lab.setAttribute('data-i18n','Voice');
@@ -110,7 +110,7 @@ function i18nNormalizeControls() {
     if (lab) lab.setAttribute('data-i18n','Language');
   });
 
-  // عنوان «حسابك»
+  // ״¹†ˆ״§† ֲ«״­״³״§״¨ƒֲ»
   const accTitleInner = document.querySelector('.static-section .sidebar-title [data-i18n]');
   if (accTitleInner) {
     accTitleInner.setAttribute('data-i18n','your_account');
@@ -122,8 +122,8 @@ function i18nNormalizeControls() {
   try { applyTranslations(); } catch {}
 }
 
-/* ------------------------- أدوات واجهة بسيطة للسايدبار ------------------------- */
-// لا تُفرّغ القسم الثابت (مثل «حسابك»)
+/* ------------------------- ״£״¯ˆ״§״× ˆ״§״¬‡״© ״¨״³״·״© „„״³״§״¯״¨״§״± ------------------------- */
+// „״§ ״×״±‘״÷ ״§„‚״³… ״§„״«״§״¨״× (…״«„ ֲ«״­״³״§״¨ƒֲ»)
 function hideAllControls() {
   document
     .querySelectorAll("#sidebar-section .sidebar-section:not(.static-section)")
@@ -135,7 +135,7 @@ function hideAllControls() {
   if (aside) aside.style.display = "";
 }
 
-/* ------------------------- حساب المستخدم: واجهة الأزرار ------------------------- */
+/* ------------------------- ״­״³״§״¨ ״§„…״³״×״®״¯…: ˆ״§״¬‡״© ״§„״£״²״±״§״± ------------------------- */
 function updateAccountActionsUI(user) {
   const loggedIn = !!user;
   const setHidden = (id, hidden) => {
@@ -159,7 +159,7 @@ async function handleLogout() {
 }
 window.handleLogout = handleLogout;
 
-/* ------------------------- ترتيب «حسابك» تحت التحكّم الظاهر ------------------------- */
+/* ------------------------- ״×״±״×״¨ ֲ«״­״³״§״¨ƒֲ» ״×״­״× ״§„״×״­ƒ‘… ״§„״¸״§‡״± ------------------------- */
 function getActiveControlsSection() {
   const aside = document.getElementById('sidebar-section');
   if (!aside) return null;
@@ -205,7 +205,7 @@ function initSidebarObserver() {
   });
 }
 
-/* ------------------------- محمل صفحات عام (مُحصَّن) ------------------------- */
+/* ------------------------- …״­…„ ״µ״­״§״× ״¹״§… (…״­״µ‘†) ------------------------- */
 const FRAGMENT_SELECTORS = [
   "#page-content",
   ".subject-page",
@@ -215,7 +215,7 @@ const FRAGMENT_SELECTORS = [
   "body"
 ];
 
-// إزالة جميع وسوم <script> من HTML الجزئي (حماية من أخطاء MIME)
+// ״¥״²״§„״© ״¬…״¹ ˆ״³ˆ… <script> …† HTML ״§„״¬״²״¦ (״­…״§״© …† ״£״®״·״§״¡ MIME)
 function stripScripts(html) {
   try {
     const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -229,7 +229,7 @@ function stripScripts(html) {
 async function loadPage(htmlPath, moduleLoader, subjectType) {
   const mainContent = document.getElementById('app-main') || document.querySelector('main.main-content');
   try {
-    // CSS الموضوع (إن وُجد)
+    // CSS ״§„…ˆ״¶ˆ״¹ (״¥† ˆ״¬״¯)
     if (subjectType && SUBJECT_CSS[subjectType]) {
       ensureCss(['/css/common-components-subjects.css', SUBJECT_CSS[subjectType]]);
     }
@@ -237,43 +237,43 @@ async function loadPage(htmlPath, moduleLoader, subjectType) {
     hideAllControls();
 
     const res = await fetch(htmlPath, { cache: 'no-cache' });
-    if (!res.ok) throw new Error(`فشل تحميل الصفحة: ${htmlPath} (status ${res.status})`);
+    if (!res.ok) throw new Error(`״´„ ״×״­…„ ״§„״µ״­״©: ${htmlPath} (status ${res.status})`);
     let html = await res.text();
 
-    // لو رجعت وثيقة كاملة بالخطأ
+    // „ˆ ״±״¬״¹״× ˆ״«‚״© ƒ״§…„״© ״¨״§„״®״·״£
     if (/<\!doctype html>|<html|<header[^>]+top-navbar/i.test(html)) {
-      console.warn(`[loader] "${htmlPath}" أعاد وثيقة كاملة (غالبًا index.html). سأحاول استخراج جزء المحتوى فقط.`);
+      console.warn(`[loader] "${htmlPath}" ״£״¹״§״¯ ˆ״«‚״© ƒ״§…„״© (״÷״§„״¨‹״§ index.html). ״³״£״­״§ˆ„ ״§״³״×״®״±״§״¬ ״¬״²״¡ ״§„…״­״×ˆ‰ ‚״·.`);
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const candidate = FRAGMENT_SELECTORS.map(sel => doc.querySelector(sel)).find(Boolean);
-      html = candidate ? candidate.innerHTML : '<p>تعذّر تحميل الصفحة.</p>';
+      html = candidate ? candidate.innerHTML : '<p>״×״¹״°‘״± ״×״­…„ ״§„״µ״­״©.</p>';
     }
 
-    // 🔒 تنظيف أي <script> داخل الجزئي
+    // נ”’ ״×†״¸ ״£ <script> ״¯״§״®„ ״§„״¬״²״¦
     mainContent.innerHTML = stripScripts(html);
 
-    // ترجمات فورية لمحتوى الصفحة المحقون
+    // ״×״±״¬…״§״× ˆ״±״© „…״­״×ˆ‰ ״§„״µ״­״© ״§„…״­‚ˆ†
     try { await applyTranslations(); } catch {}
 
-    // تهيئة مجموعة التحكم للموضوع (إن وُجد)، ثم ضع «حسابك» تحتها + طبّق i18n لتلك العناصر
+    // ״×‡״¦״© …״¬…ˆ״¹״© ״§„״×״­ƒ… „„…ˆ״¶ˆ״¹ (״¥† ˆ״¬״¯)״ ״«… ״¶״¹ ֲ«״­״³״§״¨ƒֲ» ״×״­״×‡״§ + ״·״¨‘‚ i18n „״×„ƒ ״§„״¹†״§״µ״±
     if (subjectType) initializeSubjectControls(subjectType);
     i18nNormalizeControls();
 
-    // ننتظر فريم لضمان اكتمال حقن عناصر التحكم ثم نرتّب «حسابك»
+    // ††״×״¸״± ״±… „״¶…״§† ״§ƒ״×…״§„ ״­‚† ״¹†״§״µ״± ״§„״×״­ƒ… ״«… †״±״×‘״¨ ֲ«״­״³״§״¨ƒֲ»
     requestAnimationFrame(() => {
       placeAccountSectionBelowActiveControls();
-      initSidebarObserver(); // مرّة واحدة
+      initSidebarObserver(); // …״±‘״© ˆ״§״­״¯״©
     });
 
-    // تشغيل منطق الصفحة/اللعبة إن وُجد
+    // ״×״´״÷„ …†״·‚ ״§„״µ״­״©/״§„„״¹״¨״© ״¥† ˆ״¬״¯
     if (typeof moduleLoader === 'function') {
       await moduleLoader();
     }
 
-    console.log(`✅ تم تحميل الصفحة: ${htmlPath}`);
+    if (import.meta.env.DEV) if (import.meta.env.DEV) console.log(`ג… ״×… ״×״­…„ ״§„״µ״­״©: ${htmlPath}`);
   } catch (err) {
-    console.error(`❌ خطأ في تحميل الصفحة: ${htmlPath}`, err);
+    console.error(`ג ״®״·״£  ״×״­…„ ״§„״µ״­״©: ${htmlPath}`, err);
     if (mainContent) {
-      mainContent.innerHTML = `<div class="error-box">حدث خطأ أثناء تحميل الصفحة المطلوبة.</div>`;
+      mainContent.innerHTML = `<div class="error-box">״­״¯״« ״®״·״£ ״£״«†״§״¡ ״×״­…„ ״§„״µ״­״© ״§„…״·„ˆ״¨״©.</div>`;
     }
   }
 }
@@ -282,13 +282,13 @@ onLangChange(() => {
   i18nNormalizeControls();
 });
 
-/* ------------------------- ربط الدوال بنافذة المتصفح ------------------------- */
+/* ------------------------- ״±״¨״· ״§„״¯ˆ״§„ ״¨†״§״°״© ״§„…״×״µ״­ ------------------------- */
 window.showHomePage = () => {
   const main = document.getElementById('app-main') || document.querySelector('main.main-content');
   main.innerHTML = `
     <section id="welcome-message">
-      <h1>مرحباً بك في الموسوعة التفاعلية للأطفال</h1>
-      <p>اختر موضوعاً من القائمة لبدء التعلم واللعب.</p>
+      <h1>…״±״­״¨״§‹ ״¨ƒ  ״§„…ˆ״³ˆ״¹״© ״§„״×״§״¹„״© „„״£״·״§„</h1>
+      <p>״§״®״×״± …ˆ״¶ˆ״¹״§‹ …† ״§„‚״§״¦…״© „״¨״¯״¡ ״§„״×״¹„… ˆ״§„„״¹״¨.</p>
     </section>
   `;
   hideAllControls();
@@ -298,7 +298,7 @@ window.showHomePage = () => {
   });
 };
 
-// صفحات المواضيع (تبقى كما هي)
+// ״µ״­״§״× ״§„…ˆ״§״¶״¹ (״×״¨‚‰ ƒ…״§ ‡)
 window.loadAnimalsPage        = () => loadPage("/html/animals.html",        loadAnimalsGameContent,       "animal");
 window.loadFruitsPage         = () => loadPage("/html/fruits.html",         loadFruitsGameContent,        "fruit");
 window.loadVegetablesPage     = () => loadPage("/html/vegetables.html",     loadVegetablesGameContent,    "vegetable");
@@ -306,15 +306,15 @@ window.loadHumanBodyPage      = () => loadPage("/html/human-body.html",     load
 window.loadProfessionsPage    = () => loadPage("/html/professions.html",    loadProfessionsGameContent,   "profession");
 window.loadToolsPage          = () => loadPage("/html/tools.html",          loadToolsGameContent,         "tools");
 
-// ✅ «أين عائلتي؟» — حقن HTML ثم استيراد ديناميكي للموديول
+// ג… ֲ«״£† ״¹״§״¦„״×״ֲ» ג€” ״­‚† HTML ״«… ״§״³״×״±״§״¯ ״¯†״§…ƒ „„…ˆ״¯ˆ„
 window.loadFamilyGroupsGamePage = () =>
   loadPage(
     "/html/family-groups-game.html",
     async () => {
-      // تأكيد تحميل CSS
+      // ״×״£ƒ״¯ ״×״­…„ CSS
       ensureCss(['/css/common-components-subjects.css', '/css/family-groups-game.css']);
 
-      // ✅ استيراد مضمون عبر import.meta.glob
+      // ג… ״§״³״×״±״§״¯ …״¶…ˆ† ״¹״¨״± import.meta.glob
       const mods = import.meta.glob('/src/subjects/*-game.js');
       const loader = mods['/src/subjects/family-groups-game.js'];
       if (!loader) {
@@ -322,17 +322,17 @@ window.loadFamilyGroupsGamePage = () =>
         return;
       }
       try {
-        const m = await loader();                // سيُحوَّل إلى assets/family-groups-game-*.js تلقائيًا
+        const m = await loader();                // ״³״­ˆ‘„ ״¥„‰ assets/family-groups-game-*.js ״×„‚״§״¦‹״§
         if (m?.loadFamilyGroupsGameContent) {
           await m.loadFamilyGroupsGameContent();
         } else {
           console.error('[family-groups] load function missing');
         }
       } catch (e) {
-        // لو حصل 404/كاش قديم — أعد المحاولة بتهشير بسيط لكسر الكاش
-        console.warn('[family-groups] first dynamic import failed, retrying with cache-bust…', e);
+        // „ˆ ״­״µ„ 404/ƒ״§״´ ‚״¯… ג€” ״£״¹״¯ ״§„…״­״§ˆ„״© ״¨״×‡״´״± ״¨״³״· „ƒ״³״± ״§„ƒ״§״´
+        console.warn('[family-groups] first dynamic import failed, retrying with cache-bustג€¦', e);
         const bust = Date.now();
-        const modsBust = import.meta.glob('/src/subjects/*-game.js?v=*'); // نمط مع استعلام
+        const modsBust = import.meta.glob('/src/subjects/*-game.js?v=*'); // †…״· …״¹ ״§״³״×״¹„״§…
         const loaderBust = modsBust['/src/subjects/family-groups-game.js?v=*'];
         if (loaderBust) {
           const m2 = await loaderBust();
@@ -344,7 +344,7 @@ window.loadFamilyGroupsGamePage = () =>
   );
 
 
-// نشاط الحروف
+// †״´״§״· ״§„״­״±ˆ
 window.loadAlphabetActivity = () =>
   loadPage(
     "/html/alphabet-activity.html",
@@ -357,19 +357,19 @@ window.loadAlphabetActivity = () =>
 window.loadMemoryGamePage    = () => loadPage("/html/memory-game.html",    loadMemoryGameContent,        "memory-game");
 window.loadToolsMatchPage    = () => loadPage("/html/tools-match.html",    loadToolsMatchGameContent,    "tools-match");
 
-// حساب المستخدم
+// ״­״³״§״¨ ״§„…״³״×״®״¯…
 window.loadLogin    = () => loadPage("/users/login.html");
 window.loadRegister = () => loadPage("/users/register.html");
 window.loadProfile  = () => loadPage("/users/profile.html");
 window.loadMyReport = () => loadPage("/users/my-report.html");
 
-/* ------------------------- تهيئة اللغة ------------------------- */
+/* ------------------------- ״×‡״¦״© ״§„„״÷״© ------------------------- */
 (function initLang() {
   const lang = getCurrentLang();
   loadLanguage(lang).then(() => applyTranslations());
 })();
 
-/* ------------------------- مراقبة حالة الدخول ------------------------- */
+/* ------------------------- …״±״§‚״¨״© ״­״§„״© ״§„״¯״®ˆ„ ------------------------- */
 (function initAuthWatch() {
   try {
     const auth = getAuth();
@@ -377,12 +377,14 @@ window.loadMyReport = () => loadPage("/users/my-report.html");
       updateAccountActionsUI(user);
     });
   } catch (e) {
-    console.warn('[auth] Firebase Auth غير مهيّأة بعد. سيتم استخدام الحالة الافتراضية.', e);
+    console.warn('[auth] Firebase Auth ״÷״± …‡‘״£״© ״¨״¹״¯. ״³״×… ״§״³״×״®״¯״§… ״§„״­״§„״© ״§„״§״×״±״§״¶״©.', e);
     updateAccountActionsUI(null);
   }
 })();
 
-// تشغيل الصفحة الرئيسية عند الجاهزية
+// ״×״´״÷„ ״§„״µ״­״© ״§„״±״¦״³״© ״¹†״¯ ״§„״¬״§‡״²״©
 window.addEventListener('DOMContentLoaded', () => {
   showHomePage();
 });
+
+

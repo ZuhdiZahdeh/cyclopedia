@@ -1,5 +1,5 @@
-// src/subjects/tools-game.js
-// تشغيل بالصورة/الاسم فقط — بلا زر استماع
+﻿// src/subjects/tools-game.js
+// ״×״´״÷„ ״¨״§„״µˆ״±״©/״§„״§״³… ‚״· ג€” ״¨„״§ ״²״± ״§״³״×…״§״¹
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
 import { playItemSound, stopCurrentAudio, setVoiceShape, setLanguage } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
@@ -28,14 +28,14 @@ function __ensureFixedLcpAttrs(img, isLcp=true){
 }
 __ensureGlobalFixedImgCSS();
 
-/* -------------------- الحالة -------------------- */
+/* -------------------- ״§„״­״§„״© -------------------- */
 let tools = [];
 let currentIndex = 0;
 let currentToolData = null;
 let currentUILang = 'ar';
 let professionsCache = null;
 
-/* -------------------- عناصر الصفحة -------------------- */
+/* -------------------- ״¹†״§״µ״± ״§„״µ״­״© -------------------- */
 const els = {
   main:     () => document.querySelector('main.main-content'),
   nameEl:   () => document.getElementById('tool-word'),
@@ -57,7 +57,7 @@ const els = {
 function setHighlightedName(el, txt) {
   if (!el) return;
   const s = (txt || '').toString();
-  el.innerHTML = s ? `<span class="highlight-first-letter">${s.charAt(0)}</span>${s.slice(1)}` : '—';
+  el.innerHTML = s ? `<span class="highlight-first-letter">${s.charAt(0)}</span>${s.slice(1)}` : 'ג€”';
 }
 function toolName(t, lang){ return pickLocalized(t?.name, lang); }
 function toolDescription(t, lang){ return pickLocalized(t?.description, lang); }
@@ -76,7 +76,7 @@ function toolAudioPath(tool, lang, voice='teacher') {
   return base ? `/audio/${lang}/tools/${slugify(base)}_${voice}_${lang}.mp3` : '';
 }
 
-/* -------------------- حقن وربط الأزرار -------------------- */
+/* -------------------- ״­‚† ˆ״±״¨״· ״§„״£״²״±״§״± -------------------- */
 async function ensureToolsSidebar() {
   let sidebar = els.sidebar();
   if (!sidebar) {
@@ -107,25 +107,25 @@ async function ensureToolsSidebar() {
     container.innerHTML = html || `
       <div class="control-grid">
         <div class="row two-col">
-          <button id="${els.btnPrevId}" class="btn secondary">السابق</button>
-          <button id="${els.btnNextId}" class="btn primary">التالي</button>
+          <button id="${els.btnPrevId}" class="btn secondary">״§„״³״§״¨‚</button>
+          <button id="${els.btnNextId}" class="btn primary">״§„״×״§„</button>
         </div>
-        <div class="row"><button id="${els.btnToggleId}" class="btn ghost">الوصف</button></div>
-        <div class="row"><button id="${els.btnProfId}"  class="btn ghost">المهن المرتبطة</button></div>
+        <div class="row"><button id="${els.btnToggleId}" class="btn ghost">״§„ˆ״µ</button></div>
+        <div class="row"><button id="${els.btnProfId}"  class="btn ghost">״§„…‡† ״§„…״±״×״¨״·״©</button></div>
         <div class="row">
-          <label for="${els.voiceSelId}" class="ctrl-label">الصوت</label>
+          <label for="${els.voiceSelId}" class="ctrl-label">״§„״µˆ״×</label>
           <select id="${els.voiceSelId}" class="ctrl-select">
-            <option value="teacher">المعلم</option>
-            <option value="boy">ولد</option>
-            <option value="girl">بنت</option>
+            <option value="teacher">״§„…״¹„…</option>
+            <option value="boy">ˆ„״¯</option>
+            <option value="girl">״¨†״×</option>
           </select>
         </div>
         <div class="row">
-          <label for="${els.langSelId}" class="ctrl-label">اللغة</label>
+          <label for="${els.langSelId}" class="ctrl-label">״§„„״÷״©</label>
           <select id="${els.langSelId}" class="ctrl-select">
-            <option value="ar">العربية</option>
+            <option value="ar">״§„״¹״±״¨״©</option>
             <option value="en">English</option>
-            <option value="he">עברית</option>
+            <option value="he">׳¢׳‘׳¨׳™׳×</option>
           </select>
         </div>
       </div>`;
@@ -160,7 +160,7 @@ function bindControls() {
   });
 }
 
-/* -------------------- العرض -------------------- */
+/* -------------------- ״§„״¹״±״¶ -------------------- */
 function ensureClickToPlay() {
   const nameEl = els.nameEl();
   const imgEl  = els.imgEl();
@@ -187,7 +187,7 @@ async function renderCurrentTool(lang = currentUILang) {
   const profEl = els.profList();
 
   if (!data) {
-    if (nameEl) nameEl.textContent = '—';
+    if (nameEl) nameEl.textContent = 'ג€”';
     if (imgEl)  { imgEl.alt = ''; imgEl.removeAttribute('src'); }
     if (descEl) descEl.textContent = '';
     if (profEl) profEl.textContent = '';
@@ -206,7 +206,7 @@ async function renderCurrentTool(lang = currentUILang) {
       const p  = nameMap.get(id);
       return p ? pickLocalized(p.name, lang) : x;
     });
-    profEl.textContent = pretty.join('، ');
+    profEl.textContent = pretty.join('״ ');
   }
 
   const img = toolImagePath(data);
@@ -218,7 +218,7 @@ async function renderCurrentTool(lang = currentUILang) {
   ensureClickToPlay();
 }
 
-/* -------------------- الصوت/التبديل -------------------- */
+/* -------------------- ״§„״µˆ״×/״§„״×״¨״¯„ -------------------- */
 function playCurrentToolAudio() {
   if (!currentToolData) return;
   stopCurrentAudio?.();
@@ -236,7 +236,7 @@ function toggleProfessions() {
   el.style.display = hidden ? 'block' : 'none';
 }
 
-/* -------------------- تنقّل -------------------- */
+/* -------------------- ״×†‚‘„ -------------------- */
 function showNextTool() {
   if (!tools.length) return;
   currentIndex = (currentIndex + 1) % tools.length;
@@ -250,14 +250,14 @@ function showPreviousTool() {
   recordActivity?.('tools_prev', { id: currentToolData?.id, index: currentIndex });
 }
 
-/* -------------------- البيانات -------------------- */
+/* -------------------- ״§„״¨״§†״§״× -------------------- */
 async function fetchToolsData() {
   const arr = await fetchSubjectItems('tools', { strict: true });
-  console.log('[tools] ✅ source: items | count =', arr?.length || 0);
+  if (import.meta.env.DEV) if (import.meta.env.DEV) console.log('[tools] ג… source: items | count =', arr?.length || 0);
   return arr || [];
 }
 
-/* -------------------- تغيير اللغة -------------------- */
+/* -------------------- ״×״÷״± ״§„„״÷״© -------------------- */
 async function onLanguageChanged(newLang) {
   try {
     stopCurrentAudio?.();
@@ -273,7 +273,7 @@ async function onLanguageChanged(newLang) {
   } catch (err) { console.warn('[tools] change language failed', err); }
 }
 
-/* -------------------- التهيئة -------------------- */
+/* -------------------- ״§„״×‡״¦״© -------------------- */
 export async function loadToolsGameContent() {
   try {
     const resp = await fetch('/html/tools.html', { cache: 'no-store' });
@@ -281,7 +281,7 @@ export async function loadToolsGameContent() {
       const html = await resp.text();
       const main = els.main();
       if (main) main.innerHTML = html;
-      console.log('[tools] ✔ تم تحميل الصفحة: /html/tools.html');
+      if (import.meta.env.DEV) if (import.meta.env.DEV) console.log('[tools] ג” ״×… ״×״­…„ ״§„״µ״­״©: /html/tools.html');
     }
   } catch (e) { console.warn('[tools] failed to fetch tools.html', e); }
 
@@ -314,3 +314,5 @@ export async function loadToolsGameContent() {
 }
 function _appLang(e){ const L = e?.detail?.lang; if (L) onLanguageChanged(L); }
 function _storageLang(e){ if (e.key === 'lang' && e.newValue) onLanguageChanged(e.newValue); }
+
+

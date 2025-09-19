@@ -1,4 +1,4 @@
-// src/subjects/professions-game.js
+﻿// src/subjects/professions-game.js
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
 import { playItemSound, stopCurrentAudio, setVoiceShape, setLanguage } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
@@ -57,7 +57,7 @@ async function updateUI() {
   if (!professions.length) {
     const nameEl = $('profession-word');
     const imgEl  = $('profession-image');
-    if (nameEl) nameEl.textContent = '—';
+    if (nameEl) nameEl.textContent = 'ג€”';
     if (imgEl) { imgEl.removeAttribute('src'); imgEl.alt = ''; }
     const descEl = $('profession-description'); if (descEl) descEl.textContent = '';
     const detSec = $('profession-details-section'); if (detSec) detSec.innerHTML = '';
@@ -87,7 +87,7 @@ async function updateUI() {
   }
 
   const descEl = $('profession-description');
-  if (descEl) descEl.textContent = pickLocalized(currentItem?.description, lang) || '—';
+  if (descEl) descEl.textContent = pickLocalized(currentItem?.description, lang) || 'ג€”';
 
   const detSec = $('profession-details-section');
   if (detSec) {
@@ -96,7 +96,7 @@ async function updateUI() {
     detSec.innerHTML = `
       <ul class="details-list">
         <li><strong>Category:</strong> ${category}</li>
-        <li><strong>الحرف الأول:</strong> ${letter}</li>
+        <li><strong>״§„״­״± ״§„״£ˆ„:</strong> ${letter}</li>
       </ul>
     `;
   }
@@ -105,7 +105,7 @@ async function updateUI() {
   if (toolsSec) {
     const related = await getRelatedTools(currentItem);
     if (!related.length) {
-      toolsSec.innerHTML = `<div class="empty">—</div>`;
+      toolsSec.innerHTML = `<div class="empty">ג€”</div>`;
     } else {
       const langNow = getEffectiveLang();
       toolsSec.innerHTML = `
@@ -124,7 +124,7 @@ async function updateUI() {
   stopCurrentAudio();
 }
 
-// تنقّل/صوت
+// ״×†‚‘„/״µˆ״×
 export function showNextProfession() {
   if (!professions.length) return;
   if (currentIndex < professions.length - 1) currentIndex++;
@@ -144,14 +144,14 @@ export async function playCurrentProfessionAudio() {
   await Promise.resolve(playItemSound({ type: 'professions', key }));
 }
 
-// جلب البيانات
+// ״¬„״¨ ״§„״¨״§†״§״×
 async function fetchProfessionsData() {
   const arr = await fetchSubjectItems('professions', { strict:true });
-  console.log('[professions] ✅ source: items | count =', arr?.length || 0);
+  if (import.meta.env.DEV) if (import.meta.env.DEV) console.log('[professions] ג… source: items | count =', arr?.length || 0);
   return arr || [];
 }
 
-// ربط عناصر التحكم
+// ״±״¨״· ״¹†״§״µ״± ״§„״×״­ƒ…
 function bindControls() {
   const prevBtn  = $('prev-profession-btn');
   const nextBtn  = $('next-profession-btn');
@@ -185,7 +185,7 @@ function bindControls() {
   if (toggleTools)   toggleTools.onclick   = () => toggleDisplay('profession-tools-section');
 }
 
-// نقطة الدخول
+// †‚״·״© ״§„״¯״®ˆ„
 export async function loadProfessionsGameContent() {
   ['prev-profession-btn','next-profession-btn'].forEach(id => { const b = $(id); if (b) b.disabled = true; });
 
@@ -195,7 +195,7 @@ export async function loadProfessionsGameContent() {
   if (!professions.length) {
     const nameEl = $('profession-word');
     const imgEl  = $('profession-image');
-    if (nameEl) nameEl.textContent = 'لا توجد بيانات';
+    if (nameEl) nameEl.textContent = '„״§ ״×ˆ״¬״¯ ״¨״§†״§״×';
     if (imgEl)  imgEl.src = '/images/default.png';
     return;
   }
@@ -214,3 +214,5 @@ export async function loadProfessionsGameContent() {
     window.playCurrentProfessionAudio = playCurrentProfessionAudio;
   }
 }
+
+

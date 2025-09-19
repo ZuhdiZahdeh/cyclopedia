@@ -1,4 +1,4 @@
-// src/subjects/subject-game-factory.js
+﻿// src/subjects/subject-game-factory.js
 import { db } from '../js/firebase-config.js';
 import { collection, getDocs } from 'firebase/firestore';
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
@@ -48,15 +48,15 @@ const normalizeLang = (v)=>{
 };
 const normalizeVoice = (v)=>{
   v = String(v||'').toLowerCase();
-  if (v.includes('boy')     || v.includes('ولد'))    return 'boy';
-  if (v.includes('girl')    || v.includes('بنت'))    return 'girl';
-  if (v.includes('teacher') || v.includes('معلم') || v.includes('معلمة')) return 'teacher';
+  if (v.includes('boy')     || v.includes('ˆ„״¯'))    return 'boy';
+  if (v.includes('girl')    || v.includes('״¨†״×'))    return 'girl';
+  if (v.includes('teacher') || v.includes('…״¹„…') || v.includes('…״¹„…״©')) return 'teacher';
   return 'boy';
 };
 const slug = (s)=> safeText(s).trim().toLowerCase().replace(/\s+/g,'_').replace(/[^\w\-]+/g,'');
 
 export function makeSubjectGame(cfg) {
-  // --- حالة ---
+  // --- ״­״§„״© ---
   let items = [];
   let currentIndex = 0;
   let currentItem = null;
@@ -65,7 +65,7 @@ export function makeSubjectGame(cfg) {
   const logP = (...a)=>console.log(`[${cfg.key}]`, ...a);
   const warnP= (...a)=>console.warn(`[${cfg.key}]`, ...a);
 
-  // --- جلب البيانات ---
+  // --- ״¬„״¨ ״§„״¨״§†״§״× ---
   async function tryFetch(pathSegments) {
     const snap = await getDocs(collection(db, ...pathSegments));
     const buff = [];
@@ -90,7 +90,7 @@ export function makeSubjectGame(cfg) {
     items = list;
   }
 
-  // --- قراءات آمنة ---
+  // --- ‚״±״§״¡״§״× ״¢…†״© ---
   const nameFor = (d, lang) =>
     d?.name?.[lang] ?? d?.name?.ar ?? d?.name?.en ?? d?.name?.he ?? d?.title ?? d?.word ?? '';
 
@@ -187,7 +187,7 @@ export function makeSubjectGame(cfg) {
     btn.type = 'button';
     btn.className = 'btn ghost';
     btn.setAttribute('data-i18n', 'description');
-    btn.textContent = 'الوصف';
+    btn.textContent = '״§„ˆ״µ';
     row.appendChild(btn);
 
     const afterListen = grid.querySelector(cfg.controls.play.map(id=>`#${id}`).join(','))?.closest('.row');
@@ -200,7 +200,7 @@ export function makeSubjectGame(cfg) {
     return btn;
   }
 
-  // --- تحديث الواجهة ---
+  // --- ״×״­״¯״« ״§„ˆ״§״¬‡״© ---
   function updateContent() {
     const lang = gameLang;
     const d = items[currentIndex];
@@ -212,15 +212,15 @@ export function makeSubjectGame(cfg) {
     setImage(imgEl, imageFor(d), nameFor(d, lang));
 
     const catEl = pick(...cfg.selectors.category);
-    if (catEl) catEl.textContent = categoryFor(d, lang) || '—';
+    if (catEl) catEl.textContent = categoryFor(d, lang) || 'ג€”';
 
     const descEl = pick(...cfg.selectors.description);
-    if (descEl) descEl.textContent = descriptionFor(d, lang) || '—';
+    if (descEl) descEl.textContent = descriptionFor(d, lang) || 'ג€”';
 
     logP('update', { index: currentIndex, id: d?.id, name: nameFor(d, lang) });
   }
 
-  // --- صوت ---
+  // --- ״µˆ״× ---
   function playCurrentAudio() {
     if (!currentItem) return;
     const langSel = grab(cfg.controls.lang);
@@ -237,7 +237,7 @@ export function makeSubjectGame(cfg) {
     }
   }
 
-  // --- ربط الأحداث ---
+  // --- ״±״¨״· ״§„״£״­״¯״§״« ---
   function bindControls() {
     const prevBtn  = grab(cfg.controls.prev);
     const nextBtn  = grab(cfg.controls.next);
@@ -288,7 +288,7 @@ export function makeSubjectGame(cfg) {
     [wordEl, imgEl].forEach(el => { if (el) el.style.cursor = 'pointer'; if (el) el.onclick = () => playCurrentAudio(); });
   }
 
-  // --- تحميل ---
+  // --- ״×״­…„ ---
   async function loadContent() {
     logP('loadContent()');
     if (!document.querySelector(cfg.container)) { warnP('container not found:', cfg.container); return; }
@@ -305,7 +305,7 @@ export function makeSubjectGame(cfg) {
     updateContent();
   }
 
-  // للتشخيص
+  // „„״×״´״®״µ
   if (typeof window !== 'undefined') {
     window[`_${cfg.key}`] = () => ({ items, currentIndex, currentItem, gameLang });
     window[`playCurrent${cfg.key[0].toUpperCase()+cfg.key.slice(1)}Audio`] = () => playCurrentAudio();
@@ -313,3 +313,5 @@ export function makeSubjectGame(cfg) {
 
   return { loadContent };
 }
+
+

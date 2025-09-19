@@ -1,9 +1,9 @@
-// src/core/items-repo.js
+﻿// src/core/items-repo.js
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../js/firebase-config.js';
 import { getImagePath, getImageAlt, pickLocalized } from './media-utils.js';
 
-/** مرادفات لكل موضوع لتحسين المطابقة */
+/** …״±״§״¯״§״× „ƒ„ …ˆ״¶ˆ״¹ „״×״­״³† ״§„…״·״§״¨‚״© */
 function subjectSynonyms(key) {
   const k = String(key || '').toLowerCase();
   const map = {
@@ -20,7 +20,7 @@ function subjectSynonyms(key) {
   return map[k] || [k];
 }
 
-/** نحاول where على عدة حقول داخل items */
+/** †״­״§ˆ„ where ״¹„‰ ״¹״¯״© ״­‚ˆ„ ״¯״§״®„ items */
 async function tryQueries(colRef, key) {
   const fields = ['subject', 'subjectType', 'category.slug', 'key'];
   const values = subjectSynonyms(key);
@@ -30,18 +30,18 @@ async function tryQueries(colRef, key) {
         const q = query(colRef, where(f, '==', v));
         const snap = await getDocs(q);
         if (!snap.empty) {
-          console.log(`[items-repo] ✅ items via ${f}=="${v}" → count=${snap.size}`);
+          if (import.meta.env.DEV) if (import.meta.env.DEV) console.log(`[items-repo] ג… items via ${f}=="${v}" ג†’ count=${snap.size}`);
           return snap.docs.map(d => ({ id: d.id, ...d.data() }));
         }
       } catch {
-        // قد يتطلب فهرس؛ نكمل بالمحاولات الأخرى
+        // ‚״¯ ״×״·„״¨ ‡״±״³״› †ƒ…„ ״¨״§„…״­״§ˆ„״§״× ״§„״£״®״±‰
       }
     }
   }
   return null;
 }
 
-/** فلترة احتياطية — داخل items فقط — حسب مسارات الصور */
+/** „״×״±״© ״§״­״×״§״·״© ג€” ״¯״§״®„ items ‚״· ג€” ״­״³״¨ …״³״§״±״§״× ״§„״µˆ״± */
 function filterByPathHeuristic(all, key) {
   const needles = subjectSynonyms(key).map(v => `/${v}/`);
   const out = all.filter(item => {
@@ -55,34 +55,34 @@ function filterByPathHeuristic(all, key) {
     const p = String(item?.image_path || '');
     return needles.some(n => p.includes(n));
   });
-  console.log(`[items-repo] ℹ️ items via path-heuristic("${key}") → count=${out.length}`);
+  if (import.meta.env.DEV) if (import.meta.env.DEV) console.log(`[items-repo] ג„¹ן¸ items via path-heuristic("${key}") ג†’ count=${out.length}`);
   return out;
 }
 
 /**
- * يجلب عناصر موضوع من مجموعة items فقط.
- * strict=true: إن لم توجد مطابقات، يُعيد [] بدل كل العناصر (لمنع ظهور عناصر خاطئة).
+ * ״¬„״¨ ״¹†״§״µ״± …ˆ״¶ˆ״¹ …† …״¬…ˆ״¹״© items ‚״·.
+ * strict=true: ״¥† „… ״×ˆ״¬״¯ …״·״§״¨‚״§״×״ ״¹״¯ [] ״¨״¯„ ƒ„ ״§„״¹†״§״µ״± („…†״¹ ״¸‡ˆ״± ״¹†״§״µ״± ״®״§״·״¦״©).
  */
 export async function fetchSubjectItems(subjectKey, { strict = true } = {}) {
   const col = collection(db, 'items');
 
-  // محاولة استعلامات مباشرة
+  // …״­״§ˆ„״© ״§״³״×״¹„״§…״§״× …״¨״§״´״±״©
   const hit = await tryQueries(col, subjectKey);
   if (hit && hit.length) return hit;
 
-  // اجلب الكل ثم جرّب فِلترة المسار
+  // ״§״¬„״¨ ״§„ƒ„ ״«… ״¬״±‘״¨ „״×״±״© ״§„…״³״§״±
   const snapAll = await getDocs(col);
   const all = snapAll.docs.map(d => ({ id: d.id, ...d.data() }));
-  console.log(`[items-repo] ℹ️ items(all) fetched → total=${all.length}`);
+  if (import.meta.env.DEV) if (import.meta.env.DEV) console.log(`[items-repo] ג„¹ן¸ items(all) fetched ג†’ total=${all.length}`);
 
   const filtered = filterByPathHeuristic(all, subjectKey);
   if (filtered.length) return filtered;
 
-  console.warn(`[items-repo] ⚠️ no matches for subject="${subjectKey}"`);
-  return strict ? [] : all;  // ← هذا يمنع سقوط الصفحة على عناصر غير صحيحة
+  console.warn(`[items-repo] ג ן¸ no matches for subject="${subjectKey}"`);
+  return strict ? [] : all;  // ג† ‡״°״§ …†״¹ ״³‚ˆ״· ״§„״µ״­״© ״¹„‰ ״¹†״§״µ״± ״÷״± ״µ״­״­״©
 }
 
-/** تطبيع العنصر لواجهة العرض */
+/** ״×״·״¨״¹ ״§„״¹†״µ״± „ˆ״§״¬‡״© ״§„״¹״±״¶ */
 export function normalizeItemForView(raw, lang = 'ar') {
   const name = pickLocalized(raw?.name, lang);
   const description = pickLocalized(raw?.description, lang);
@@ -91,3 +91,5 @@ export function normalizeItemForView(raw, lang = 'ar') {
 
   return { id: raw.id, name, description, imagePath, imageAlt, _raw: raw };
 }
+
+

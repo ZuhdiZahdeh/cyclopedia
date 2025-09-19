@@ -1,26 +1,26 @@
-// src/activities/alphabet-activity.js
-// نشاط الحروف — النسخة النهائية الموحّدة (Clean + Fix)
-// - لا auto-boot: يستدعى فقط من main.js عبر loadAlphabetActivityContent()
-// - حارس تهيئة + منع الازدواجية
-// - جلب واحد ثم refilter بلا refetch عند تغيير اللغة/الحرف
-// - افتراضياً subjects=['animal'] لتسريع البداية (قابل للتعديل من الواجهة)
-// - تشغيل الصوت عند الضغط على الاسم/الصورة مع بدائل تلقائية للمسار
+﻿// src/activities/alphabet-activity.js
+// †״´״§״· ״§„״­״±ˆ ג€” ״§„†״³״®״© ״§„†‡״§״¦״© ״§„…ˆ״­‘״¯״© (Clean + Fix)
+// - „״§ auto-boot: ״³״×״¯״¹‰ ‚״· …† main.js ״¹״¨״± loadAlphabetActivityContent()
+// - ״­״§״±״³ ״×‡״¦״© + …†״¹ ״§„״§״²״¯ˆ״§״¬״©
+// - ״¬„״¨ ˆ״§״­״¯ ״«… refilter ״¨„״§ refetch ״¹†״¯ ״×״÷״± ״§„„״÷״©/״§„״­״±
+// - ״§״×״±״§״¶״§‹ subjects=['animal'] „״×״³״±״¹ ״§„״¨״¯״§״© (‚״§״¨„ „„״×״¹״¯„ …† ״§„ˆ״§״¬‡״©)
+// - ״×״´״÷„ ״§„״µˆ״× ״¹†״¯ ״§„״¶״÷״· ״¹„‰ ״§„״§״³…/״§„״µˆ״±״© …״¹ ״¨״¯״§״¦„ ״×„‚״§״¦״© „„…״³״§״±
 
 import { db } from '@/core/db-handler.js';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { playAudio, stopCurrentAudio } from '@/core/audio-handler.js';
 
 /* ===================== DEBUG ===================== */
-const AA_DBG = false; // ← يمكن جعله true مؤقتًا للتشخيص
-const dbg  = (...a)=>{ if(AA_DBG) console.log('[AA]', ...a); };
+const AA_DBG = false; // ג† …ƒ† ״¬״¹„‡ true …״₪‚״×‹״§ „„״×״´״®״µ
+const dbg  = (...a)=>{ if(AA_DBG) if (import.meta.env.DEV) if (import.meta.env.DEV) console.log('[AA]', ...a); };
 const dbgt = (title, rows)=>{ if(AA_DBG && console.table){ console.groupCollapsed('[AA] '+title); console.table(rows); console.groupEnd(); } };
 /* ================================================= */
 
 const LANGS = ['ar','en','he'];
 const ALPHABET = {
-  ar: ['أ','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ي'],
+  ar: ['״£','״¨','״×','״«','״¬','״­','״®','״¯','״°','״±','״²','״³','״´','״µ','״¶','״·','״¸','״¹','״÷','','‚','ƒ','„','…','†','‡','ˆ',''],
   en: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
-  he: ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','כ','ך','ל','מ','ם','נ','ן','ס','ע','פ','ף','צ','ץ','ק','ר','ש','ת'],
+  he: ['׳','׳‘','׳’','׳“','׳”','׳•','׳–','׳—','׳˜','׳™','׳›','׳','׳','׳','׳','׳ ','׳','׳¡','׳¢','׳₪','׳£','׳¦','׳¥','׳§','׳¨','׳©','׳×'],
 };
 
 const SUBJECTS = ['animal','fruit','vegetable','tool','profession','human_body'];
@@ -32,7 +32,7 @@ const DEFAULT_HINTS = {
   audioBases: ['/audio','/media/audio','/sounds'],
   imageExts:  ['webp','jpg','jpeg','png'],
   audioExts:  ['mp3','ogg','wav'],
-  placeholderSVG: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="360"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" fill="#9ca3af" font-size="22">لا توجد صورة</text></svg>'),
+  placeholderSVG: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="360"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" fill="#9ca3af" font-size="22">„״§ ״×ˆ״¬״¯ ״µˆ״±״©</text></svg>'),
 };
 const HINTS = (typeof window!=='undefined' && window.ASSET_HINTS) ? { ...DEFAULT_HINTS, ...window.ASSET_HINTS } : DEFAULT_HINTS;
 
@@ -42,8 +42,8 @@ const VOICE_KEY = 'aa.voice';
 
 const state = {
   lang:'ar',
-  letter:'أ',
-  subjects:['animal'], // ← يبدأ بمجموعة واحدة لتسريع البداية
+  letter:'״£',
+  subjects:['animal'], // ג† ״¨״¯״£ ״¨…״¬…ˆ״¹״© ˆ״§״­״¯״© „״×״³״±״¹ ״§„״¨״¯״§״©
   items:[],
   filtered:[],
   index:0,
@@ -86,9 +86,9 @@ function computeFirstLetter(word, lang){
   if (!word) return '';
   let w = String(word).trim();
   if (!w) return '';
-  if (lang === 'ar'){ w = w.replace(/^ال/, ''); const ch = w[0]; const map = {'إ':'أ','آ':'أ','ا':'أ','ة':'ت'}; return map[ch] || ch; }
+  if (lang === 'ar'){ w = w.replace(/^״§„/, ''); const ch = w[0]; const map = {'״¥':'״£','״¢':'״£','״§':'״£','״©':'״×'}; return map[ch] || ch; }
   if (lang === 'en') return (w[0] || '').toUpperCase();
-  if (lang === 'he'){ const ch = w[0] || ''; const map = {'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}; return map[ch] || ch; }
+  if (lang === 'he'){ const ch = w[0] || ''; const map = {'׳':'׳›','׳':'׳','׳':'׳ ','׳£':'׳₪','׳¥':'׳¦'}; return map[ch] || ch; }
   return w[0] || '';
 }
 function subjectToDir(subject){ const s = SUBJECT_ALIASES[subject] || subject; return { animal:'animals', fruit:'fruits', vegetable:'vegetables', tool:'tools', profession:'professions', human_body:'body' }[s]; }
@@ -101,7 +101,7 @@ function sanitizeId(s){
   return t || 'item';
 }
 
-/* ===================== تنسيقات + إخفاء أزرار قديمة ===================== */
+/* ===================== ״×†״³‚״§״× + ״¥״®״§״¡ ״£״²״±״§״± ‚״¯…״© ===================== */
 function injectStyles(){
   if (document.getElementById('aa-style')) return;
   const style = document.createElement('style');
@@ -130,7 +130,7 @@ function injectStyles(){
   document.head.appendChild(style);
 }
 
-/* ===================== استخراج مسارات مرنة ===================== */
+/* ===================== ״§״³״×״®״±״§״¬ …״³״§״±״§״× …״±†״© ===================== */
 function pickFromMediaNode(node){ if (!node) return ''; return prefixSlash(node.image_path || node.path || node.src || node.url || ''); }
 function extractImagePath(mediaImages){
   if (!mediaImages) return '';
@@ -164,7 +164,7 @@ function extractSoundPath(soundsLang){
 }
 function pickName(data, lang){ return data?.name?.[lang] || data?.name?.ar || data?.title?.[lang] || data?.title?.ar || ''; }
 function pickDescription(data, lang){ return data?.description?.[lang] || data?.description?.ar || ''; }
-function labelOf(subject){ return { animal:'الحيوانات', fruit:'الفواكه', vegetable:'الخضروات', tool:'الأدوات', profession:'المهن', human_body:'جسم الإنسان' }[subject] || subject; }
+function labelOf(subject){ return { animal:'״§„״­ˆ״§†״§״×', fruit:'״§„ˆ״§ƒ‡', vegetable:'״§„״®״¶״±ˆ״§״×', tool:'״§„״£״¯ˆ״§״×', profession:'״§„…‡†', human_body:'״¬״³… ״§„״¥†״³״§†' }[subject] || subject; }
 
 function pickImageDirect(data){
   const m = extractImagePath(data?.media?.images);
@@ -181,9 +181,9 @@ function pickImageDirect(data){
 
 function voiceLabel(v, lang){
   const map = {
-    ar: {boy:'ولد', girl:'بنت', teacher:'معلّم'},
+    ar: {boy:'ˆ„״¯', girl:'״¨†״×', teacher:'…״¹„‘…'},
     en: {boy:'Boy', girl:'Girl', teacher:'Teacher'},
-    he: {boy:'ילד', girl:'ילדה', teacher:'מורה'},
+    he: {boy:'׳™׳׳“', girl:'׳™׳׳“׳”', teacher:'׳׳•׳¨׳”'},
   };
   return (map[lang]||map.ar)[v] || v;
 }
@@ -283,7 +283,7 @@ async function fetchItemsBySubjects(subjects){
   return all;
 }
 
-/* ===================== فلترة/عرض ===================== */
+/* ===================== „״×״±״©/״¹״±״¶ ===================== */
 function filterByLetter(items, letter, lang){
   const L = String(letter || '').trim();
   const filtered = items.filter(it => computeFirstLetter(it.name[lang], lang) === L);
@@ -319,23 +319,23 @@ function ensureSidebar(){
   }
   ELS.sidebar.innerHTML = `
     <div class="sidebar-section">
-      <h3 class="sidebar-title">اللغة</h3>
+      <h3 class="sidebar-title">״§„„״÷״©</h3>
       <select id="aa-lang" class="select">
-        <option value="ar">العربية</option>
+        <option value="ar">״§„״¹״±״¨״©</option>
         <option value="en">English</option>
-        <option value="he">עברית</option>
+        <option value="he">׳¢׳‘׳¨׳™׳×</option>
       </select>
     </div>
     <div class="sidebar-section">
-      <h3 class="sidebar-title">نوع الصوت</h3>
+      <h3 class="sidebar-title">†ˆ״¹ ״§„״µˆ״×</h3>
       <div id="aa-voice" class="voice-filter" style="display:flex;gap:8px;flex-wrap:wrap"></div>
     </div>
     <div class="sidebar-section">
-      <h3 class="sidebar-title">الحروف</h3>
+      <h3 class="sidebar-title">״§„״­״±ˆ</h3>
       <div id="aa-letters" class="letters-grid" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px"></div>
     </div>
     <div class="sidebar-section">
-      <h3 class="sidebar-title">المواضيع</h3>
+      <h3 class="sidebar-title">״§„…ˆ״§״¶״¹</h3>
       <div id="aa-subjects" class="subjects-filter" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px"></div>
     </div>
   `;
@@ -384,7 +384,7 @@ function buildLetters(){
     btn.textContent = ch;
     btn.style.padding = '10px 0';
     btn.addEventListener('click', ()=>{
-      // الضغط على نفس الحرف مرّة ثانية ⇒ التالي ضمن نفس الحرف
+      // ״§„״¶״÷״· ״¹„‰ †״³ ״§„״­״± …״±‘״© ״«״§†״© ג‡’ ״§„״×״§„ ״¶…† †״³ ״§„״­״±
       if (state.letter === ch){
         if (state.filtered.length){
           state.index = (state.index + 1) % state.filtered.length;
@@ -393,7 +393,7 @@ function buildLetters(){
         }
         return;
       }
-      // تغيير الحرف: فلترة من الكاش فقط
+      // ״×״÷״± ״§„״­״±: „״×״±״© …† ״§„ƒ״§״´ ‚״·
       state.letter = ch;
       dbg('letter:selected', { letter: ch, lang: state.lang });
       qsa('#aa-letters .letter-btn').forEach(b => b.classList.remove('active'));
@@ -422,12 +422,12 @@ function buildSubjectsFilter(){
       if (chk.checked && !state.subjects.includes(val)) state.subjects.push(val);
       if (!chk.checked) state.subjects = state.subjects.filter(v => v!==val);
       dbg('subjects:changed', { subjects: state.subjects.slice() });
-      await refetchAndRender(); // الجلب فقط عند تغيير المجموعات
+      await refetchAndRender(); // ״§„״¬„״¨ ‚״· ״¹†״¯ ״×״÷״± ״§„…״¬…ˆ״¹״§״×
     });
   });
 }
 
-/* ===================== تشغيل الصوت بالضغط ===================== */
+/* ===================== ״×״´״÷„ ״§„״µˆ״× ״¨״§„״¶״÷״· ===================== */
 async function playCurrent(){
   if (!state.filtered.length) return;
   const it = state.filtered[state.index];
@@ -442,12 +442,12 @@ function bindClickToPlay(){
   if (ELS.name && !ELS.name._aa_play){ ELS.name._aa_play = true; ELS.name.addEventListener('click', handler); }
 }
 
-/* ===================== العرض ===================== */
+/* ===================== ״§„״¹״±״¶ ===================== */
 function renderCurrent(){
   if (ELS.letterBar) ELS.letterBar.textContent = state.letter || '';
 
   if (!state.filtered.length){
-    if (ELS.name) ELS.name.innerHTML = `<span style="opacity:.8">(لا عناصر)</span>`;
+    if (ELS.name) ELS.name.innerHTML = `<span style="opacity:.8">(„״§ ״¹†״§״µ״±)</span>`;
     if (ELS.img){ ELS.img.src = HINTS.placeholderSVG; ELS.img.removeAttribute('data-aa-id'); }
     if (ELS.desc) ELS.desc.style.display = 'none';
     if (ELS.count) ELS.count.textContent = '0';
@@ -488,7 +488,7 @@ function renderCurrent(){
 }
 function toggleNavButtons(enabled){ [ELS.btnPrev, ELS.btnNext, ELS.btnToggleDesc].forEach(b => { if (b) b.disabled = !enabled; }); }
 
-/* ===================== إعادة الجلب/الفلترة ===================== */
+/* ===================== ״¥״¹״§״¯״© ״§„״¬„״¨/״§„„״×״±״© ===================== */
 async function refetchAndRender(){
   stopCurrentAudio?.();
   const nowSubjects = state.subjects && state.subjects.length ? state.subjects : ['animal'];
@@ -504,7 +504,7 @@ function refilterAndRender(){
   state.index = 0; renderCurrent();
 }
 
-/* ===================== الأزرار ===================== */
+/* ===================== ״§„״£״²״±״§״± ===================== */
 function bindMainActions(){
   if (ELS.btnPrev && !ELS.btnPrev._aa_bound){
     ELS.btnPrev._aa_bound = true;
@@ -534,7 +534,7 @@ function bindMainActions(){
   }
 }
 
-/* ===================== مراقبة تغيّر اللغة العالمية ===================== */
+/* ===================== …״±״§‚״¨״© ״×״÷‘״± ״§„„״÷״© ״§„״¹״§„…״© ===================== */
 let langObserver = null;
 function observeGlobalLang(){
   if (langObserver) return;
@@ -551,7 +551,7 @@ function observeGlobalLang(){
 
 /* ===================== Init Guard + API ===================== */
 export async function loadAlphabetActivity(){
-  // حارس لمنع التهيئة المزدوجة
+  // ״­״§״±״³ „…†״¹ ״§„״×‡״¦״© ״§„…״²״¯ˆ״¬״©
   if (window.__AA_INIT__){ dbg('init:skipped (already initialized)'); return; }
   window.__AA_INIT__ = true;
 
@@ -561,11 +561,13 @@ export async function loadAlphabetActivity(){
     bindDom(); ensureSidebar(); bindMainActions(); observeGlobalLang();
 
     await refetchAndRender();
-    dbg('✅ ready', { lang: state.lang, letter: state.letter, subjects: state.subjects, voice: state.voice });
+    dbg('ג… ready', { lang: state.lang, letter: state.letter, subjects: state.subjects, voice: state.voice });
   }catch(err){
     console.error('[alphabet-activity] failed to init', err);
-    if (ELS.name) ELS.name.textContent = 'حدث خطأ أثناء التحميل';
+    if (ELS.name) ELS.name.textContent = '״­״¯״« ״®״·״£ ״£״«†״§״¡ ״§„״×״­…„';
   }
 }
 export const loadAlphabetActivityContent = loadAlphabetActivity;
-// (لا يوجد Auto-Boot هنا)
+// („״§ ˆ״¬״¯ Auto-Boot ‡†״§)
+
+
