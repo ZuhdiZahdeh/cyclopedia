@@ -2,8 +2,8 @@ name: build_and_deploy
 
 on:
   push:
-    branches: [ "main" ]     # انشر تلقائياً عند الدفع إلى main
-  workflow_dispatch:         # تشغيل يدوي عند الحاجة
+    branches: [ "main" ]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,7 +19,6 @@ jobs:
       CI: true
 
     steps:
-      # 1) جلب الكود + ملفات LFS (للصوت/الصور الكبيرة)
       - name: Checkout (with LFS)
         uses: actions/checkout@v4
         with:
@@ -30,34 +29,28 @@ jobs:
           git lfs fetch --all
           git lfs checkout
 
-      # 2) Node + كاش npm
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "22"       # ✅ Firebase CLI v14.x يتطلب >=20 || >=22
           cache: "npm"
 
-      # 3) تثبيت الحزم
       - name: Install dependencies
         run: npm ci
 
-      # 4) بناء Vite إلى dist/
       - name: Build (Vite)
         run: npm run build
 
-      # 5) فحص سريع أن المخرجات و firebase.json موجودان
       - name: Sanity check assets
         run: |
           test -f firebase.json && echo "firebase.json found ✅" || (echo "firebase.json missing ❌"; exit 1)
           ls -la dist | head -n 50
 
-      # 6) النشر إلى Firebase Hosting
-      # يعتمد على FIREBASE_TOKEN كـ Repository secret
+      # إذا كنت تستخدم FIREBASE_TOKEN
       - name: Deploy to Firebase Hosting
         run: npx --yes firebase-tools@latest deploy --only hosting --project cyclopedia-edu --non-interactive --token "${{ secrets.FIREBASE_TOKEN }}"
 
-      # ===== بديل مستقبلي: استخدام Service Account بدل التوكن (اختياري) =====
-      # فعّل الخطوتين أدناه وأزل --token من سطر النشر أعلاه، بعد إضافة السر GCP_SA_KEY (محتوى JSON)
+      # === بديل موصى به: Service Account بدل التوكن ===
       # - name: Auth with GCP Service Account
       #   run: |
       #     echo '${{ secrets.GCP_SA_KEY }}' > $HOME/gcloud.json
