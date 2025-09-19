@@ -528,14 +528,33 @@ function hasCats(item, lang){
 }
 async function getMasterCategories(lang){
   try{
-    const cfg = await getDoc(doc(db,"config","classification_categories"));
-    if (cfg.exists()){
-      const list = cfg.data()?.[lang] || cfg.data()?.ar;
-      if (Array.isArray(list) && list.length) return uniq(list);
+    const cfgSnap = await getDoc(doc(db,"config","classification_categories"));
+    if (cfgSnap.exists()){
+      const data = cfgSnap.data() || {};
+
+      // دعم شكلين: byLocale.{lang} أو {lang} مباشرة
+      let list =
+        data?.byLocale?.[lang] ??
+        data?.byLocale?.ar ??
+        data?.[lang] ??
+        data?.ar ??
+        [];
+
+      // تنظيف: إزالة undefined / null / فراغات وتحويل القيم لنصوص
+      if (!Array.isArray(list)) list = [];
+      list = list
+        .map(v => (typeof v === "string" ? v.trim() : (v && String(v).trim())))
+        .filter(v => v && v.length > 0);
+
+      if (list.length) return uniq(list);
     }
-  }catch{}
-  return uniq(FALLBACK_CATS[lang] || FALLBACK_CATS.ar);
+  } catch {}
+
+  // قائمة احتياطية مؤكدة
+  const fallback = (FALLBACK_CATS[lang] || FALLBACK_CATS.ar || []).filter(Boolean);
+  return uniq(fallback);
 }
+
 function pickItemImage(item){
   const images = item?.media?.images;
   if (Array.isArray(images) && images.length){
