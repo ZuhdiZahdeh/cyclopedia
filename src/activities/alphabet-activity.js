@@ -1,5 +1,5 @@
 ﻿// src/activities/alphabet-activity.js
-// †״´״§״· ״§„״­״±ˆ ג€” ״§„†״³״®״© ״§„†‡״§״¦״© ״§„…ˆ״­‘״¯״© (Clean + Fix)
+// †״´״§״· ״§„״­״±ˆ — ״§„†״³״®״© ״§„†‡״§״¦״© ״§„…ˆ״­‘״¯״© (Clean + Fix)
 // - „״§ auto-boot: ״³״×״¯״¹‰ ‚״· …† main.js ״¹״¨״± loadAlphabetActivityContent()
 // - ״­״§״±״³ ״×‡״¦״© + …†״¹ ״§„״§״²״¯ˆ״§״¬״©
 // - ״¬„״¨ ˆ״§״­״¯ ״«… refilter ״¨„״§ refetch ״¹†״¯ ״×״÷״± ״§„„״÷״©/״§„״­״±
@@ -564,7 +564,7 @@ export async function loadAlphabetActivity(){
     dbg('ג… ready', { lang: state.lang, letter: state.letter, subjects: state.subjects, voice: state.voice });
   }catch(err){
     console.error('[alphabet-activity] failed to init', err);
-    if (ELS.name) ELS.name.textContent = '״­״¯״« ״®״·״£ ״£״«†״§״¡ ״§„״×״­…„';
+    if (ELS.name) ELS.name.textContent = 'حدث خطأ أثناء تحميل الصفحة';
   }
 }
 export const loadAlphabetActivityContent = loadAlphabetActivity;

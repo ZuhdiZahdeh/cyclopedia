@@ -1,5 +1,5 @@
 ﻿// =========================
-// main.js ג€” ״§„†״³״®״© ״§„…†‚״­״© (״®״§״± B: ״­‚† ״¯†״§…ƒ)
+// main.js — ״§„†״³״®״© ״§„…†‚״­״© (״®״§״± B: ״­‚† ״¯†״§…ƒ)
 // =========================
 
 // „״÷״© ״§„ˆ״§״¬‡״©
@@ -273,7 +273,7 @@ async function loadPage(htmlPath, moduleLoader, subjectType) {
   } catch (err) {
     console.error(`ג ״®״·״£  ״×״­…„ ״§„״µ״­״©: ${htmlPath}`, err);
     if (mainContent) {
-      mainContent.innerHTML = `<div class="error-box">״­״¯״« ״®״·״£ ״£״«†״§״¡ ״×״­…„ ״§„״µ״­״© ״§„…״·„ˆ״¨״©.</div>`;
+      mainContent.innerHTML = `<div class="error-box">تعذر تحميل المحتوى المطلوب.</div>`;
     }
   }
 }
@@ -287,8 +287,8 @@ window.showHomePage = () => {
   const main = document.getElementById('app-main') || document.querySelector('main.main-content');
   main.innerHTML = `
     <section id="welcome-message">
-      <h1>…״±״­״¨״§‹ ״¨ƒ  ״§„…ˆ״³ˆ״¹״© ״§„״×״§״¹„״© „„״£״·״§„</h1>
-      <p>״§״®״×״± …ˆ״¶ˆ״¹״§‹ …† ״§„‚״§״¦…״© „״¨״¯״¡ ״§„״×״¹„… ˆ״§„„״¹״¨.</p>
+      <h1 data-i18n="welcome_title"></h1>
+      <p data-i18n="welcome_tagline"></p>
     </section>
   `;
   hideAllControls();
@@ -306,7 +306,7 @@ window.loadHumanBodyPage      = () => loadPage("/html/human-body.html",     load
 window.loadProfessionsPage    = () => loadPage("/html/professions.html",    loadProfessionsGameContent,   "profession");
 window.loadToolsPage          = () => loadPage("/html/tools.html",          loadToolsGameContent,         "tools");
 
-// ג… ֲ«״£† ״¹״§״¦„״×״ֲ» ג€” ״­‚† HTML ״«… ״§״³״×״±״§״¯ ״¯†״§…ƒ „„…ˆ״¯ˆ„
+// ג… ֲ«״£† ״¹״§״¦„״×״ֲ» — ״­‚† HTML ״«… ״§״³״×״±״§״¯ ״¯†״§…ƒ „„…ˆ״¯ˆ„
 window.loadFamilyGroupsGamePage = () =>
   loadPage(
     "/html/family-groups-game.html",
@@ -329,7 +329,7 @@ window.loadFamilyGroupsGamePage = () =>
           console.error('[family-groups] load function missing');
         }
       } catch (e) {
-        // „ˆ ״­״µ„ 404/ƒ״§״´ ‚״¯… ג€” ״£״¹״¯ ״§„…״­״§ˆ„״© ״¨״×‡״´״± ״¨״³״· „ƒ״³״± ״§„ƒ״§״´
+        // „ˆ ״­״µ„ 404/ƒ״§״´ ‚״¯… — ״£״¹״¯ ״§„…״­״§ˆ„״© ״¨״×‡״´״± ״¨״³״· „ƒ״³״± ״§„ƒ״§״´
         console.warn('[family-groups] first dynamic import failed, retrying with cache-bustג€¦', e);
         const bust = Date.now();
         const modsBust = import.meta.glob('/src/subjects/*-game.js?v=*'); // †…״· …״¹ ״§״³״×״¹„״§…

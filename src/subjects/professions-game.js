@@ -57,7 +57,7 @@ async function updateUI() {
   if (!professions.length) {
     const nameEl = $('profession-word');
     const imgEl  = $('profession-image');
-    if (nameEl) nameEl.textContent = 'ג€”';
+    if (nameEl) nameEl.textContent = '—';
     if (imgEl) { imgEl.removeAttribute('src'); imgEl.alt = ''; }
     const descEl = $('profession-description'); if (descEl) descEl.textContent = '';
     const detSec = $('profession-details-section'); if (detSec) detSec.innerHTML = '';
@@ -87,7 +87,7 @@ async function updateUI() {
   }
 
   const descEl = $('profession-description');
-  if (descEl) descEl.textContent = pickLocalized(currentItem?.description, lang) || 'ג€”';
+  if (descEl) descEl.textContent = pickLocalized(currentItem?.description, lang) || '—';
 
   const detSec = $('profession-details-section');
   if (detSec) {
@@ -105,7 +105,7 @@ async function updateUI() {
   if (toolsSec) {
     const related = await getRelatedTools(currentItem);
     if (!related.length) {
-      toolsSec.innerHTML = `<div class="empty">ג€”</div>`;
+      toolsSec.innerHTML = `<div class="empty">—</div>`;
     } else {
       const langNow = getEffectiveLang();
       toolsSec.innerHTML = `
@@ -195,7 +195,7 @@ export async function loadProfessionsGameContent() {
   if (!professions.length) {
     const nameEl = $('profession-word');
     const imgEl  = $('profession-image');
-    if (nameEl) nameEl.textContent = '„״§ ״×ˆ״¬״¯ ״¨״§†״§״×';
+    if (nameEl) nameEl.textContent = '—';
     if (imgEl)  imgEl.src = '/images/default.png';
     return;
   }

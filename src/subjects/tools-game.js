@@ -1,5 +1,5 @@
 ﻿// src/subjects/tools-game.js
-// ״×״´״÷„ ״¨״§„״µˆ״±״©/״§„״§״³… ‚״· ג€” ״¨„״§ ״²״± ״§״³״×…״§״¹
+// ״×״´״÷„ ״¨״§„״µˆ״±״©/״§„״§״³… ‚״· — ״¨„״§ ״²״± ״§״³״×…״§״¹
 import { getCurrentLang, loadLanguage, applyTranslations, setDirection } from '../core/lang-handler.js';
 import { playItemSound, stopCurrentAudio, setVoiceShape, setLanguage } from '../core/audio-handler.js';
 import { recordActivity } from '../core/activity-handler.js';
@@ -57,7 +57,7 @@ const els = {
 function setHighlightedName(el, txt) {
   if (!el) return;
   const s = (txt || '').toString();
-  el.innerHTML = s ? `<span class="highlight-first-letter">${s.charAt(0)}</span>${s.slice(1)}` : 'ג€”';
+  el.innerHTML = s ? `<span class="highlight-first-letter">${s.charAt(0)}</span>${s.slice(1)}` : '—';
 }
 function toolName(t, lang){ return pickLocalized(t?.name, lang); }
 function toolDescription(t, lang){ return pickLocalized(t?.description, lang); }
@@ -187,7 +187,7 @@ async function renderCurrentTool(lang = currentUILang) {
   const profEl = els.profList();
 
   if (!data) {
-    if (nameEl) nameEl.textContent = 'ג€”';
+    if (nameEl) nameEl.textContent = '—';
     if (imgEl)  { imgEl.alt = ''; imgEl.removeAttribute('src'); }
     if (descEl) descEl.textContent = '';
     if (profEl) profEl.textContent = '';
