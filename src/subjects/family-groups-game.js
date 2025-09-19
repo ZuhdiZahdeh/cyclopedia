@@ -1,9 +1,5 @@
-// src/subjects/family-groups-game.js
-
 import { db } from "../js/firebase-config.js";
-import {
-  collection, doc, getDoc, getDocs, query, orderBy, limit, startAt
-} from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, orderBy, limit, startAt } from "firebase/firestore";
 import * as LangMod from "../core/lang-handler.js";
 import * as AudioMod from "../core/audio-handler.js";
 import * as Activity from "../core/activity-handler.js";
@@ -22,7 +18,7 @@ const SEL = {
   btnNew:     "#fg-new-round-btn",
   btnListen:  "#fg-listen-btn",
   sidebar:    "#family-groups-controls",
-  // legacy support (إن وُجد)
+  // legacy (إن وُجد)
   modeSel:    "#fg-display-mode",
   voiceSel:   "#fg-sound-variant",
   langSel:    "#fg-lang-select",
@@ -40,34 +36,6 @@ const FALLBACK_CATS = {
   he:["יונק","ציפור","זוחל","טורף","צמחוני","פרי","ירק","כלי","מקצוע","איבר"]
 };
 
-// ===== Debug Switch / أدوات فحص =====
-const FG_DEBUG =
-  new URLSearchParams(location.search).get("debug") === "1" ||
-  sessionStorage.getItem("FG_DEBUG") === "1";
-function dbg(...args){ if (FG_DEBUG) console.log("[FG]", ...args); }
-function dgbg(label){ if (FG_DEBUG) console.group(label); }
-function dgend(){ if (FG_DEBUG) console.groupEnd(); }
-
-window.FG = window.FG || {};
-window.FG.enableDebug  = () => { sessionStorage.setItem("FG_DEBUG","1"); location.reload(); };
-window.FG.disableDebug = () => { sessionStorage.removeItem("FG_DEBUG"); location.reload(); };
-window.FG.dump = () => {
-  console.group("[FG] dump");
-  console.log("lang:", state.lang);
-  console.log("itemId:", state.item?.id);
-  console.log("itemName:", state.item?.name?.[state.lang] || state.item?.name?.ar);
-  console.log("itemCats:", state.item?.categories?.[state.lang] || state.item?.categories?.ar);
-  console.log("correctCategory:", state.correctCategory);
-  console.log("options:", state.options);
-  console.groupEnd();
-};
-window.FG.next = () => newRound(true);
-window.FG.master = async (lng=state.lang) => {
-  const m = await getMasterCategories(lng);
-  console.table(m.map(v=>({category:v})));
-  return m;
-};
-
 const state = {
   lang:"ar",
   item:null,
@@ -79,22 +47,11 @@ const state = {
   soundVariant:"boy"   // boy | girl | teacher | child
 };
 
-/* ====================== مؤثرات النجاح/الفشل (مسارات Windows → ويب) ===================== */
+/* ======= مؤثرات النجاح/الفشل ======= */
 const WIN_BASE_SUCCESS = "C:\\cyclopedia\\public\\audio\\success\\";
 const WIN_BASE_FAIL    = "C:\\cyclopedia\\public\\audio\\fail\\";
-
-const SUCCESS_FILES = [
-  "success_toolMatch_a.mp3",
-  "success_toolMatch_b.mp3",
-  "success_toolMatch_c.mp3",
-  "success_toolMatch_d.mp3",
-  "success_toolMatch_e.mp3",
-];
-const FAIL_FILES = [
-  "fail_toolMatch_a.mp3",
-  "fail_toolMatch_b.mp3",
-  "fail_toolMatch_c.mp3",
-];
+const SUCCESS_FILES = ["success_toolMatch_a.mp3","success_toolMatch_b.mp3","success_toolMatch_c.mp3","success_toolMatch_d.mp3","success_toolMatch_e.mp3"];
+const FAIL_FILES    = ["fail_toolMatch_a.mp3","fail_toolMatch_b.mp3","fail_toolMatch_c.mp3"];
 
 function normalizeAudioPath(winBase, fileName) {
   if (location.protocol.startsWith("http")) {
@@ -111,18 +68,13 @@ function playRandomFrom(winBase, files){
   if (!files?.length) return;
   const name = files[Math.floor(Math.random()*files.length)];
   const url  = normalizeAudioPath(winBase, name);
-  dbg("SFX:", url);
-  try {
-    if (AudioMod?.playUrl) AudioMod.playUrl(url);
-    else new Audio(url).play().catch(()=>{});
-  } catch {}
+  try { (AudioMod?.playUrl ? AudioMod.playUrl(url) : new Audio(url).play().catch(()=>{})); } catch {}
 }
 function playCorrect(){ playRandomFrom(WIN_BASE_SUCCESS, SUCCESS_FILES); }
 function playWrong(){   playRandomFrom(WIN_BASE_FAIL,    FAIL_FILES);   }
-/* ======================================================================================= */
 
+/* ======= تهيئة المشهد ======= */
 export async function loadFamilyGroupsGameContent(){
-  dbg("loadFamilyGroupsGameContent()");
   await mountViews();
   state.lang = getSelectedLang();
   bindControls();
@@ -130,13 +82,11 @@ export async function loadFamilyGroupsGameContent(){
 }
 
 async function mountViews(){
-  // المسرح
   const main = document.querySelector("main.main-content") || document.getElementById("main-content");
   if (main){
     const html = await fetch("/html/family-groups-game.html").then(r=>r.text()).catch(()=>null);
     main.innerHTML = html || fallbackMainHTML();
   }
-  // الشريط الجانبي
   const sidebar = document.getElementById("sidebar") || document.querySelector(".sidebar");
   if (sidebar){
     const html = await fetch("/html/family-groups-controls.html").then(r=>r.text()).catch(()=>null);
@@ -147,15 +97,12 @@ async function mountViews(){
       sidebar.insertAdjacentHTML("beforeend", fallbackSidebarHTML());
     }
   }
-
-  // تركيب الشريط الموحد (لغة/صوت)
   const scRoot = document.querySelector("#family-groups-controls #sidebar-controls");
   if (scRoot){
     const initLang  = getSelectedLang();
     const initVoice = getSelectedVoice();
     mountSidebarControls({ mount: scRoot, initialLang: initLang, initialVoice: initVoice });
   }
-
   relocalizeUI();
   applyDisplayMode();
 }
@@ -198,6 +145,7 @@ function bindControls(){
   });
 }
 
+/* ======= جولة جديدة ======= */
 async function newRound(autoPlay){
   clearFeedback();
   state.lang = getSelectedLang();
@@ -206,15 +154,6 @@ async function newRound(autoPlay){
   if (!it){ setFeedback(msg("wrong")); return; }
 
   state.item = it;
-
-  // نقاط فحص للجولة
-  dgbg("NEW ROUND");
-  dbg("lang:", state.lang);
-  dbg("itemId:", state.item?.id);
-  dbg("itemName:", state.item?.name?.[state.lang] || state.item?.name?.ar);
-  dbg("itemCats(raw):", state.item?.categories);
-  dgend();
-
   fillItemCard(it, state.lang);
   await rebuildBinsForCurrentItem();
 
@@ -232,55 +171,38 @@ async function handleLangChanged(){
   tryPreloadItemAudio();
 }
 
+/* ======= بناء الخيارات ======= */
 async function rebuildBinsForCurrentItem(){
   const lang   = state.lang;
   const master = await getMasterCategories(lang);
 
-  // فئات العنصر (من البيانات)
   const itemCats = sanitizeCats(state.item?.categories?.[lang] || state.item?.categories?.ar);
   const correct  = itemCats.length ? itemCats[Math.floor(Math.random()*itemCats.length)] : "";
 
-  dgbg("Rebuild bins");
-  dbg("Item cats:", itemCats);
-  dbg("Correct (picked):", correct);
-  dbg("Master size:", master.length);
-  dgend();
+  if (!correct) return newRound(true);
 
-  if (!correct){
-    console.warn("[FG] No valid category on item, skipping round.");
-    return newRound(true);
-  }
-
-  // خذ 3 مشتّتات آمنة من master (بدون تكرار وبدون الصحيح)
   const distractors = sampleWithoutReplacement(master, 3, new Set([correct]));
-
-  // أكمل من الاحتياطي لو لزم
   if (distractors.length < 3){
     const fb = sanitizeCats(FALLBACK_CATS[lang] || FALLBACK_CATS.ar);
     const more = sampleWithoutReplacement(fb, 3 - distractors.length, new Set([correct, ...distractors]));
     distractors.push(...more);
   }
 
-  // بناء الخيارات (4 دائمًا) ثم خلط آمن
   let options = [correct, ...distractors].map(asCleanString).filter(Boolean);
   options = uniq(options).slice(0, 4);
   while (options.length < 4){
     const fb = sampleWithoutReplacement(FALLBACK_CATS[lang] || FALLBACK_CATS.ar, 1, new Set(options))[0];
     if (fb) options.push(fb);
   }
-  // خلط في مكانه
   for (let i = options.length - 1; i > 0; i--){
     const j = Math.floor(Math.random() * (i + 1));
     [options[i], options[j]] = [options[j], options[i]];
   }
 
-  dgbg("Options (final)"); if (FG_DEBUG) console.table(options.map((v,i)=>({idx:i+1, option:v}))); dgend();
-
   state.correctCategory = correct;
   state.options = options;
   renderBins(options);
 }
-
 
 function fillItemCard(item, lang){
   const titleEl = qs(SEL.title);
@@ -314,7 +236,7 @@ function renderBins(options){
   });
 }
 
-/* ====================== سحب/إفلات مع تصغير ديناميكي ====================== */
+/* ======= سحب/إفلات + تصغير ديناميكي أقوى ======= */
 function attachDragAndDrop(){
   const card = qs(SEL.card);
   const bins = qsa(".fg-bin");
@@ -366,7 +288,7 @@ function attachDragAndDrop(){
   window.addEventListener("touchend",  up);
 }
 
-/** Scale ديناميكي: قربك من أقرب سلّة يحرّك المقياس بين ~0.95 → ~0.62 */
+/** تصغير ديناميكي أقوى: ~0.95 ← ~0.52 */
 function dynamicScaleFor(card, bins, dx, dy){
   const c = card.getBoundingClientRect();
   const cx = c.left + c.width/2 + dx;
@@ -381,15 +303,15 @@ function dynamicScaleFor(card, bins, dx, dy){
     if (d < minD) minD = d;
   });
 
-  const D0 = 120;   // داخل هذا النطاق يصبح أصغر حجم
-  const D1 = 600;   // أبعد من هذا يعود لأكبر حجم
+  const D0 = 100;  // يبدأ التصغير باكراً
+  const D1 = 520;  // يصل للحجم الطبيعي أسرع
   const t  = clamp01((minD - D0) / (D1 - D0));
   const smooth = t * t * (3 - 2*t); // Smoothstep
-  const sMax = 0.95, sMin = 0.62;
+  const sMax = 0.95, sMin = 0.42;   // ← أصغر من قبل (0.62)
   return +(sMin + (sMax - sMin) * smooth).toFixed(3);
 }
 
-/* ====================== كشف التقاطع، تقييم الإسقاط ====================== */
+/* ======= كشف التقاطع وتقييم الإسقاط ======= */
 function detectBinHover(card, bins){
   const c = card.getBoundingClientRect();
   let best=null, bestArea=0;
@@ -430,7 +352,7 @@ function tryDropOn(binEl){
   }
 }
 
-/* ارتداد + وميض أخضر عند الصح */
+/* ======= ارتداد + وميض أخضر عند الصح ======= */
 function animateCorrectDrop(binEl){
   const card = qs(SEL.card); if (!card) return;
 
@@ -479,10 +401,9 @@ function ensureFlashStyle(){
   __flashStyleInjected = true;
 }
 
-/* ====================== الصوت/النقاط/السجل ====================== */
+/* ======= الصوت/النقاط/السجل ======= */
 function tryPlayItemSound(){
   const url = pickItemSoundUrl(state.item, state.lang, getSelectedVoice());
-  dbg("itemSound:", url);
   if (!url) return;
   try { (AudioMod?.playUrl ? AudioMod.playUrl(url) : new Audio(url).play().catch(()=>{})); } catch {}
 }
@@ -502,7 +423,7 @@ function logActivity(ok, chosen, correct){
   Activity?.recordActivity?.(payload);
 }
 
-/* ====================== مساعدين ====================== */
+/* ======= مساعدين ======= */
 function getSelectedLang(){
   const sys = (LangMod?.getCurrentLang && LangMod.getCurrentLang())
            || (LangMod?.getActiveLang && LangMod.getActiveLang());
@@ -551,7 +472,7 @@ async function pickRandomItemWithCategories(lang){
         if (hasCats(v,lang)) return v;
       }
     }
-  }catch(e){ dbg("index lookup error:", e); }
+  }catch(e){}
   const seed = Math.random().toString(36).slice(2,8);
   const q1 = query(collection(db,"items"), orderBy("__name__"), startAt(seed), limit(50));
   const s1 = await getDocs(q1);
@@ -579,20 +500,11 @@ async function getMasterCategories(lang){
         data?.ar ??
         [];
       const list = sanitizeCats(raw);
-      dgbg("Master categories"); dbg("lang=", lang, "count=", list.length); if (FG_DEBUG) console.table(list.map(v=>({category:v}))); dgend();
       if (list.length) return uniq(list);
-    } else {
-      dbg("classification_categories doc missing");
     }
-  } catch (e) {
-    console.warn("[FG] getMasterCategories error:", e);
-  }
-  const fallback = sanitizeCats(FALLBACK_CATS[lang] || FALLBACK_CATS.ar);
-  dgbg("Using FALLBACK_CATS"); if (FG_DEBUG) console.table(fallback.map(v=>({category:v}))); dgend();
-  return uniq(fallback);
+  } catch (e) {}
+  return uniq(sanitizeCats(FALLBACK_CATS[lang] || FALLBACK_CATS.ar));
 }
-
-
 function pickItemImage(item){
   const images = item?.media?.images;
   if (Array.isArray(images) && images.length){
@@ -612,42 +524,27 @@ function pickItemSoundUrl(item, lang, variant){
   return null;
 }
 
-// Utils
+/* ======= Utils ======= */
 function msg(key){ return (UI[state.lang]||UI.ar)[key]; }
 function isRTL(lang){ return lang==="ar" || lang==="he"; }
 function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j]]; } return a; }
 function uniq(a){ return [...new Set(a.filter(Boolean).map(String))]; }
 function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 function qs(s){ return document.querySelector(s); }
 function qsa(s){ return Array.from(document.querySelectorAll(s)); }
 
-// ===== Helpers to enforce safe, non-undefined options =====
-function asCleanString(x){
-  if (typeof x === "string") return x.trim();
-  if (x == null) return "";
-  return String(x).trim();
-}
-function sanitizeCats(arr){
-  if (!Array.isArray(arr)) return [];
-  return arr.map(asCleanString).filter(Boolean);
-}
+// تنظيف الفئات + عينات آمنة
+function asCleanString(x){ if (typeof x === "string") return x.trim(); if (x == null) return ""; return String(x).trim(); }
+function sanitizeCats(arr){ if (!Array.isArray(arr)) return []; return arr.map(asCleanString).filter(Boolean); }
 function sampleWithoutReplacement(arr, k, exclude = new Set()){
   const clean = sanitizeCats(arr).filter(v => !exclude.has(v));
   const out = [];
-  for (let i = clean.length - 1; i > 0; i--){
-    const j = Math.floor(Math.random() * (i + 1));
-    [clean[i], clean[j]] = [clean[j], clean[i]];
-  }
-  for (let i = 0; i < clean.length && out.length < k; i++){
-    const v = clean[i];
-    if (v && !out.includes(v)) out.push(v);
-  }
+  for (let i = clean.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [clean[i], clean[j]] = [clean[j], clean[i]]; }
+  for (let i = 0; i < clean.length && out.length < k; i++){ const v = clean[i]; if (v && !out.includes(v)) out.push(v); }
   return out;
 }
 
-
-// Fallbacks (للاستخدام فقط إذا فشل جلب HTML الجزئي)
+/* ======= Fallback HTML (إذا فشل تحميل الجزئي) ======= */
 function fallbackMainHTML(){
   return `
   <section id="family-groups-game" class="subject-screen">
