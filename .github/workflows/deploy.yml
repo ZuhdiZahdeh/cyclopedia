@@ -19,6 +19,7 @@ jobs:
       CI: true
 
     steps:
+      # 1) Checkout + LFS
       - name: Checkout (with LFS)
         uses: actions/checkout@v4
         with:
@@ -29,28 +30,50 @@ jobs:
           git lfs fetch --all
           git lfs checkout
 
+      # 2) Node 22 (مطلوب لـ firebase-tools@14)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"       # ✅ Firebase CLI v14.x يتطلب >=20 || >=22
+          node-version: "22"
           cache: "npm"
 
+      # 3) Install
       - name: Install dependencies
         run: npm ci
 
+      # 4) Build (Vite)
       - name: Build (Vite)
         run: npm run build
 
+      # 5) Sanity checks (وجود الملفات الأساسية)
       - name: Sanity check assets
         run: |
-          test -f firebase.json && echo "firebase.json found ✅" || (echo "firebase.json missing ❌"; exit 1)
-          ls -la dist | head -n 50
+          test -f firebase.json && echo "✅ firebase.json found" || (echo "❌ firebase.json missing"; exit 1)
+          test -d dist && echo "✅ dist/ exists" || (echo "❌ dist/ missing"; exit 1)
+          echo "— dist root —"
+          ls -la dist | sed -n '1,120p'
+          echo "— dist/assets —"
+          ls -la dist/assets | sed -n '1,200p'
 
-      # إذا كنت تستخدم FIREBASE_TOKEN
+      # 6) ✅ Verify family-groups chunk exists (يفشل الـ job إذا غير موجود)
+      - name: Verify family-groups dynamic chunk
+        run: |
+          echo "Looking for family-groups bundled chunk(s)…"
+          # أمثلة أسماء: family-groups-game-XXXXX.js أو أي ملف يحوي family-groups
+          CHUNKS=$(ls dist/assets | grep -Ei 'family[-_]groups.*\.js$' || true)
+          if [ -z "$CHUNKS" ]; then
+            echo "❌ family-groups chunk not found in dist/assets. Make sure main.js uses import.meta.glob to include the module."
+            exit 1
+          fi
+          echo "✅ Found:"
+          echo "$CHUNKS"
+
+      # 7) Deploy (FIREBASE_TOKEN)
       - name: Deploy to Firebase Hosting
         run: npx --yes firebase-tools@latest deploy --only hosting --project cyclopedia-edu --non-interactive --token "${{ secrets.FIREBASE_TOKEN }}"
 
-      # === بديل موصى به: Service Account بدل التوكن ===
+      # ===== بديل موصى به مستقبلاً: Service Account بدل FIREBASE_TOKEN =====
+      # فعّل الخطوتين أدناه، واحذف --token من خطوة النشر أعلاه
       # - name: Auth with GCP Service Account
       #   run: |
       #     echo '${{ secrets.GCP_SA_KEY }}' > $HOME/gcloud.json

@@ -311,12 +311,38 @@ window.loadFamilyGroupsGamePage = () =>
   loadPage(
     "/html/family-groups-game.html",
     async () => {
-      ensureCss(['/css/common-components-subjects.css', SUBJECT_CSS['family-groups']]);
-      const mod = await import('/src/subjects/family-groups-game.js');
-      await mod.loadFamilyGroupsGameContent(); // دالة التهيئة داخل الموديول
+      // تأكيد تحميل CSS
+      ensureCss(['/css/common-components-subjects.css', '/css/family-groups-game.css']);
+
+      // ✅ استيراد مضمون عبر import.meta.glob
+      const mods = import.meta.glob('/src/subjects/*-game.js');
+      const loader = mods['/src/subjects/family-groups-game.js'];
+      if (!loader) {
+        console.error('[family-groups] module not found in Vite glob');
+        return;
+      }
+      try {
+        const m = await loader();                // سيُحوَّل إلى assets/family-groups-game-*.js تلقائيًا
+        if (m?.loadFamilyGroupsGameContent) {
+          await m.loadFamilyGroupsGameContent();
+        } else {
+          console.error('[family-groups] load function missing');
+        }
+      } catch (e) {
+        // لو حصل 404/كاش قديم — أعد المحاولة بتهشير بسيط لكسر الكاش
+        console.warn('[family-groups] first dynamic import failed, retrying with cache-bust…', e);
+        const bust = Date.now();
+        const modsBust = import.meta.glob('/src/subjects/*-game.js?v=*'); // نمط مع استعلام
+        const loaderBust = modsBust['/src/subjects/family-groups-game.js?v=*'];
+        if (loaderBust) {
+          const m2 = await loaderBust();
+          m2?.loadFamilyGroupsGameContent?.();
+        }
+      }
     },
     "family-groups"
   );
+
 
 // نشاط الحروف
 window.loadAlphabetActivity = () =>
