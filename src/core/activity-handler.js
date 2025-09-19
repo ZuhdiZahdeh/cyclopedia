@@ -1,26 +1,69 @@
-import { db } from "./firebase-config.js";
-import { doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
+// activity-handler.js — safe activity logging
 
-// دالة لتسجيل نشاط المستخدم وزيادة النقاط والتحقق من الترقية
-export async function recordActivity(user, categoryName) {
-  if (!user || !user.uid) return;
+import { db } from '../js/firebase-config.js';
+import {
+  collection, addDoc, serverTimestamp
+} from 'firebase/firestore';
 
-  const userRef = doc(db, "users", user.uid);
+// احصل على المستخدم الحالي (من localStorage أو كائن مباشر)
+function getCurrentUser(maybeUser) {
+  try {
+    if (maybeUser && (maybeUser.uid || maybeUser.userId)) return maybeUser;
+    const u = JSON.parse(localStorage.getItem('user'));
+    if (u && (u.uid || u.userId)) return u;
+  } catch {}
+  return null;
+}
 
-  // زيادة النقطة وتسجيل النشاط
-  const timestamp = Date.now().toString();
-  const logEntry = {
-    action: `تعرف على اسم في فئة ${categoryName}`,
-    category: categoryName,
-    timestamp: serverTimestamp()
-  };
+/**
+ * سجل نشاطًا آمنًا.
+ * الاستخدامات المقبولة:
+ *   recordActivity(user, "memory")          // نوع فقط
+ *   recordActivity(user, {type:"memory", extra:"..."})  // حمولة مخصّصة
+ *   recordActivity("memory")                // سيقرأ المستخدم من localStorage
+ */
+export async function recordActivity(userOrPayload, typeOrPayload) {
+  const user = getCurrentUser(
+    typeof userOrPayload === 'object' && userOrPayload && !typeOrPayload ? userOrPayload : undefined
+  ) || getCurrentUser();
 
-  await updateDoc(userRef, {
-    points: increment(1),
-    [`activityLog.${timestamp}`]: logEntry
-  });
+  // إذا لا يوجد مستخدم مصادَق — لا تكتب شيئًا
+  if (!user || !(user.uid || user.userId)) {
+    return; // resolve silently
+  }
+  const uid = user.uid || user.userId;
 
-  // تحقق من النقاط الحالية لتحديث المستوى (اختياري حسب الحاجة)
-  // يتم جلب البيانات مرة أخرى بعد التحديث
-  // مفضل تنفيذه في صفحة الملف الشخصي أو عند عرض النقاط وليس كل مرة
+  // ابنِ الحمولة
+  let payload;
+  if (typeof userOrPayload === 'string' && !typeOrPayload) {
+    payload = { type: userOrPayload };
+  } else if (typeof typeOrPayload === 'string') {
+    payload = { type: typeOrPayload };
+  } else if (typeof typeOrPayload === 'object' && typeOrPayload) {
+    payload = { ...typeOrPayload };
+  } else if (typeof userOrPayload === 'object' && userOrPayload && userOrPayload.type) {
+    payload = { ...userOrPayload };
+  } else {
+    payload = { type: 'generic' };
+  }
+
+  // أضف التوقيت إن لم يوجد
+  if (!payload.ts) payload.ts = serverTimestamp();
+
+  try {
+    await addDoc(collection(db, 'activity', uid, 'events'), payload);
+  } catch (e) {
+    // كتم أخطاء الأذونات (ضيف أو قواعد Firestore تمنع الكتابة)
+    const msg = String(e && (e.code || e.message) || '');
+    if (msg.includes('permission-denied') || /insufficient permissions/i.test(msg)) {
+      return; // لا تُزعج الـConsole
+    }
+    // غير ذلك: سجّل تحذيرًا لطيفًا بدون رمي
+    console.warn('[activity] recordActivity failed:', e);
+  }
+}
+
+// اختياري: دالة ملائمة تُغلف النوع فقط
+export function recordSimple(type, extra = {}) {
+  return recordActivity({ type, ...extra });
 }
