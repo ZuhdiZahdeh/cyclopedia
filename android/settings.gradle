@@ -1,5 +1,57 @@
-include ':app'
-include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+// android/settings.gradle
 
-apply from: 'capacitor.settings.gradle'
+pluginManagement {
+  repositories {
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+  }
+}
+
+dependencyResolutionManagement {
+  // منع تعريف المستودعات داخل ملفات الوحدات
+  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+  repositories {
+    google()
+    mavenCentral()
+
+    // (اختياري) دعم AAR/JAR محلية — إبقِ مركزيًا هنا فقط
+    flatDir {
+      dirs new File(rootDir, "app/libs"),
+          new File(rootDir, "app/src/main/libs"),
+          new File(rootDir, "capacitor-cordova-android-plugins/libs"),
+          new File(rootDir, "capacitor-cordova-android-plugins/src/main/libs"),
+          // وجوده لا يضر حتى مع includeBuild
+          new File(rootDir, "../node_modules/@capacitor/android/capacitor/build/outputs/aar")
+    }
+  }
+}
+
+rootProject.name = "android"
+
+// وحدات المشروع
+include(":app")
+project(":app").projectDir = new File(rootDir, "app")
+
+// أبقِ هذه الوحدة فقط إن كنت تستخدم Cordova plugins فعلاً
+include(":capacitor-cordova-android-plugins")
+project(":capacitor-cordova-android-plugins").projectDir =
+        new File(rootDir, "capacitor-cordova-android-plugins")
+
+// ===== Capacitor composite build (مشروع أحادي داخل مجلد capacitor) =====
+def capRoot = new File(rootDir, "../node_modules/@capacitor/android/capacitor")
+if (!capRoot.exists()) {
+  throw new GradleException("Capacitor Android not found at: ${capRoot}")
+}
+if (!new File(capRoot, "build.gradle").exists() && !new File(capRoot, "build.gradle.kts").exists()) {
+  throw new GradleException("No Gradle build found in: ${capRoot}")
+}
+
+includeBuild(capRoot) {
+  dependencySubstitution {
+    substitute(module("com.capacitorjs:capacitor-android"))
+      .using(project(":"))     // مشروع أحادي: الجذر هو ":"
+  }
+}
+
+

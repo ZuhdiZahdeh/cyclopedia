@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-  base: '/',            // للويب (Firebase Hosting)
+  base: '/',
   publicDir: 'public',
   resolve: {
     alias: {
@@ -18,27 +18,18 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    sourcemap: false, // أصغر للحجم
     rollupOptions: {
-      // اجبر Vite أن يعتبر index.html (وغيره) مداخل البناء
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        // أضِف صفحات HTML أخرى هنا إن أردت بنائها كصفحات مستقلة:
-        // animals: resolve(__dirname, 'html/animals.html'),
-        // fruits: resolve(__dirname, 'html/fruits.html'),
-        // ...
-      },
+      input: { main: resolve(__dirname, 'index.html') },
     },
   },
-  plugins: [
-    // يضمن بقاء سطر نقطة الدخول حتى إن شالته أداة أخرى بالخطأ
-    {
-      name: 'ensure-main-entry',
-      transformIndexHtml(html) {
-        const tag = '<script type="module" src="/src/js/main.js"></script>';
-        return html.includes(tag)
-          ? html
-          : html.replace('</body>', `\n  <!-- نقطة الدخول (Vite) -->\n  ${tag}\n</body>`);
-      },
+  plugins: [{
+    name: 'ensure-main-entry',
+    transformIndexHtml(html) {
+      const tag = '<script type="module" src="/src/js/main.js"></script>';
+      return html.includes(tag)
+        ? html
+        : html.replace('</body>', `\n  <!-- نقطة الدخول (Vite) -->\n  ${tag}\n</body>`);
     },
-  ],
+  }],
 });

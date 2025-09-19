@@ -1,90 +1,46 @@
-apply plugin: 'com.android.application'
-
-import java.util.Properties
-import java.io.FileInputStream
-
-// تحميل خصائص التوقيع من android/keystore.properties إن وُجد
-def keystorePropsFile = rootProject.file("keystore.properties")
-def keystoreProps = new Properties()
-if (keystorePropsFile.exists()) {
-    keystoreProps.load(new FileInputStream(keystorePropsFile))
+// android/app/build.gradle
+plugins {
+  id 'com.android.application'
+  // id 'org.jetbrains.kotlin.android'  // فعّل عند الحاجة
 }
 
 android {
-    namespace "edu.cyclopedia.app"
-    compileSdk rootProject.ext.compileSdkVersion
+  namespace 'edu.cyclopedia.app'
+  compileSdkVersion 35
 
-    defaultConfig {
-        applicationId "edu.cyclopedia.app"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2          // ارفعها قبل كل إصدار
-        versionName "2.0"      // حدّث رقم النسخة حسب الحاجة
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+  defaultConfig {
+    applicationId "edu.cyclopedia.app"
+    minSdkVersion 24
+    targetSdkVersion 35
+    versionCode 5         // ارفع (+1) قبل كل رفع AAB
+    versionName "2.0.2"
+  }
 
-        // Files/dirs to omit from packaged assets (مفيد لتطبيقات الويب)
-        // المرجع الأصلي كان ضمن AaptAssets.cpp
-        aaptOptions {
-            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
-        }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled false
+      shrinkResources false
+      // proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
     }
-
-    // توقيع الإصدار - يقرأ من keystore.properties أو من متغيرات البيئة
-    signingConfigs {
-        release {
-            // المسار يُقرأ بهذا الترتيب: keystore.properties → ENV → قيمة افتراضية داخل android/
-            def store = keystoreProps['storeFile'] ?: System.getenv('UPLOAD_STORE_FILE') ?: '../upload-keystore.jks'
-            storeFile file(store)
-            storePassword keystoreProps['storePassword'] ?: System.getenv('UPLOAD_STORE_PASSWORD')
-            keyAlias keystoreProps['keyAlias'] ?: System.getenv('UPLOAD_KEY_ALIAS') ?: 'upload'
-            keyPassword keystoreProps['keyPassword'] ?: System.getenv('UPLOAD_KEY_PASSWORD')
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            minifyEnabled false
-            shrinkResources false
-            // إن أردت تقليص الكود لاحقًا:
-            // proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-        debug {
-            // Debug يستخدم debug keystore الافتراضي
-        }
-    }
-
-    // Java 17 موصى به لمشاريع Capacitor الحديثة
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
+  }
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
+  // سيتم استبداله بمشروع Capacitor من node_modules عبر includeBuild في settings.gradle
+  implementation("com.capacitorjs:capacitor-android")
 
-    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
-    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
-    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
-
-    implementation project(':capacitor-android')
+  // أبقِ وحدة Cordova فقط إن كنت تستخدم Plugins فعلاً
+  if (findProject(':capacitor-cordova-android-plugins') != null) {
     implementation project(':capacitor-cordova-android-plugins')
+  }
 
-    testImplementation "junit:junit:$junitVersion"
-    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
-    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
-}
-
-// سكربت Capacitor (يجب أن يبقى بعد dependencies)
-apply from: 'capacitor.build.gradle'
-
-// تفعيل Google Services فقط عند وجود google-services.json
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON != null && servicesJSON.exists() && servicesJSON.length() > 0) {
-        apply plugin: 'com.google.gms.google-services'
-    }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+  implementation 'androidx.appcompat:appcompat:1.7.0'
+  implementation 'com.google.android.material:material:1.12.0'
+  implementation 'androidx.core:core-ktx:1.13.1'
+  implementation 'androidx.activity:activity:1.9.2'
 }

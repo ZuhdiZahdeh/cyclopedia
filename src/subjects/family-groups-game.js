@@ -1,13 +1,13 @@
 // src/subjects/family-groups-game.js
+
 import { db } from "../js/firebase-config.js";
 import {
   collection, doc, getDoc, getDocs, query, orderBy, limit, startAt
 } from "firebase/firestore";
 import * as LangMod from "../core/lang-handler.js";
-import * as AudioMod from "../core/audio-handler.js";
-
-import * as Activity from "../core/activity-handler.js";
-import { mountSidebarControls } from "../core/sidebar-controls.js";
+import * as AudioMod from "../core/audio-handler.js";     // إدارة الصوت الموحدة :contentReference[oaicite:3]{index=3}
+import * as Activity from "../core/activity-handler.js";   // تسجيل النشاط/النقاط     :contentReference[oaicite:4]{index=4}
+import { mountSidebarControls } from "../core/sidebar-controls.js"; // الشريط الموحد  :contentReference[oaicite:5]{index=5}
 
 const GAME_KEY = "family-groups";
 
@@ -22,7 +22,7 @@ const SEL = {
   btnNew:     "#fg-new-round-btn",
   btnListen:  "#fg-listen-btn",
   sidebar:    "#family-groups-controls",
-  // دعم النسخ القديمة (اختياري)
+  // دعم اختياري لقدامى الواجهات
   modeSel:    "#fg-display-mode",
   voiceSel:   "#fg-sound-variant",
   langSel:    "#fg-lang-select",
@@ -51,6 +51,59 @@ const state = {
   soundVariant:"boy"   // boy | girl | teacher | child
 };
 
+/* ====================== مؤثرات النجاح/الفشل (مسارات Windows → ويب) ===================== */
+
+/** أساس المسارات كما طلبتَ (Windows paths) */
+const WIN_BASE_SUCCESS = "C:\\cyclopedia\\public\\audio\\success\\";
+const WIN_BASE_FAIL    = "C:\\cyclopedia\\public\\audio\\fail\\";
+
+/** أسماء الملفات المتوفرة */
+const SUCCESS_FILES = [
+  "success_toolMatch_a.mp3",
+  "success_toolMatch_b.mp3",
+  "success_toolMatch_c.mp3",
+  "success_toolMatch_d.mp3",
+  "success_toolMatch_e.mp3",
+];
+const FAIL_FILES = [
+  "fail_toolMatch_a.mp3",
+  "fail_toolMatch_b.mp3",
+  "fail_toolMatch_c.mp3",
+];
+
+/** يحوّل مسار Windows إلى مسار ويب صالح (يفترض أن الملفات تُقدّم من /audio/* على الخادم) */
+function normalizeAudioPath(winBase, fileName) {
+  // إن كنا على http/https: استخدم مسار الويب
+  if (location.protocol.startsWith("http")) {
+    const folder = winBase.toLowerCase().includes("\\success\\") ? "success" : "fail";
+    return `/audio/${folder}/${fileName}`;
+  }
+  // في حالة فتح ملف محلياً عبر file:// (نادر): جرّب تحويل C:\ إلى file:///C:/...
+  try {
+    const drive = winBase.slice(0, 2).replace(":", "");
+    const tail  = winBase.slice(2).replace(/\\/g, "/");
+    return `file:///${drive}:${tail}${fileName}`;
+  } catch(_) {
+    // احتياطي: أرجع الاسم فقط
+    return fileName;
+  }
+}
+
+function playRandomFrom(winBase, files){
+  if (!files?.length) return;
+  const name = files[Math.floor(Math.random()*files.length)];
+  const url  = normalizeAudioPath(winBase, name);
+  try {
+    if (AudioMod?.playUrl) AudioMod.playUrl(url);
+    else new Audio(url).play().catch(()=>{});
+  } catch {}
+}
+
+function playCorrect(){ playRandomFrom(WIN_BASE_SUCCESS, SUCCESS_FILES); }
+function playWrong(){   playRandomFrom(WIN_BASE_FAIL,    FAIL_FILES);   }
+
+/* ======================================================================================= */
+
 export async function loadFamilyGroupsGameContent(){
   await mountViews();
   state.lang = getSelectedLang();
@@ -77,12 +130,12 @@ async function mountViews(){
     }
   }
 
-  // تركيب الشريط الموحّد (لغة/صوت) داخل #sidebar-controls
+  // تركيب الشريط الموحد (لغة/صوت)
   const scRoot = document.querySelector("#family-groups-controls #sidebar-controls");
   if (scRoot){
     const initLang  = getSelectedLang();
     const initVoice = getSelectedVoice();
-    mountSidebarControls({ mount: scRoot, initialLang: initLang, initialVoice: initVoice });
+    mountSidebarControls({ mount: scRoot, initialLang: initLang, initialVoice: initVoice }); // :contentReference[oaicite:6]{index=6}
   }
 
   relocalizeUI();
@@ -90,11 +143,10 @@ async function mountViews(){
 }
 
 function bindControls(){
-  // أزرار النشاط الخاصة
   qs(SEL.btnNew)?.addEventListener("click", ()=>newRound(true));
   qs(SEL.btnListen)?.addEventListener("click", ()=>tryPlayItemSound());
 
-  // أحداث عامة من الشريط الموحّد
+  // أحداث الشريط الموحد
   window.addEventListener("lang:change", (e)=>{
     const next = (e.detail?.lang) || "ar";
     LangMod?.setLang?.(next);
@@ -104,19 +156,16 @@ function bindControls(){
 
   window.addEventListener("voice:change", (e)=>{
     const v = (e.detail?.voice) || "boy";
-    AudioMod?.setVoiceShape?.(v); // آمنة حتى لو غير موجودة
+    AudioMod?.setVoiceShape?.(v);
     state.soundVariant = v;
     tryPreloadItemAudio();
   });
 
   window.addEventListener("controls:next", ()=> newRound(true));
   window.addEventListener("controls:prev", ()=> newRound(true));
-  window.addEventListener("controls:description", ()=> {
-    // في هذا النشاط: اجعل زر "الوصف" يشغّل الصوت كمساعدة
-    tryPlayItemSound();
-  });
+  window.addEventListener("controls:description", ()=> { tryPlayItemSound(); });
 
-  // دعم قديم (selects) إذا كانت موجودة
+  // دعم قديم (إن وُجد)
   qs(SEL.langSel)?.addEventListener("change", e=>{
     const next = e.target.value;
     LangMod?.setLang?.(next);
@@ -147,7 +196,7 @@ async function newRound(autoPlay){
 
   attachDragAndDrop();
   tryPreloadItemAudio();
-  if (autoPlay) tryPlayItemSound(); // تشغيل تلقائي عند بداية كل جولة
+  if (autoPlay) tryPlayItemSound(); // تشغيل تلقائي ببداية الجولة
 }
 
 async function handleLangChanged(){
@@ -183,7 +232,7 @@ function fillItemCard(item, lang){
 
   const label = (item.name?.[lang] || item.name?.ar || "").toString();
   if (titleEl){ titleEl.textContent = label; titleEl.setAttribute("dir", isRTL(lang)?"rtl":"ltr"); }
-  if (nameOn){  nameOn.textContent  = label; nameOn.setAttribute("dir", isRTL(lang)?"rtl":"ltr"); }
+  if (nameOn){  nameOn.textContent  = label;  nameOn.setAttribute("dir", isRTL(lang)?"rtl":"ltr"); }
 
   const mainImage = pickItemImage(item);
   if (imgEl){
@@ -208,6 +257,8 @@ function renderBins(options){
   });
 }
 
+/* ====================== سحب/إفلات مع تصغير ديناميكي ====================== */
+
 function attachDragAndDrop(){
   const card = qs(SEL.card);
   const bins = qsa(".fg-bin");
@@ -218,20 +269,27 @@ function attachDragAndDrop(){
   });
 
   let dragging=false, sx=0, sy=0, dx=0, dy=0;
+
   const down = e=>{
     dragging = true; dx=dy=0;
     sx = ("clientX" in e? e.clientX : e.touches?.[0]?.clientX)||0;
     sy = ("clientY" in e? e.clientY : e.touches?.[0]?.clientY)||0;
     card.style.transition="none";
     card.setAttribute("aria-grabbed","true");
+    card.classList.add("dragging");
   };
+
   const move = e=>{
     if (!dragging) return;
     const cx = ("clientX" in e? e.clientX : e.touches?.[0]?.clientX)||0;
     const cy = ("clientY" in e? e.clientY : e.touches?.[0]?.clientY)||0;
     dx=cx-sx; dy=cy-sy;
-    card.style.transform=`translate(${dx}px,${dy}px)`;
+
+    // حساب أصغر مسافة من مركز البطاقة إلى أقرب سلّة
+    const scale = dynamicScaleFor(card, bins, dx, dy);
+    card.style.transform=`translate(${dx}px,${dy}px) scale(${scale})`;
   };
+
   const up = ()=>{
     if (!dragging) return;
     dragging=false;
@@ -239,8 +297,9 @@ function attachDragAndDrop(){
     if (target) tryDropOn(target);
     else {
       card.style.transition="transform 160ms ease";
-      card.style.transform="translate(0,0)";
+      card.style.transform="translate(0,0) scale(1)";
       card.setAttribute("aria-grabbed","false");
+      card.classList.remove("dragging");
     }
   };
 
@@ -252,6 +311,32 @@ function attachDragAndDrop(){
   window.addEventListener("touchend",  up);
 }
 
+/** Scale ديناميكي: قربك من أقرب سلّة يحرّك المقياس بين ~0.95 → ~0.62 */
+function dynamicScaleFor(card, bins, dx, dy){
+  const c = card.getBoundingClientRect();
+  const cx = c.left + c.width/2 + dx;
+  const cy = c.top  + c.height/2 + dy;
+
+  let minD = Infinity;
+  bins.forEach(bin=>{
+    const b = bin.getBoundingClientRect();
+    const bx = b.left + b.width/2;
+    const by = b.top  + b.height/2;
+    const d  = Math.hypot(cx-bx, cy-by);
+    if (d < minD) minD = d;
+  });
+
+  // عتبة مسافة للتطبيع
+  const D0 = 120;   // داخل هذا النطاق يصبح أصغر حجم
+  const D1 = 600;   // أبعد من هذا يعود لأكبر حجم
+  const t  = clamp01((minD - D0) / (D1 - D0)); // 0 قرب جدًا، 1 بعيد
+  const smooth = t * t * (3 - 2*t);           // Smoothstep
+  const sMax = 0.95, sMin = 0.62;             // حدود المقياس
+  return +(sMin + (sMax - sMin) * smooth).toFixed(3);
+}
+
+/* ====================== كشف التقاطع، تقييم الإسقاط ====================== */
+
 function detectBinHover(card, bins){
   const c = card.getBoundingClientRect();
   let best=null, bestArea=0;
@@ -262,7 +347,7 @@ function detectBinHover(card, bins){
     const area = interW*interH;
     if (area>bestArea){ bestArea=area; best=bin; }
   });
-  return bestArea>200 ? best : null;
+  return bestArea>160 ? best : null; // خفّضنا العتبة قليلًا
 }
 
 function tryDropOn(binEl){
@@ -271,12 +356,11 @@ function tryDropOn(binEl){
   if (!chosen || !correct) return;
 
   if (chosen===correct){
-    binEl.classList.add("correct");
+    animateCorrectDrop(binEl);
     addScore(1);
     setFeedback(msg("correct"));
     playCorrect();
     logActivity(true, chosen, correct);
-    swallowCard(binEl);
     setTimeout(()=>newRound(true), state.autoNextMs);
   } else {
     binEl.classList.add("incorrect");
@@ -284,24 +368,74 @@ function tryDropOn(binEl){
     playWrong();
     logActivity(false, chosen, correct);
     setTimeout(()=>binEl.classList.remove("incorrect"), 360);
+
     const card = qs(SEL.card);
     card.style.transition="transform 160ms ease";
-    card.style.transform="translate(0,0)";
+    card.style.transform="translate(0,0) scale(1)";
     card.setAttribute("aria-grabbed","false");
+    card.classList.remove("dragging");
   }
 }
 
-function swallowCard(binEl){
+/* ارتداد + وميض أخضر عند الصح */
+function animateCorrectDrop(binEl){
   const card = qs(SEL.card); if (!card) return;
+
+  // وميض أخضر للسلّة
+  flashBinGreen(binEl);
+
+  // احسب انتقال البطاقة إلى مركز السلّة
   const b = binEl.getBoundingClientRect();
   const c = card.getBoundingClientRect();
   const dx = (b.left+b.width/2)  - (c.left+c.width/2);
   const dy = (b.top +b.height/2) - (c.top +c.height/2);
-  card.style.transition="transform 240ms ease";
-  card.style.transform = `translate(${dx}px,${dy}px) scale(0.8)`;
+
+  // تسلسل ارتداد بسيط: إلى السلّة (تصغير) → تكبير خفيف → استقرار
+  card.style.transition = "transform 220ms cubic-bezier(.2,.9,.3,1.2)";
+  card.style.transform  = `translate(${dx}px,${dy}px) scale(0.72)`;
+
+  // المرحلة الثانية (Overshoot صغير)
+  setTimeout(()=>{
+    card.style.transition = "transform 120ms ease-out";
+    card.style.transform  = `translate(${dx}px,${dy}px) scale(0.82)`;
+  }, 220);
+
+  // تثبيت نهائي قبل الانتقال للجولة الجديدة
+  setTimeout(()=>{
+    card.style.transition = "transform 120ms ease-in";
+    card.style.transform  = `translate(${dx}px,${dy}px) scale(0.78)`;
+    card.setAttribute("aria-grabbed","false");
+    card.classList.remove("dragging");
+  }, 360);
 }
 
-// ---------------- الصوت/النقاط/السجل ----------------
+/** وميض أخضر: نُنشئ @keyframes لمرة واحدة ونطبق Animation قصيرة */
+function flashBinGreen(binEl){
+  ensureFlashStyle();
+  binEl.classList.remove("correct"); // نظّف حالة قديمة
+  // طبّق فلاش بصري قصير
+  binEl.style.animation = "fg-correct-flash 420ms ease-out 1";
+  // أعدّ حالة correct العادية لإبقاء الإطار أخضر بعد الفلاش
+  setTimeout(()=>{ binEl.classList.add("correct"); }, 420);
+}
+let __flashStyleInjected = false;
+function ensureFlashStyle(){
+  if (__flashStyleInjected) return;
+  const css = `
+  @keyframes fg-correct-flash {
+    0%   { box-shadow: 0 0 0 rgba(46,204,113,0); background: rgba(46,204,113,.10); }
+    40%  { box-shadow: 0 0 0 10px rgba(46,204,113,.22); background: rgba(46,204,113,.18); }
+    100% { box-shadow: 0 0 0 rgba(46,204,113,0); background: rgba(46,204,113,.08); }
+  }`;
+  const tag = document.createElement("style");
+  tag.setAttribute("data-fg-correct-flash","1");
+  tag.textContent = css;
+  document.head.appendChild(tag);
+  __flashStyleInjected = true;
+}
+
+/* ====================== الصوت/النقاط/السجل ====================== */
+
 function tryPlayItemSound(){
   const url = pickItemSoundUrl(state.item, state.lang, getSelectedVoice());
   if (!url) return;
@@ -316,15 +450,18 @@ function tryPreloadItemAudio(){
   const a = document.createElement("audio");
   a.src = url; a.preload = "auto";
 }
-function playCorrect(){ AudioMod?.playFeedback?.("correct", state.lang); }
-function playWrong(){   AudioMod?.playFeedback?.("wrong",   state.lang); }
-function addScore(n=1){ state.score+=n; const el=qs(SEL.score); if (el) el.textContent=String(state.score); }
+function addScore(n=1){
+  state.score+=n;
+  const el=qs(SEL.score);
+  if (el) el.textContent=String(state.score);
+}
 function logActivity(ok, chosen, correct){
   const payload={ type:GAME_KEY, ok, chosen, correct, itemId:state.item?.id, lang:state.lang, ts:Date.now() };
   Activity?.recordActivity?.(payload);
 }
 
-// ---------------- مساعدين ----------------
+/* ====================== مساعدين ====================== */
+
 function getSelectedLang(){
   const sys = (LangMod?.getCurrentLang && LangMod.getCurrentLang())
            || (LangMod?.getActiveLang && LangMod.getActiveLang());
@@ -340,7 +477,7 @@ function applyDisplayMode(){
   if (!card || !img) return;
   const mode = state.displayMode || "image";
   card.classList.remove("mode-image","mode-name","mode-sound");
-  if (mode==="name"){ card.classList.add("mode-name"); img.setAttribute("aria-hidden","true");  name?.setAttribute("aria-hidden","false"); }
+  if (mode==="name"){  card.classList.add("mode-name");  img.setAttribute("aria-hidden","true");  name?.setAttribute("aria-hidden","false"); }
   else if (mode==="sound"){ card.classList.add("mode-sound"); img.setAttribute("aria-hidden","true"); name?.setAttribute("aria-hidden","false"); }
   else { card.classList.add("mode-image"); img.setAttribute("aria-hidden","false"); name?.setAttribute("aria-hidden","true"); }
 }
@@ -422,12 +559,13 @@ function pickItemSoundUrl(item, lang, variant){
 function msg(key){ return (UI[state.lang]||UI.ar)[key]; }
 function isRTL(lang){ return lang==="ar" || lang==="he"; }
 function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j]]; } return a; }
 function uniq(a){ return [...new Set(a.filter(Boolean).map(String))]; }
+function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 function qs(s){ return document.querySelector(s); }
 function qsa(s){ return Array.from(document.querySelectorAll(s)); }
 
-// Fallbacks (لو فشل جلب الـHTML)
+// Fallbacks
 function fallbackMainHTML(){
   return `
   <section id="family-groups-game" class="subject-screen">
