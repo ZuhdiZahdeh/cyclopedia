@@ -25,6 +25,14 @@ let items = [];
 let currentIndex = 0;
 let currentItemData = null;
 
+// 🔒 تسجيل نشاط آمن فقط عند وجود مستخدم مصادَق
+function safeRecordActivity(userObj, subjectType){
+  try {
+    const u = userObj || JSON.parse(localStorage.getItem("user"));
+    if (u && (u.uid || u.userId)) recordActivity(u, subjectType);
+  } catch {}
+}
+
 export async function loadSubjectGameContent(subjectType){
   stopCurrentAudio();
 
@@ -86,7 +94,6 @@ async function fetchItemsUnified(subjectType){
   const syns = TYPE_SYNONYMS[subjectType] || [subjectType];
   const ref  = collection(db, "items");
 
-  // where('type','in', syns) (≤10) — كافية لنا
   const snap = await getDocs(query(ref, where('type','in', syns), limit(1000)));
   items = snap.docs.map(doc => unifyItem(doc, subjectType));
 }
@@ -214,8 +221,8 @@ function wireSidebarControls(subjectType){
   const voiceSel= document.getElementById(`voice-select-${subjectType}`);
   const descBtn = document.getElementById(`toggle-description-btn-${subjectType}`);
 
-  if (prev) prev.onclick = () => { if (currentIndex>0){ currentIndex--; updateContent(subjectType); recordActivity(JSON.parse(localStorage.getItem("user")), subjectType); } };
-  if (next) next.onclick = () => { if (currentIndex<items.length-1){ currentIndex++; updateContent(subjectType); recordActivity(JSON.parse(localStorage.getItem("user")), subjectType); } };
+  if (prev) prev.onclick = () => { if (currentIndex>0){ currentIndex--; updateContent(subjectType); safeRecordActivity(JSON.parse(localStorage.getItem("user")), subjectType); } };
+  if (next) next.onclick = () => { if (currentIndex<items.length-1){ currentIndex++; updateContent(subjectType); safeRecordActivity(JSON.parse(localStorage.getItem("user")), subjectType); } };
 
   if (langSel){
     langSel.value = currentLang();
@@ -251,7 +258,7 @@ export function playCurrentItemAudio(subjectType){
   const src = resolveAudio(currentItemData, lang, voice);
   if (!src) return console.error('🔇 No audio available');
   playAudio(src);
-  recordActivity(JSON.parse(localStorage.getItem("user")), subjectType);
+  safeRecordActivity(JSON.parse(localStorage.getItem("user")), subjectType);
 }
 
 function disableSidebarButtons(subjectType, isDisabled){

@@ -164,6 +164,20 @@ function textByLang(item, kind){
   return '';
 }
 
+// -------------------- أصوات الفوز/النشاط --------------------
+const APPLAUSE_URL = "/audio/success/clapping.mp3";   // ملفك من public/audio/success
+function playWinApplause(){
+  try { playAudio(APPLAUSE_URL); }
+  catch { try { new Audio(APPLAUSE_URL).play().catch(()=>{}); } catch {} }
+}
+function safeRecordActivity(userOrType, maybeType){
+  try {
+    const u = (typeof userOrType === 'object' && userOrType) || JSON.parse(localStorage.getItem('user'));
+    const t = (typeof userOrType === 'string') ? userOrType : maybeType;
+    if (u && (u.uid || u.userId)) recordActivity(u, t);
+  } catch {}
+}
+
 // -------------------- تحميل الصفحة --------------------
 export async function loadMemoryGameContent(){
   const host = document.getElementById('memory-game-host') || document.querySelector('.main-content');
@@ -226,10 +240,8 @@ async function fetchOneType(canonType){
   const syns = TYPE_SYNONYMS[canonType] || [canonType];
   const itemsRef = collection(db, 'items');
 
-  // تقنيًا يمكن استخدام where('type','in', syns) (≤10 عناصر)،
-  // لكن لتفادي حدود أخرى نكرر الاستعلامات على دفعات صغيرة:
   let collected = [];
-  const batchSyns = [...syns]; // هنا صغيرة أساسًا
+  const batchSyns = [...syns];
   while (batchSyns.length){
     const slice = batchSyns.splice(0, 10);
     const snap = await getDocs(query(itemsRef, where('type','in', slice), limit(500)));
@@ -251,7 +263,6 @@ async function fetchCardDataFromItems(){
     }
   }
 
-  // اختيار افتراضي أول نوع متوفر
   const first = Object.keys(allCardData)[0];
   if (first) currentType = first;
 
@@ -418,8 +429,8 @@ function checkForMatch(){
         (lang==='ar' ? 'لقد وجدت زوجًا!' : lang==='he' ? 'מצאת זוג!' : 'You found a pair!');
     }
 
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user) recordActivity(user, currentType);
+    // سجل النشاط إن كان هناك مستخدم
+    safeRecordActivity(JSON.parse(localStorage.getItem('user')), currentType);
 
     if (matchedPairs === 6){
       setTimeout(() => {
@@ -427,6 +438,8 @@ function checkForMatch(){
           gameStatusDisplay.textContent =
             (lang==='ar' ? 'تهانينا! لقد فزت باللعبة!' : lang==='he' ? 'מזל טוב! ניצחת!' : 'Congratulations! You won!');
         }
+        // 👏 تصفيق الفوز
+        playWinApplause();
       }, 400);
     }
   } else {
