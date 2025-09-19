@@ -307,7 +307,7 @@ function dynamicScaleFor(card, bins, dx, dy){
   const D1 = 520;  // يصل للحجم الطبيعي أسرع
   const t  = clamp01((minD - D0) / (D1 - D0));
   const smooth = t * t * (3 - 2*t); // Smoothstep
-  const sMax = 0.95, sMin = 0.42;   // ← أصغر من قبل (0.62)
+  const sMax = 0.95, sMin = 0.22;   // ← أصغر من قبل (0.62)
   return +(sMin + (sMax - sMin) * smooth).toFixed(3);
 }
 
