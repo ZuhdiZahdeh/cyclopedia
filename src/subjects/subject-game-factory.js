@@ -30,8 +30,8 @@ function __ensureFixedLcpAttrs(img, isLcp=true){
 __ensureGlobalFixedImgCSS();
 
 
-const log  = (...a)=>console.log('[subject]', ...a);
-const warn = (...a)=>console.warn('[subject]', ...a);
+const log  = (...a)=>{ if (import.meta.env?.DEV) console.log('[subject]', ...a); };
+const warn = (...a)=>{ if (import.meta.env?.DEV) console.warn('[subject]', ...a); };
 
 const grab = (ids) => (Array.isArray(ids)?ids:[ids]).map(id=>document.getElementById(id)).find(Boolean) || null;
 const pick = (...ids) => grab(ids);
@@ -62,8 +62,8 @@ export function makeSubjectGame(cfg) {
   let currentItem = null;
   let gameLang = getCurrentLang();
 
-  const logP = (...a)=>console.log(`[${cfg.key}]`, ...a);
-  const warnP= (...a)=>console.warn(`[${cfg.key}]`, ...a);
+  const logP = (...a)=>{ if (import.meta.env?.DEV) console.log(`[${cfg.key}]`, ...a); };
+  const warnP= (...a)=>{ if (import.meta.env?.DEV) console.warn(`[${cfg.key}]`, ...a); };
 
   // --- ״¬„״¨ ״§„״¨״§†״§״× ---
   async function tryFetch(pathSegments) {

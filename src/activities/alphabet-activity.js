@@ -12,15 +12,15 @@ import { playAudio, stopCurrentAudio } from '@/core/audio-handler.js';
 
 /* ===================== DEBUG ===================== */
 const AA_DBG = false; // ג† …ƒ† ״¬״¹„‡ true …״₪‚״×‹״§ „„״×״´״®״µ
-const dbg  = (...a)=>{ if(AA_DBG) if (import.meta.env.DEV) if (import.meta.env.DEV) console.log('[AA]', ...a); };
-const dbgt = (title, rows)=>{ if(AA_DBG && console.table){ console.groupCollapsed('[AA] '+title); console.table(rows); console.groupEnd(); } };
+const dbg  = (...a)=>{ if (AA_DBG && import.meta.env.DEV) (import.meta.env?.DEV?console.log:()=>null)('[AA]', ...a); };
+const dbgt = (title, rows)=>{ if (AA_DBG && import.meta.env.DEV && console.table){ (import.meta.env?.DEV?console.groupCollapsed:()=>null)('[AA] '+title); (import.meta.env?.DEV?console.table:()=>null)(rows); (import.meta.env?.DEV?console.groupEnd:()=>null)(); } };
 /* ================================================= */
 
 const LANGS = ['ar','en','he'];
 const ALPHABET = {
-  ar: ['״£','״¨','״×','״«','״¬','״­','״®','״¯','״°','״±','״²','״³','״´','״µ','״¶','״·','״¸','״¹','״÷','','‚','ƒ','„','…','†','‡','ˆ',''],
+  ar: ['أ','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','هـ','و','ي'],
   en: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
-  he: ['׳','׳‘','׳’','׳“','׳”','׳•','׳–','׳—','׳˜','׳™','׳›','׳','׳','׳','׳','׳ ','׳','׳¡','׳¢','׳₪','׳£','׳¦','׳¥','׳§','׳¨','׳©','׳×'],
+  he: ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','ך','כ','ל','ם','מ','ן','נ','ס','ע','ף','פ','ץ','צ','ק','ר','ש','ת'],
 };
 
 const SUBJECTS = ['animal','fruit','vegetable','tool','profession','human_body'];
@@ -32,7 +32,7 @@ const DEFAULT_HINTS = {
   audioBases: ['/audio','/media/audio','/sounds'],
   imageExts:  ['webp','jpg','jpeg','png'],
   audioExts:  ['mp3','ogg','wav'],
-  placeholderSVG: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="360"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" fill="#9ca3af" font-size="22">„״§ ״×ˆ״¬״¯ ״µˆ״±״©</text></svg>'),
+  placeholderSVG: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="360"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" fill="#9ca3af" font-size="22">لا توجد صورة</text></svg>'),
 };
 const HINTS = (typeof window!=='undefined' && window.ASSET_HINTS) ? { ...DEFAULT_HINTS, ...window.ASSET_HINTS } : DEFAULT_HINTS;
 
@@ -86,12 +86,27 @@ function computeFirstLetter(word, lang){
   if (!word) return '';
   let w = String(word).trim();
   if (!w) return '';
-  if (lang === 'ar'){ w = w.replace(/^״§„/, ''); const ch = w[0]; const map = {'״¥':'״£','״¢':'״£','״§':'״£','״©':'״×'}; return map[ch] || ch; }
-  if (lang === 'en') return (w[0] || '').toUpperCase();
-  if (lang === 'he'){ const ch = w[0] || ''; const map = {'׳':'׳›','׳':'׳','׳':'׳ ','׳£':'׳₪','׳¥':'׳¦'}; return map[ch] || ch; }
-  return w[0] || '';
-}
-function subjectToDir(subject){ const s = SUBJECT_ALIASES[subject] || subject; return { animal:'animals', fruit:'fruits', vegetable:'vegetables', tool:'tools', profession:'professions', human_body:'body' }[s]; }
+
+  if (lang === 'ar'){
+    // تجاهل "ال" في بداية الكلمة
+    if (w.startsWith('ال')) w = w.slice(2);
+    // توحيد بعض أشكال الألف وتحويل التاء المربوطة
+    const ch0 = (w[0] || '')
+      .replace(/[إأآا]/, 'أ')
+      .replace('ة', 'ت');
+    return ch0;
+  }
+
+  if (lang === 'he'){
+    // تحويل الأشكال النهائية إلى أشكالها القياسية
+    const ch = w[0] || '';
+    const map = { 'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ' };
+    return map[ch] || ch;
+  }
+
+  // en أو غيرها
+  return (w[0] || '').toUpperCase();
+}function subjectToDir(subject){ const s = SUBJECT_ALIASES[subject] || subject; return { animal:'animals', fruit:'fruits', vegetable:'vegetables', tool:'tools', profession:'professions', human_body:'body' }[s]; }
 function sanitizeId(s){
   const t = String(s||'').toLowerCase()
     .normalize('NFKD')
@@ -164,7 +179,16 @@ function extractSoundPath(soundsLang){
 }
 function pickName(data, lang){ return data?.name?.[lang] || data?.name?.ar || data?.title?.[lang] || data?.title?.ar || ''; }
 function pickDescription(data, lang){ return data?.description?.[lang] || data?.description?.ar || ''; }
-function labelOf(subject){ return { animal:'״§„״­ˆ״§†״§״×', fruit:'״§„ˆ״§ƒ‡', vegetable:'״§„״®״¶״±ˆ״§״×', tool:'״§„״£״¯ˆ״§״×', profession:'״§„…‡†', human_body:'״¬״³… ״§„״¥†״³״§†' }[subject] || subject; }
+function labelOf(subject){
+  return {
+    animal:'الحيوانات',
+    fruit:'الفواكه',
+    vegetable:'الخضروات',
+    tool:'الأدوات',
+    profession:'المهن',
+    human_body:'جسم الإنسان'
+  }[subject] || subject;
+}
 
 function pickImageDirect(data){
   const m = extractImagePath(data?.media?.images);
@@ -181,260 +205,11 @@ function pickImageDirect(data){
 
 function voiceLabel(v, lang){
   const map = {
-    ar: {boy:'ˆ„״¯', girl:'״¨†״×', teacher:'…״¹„‘…'},
+    ar: {boy:'ولد', girl:'بنت', teacher:'المعلم'},
     en: {boy:'Boy', girl:'Girl', teacher:'Teacher'},
-    he: {boy:'׳™׳׳“', girl:'׳™׳׳“׳”', teacher:'׳׳•׳¨׳”'},
+    he: {boy:'ילד', girl:'ילדה', teacher:'מורה'},
   };
   return (map[lang]||map.ar)[v] || v;
-}
-function pickAudioDirect(data, lang, voice){
-  const m1 = extractSoundPath(data?.media?.sounds?.[lang]);
-  if (m1) return m1;
-
-  const p = data?.sound?.paths?.[lang];
-  if (p){
-    const chosen = p?.[voice] || p?.teacher || p?.boy || p?.girl;
-    if (chosen) return prefixSlash(chosen);
-  }
-
-  const base = data?.sound?.base || data?.sound_base;
-  const subjRaw = data?.subject || data?.type || data?.subjectType || data?.category;
-  const subjDir = { animal:'animals', fruit:'fruits', vegetable:'vegetables', tool:'tools', profession:'professions', human_body:'body' }[SUBJECT_ALIASES[subjRaw]||subjRaw];
-  if (base && subjDir) return `/audio/${lang}/${subjDir}/${base}_${voice}_${lang}.mp3`;
-
-  const s = data?.sound?.[lang];
-  if (typeof s === 'string') return prefixSlash(s);
-  if (s?.boy) return prefixSlash(s.boy);
-  if (s?.default) return prefixSlash(s.default);
-
-  return '';
-}
-function buildAudioCandidates(it, lang, voice){
-  const dir = subjectToDir(it.subject);
-  const baseName = it?.sound?.base || it?.sound_base || sanitizeId(it.id || it.name?.[lang] || it.name?.en || it.name?.ar);
-  const bases = HINTS.audioBases, exts = HINTS.audioExts, out=[];
-  if (dir && baseName){
-    for (const b of bases){ for (const e of exts){
-      out.push(`${b}/${lang}/${dir}/${baseName}_${voice}_${lang}.${e}`);
-      out.push(`${b}/${lang}/${dir}/${baseName}.${e}`);
-    } }
-  }
-  return out.map(prefixSlash);
-}
-async function probeAudio(url){
-  const key = 'aud:'+url;
-  if (assetCache.has(key)) return assetCache.get(key) || '';
-  try{ const res = await fetch(url, { method:'HEAD' }); if (res.ok){ assetCache.set(key, url); return url; } }catch(e){}
-  assetCache.set(key, ''); return '';
-}
-async function resolveAudioUrl(it, lang, voice){
-  const direct = pickAudioDirect(it.raw || it, lang, voice);
-  if (direct) return direct;
-  for (const u of buildAudioCandidates(it, lang, voice)){ const ok = await probeAudio(u); if (ok) return ok; }
-  return '';
-}
-
-/* ===================== Firestore ===================== */
-function normalizeDocSubject(d){ const raw = d.subject ?? d.type ?? d.subjectType ?? d.category ?? ''; return SUBJECT_ALIASES[raw] || raw; }
-function prefixItem(data, id){
-  return {
-    id,
-    subject: normalizeDocSubject(data),
-    name: { ar: pickName(data,'ar'), en: pickName(data,'en'), he: pickName(data,'he') },
-    description: { ar: pickDescription(data,'ar'), en: pickDescription(data,'en'), he: pickDescription(data,'he') },
-    image: pickImageDirect(data) || '',
-    sound: data?.sound || null,
-    media: data?.media || null,
-    raw: data,
-    tags: data?.tags || [],
-    difficulty: data?.difficulty || 'normal',
-  };
-}
-async function fetchByFieldValues(colRef, field, values){
-  const results = [];
-  for (const part of chunk(values, 10)){
-    const qy = query(colRef, where(field, 'in', part));
-    dbg('fetch:query', { field, part });
-    const snap = await getDocs(qy);
-    snap.forEach(doc => results.push({ id: doc.id, data: doc.data() }));
-  }
-  return results;
-}
-async function fetchItemsBySubjects(subjects){
-  const wanted = normalizeSubjects(subjects && subjects.length ? subjects : ['animal']);
-  const variants = expandSubjectVariants(wanted);
-  dbg('fetch:subjects', { wanted, variants });
-
-  const colRef = collection(db, 'items');
-  const bag = new Map();
-
-  for (const rec of await fetchByFieldValues(colRef, 'subject', variants)) bag.set(rec.id, rec.data);
-  if (bag.size < 5){
-    for (const altField of ['type','subjectType','category']){
-      const arr = await fetchByFieldValues(colRef, altField, variants);
-      for (const rec of arr) bag.set(rec.id, rec.data);
-    }
-  }
-
-  const all = []; bag.forEach((data, id)=> all.push(prefixItem(data, id)) );
-  const bySubject = all.reduce((acc,it)=>{ acc[it.subject]=(acc[it.subject]||0)+1; return acc; },{});
-  const sample = all.slice(0,12).map(it=>({ id: it.id, subject: it.subject, name: it.name[state.lang]||'', image: it.image }));
-  dbg('fetched:summary', { total: all.length, bySubject }); dbgt('fetched:sample(<=12)', sample);
-  return all;
-}
-
-/* ===================== „״×״±״©/״¹״±״¶ ===================== */
-function filterByLetter(items, letter, lang){
-  const L = String(letter || '').trim();
-  const filtered = items.filter(it => computeFirstLetter(it.name[lang], lang) === L);
-  dbg('filter:by-letter', { letter: L, lang, count: filtered.length });
-  return filtered;
-}
-
-function bindDom(){
-  ELS.name  = qs('#aa-name')  || qs('#item-name');
-  ELS.img   = qs('#aa-image') || qs('#item-image');
-  ELS.desc  = qs('#aa-desc')  || qs('#item-description');
-  ELS.letterBar = qs('#aa-letter-bar') || qs('#letter-badge');
-  ELS.count = qs('#aa-count') || qs('#item-count');
-  ELS.btnPrev      = qs('#aa-prev')        || qs('#prev-btn');
-  ELS.btnNext      = qs('#aa-next')        || qs('#next-btn');
-  ELS.btnToggleDesc= qs('#aa-toggle-desc') || qs('#toggle-desc-btn');
-  ELS.sidebar   = qs('#alphabet-activity-controls') || null;
-  ELS.lettersGrid = qs('#aa-letters') || null;
-  ELS.subjectsWrap= qs('#aa-subjects') || null;
-  ELS.langSelect  = qs('#aa-lang') || null;
-  ELS.voiceWrap   = qs('#aa-voice') || null;
-}
-
-function ensureSidebar(){
-  if (!ELS.sidebar){
-    const aside = document.createElement('div');
-    aside.id = 'alphabet-activity-controls';
-    aside.className = 'sidebar-section';
-    const host = qs('#sidebar-section') || qs('.sidebar') || qs('aside') || document.body;
-    host.appendChild(aside);
-    ELS.sidebar = aside;
-    dbg('sidebar:fallback-mounted');
-  }
-  ELS.sidebar.innerHTML = `
-    <div class="sidebar-section">
-      <h3 class="sidebar-title">״§„„״÷״©</h3>
-      <select id="aa-lang" class="select">
-        <option value="ar">״§„״¹״±״¨״©</option>
-        <option value="en">English</option>
-        <option value="he">׳¢׳‘׳¨׳™׳×</option>
-      </select>
-    </div>
-    <div class="sidebar-section">
-      <h3 class="sidebar-title">†ˆ״¹ ״§„״µˆ״×</h3>
-      <div id="aa-voice" class="voice-filter" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-    </div>
-    <div class="sidebar-section">
-      <h3 class="sidebar-title">״§„״­״±ˆ</h3>
-      <div id="aa-letters" class="letters-grid" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px"></div>
-    </div>
-    <div class="sidebar-section">
-      <h3 class="sidebar-title">״§„…ˆ״§״¶״¹</h3>
-      <div id="aa-subjects" class="subjects-filter" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px"></div>
-    </div>
-  `;
-  bindDom();
-
-  if (ELS.langSelect){
-    ELS.langSelect.value = state.lang;
-    ELS.langSelect.addEventListener('change', ()=>{
-      ensureLang(ELS.langSelect.value);
-      dbg('lang:changed', { lang: state.lang });
-      buildLetters(); buildVoiceFilter(); refilterAndRender();
-    });
-  }
-  buildVoiceFilter();
-  buildLetters();
-  buildSubjectsFilter();
-}
-
-function buildVoiceFilter(){
-  if (!ELS.voiceWrap) ELS.voiceWrap = qs('#aa-voice');
-  if (!ELS.voiceWrap) return;
-  ELS.voiceWrap.innerHTML = VOICES.map(v => `
-    <label style="display:flex;align-items:center;gap:4px">
-      <input type="radio" name="aa-voice" value="${v}" ${state.voice===v?'checked':''}>
-      <span>${voiceLabel(v, state.lang)}</span>
-    </label>
-  `).join('');
-  ELS.voiceWrap.querySelectorAll('input[name="aa-voice"]').forEach(r => {
-    r.addEventListener('change', ()=>{
-      state.voice = r.value;
-      try{ localStorage.setItem(VOICE_KEY, state.voice); }catch(e){}
-      dbg('voice:changed', { voice: state.voice });
-      stopCurrentAudio?.();
-    });
-  });
-}
-
-function buildLetters(){
-  if (!ELS.lettersGrid) ELS.lettersGrid = qs('#aa-letters');
-  if (!ELS.lettersGrid) return;
-  ELS.lettersGrid.innerHTML = '';
-  const letters = ALPHABET[state.lang] || [];
-  letters.forEach(ch => {
-    const btn = document.createElement('button');
-    btn.className = 'btn letter-btn';
-    btn.textContent = ch;
-    btn.style.padding = '10px 0';
-    btn.addEventListener('click', ()=>{
-      // ״§„״¶״÷״· ״¹„‰ †״³ ״§„״­״± …״±‘״© ״«״§†״© ג‡’ ״§„״×״§„ ״¶…† †״³ ״§„״­״±
-      if (state.letter === ch){
-        if (state.filtered.length){
-          state.index = (state.index + 1) % state.filtered.length;
-          dbg('letter:reclick-next', { letter: ch, index: state.index, total: state.filtered.length });
-          renderCurrent();
-        }
-        return;
-      }
-      // ״×״÷״± ״§„״­״±: „״×״±״© …† ״§„ƒ״§״´ ‚״·
-      state.letter = ch;
-      dbg('letter:selected', { letter: ch, lang: state.lang });
-      qsa('#aa-letters .letter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      if (ELS.letterBar) ELS.letterBar.textContent = state.letter;
-      refilterAndRender();
-    });
-    if (ch === state.letter) btn.classList.add('active');
-    ELS.lettersGrid.appendChild(btn);
-  });
-  dbg('letters:built', { lang: state.lang, count: letters.length });
-}
-
-function buildSubjectsFilter(){
-  if (!ELS.subjectsWrap) ELS.subjectsWrap = qs('#aa-subjects');
-  if (!ELS.subjectsWrap) return;
-  ELS.subjectsWrap.innerHTML = SUBJECTS.map(s => `
-    <label style="display:flex;align-items:center;gap:6px">
-      <input type="checkbox" value="${s}" ${state.subjects.includes(s)?'checked':''}>
-      <span>${labelOf(s)}</span>
-    </label>
-  `).join('');
-  ELS.subjectsWrap.querySelectorAll('input[type="checkbox"]').forEach(chk => {
-    chk.addEventListener('change', async ()=>{
-      const val = chk.value;
-      if (chk.checked && !state.subjects.includes(val)) state.subjects.push(val);
-      if (!chk.checked) state.subjects = state.subjects.filter(v => v!==val);
-      dbg('subjects:changed', { subjects: state.subjects.slice() });
-      await refetchAndRender(); // ״§„״¬„״¨ ‚״· ״¹†״¯ ״×״÷״± ״§„…״¬…ˆ״¹״§״×
-    });
-  });
-}
-
-/* ===================== ״×״´״÷„ ״§„״µˆ״× ״¨״§„״¶״÷״· ===================== */
-async function playCurrent(){
-  if (!state.filtered.length) return;
-  const it = state.filtered[state.index];
-  let src = pickAudioDirect(it.raw || it, state.lang, state.voice);
-  if (!src) src = await resolveAudioUrl(it, state.lang, state.voice);
-  if (src){ dbg('audio:play', { id: it?.id, name: it?.name?.[state.lang], src, voice: state.voice }); playAudio(src); }
-  else { dbg('audio:missing', { id: it?.id, name: it?.name?.[state.lang], voice: state.voice }); }
 }
 function bindClickToPlay(){
   const handler = ()=> playCurrent();
@@ -550,7 +325,7 @@ function observeGlobalLang(){
 }
 
 /* ===================== Init Guard + API ===================== */
-export async function loadAlphabetActivity(){
+async function loadAlphabetActivity(){
   // ״­״§״±״³ „…†״¹ ״§„״×‡״¦״© ״§„…״²״¯ˆ״¬״©
   if (window.__AA_INIT__){ dbg('init:skipped (already initialized)'); return; }
   window.__AA_INIT__ = true;
@@ -567,7 +342,19 @@ export async function loadAlphabetActivity(){
     if (ELS.name) ELS.name.textContent = 'حدث خطأ أثناء تحميل الصفحة';
   }
 }
-export const loadAlphabetActivityContent = loadAlphabetActivity;
+const loadAlphabetActivityContent = loadAlphabetActivity;
 // („״§ ˆ״¬״¯ Auto-Boot ‡†״§)
 
+
+// ---- Global exposure for non-module usage ----
+try {
+  if (typeof window !== 'undefined') {
+    window.loadAlphabetActivity = loadAlphabetActivity;
+    window.loadAlphabetActivityContent = loadAlphabetActivityContent || loadAlphabetActivity;
+    window.AlphabetActivity = Object.assign(window.AlphabetActivity || {}, {
+      loadAlphabetActivity,
+      loadAlphabetActivityContent: loadAlphabetActivityContent || loadAlphabetActivity
+    });
+  }
+} catch (_) {}
 

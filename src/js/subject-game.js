@@ -2,8 +2,8 @@
 
 import { db } from "./firebase-config.js";
 import { getDocs, collection, query, where, limit } from "firebase/firestore";
-import { getCurrentLang, loadLanguage, setDirection, applyTranslations } from "./lang-handler.js";
-import { playAudio, stopCurrentAudio } from "./audio-handler.js";
+import { getCurrentLang, loadLanguage, setDirection, applyTranslations } from "../core/lang-handler.js";
+import { playAudio, stopCurrentAudio } from "../core/audio-handler.js";
 import { recordActivity } from "./activity-handler.js";
 
 const TYPE_SYNONYMS = {

@@ -3,6 +3,10 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
+  define: {
+    __BASE_URL__: JSON.stringify(process.env.VITE_BASE_URL || '/'),
+    __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production')
+  },
   base: '/',
   publicDir: 'public',
   resolve: {
@@ -16,10 +20,23 @@ export default defineConfig({
     },
   },
   build: {
+    chunkSizeWarningLimit: 1200,
     outDir: 'dist',
     emptyOutDir: true,
     sourcemap: false, // أصغر للحجم
     rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('firebase')) return 'vendor-firebase';
+            return 'vendor';
+          }
+          if (id.includes('/src/subjects/')) {
+            const m = id.match(/\/src\/subjects\/([^\/]+)\.js$/);
+            if (m) return `subject-${m[1]}`;
+          }
+        }
+      },
       input: { main: resolve(__dirname, 'index.html') },
     },
   },

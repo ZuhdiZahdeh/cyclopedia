@@ -1,9 +1,72 @@
+catch (e) {
+      if (typeof __DEV__ !== 'undefined' && __DEV__) console.warn('[alphabet] dynamic import failed', e);
+    }
+    throw new Error('Alphabet activity loader not found');
+  };
+}
+
+if (typeof window !== 'undefined' && !window.__loadAlphabetPage) {
+  window.__loadAlphabetPage = async function (...args) {
+    const g = (window.loadAlphabetActivityContent || window.loadAlphabetActivity) || null;
+    if (typeof g === 'function') return g(...args);
+    try {
+      const mod = await import('../activities/alphabet-activity.js');
+      const fn = mod.loadAlphabetActivityContent || mod.loadAlphabetActivity ||
+                 (typeof mod.default === 'function' ? mod.default : null);
+      if (typeof fn === 'function') return fn(...args);
+    } catch (e) {
+      if (__DEV__) console.warn('[alphabet] dynamic import failed', e);
+    }
+    throw new Error('Alphabet activity loader not found');
+  };
+}
+catch (e) {
+      if (__DEV__) console.warn('[alphabet] dynamic import failed', e);
+    }
+    throw new Error('Alphabet activity loader not found');
+  };
+}
+catch (e) {
+      if (__DEV__) console.warn('[alphabet] dynamic import failed', e);
+    }
+    throw new Error('Alphabet activity loader not found');
+  };
+}
+catch (e) {
+      if (__DEV__) console.warn('[alphabet] dynamic import failed', e);
+    }
+    throw new Error('Alphabet activity loader not found');
+  };
+}
+catch (e) {
+      if (__DEV__) console.warn('[alphabet] dynamic import failed', e);
+    }
+    throw new Error('Alphabet activity loader not found');
+  };
+}
+ןasync function window.window.window.window.window.__loadAlphabetPage(...args){
+  const g =
+    (typeof window !== 'undefined')
+      ? (window.loadAlphabetActivityContent || window.loadAlphabetActivity)
+      : null;
+  if (typeof g === 'function') return g(...args);
+  try {
+    const mod = await import('../activities/alphabet-activity.js');
+    const fn = mod.loadAlphabetActivityContent || mod.loadAlphabetActivity ||
+               (typeof mod.default === 'function' ? mod.default : null);
+    if (typeof fn === 'function') return fn(...args);
+  } catch (e) {
+    if (typeof console !== 'undefined') console.warn('[alphabet] dynamic import failed', e);
+  }
+  throw new Error('Alphabet activity loader not found');
+}
+// =========================
+// =========================
 import { getCurrentLang, loadLanguage, applyTranslations, onLangChange } from '../core/lang-handler.js';
 import { initializeSubjectControls } from '../core/initializeSubjectControls.js';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
-
 /* ------------------------------------------------------------------
-   CSS
+   ׳´ֳ—׳´ֲן¢ג€¦ן¢ֲן¢ג€ CSS ׳´ֲ§ן¢ג€׳´ֲ£׳´ֲ³׳´ֲ§׳´ֲ³ן¢ֲ + CSS ׳´ֲ§ן¢ג€׳´ֲ®׳´ֲ§׳´ֲµ ׳´ֲ¨ן¢ֶ'ן¢ג€ ן¢ג€¦ן¢ֻ†׳´ֲ¶ן¢ֻ†׳´ֲ¹ ׳´ֳ—ן¢ג€ן¢ג€׳´ֲ§׳´ֲ¦ן¢ֲן¢ג€¹׳´ֲ§
 -------------------------------------------------------------------*/
 const BASE_CSS = [
   '/css/colors.css',
@@ -22,7 +85,7 @@ const SUBJECT_CSS = {
   'human-body':   '/css/human-body.css',
   'memory-game':  '/css/memory-game.css',
   'tools-match':  '/css/tools-match.css',
-  'family-groups':'/css/family-groups-game.css',
+  'family-groups':'/css/family-groups-game.css', // ׳´ֳ—׳´ֲ£ן¢ֶ'ן¢ֲ׳´ֲ¯ ׳´ֳ—׳´ֲן¢ג€¦ן¢ֲן¢ג€ CSS ׳´ֲ§ן¢ג€׳´ֲ®׳´ֲ§׳´ֲµ ׳´ֲ¨׳´ֲ§ן¢ג€ן¢ג€׳´ֲ¹׳´ֲ¨׳´ֲ©
 };
 function ensureCss(paths = []) {
   const head = document.head;
@@ -46,7 +109,7 @@ function ensureCss(paths = []) {
   if (appended) requestAnimationFrame(() => {});
 }
 ensureCss(BASE_CSS);
-/* ------------------------- i18n ------------------------- */
+/* ------------------------- i18n ן¢ג€׳´ֲ¹ן¢ג€׳´ֲ§׳´ֲµ׳´ֲ± ׳´ֲ§ן¢ג€׳´ֳ—׳´ֲן¢ֶ'ן¢ג€¦ ------------------------- */
 function rebuildVoiceOptions(sel) {
   if (!sel) return;
   const keep = sel.value || 'boy';
@@ -87,7 +150,7 @@ const accTitleInner = document.querySelector('.static-section .sidebar-title [da
   }
 try { applyTranslations(); } catch {}
 }
-/* ------------------------- UI and Layout ------------------------- */
+/* ------------------------- ׳´ֲ£׳´ֲ¯ן¢ֻ†׳´ֲ§׳´ֳ— ן¢ֻ†׳´ֲ§׳´ֲ¬ן¢ג€¡׳´ֲ© ׳´ֲ¨׳´ֲ³ן¢ֲ׳´ֲ·׳´ֲ© ן¢ג€ן¢ג€׳´ֲ³׳´ֲ§ן¢ֲ׳´ֲ¯׳´ֲ¨׳´ֲ§׳´ֲ± ------------------------- */
 function hideAllControls() {
   document
     .querySelectorAll("#sidebar-section .sidebar-section:not(.static-section)")
@@ -98,6 +161,7 @@ function hideAllControls() {
   const aside = document.getElementById("sidebar-section");
   if (aside) aside.style.display = "";
 }
+/* ------------------------- ׳´ֲ׳´ֲ³׳´ֲ§׳´ֲ¨ ׳´ֲ§ן¢ג€ן¢ג€¦׳´ֲ³׳´ֳ—׳´ֲ®׳´ֲ¯ן¢ג€¦: ן¢ֻ†׳´ֲ§׳´ֲ¬ן¢ג€¡׳´ֲ© ׳´ֲ§ן¢ג€׳´ֲ£׳´ֲ²׳´ֲ±׳´ֲ§׳´ֲ± ------------------------- */
 function updateAccountActionsUI(user) {
   const loggedIn = !!user;
   const setHidden = (id, hidden) => {
@@ -119,6 +183,7 @@ async function handleLogout() {
   }
 }
 window.handleLogout = handleLogout;
+/* ------------------------- ׳´ֳ—׳´ֲ±׳´ֳ—ן¢ֲ׳´ֲ¨ ײ²ֲ׳´ֲ׳´ֲ³׳´ֲ§׳´ֲ¨ן¢ֶ'ײ²ֲ ׳´ֳ—׳´ֲ׳´ֳ— ׳´ֲ§ן¢ג€׳´ֳ—׳´ֲן¢ֶ'ן¢ג€˜ן¢ג€¦ ׳´ֲ§ן¢ג€׳´ֲ¸׳´ֲ§ן¢ג€¡׳´ֲ± ------------------------- */
 function getActiveControlsSection() {
   const aside = document.getElementById('sidebar-section');
   if (!aside) return null;
@@ -159,7 +224,7 @@ _sidebarObserver.observe(aside, {
     attributeFilter: ['style', 'hidden', 'class']
   });
 }
-/* ------------------------- Page Loading ------------------------- */
+/* ------------------------- ן¢ג€¦׳´ֲן¢ג€¦ן¢ג€ ׳´ֲµן¢ֲ׳´ֲ׳´ֲ§׳´ֳ— ׳´ֲ¹׳´ֲ§ן¢ג€¦ (ן¢ג€¦ן¢ֲ׳´ֲ׳´ֲµן¢ג€˜ן¢ֲן¢ג€) ------------------------- */
 const FRAGMENT_SELECTORS = [
   "#page-content",
   ".subject-page",
@@ -185,13 +250,13 @@ if (subjectType && SUBJECT_CSS[subjectType]) {
     }
 hideAllControls();
 const res = await fetch(htmlPath, { cache: 'no-cache' });
-    if (!res.ok) throw new Error(`Fetch failed: ${htmlPath} (status ${res.status})`);
+    if (!res.ok) throw new Error(`ן¢ֲ׳´ֲ´ן¢ג€ ׳´ֳ—׳´ֲן¢ג€¦ן¢ֲן¢ג€ ׳´ֲ§ן¢ג€׳´ֲµן¢ֲ׳´ֲ׳´ֲ©: ${htmlPath} (status ${res.status})`);
     let html = await res.text();
 if (/<\!doctype html>|<html|<header[^>]+top-navbar/i.test(html)) {
-      console.warn(`[loader] "${htmlPath}" seems to be a full HTML document (e.g. index.html). Only loading a fragment from it.`);
+      console.warn(`[loader] "${htmlPath}" ׳´ֲ£׳´ֲ¹׳´ֲ§׳´ֲ¯ ן¢ֻ†׳´ֲן¢ֲן¢ג€׳´ֲ© ן¢ֶ'׳´ֲ§ן¢ג€¦ן¢ג€׳´ֲ© (׳´ֳ·׳´ֲ§ן¢ג€׳´ֲ¨ן¢ג€¹׳´ֲ§ index.html). ׳´ֲ³׳´ֲ£׳´ֲ׳´ֲ§ן¢ֻ†ן¢ג€ ׳´ֲ§׳´ֲ³׳´ֳ—׳´ֲ®׳´ֲ±׳´ֲ§׳´ֲ¬ ׳´ֲ¬׳´ֲ²׳´ֲ¡ ׳´ֲ§ן¢ג€ן¢ג€¦׳´ֲ׳´ֳ—ן¢ֻ†ן¢ג€° ן¢ֲן¢ג€׳´ֲ·.`);
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const candidate = FRAGMENT_SELECTORS.map(sel => doc.querySelector(sel)).find(Boolean);
-      html = candidate ? candidate.innerHTML : '<p>Content not found.</p>';
+      html = candidate ? candidate.innerHTML : '<p>׳´ֳ—׳´ֲ¹׳´ֲ°ן¢ג€˜׳´ֲ± ׳´ֳ—׳´ֲן¢ג€¦ן¢ֲן¢ג€ ׳´ֲ§ן¢ג€׳´ֲµן¢ֲ׳´ֲ׳´ֲ©.</p>';
     }
 mainContent.innerHTML = stripScripts(html);
 try { await applyTranslations(); } catch {}
@@ -199,35 +264,23 @@ if (subjectType) initializeSubjectControls(subjectType);
     i18nNormalizeControls();
 requestAnimationFrame(() => {
       placeAccountSectionBelowActiveControls();
-      initSidebarObserver();
+      initSidebarObserver(); // ן¢ג€¦׳´ֲ±ן¢ג€˜׳´ֲ© ן¢ֻ†׳´ֲ§׳´ֲ׳´ֲ¯׳´ֲ©
     });
 if (typeof moduleLoader === 'function') {
       await moduleLoader();
     }
-if (typeof __DEV__ !== 'undefined' && __DEV__) console.log(`Loaded page: ${htmlPath}`);
+if (__DEV__) console.log(`׳'ֲג€¦ ׳´ֳ—ן¢ג€¦ ׳´ֳ—׳´ֲן¢ג€¦ן¢ֲן¢ג€ ׳´ֲ§ן¢ג€׳´ֲµן¢ֲ׳´ֲ׳´ֲ©: ${htmlPath}`);
   } catch (err) {
-    console.error(`Error loading page: ${htmlPath}`, err);
+    console.error(`׳'ֲֲ ׳´ֲ®׳´ֲ·׳´ֲ£ ן¢ֲן¢ֲ ׳´ֳ—׳´ֲן¢ג€¦ן¢ֲן¢ג€ ׳´ֲ§ן¢ג€׳´ֲµן¢ֲ׳´ֲ׳´ֲ©: ${htmlPath}`, err);
     if (mainContent) {
-      mainContent.innerHTML = `<div class="error-box">An error occurred while loading the page.</div>`;
+      mainContent.innerHTML = `<div class="error-box">״×״¹״°״± ״×״…„ ״§„…״״×ˆ‰ ״§„…״·„ˆ״¨.</div>`;
     }
   }
 }
 onLangChange(() => {
   i18nNormalizeControls();
 });
-/* ------------------------- Auth Watch ------------------------- */
-(function initAuthWatch() {
-  try {
-    const auth = getAuth();
-    onAuthStateChanged(auth, (user) => {
-      updateAccountActionsUI(user);
-    });
-  } catch (e) {
-    console.warn('[auth] Firebase Auth not initialized. Using default UI state.', e);
-    updateAccountActionsUI(null);
-  }
-})();
-/* ------------------------- Page Loaders ------------------------- */
+/* ------------------------- ׳´ֲ±׳´ֲ¨׳´ֲ· ׳´ֲ§ן¢ג€׳´ֲ¯ן¢ֻ†׳´ֲ§ן¢ג€ ׳´ֲ¨ן¢ג€׳´ֲ§ן¢ֲ׳´ֲ°׳´ֲ© ׳´ֲ§ן¢ג€ן¢ג€¦׳´ֳ—׳´ֲµן¢ֲ׳´ֲ ------------------------- */
 window.showHomePage = () => {
   const main = document.getElementById('app-main') || document.querySelector('main.main-content');
   main.innerHTML = `
@@ -252,24 +305,24 @@ window.loadFamilyGroupsGamePage = () =>
   loadPage(
     "/html/family-groups-game.html",
     async () => {
-      ensureCss(['/css/common-components-subjects.css', '/css/family-groups-game.css']);
-      const mods = import.meta.glob('/src/subjects/*-game.js');
+ensureCss(['/css/common-components-subjects.css', '/css/family-groups-game.css']);
+const mods = import.meta.glob('/src/subjects/*-game.js');
       const loader = mods['/src/subjects/family-groups-game.js'];
       if (!loader) {
         console.error('[family-groups] module not found in Vite glob');
         return;
       }
       try {
-        const m = await loader();
+        const m = await loader();                // ׳´ֲ³ן¢ֲן¢ֲ׳´ֲן¢ֻ†ן¢ג€˜ן¢ֲן¢ג€ ׳´ֲ¥ן¢ג€ן¢ג€° assets/family-groups-game-*.js ׳´ֳ—ן¢ג€ן¢ג€׳´ֲ§׳´ֲ¦ן¢ֲן¢ג€¹׳´ֲ§
         if (m?.loadFamilyGroupsGameContent) {
           await m.loadFamilyGroupsGameContent();
         } else {
           console.error('[family-groups] load function missing');
         }
       } catch (e) {
-        console.warn('[family-groups] first dynamic import failed, retrying with cache-bust...', e);
+console.warn('[family-groups] first dynamic import failed, retrying with cache-bust׳'ג‚¬ֲ¦', e);
         const bust = Date.now();
-        const modsBust = import.meta.glob('/src/subjects/*-game.js?v=*');
+        const modsBust = import.meta.glob('/src/subjects/*-game.js?v=*'); // ן¢ג€ן¢ג€¦׳´ֲ· ן¢ג€¦׳´ֲ¹ ׳´ֲ§׳´ֲ³׳´ֳ—׳´ֲ¹ן¢ג€׳´ֲ§ן¢ג€¦
         const loaderBust = modsBust['/src/subjects/family-groups-game.js?v=*'];
         if (loaderBust) {
           const m2 = await loaderBust();
@@ -284,9 +337,7 @@ window.loadAlphabetActivity = () =>
     "/html/alphabet-activity.html",
     async () => {
       ensureCss(['/css/common-components-subjects.css', '/css/alphabet-activity.css']);
-      const mod = await import('../activities/alphabet-activity.js');
-      const fn = mod.loadAlphabetActivityContent || mod.loadAlphabetActivity || (typeof mod.default === 'function' ? mod.default : null);
-      if (typeof fn === 'function') await fn();
+      await window.__loadAlphabetPage();
     }
   );
 window.loadMemoryGamePage    = () => loadPage("/html/memory-game.html",    loadMemoryGameContent,        "memory-game");
@@ -295,11 +346,12 @@ window.loadLogin    = () => loadPage("/users/login.html");
 window.loadRegister = () => loadPage("/users/register.html");
 window.loadProfile  = () => loadPage("/users/profile.html");
 window.loadMyReport = () => loadPage("/users/my-report.html");
-/* ------------------------- Initialization ------------------------- */
+/* ------------------------- ׳´ֳ—ן¢ג€¡ן¢ֲ׳´ֲ¦׳´ֲ© ׳´ֲ§ן¢ג€ן¢ג€׳´ֳ·׳´ֲ© ------------------------- */
 (function initLang() {
   const lang = getCurrentLang();
   loadLanguage(lang).then(() => applyTranslations());
 })();
+/* ------------------------- ן¢ג€¦׳´ֲ±׳´ֲ§ן¢ג€׳´ֲ¨׳´ֲ© ׳´ֲ׳´ֲ§ן¢ג€׳´ֲ© ׳´ֲ§ן¢ג€׳´ֲ¯׳´ֲ®ן¢ֻ†ן¢ג€ ------------------------- */
 (function initAuthWatch() {
   try {
     const auth = getAuth();
@@ -307,7 +359,7 @@ window.loadMyReport = () => loadPage("/users/my-report.html");
       updateAccountActionsUI(user);
     });
   } catch (e) {
-    console.warn('[auth] Firebase Auth not initialized. Using default UI state.', e);
+    console.warn('[auth] Firebase Auth ׳´ֳ·ן¢ֲ׳´ֲ± ן¢ג€¦ן¢ג€¡ן¢ֲן¢ג€˜׳´ֲ£׳´ֲ© ׳´ֲ¨׳´ֲ¹׳´ֲ¯. ׳´ֲ³ן¢ֲ׳´ֳ—ן¢ג€¦ ׳´ֲ§׳´ֲ³׳´ֳ—׳´ֲ®׳´ֲ¯׳´ֲ§ן¢ג€¦ ׳´ֲ§ן¢ג€׳´ֲ׳´ֲ§ן¢ג€׳´ֲ© ׳´ֲ§ן¢ג€׳´ֲ§ן¢ֲ׳´ֳ—׳´ֲ±׳´ֲ§׳´ֲ¶ן¢ֲ׳´ֲ©.', e);
     updateAccountActionsUI(null);
   }
 })();
